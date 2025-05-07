@@ -18,11 +18,11 @@ struct Game: Identifiable, Codable {
 
 struct ContentView: View {
     @State private var currentView: AppView = .menu
-    
+
     enum AppView {
         case menu, game, settings, history
     }
-    
+
     var body: some View {
         NavigationView {
             switch currentView {
@@ -41,7 +41,7 @@ struct ContentView: View {
 
 struct MenuView: View {
     @Binding var currentView: ContentView.AppView
-    
+
     var body: some View {
         List {
             Button(action: { currentView = .game }) {
@@ -50,14 +50,14 @@ struct MenuView: View {
                     Text("New Game")
                 }
             }
-            
+
             Button(action: { currentView = .history }) {
                 HStack {
                     Image(systemName: "clock.arrow.circlepath")
                     Text("Game History")
                 }
             }
-            
+
             Button(action: { currentView = .settings }) {
                 HStack {
                     Image(systemName: "gear")
@@ -79,41 +79,48 @@ struct GameView: View {
     @AppStorage("myName") private var myName = "Me"
     @AppStorage("opponentName") private var opponentName = "Opponent"
     @AppStorage("gameHistory") private var gameHistoryData: Data = Data()
-    
+
     enum GameMode: String, Codable {
         case singles = "Singles"
         case doubles = "Doubles"
     }
-    
+
     var isMatchPoint: Bool {
-        (myScore >= 20 || opponentScore >= 20) && abs(myScore - opponentScore) == 1
+        if myScore >= 20 || opponentScore >= 20 {
+            if (myScore == 20 && opponentScore <= 19) || (opponentScore == 20 && myScore <= 19) {
+                return true
+            }
+            else if (myScore >= 21 && myScore - opponentScore == 1) || (opponentScore >= 21 && opponentScore - myScore == 1) {
+                return true
+            } else if myScore == 29 && opponentScore == 29 {
+                return true
+            } else {
+                return false
+            }
+        } else {
+            return false
+        }
     }
-    
+
     private var gameHistory: [Game] {
         (try? JSONDecoder().decode([Game].self, from: gameHistoryData)) ?? []
     }
-    
+
     func checkWinner() {
-        let hasWon = (myScore >= 21 && myScore - opponentScore >= 2) ||
-                     (opponentScore >= 21 && opponentScore - myScore >= 2)
-        
+        let hasWon = (myScore >= 21 && myScore - opponentScore >= 2) || (opponentScore >= 21 && opponentScore - myScore >= 2) || myScore == 30 || opponentScore == 30
+
         if hasWon {
             let winnerName = myScore > opponentScore ? myName : opponentName
             winner = winnerName
             isAnimating = true
-            
+
             var history = gameHistory
-            history.append(Game(
-                myScore: myScore,
-                opponentScore: opponentScore,
-                winner: winnerName,
-                date: Date()
-            ))
-            
+            history.append(Game(myScore: myScore, opponentScore: opponentScore, winner: winnerName, date: Date()))
+
             if let encoded = try? JSONEncoder().encode(history) {
                 gameHistoryData = encoded
             }
-            
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 myScore = 0
                 opponentScore = 0
@@ -122,68 +129,52 @@ struct GameView: View {
             }
         }
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // Court Background
                 Color(red: 0.2, green: 0.6, blue: 0.2)
                     .ignoresSafeArea()
-                
+
                 // Court Lines
                 VStack(spacing: 0) {
                     Rectangle()
                         .fill(Color.white.opacity(0.4))
                         .frame(height: 2)
-                    
                     Rectangle()
                         .fill(Color.white)
                         .frame(height: 2)
-                    
                     Rectangle()
                         .fill(Color.white.opacity(0.4))
                         .frame(height: 2)
                 }
                 .padding(.horizontal, 12)
-                
+
                 // Main Content
                 VStack(spacing: 8) {
                     // Opponent's Score
-                    ScoreView(
-                        name: opponentName,
-                        score: opponentScore,
-                        isWinner: winner == opponentName,
-                        isAnimating: isAnimating,
-                        onTap: {
-                            opponentScore += 1
-                            checkWinner()
-                        },
-                        onLongPress: {
-                            myScore = 0
-                            opponentScore = 0
-                            winner = nil
-                        }
-                    )
-                    
+                    ScoreView(name: opponentName, score: opponentScore, isWinner: winner == opponentName, isAnimating: isAnimating, onTap: {
+                        opponentScore += 1
+                        checkWinner()
+                    }, onLongPress: {
+                        myScore = 0
+                        opponentScore = 0
+                        winner = nil
+                    })
+
                     // My Score
-                    ScoreView(
-                        name: myName,
-                        score: myScore,
-                        isWinner: winner == myName,
-                        isAnimating: isAnimating,
-                        onTap: {
-                            myScore += 1
-                            checkWinner()
-                        },
-                        onLongPress: {
-                            myScore = 0
-                            opponentScore = 0
-                            winner = nil
-                        }
-                    )
+                    ScoreView(name: myName, score: myScore, isWinner: winner == myName, isAnimating: isAnimating, onTap: {
+                        myScore += 1
+                        checkWinner()
+                    }, onLongPress: {
+                        myScore = 0
+                        opponentScore = 0
+                        winner = nil
+                    })
                 }
                 .padding(.horizontal, 16)
-                
+
                 // Match Point Indicator
                 if isMatchPoint {
                     Text("Match Point!")
@@ -196,7 +187,7 @@ struct GameView: View {
                         .transition(.scale.combined(with: .opacity))
                         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isMatchPoint)
                 }
-                
+
                 // Winner Overlay
                 if isAnimating {
                     Text("\(winner == myName ? "I Win!" : "\(winner ?? "") Wins!")")
@@ -228,13 +219,14 @@ struct ScoreView: View {
     let isAnimating: Bool
     let onTap: () -> Void
     let onLongPress: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Text(name)
                 .font(.caption)
                 .fontWeight(.medium)
                 .foregroundColor(.white)
+
             Text("\(score)")
                 .font(.system(size: 36, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
@@ -265,7 +257,7 @@ struct SettingsView: View {
     @AppStorage("gameMode") private var gameMode: GameView.GameMode = .singles
     @AppStorage("myName") private var myName = "Me"
     @AppStorage("opponentName") private var opponentName = "Opponent"
-    
+
     var body: some View {
         List {
             Section(header: Text("Game Mode")) {
@@ -274,7 +266,7 @@ struct SettingsView: View {
                     Text("Doubles").tag(GameView.GameMode.doubles)
                 }
             }
-            
+
             Section(header: Text("Player Names")) {
                 TextField("Your Name", text: $myName)
                 TextField("Opponent Name", text: $opponentName)
@@ -295,13 +287,13 @@ struct SettingsView: View {
 struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("gameHistory") private var gameHistoryData: Data = Data()
-    
+
     private var gameHistory: [Game] {
         (try? JSONDecoder().decode([Game].self, from: gameHistoryData)) ?? []
     }
-    
+
     var body: some View {
-        List(gameHistory) { game in
+        List(gameHistory.reversed()) { game in
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(game.winner) won")
                     .font(.headline)
