@@ -193,8 +193,6 @@ struct GameView: View {
                         .padding(.vertical, 6)
                         .background(Color.red.opacity(0.8))
                         .cornerRadius(8)
-                        .transition(.scale.combined(with: .opacity))
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isMatchPoint)
                 }
                 
                 // Winner Overlay
@@ -205,8 +203,6 @@ struct GameView: View {
                         .padding()
                         .background(Color.black.opacity(0.7))
                         .cornerRadius(12)
-                        .transition(.scale.combined(with: .opacity))
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
                 }
             }
             .navigationBarBackButtonHidden(false)
@@ -256,7 +252,6 @@ struct ScoreView: View {
                 .onEnded { _ in onLongPress() }
         )
         .scaleEffect(isWinner && isAnimating ? 1.2 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
     }
 }
 
@@ -295,29 +290,175 @@ struct SettingsView: View {
 struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("gameHistory") private var gameHistoryData: Data = Data()
+    @State private var showingClearConfirmation = false
+    @State private var editingGame: Game? = nil
+    @State private var editedMyScore: String = ""
+    @State private var editedOpponentScore: String = ""
+    @State private var editedWinner: String = ""
     
     private var gameHistory: [Game] {
         (try? JSONDecoder().decode([Game].self, from: gameHistoryData)) ?? []
     }
     
+    private func saveGameHistory(_ history: [Game]) {
+        if let encoded = try? JSONEncoder().encode(history) {
+            gameHistoryData = encoded
+        }
+    }
+    
+    private func deleteGame(_ game: Game) {
+        var history = gameHistory
+        if let index = history.firstIndex(where: { $0.id == game.id }) {
+            history.remove(at: index)
+            saveGameHistory(history)
+        }
+    }
+    
+    private func updateGame(_ game: Game) {
+        var history = gameHistory
+        if let index = history.firstIndex(where: { $0.id == game.id }) {
+            history[index] = game
+            saveGameHistory(history)
+        }
+    }
+    
     var body: some View {
-        List(gameHistory) { game in
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(game.winner) won")
-                    .font(.headline)
-                Text("Score: \(game.myScore) - \(game.opponentScore)")
-                    .font(.subheadline)
-                Text(game.date, style: .time)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+        List {
+            if gameHistory.isEmpty {
+                Section {
+                    Text("No games played yet")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowBackground(Color.clear)
+                }
+            } else {
+                Section {
+                    ForEach(gameHistory) { game in
+                        GameHistoryRow(game: game) {
+                            editingGame = game
+                            editedMyScore = String(game.myScore)
+                            editedOpponentScore = String(game.opponentScore)
+                            editedWinner = game.winner
+                        } onDelete: {
+                            deleteGame(game)
+                        }
+                    }
+                }
             }
         }
         .navigationTitle("Game History")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Back") {
                     currentView = .menu
+                }
+            }
+            
+            if !gameHistory.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showingClearConfirmation = true }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+        }
+        .alert("Clear History", isPresented: $showingClearConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear", role: .destructive) {
+                gameHistoryData = Data()
+            }
+        } message: {
+            Text("Are you sure you want to clear all game history? This action cannot be undone.")
+        }
+        .sheet(item: $editingGame) { game in
+            EditGameView(
+                game: game,
+                editedMyScore: $editedMyScore,
+                editedOpponentScore: $editedOpponentScore,
+                editedWinner: $editedWinner,
+                onSave: { updatedGame in
+                    updateGame(updatedGame)
+                    editingGame = nil
+                },
+                onCancel: {
+                    editingGame = nil
+                }
+            )
+        }
+    }
+}
+
+struct GameHistoryRow: View {
+    let game: Game
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("\(game.winner) won")
+                .font(.headline)
+            Text("Score: \(game.myScore) - \(game.opponentScore)")
+                .font(.subheadline)
+            Text(game.date, style: .time)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive, action: onDelete) {
+                Label("Delete", systemImage: "trash")
+            }
+            
+            Button(action: onEdit) {
+                Label("Edit", systemImage: "pencil")
+            }
+            .tint(.blue)
+        }
+    }
+}
+
+struct EditGameView: View {
+    let game: Game
+    @Binding var editedMyScore: String
+    @Binding var editedOpponentScore: String
+    @Binding var editedWinner: String
+    let onSave: (Game) -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Score")) {
+                    TextField("Your Score", text: $editedMyScore)
+                        .keyboardType(.numberPad)
+                    TextField("Opponent Score", text: $editedOpponentScore)
+                        .keyboardType(.numberPad)
+                }
+                
+                Section(header: Text("Winner")) {
+                    TextField("Winner", text: $editedWinner)
+                }
+            }
+            .navigationTitle("Edit Game")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onCancel)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        if let myScore = Int(editedMyScore),
+                           let opponentScore = Int(editedOpponentScore) {
+                            let updatedGame = Game(
+                                id: game.id,
+                                myScore: myScore,
+                                opponentScore: opponentScore,
+                                winner: editedWinner,
+                                date: game.date
+                            )
+                            onSave(updatedGame)
+                        }
+                    }
                 }
             }
         }
