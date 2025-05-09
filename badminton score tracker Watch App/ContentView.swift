@@ -79,6 +79,7 @@ struct GameView: View {
     @AppStorage("myName") private var myName = "Me"
     @AppStorage("opponentName") private var opponentName = "Opponent"
     @AppStorage("gameHistory") private var gameHistoryData: Data = Data()
+    @State private var showRacketAnimation = true
 
     enum GameMode: String, Codable {
         case singles = "Singles"
@@ -89,8 +90,7 @@ struct GameView: View {
         if myScore >= 20 || opponentScore >= 20 {
             if (myScore == 20 && opponentScore <= 19) || (opponentScore == 20 && myScore <= 19) {
                 return true
-            }
-            else if (myScore >= 21 && myScore - opponentScore == 1) || (opponentScore >= 21 && opponentScore - myScore == 1) {
+            } else if (myScore >= 21 && myScore - opponentScore == 1) || (opponentScore >= 21 && opponentScore - myScore == 1) {
                 return true
             } else if myScore == 29 && opponentScore == 29 {
                 return true
@@ -126,6 +126,7 @@ struct GameView: View {
                 opponentScore = 0
                 isAnimating = false
                 winner = nil
+                showRacketAnimation = true // Reset for next game
             }
         }
     }
@@ -151,53 +152,65 @@ struct GameView: View {
                 }
                 .padding(.horizontal, 12)
 
-                // Main Content
-                VStack(spacing: 8) {
-                    // Opponent's Score
-                    ScoreView(name: opponentName, score: opponentScore, isWinner: winner == opponentName, isAnimating: isAnimating, onTap: {
-                        opponentScore += 1
-                        checkWinner()
-                    }, onLongPress: {
-                        myScore = 0
-                        opponentScore = 0
-                        winner = nil
-                    })
+                // Racket Animation Overlay
+                if showRacketAnimation {
+                    RacketAnimationView()
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { // Adjust duration as needed
+                                withAnimation {
+                                    showRacketAnimation = false
+                                }
+                            }
+                        }
+                } else {
+                    // Main Content (only visible after animation)
+                    VStack(spacing: 8) {
+                        // Opponent's Score
+                        ScoreView(name: opponentName, score: opponentScore, isWinner: winner == opponentName, isAnimating: isAnimating, onTap: {
+                            opponentScore += 1
+                            checkWinner()
+                        }, onLongPress: {
+                            myScore = 0
+                            opponentScore = 0
+                            winner = nil
+                        })
 
-                    // My Score
-                    ScoreView(name: myName, score: myScore, isWinner: winner == myName, isAnimating: isAnimating, onTap: {
-                        myScore += 1
-                        checkWinner()
-                    }, onLongPress: {
-                        myScore = 0
-                        opponentScore = 0
-                        winner = nil
-                    })
-                }
-                .padding(.horizontal, 16)
+                        // My Score
+                        ScoreView(name: myName, score: myScore, isWinner: winner == myName, isAnimating: isAnimating, onTap: {
+                            myScore += 1
+                            checkWinner()
+                        }, onLongPress: {
+                            myScore = 0
+                            opponentScore = 0
+                            winner = nil
+                        })
+                    }
+                    .padding(.horizontal, 16)
 
-                // Match Point Indicator
-                if isMatchPoint {
-                    Text("Match Point!")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.red.opacity(0.8))
-                        .cornerRadius(8)
-                        .transition(.scale.combined(with: .opacity))
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isMatchPoint)
-                }
+                    // Match Point Indicator
+                    if isMatchPoint {
+                        Text("Match Point!")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.red.opacity(0.8))
+                            .cornerRadius(8)
+                            .transition(.scale.combined(with: .opacity))
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isMatchPoint)
+                    }
 
-                // Winner Overlay
-                if isAnimating {
-                    Text("\(winner == myName ? "I Win!" : "\(winner ?? "") Wins!")")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.7))
-                        .cornerRadius(12)
-                        .transition(.scale.combined(with: .opacity))
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
+                    // Winner Overlay
+                    if isAnimating {
+                        Text("\(winner == myName ? "I Win!" : "\(winner ?? "") Wins!")")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.black.opacity(0.7))
+                            .cornerRadius(12)
+                            .transition(.scale.combined(with: .opacity))
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAnimating)
+                    }
                 }
             }
             .navigationBarBackButtonHidden(false)
@@ -207,6 +220,35 @@ struct GameView: View {
                         currentView = .menu
                     }
                 }
+            }
+        }
+    }
+}
+
+struct RacketAnimationView: View {
+    @State private var racket1Rotation: Double = -45
+    @State private var racket2Rotation: Double = 45
+    @State private var opacity: Double = 0
+
+    var body: some View {
+        ZStack {
+            Image("racketImage") // Replace with your racket image
+                .resizable()
+                .frame(width: 50, height: 100)
+                .rotationEffect(.degrees(racket1Rotation))
+                .opacity(opacity)
+
+            Image("racketImage") // Replace with your racket image
+                .resizable()
+                .frame(width: 50, height: 100)
+                .rotationEffect(.degrees(racket2Rotation))
+                .opacity(opacity)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.0)) {
+                racket1Rotation = 45
+                racket2Rotation = -45
+                opacity = 1
             }
         }
     }
