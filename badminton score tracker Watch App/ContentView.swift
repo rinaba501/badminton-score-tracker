@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WatchKit
+import AVFoundation // Import the AVFoundation framework
 
 struct Game: Identifiable, Codable {
     let id = UUID()
@@ -81,6 +82,11 @@ struct GameView: View {
     @AppStorage("gameHistory") private var gameHistoryData: Data = Data()
     @State private var showRacketAnimation = true
 
+    // Sound effect variables
+    @State private var scoreSound: AVAudioPlayer?
+    @State private var winSound: AVAudioPlayer?
+
+
     enum GameMode: String, Codable {
         case singles = "Singles"
         case doubles = "Doubles"
@@ -113,6 +119,7 @@ struct GameView: View {
             let winnerName = myScore > opponentScore ? myName : opponentName
             winner = winnerName
             isAnimating = true
+            playSound(sound: "win", type: "mp3") // Play win sound
 
             var history = gameHistory
             history.append(Game(myScore: myScore, opponentScore: opponentScore, winner: winnerName, date: Date()))
@@ -130,6 +137,28 @@ struct GameView: View {
             }
         }
     }
+
+    // Function to play sound
+    func playSound(sound: String, type: String) {
+        if let path = Bundle.main.path(forResource: sound, ofType: type) {
+            do {
+                let url = URL(fileURLWithPath: path)
+                switch sound {
+                case "score":
+                    scoreSound = try AVAudioPlayer(contentsOf: url)
+                    scoreSound?.play()
+                case "win":
+                    winSound = try AVAudioPlayer(contentsOf: url)
+                    winSound?.play()
+                default:
+                    print("Sound not found")
+                }
+            } catch {
+                print("Could not find and play the sound file!")
+            }
+        }
+    }
+
 
     var body: some View {
         GeometryReader { geometry in
@@ -167,7 +196,9 @@ struct GameView: View {
                     VStack(spacing: 8) {
                         // Opponent's Score
                         ScoreView(name: opponentName, score: opponentScore, isWinner: winner == opponentName, isAnimating: isAnimating, onTap: {
+                            guard winner == nil else { return }
                             opponentScore += 1
+                            playSound(sound: "score", type: "mp3") // Play score sound
                             checkWinner()
                         }, onLongPress: {
                             myScore = 0
@@ -177,7 +208,9 @@ struct GameView: View {
 
                         // My Score
                         ScoreView(name: myName, score: myScore, isWinner: winner == myName, isAnimating: isAnimating, onTap: {
+                            guard winner == nil else { return }
                             myScore += 1
+                            playSound(sound: "score", type: "mp3") // Play score sound
                             checkWinner()
                         }, onLongPress: {
                             myScore = 0
@@ -220,6 +253,11 @@ struct GameView: View {
                         currentView = .menu
                     }
                 }
+            }
+            .onAppear {
+                // Load sounds when the view appears
+                // Ensure the sound files are added to your project's bundle
+                _ = try? AVAudioSession.sharedInstance().setCategory(.ambient)
             }
         }
     }

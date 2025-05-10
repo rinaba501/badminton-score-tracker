@@ -1,0 +1,79 @@
+<context>
+# Overview  
+This app provides a simple, intuitive way for users to keep track of badminton scores directly from their Apple Watch. It is designed for players and casual users who want to easily record and monitor scores during matches without needing paper or a phone. The app focuses on quick interactions, clear display, and minimal distractions, making it ideal for use during active play.
+
+# Core Features  
+- **Score Tracking**: Users can increment scores for each side with a tap, supporting both singles and doubles play.
+- **Game/Match Logic**: Automatic handling of game/match rules (e.g., win by 2, 21-point games, up to 30 points, match point indicator, winner detection, and auto-reset after win).
+- **Reset Match**: Long-pressing a score resets the current match to start over.
+- **Game History**: Completed games are saved with scores, winner, and date, and viewable in a history screen.
+- **Settings**: Users can set game mode (singles/doubles) and player names.
+- **Simple UI**: Large, easy-to-tap buttons and clear score display optimized for Apple Watch screen.
+- **Sound Feedback**: Plays sound on score increment and win.
+- **Racket Animation**: Animated visual at the start of a game.
+
+# User Experience  
+- **User Personas**: Badminton players (casual and competitive), coaches, and recreational users.
+- **Key User Flows**:
+  - Start a new match (singles or doubles)
+  - Increment score for either side
+  - Reset match (long press)
+  - End match and view winner
+  - View game history
+  - Change player names and game mode in settings
+- **UI/UX Considerations**:
+  - Minimal taps required for core actions
+  - Always-visible, large score numbers
+  - Color and sound cues for feedback
+  - Designed for quick glances and one-handed use
+</context>
+<PRD>
+# Technical Architecture  
+- **System Components**:
+  - watchOS app (primary)
+- **Data Models**:
+  - Match: type (singles/doubles), players, scores, winner, date, history (for completed games)
+- **APIs and Integrations**:
+  - Local storage on watch for match state and history
+- **Infrastructure Requirements**:
+  - No backend required; all logic and storage on device
+
+# Development Roadmap  
+- **Current Implementation**:
+  - Start new match (singles/doubles)
+  - Increment score for each side
+  - Game/match logic (win conditions, match point, auto-reset)
+  - Reset match (long press)
+  - Game history
+  - Settings for player names and game mode
+  - Simple, clear UI
+  - Sound feedback
+  - Racket animation
+- **Future Enhancements** (not yet implemented):
+  - Undo/redo last score change
+  - Haptic feedback
+  - Switch sides feature
+  - iPhone companion app for stats/history
+  - iCloud sync
+  - Customizable match settings (points, win conditions)
+  - Voice input for score changes
+  - Sharing match results
+
+# Logical Dependency Chain
+- Foundation: Data model for match, score, and history
+- Core UI: Score display and increment controls
+- Game logic: Win conditions, match point, winner detection, match reset
+- Game history: Save and display completed games
+- Settings: Player names and game mode
+- Sound feedback and animation: Integrate with score and win events
+- (Future) Undo/redo, haptic feedback, switch sides, iPhone sync, advanced settings, sharing
+
+# Risks and Mitigations  
+- **Technical challenges**: Ensuring UI is responsive and easy to use on small screen; mitigate by prototyping and user testing.
+- **Scope creep**: Focus on core score tracking and game logic; defer advanced features to future versions.
+- **Resource constraints**: Prioritize features for MVP; use watchOS best practices for performance and battery.
+
+# Appendix  
+- Badminton official scoring rules (reference: BWF)
+- Apple Human Interface Guidelines for watchOS
+</PRD> 
