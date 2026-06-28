@@ -28,6 +28,7 @@
 "speech.match_point" = "매치 포인트. %d 대 %d";
 "speech.game_point" = "게임 포인트. %d 대 %d";
 "speech.score" = "%d 대 %d";
+"speech.tied" = "%d 동점";
 
 // Settings
 "settings.title" = "설정";

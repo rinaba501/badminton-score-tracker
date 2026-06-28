@@ -25,9 +25,10 @@
 // Speech
 "speech.wins_match" = "%@ ने मैच जीता!";
 "speech.wins_game" = "%@ ने गेम जीता!";
-"speech.match_point" = "मैच पॉइंट। %d - %d";
-"speech.game_point" = "गेम पॉइंट। %d - %d";
-"speech.score" = "%d - %d";
+"speech.match_point" = "मैच पॉइंट। %d सर्व %d";
+"speech.game_point" = "गेम पॉइंट। %d सर्व %d";
+"speech.score" = "%d सर्व %d";
+"speech.tied" = "%d बराबर";
 
 // Settings
 "settings.title" = "सेटिंग्स";

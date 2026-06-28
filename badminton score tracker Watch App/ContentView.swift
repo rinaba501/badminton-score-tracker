@@ -218,16 +218,30 @@ struct GameView: View {
     }
 
     private func announceCurrentScore() {
+        let serverScore = match.serverIsMe ? match.myScore : match.opponentScore
+        let receiverScore = match.serverIsMe ? match.opponentScore : match.myScore
+        let tied = serverScore == receiverScore
+
         if let winner = match.matchWinner {
             speak(String(format: NSLocalizedString("speech.wins_match", comment: ""), name(for: winner)))
         } else if let winner = match.gameWinner {
             speak(String(format: NSLocalizedString("speech.wins_game", comment: ""), name(for: winner)))
         } else if match.isMatchPoint {
-            speak(String(format: NSLocalizedString("speech.match_point", comment: ""), match.myScore, match.opponentScore))
+            if tied {
+                speak(String(format: NSLocalizedString("speech.tied", comment: ""), serverScore))
+            } else {
+                speak(String(format: NSLocalizedString("speech.match_point", comment: ""), serverScore, receiverScore))
+            }
         } else if match.isGamePoint {
-            speak(String(format: NSLocalizedString("speech.game_point", comment: ""), match.myScore, match.opponentScore))
+            if tied {
+                speak(String(format: NSLocalizedString("speech.tied", comment: ""), serverScore))
+            } else {
+                speak(String(format: NSLocalizedString("speech.game_point", comment: ""), serverScore, receiverScore))
+            }
+        } else if tied {
+            speak(String(format: NSLocalizedString("speech.tied", comment: ""), serverScore))
         } else {
-            speak(String(format: NSLocalizedString("speech.score", comment: ""), match.myScore, match.opponentScore))
+            speak(String(format: NSLocalizedString("speech.score", comment: ""), serverScore, receiverScore))
         }
     }
 

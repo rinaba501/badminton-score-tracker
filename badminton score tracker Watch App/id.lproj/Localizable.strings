@@ -25,9 +25,10 @@
 // Speech
 "speech.wins_match" = "%@ menang pertandingan!";
 "speech.wins_game" = "%@ menang game!";
-"speech.match_point" = "Match point. %d - %d";
-"speech.game_point" = "Game point. %d - %d";
-"speech.score" = "%d - %d";
+"speech.match_point" = "Match point. %d lawan %d";
+"speech.game_point" = "Game point. %d lawan %d";
+"speech.score" = "%d lawan %d";
+"speech.tied" = "%d sama";
 
 // Settings
 "settings.title" = "Pengaturan";

@@ -28,6 +28,7 @@
 "speech.match_point" = "赛点。%d比%d";
 "speech.game_point" = "局点。%d比%d";
 "speech.score" = "%d比%d";
+"speech.tied" = "%d平";
 
 // Settings
 "settings.title" = "设置";
