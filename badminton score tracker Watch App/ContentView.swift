@@ -9,6 +9,20 @@ import SwiftUI
 import WatchKit
 import AVFoundation
 
+final class ScoreAnnouncer: ObservableObject {
+    private let synthesizer = AVSpeechSynthesizer()
+
+    func speak(_ text: String) {
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+        try? AVAudioSession.sharedInstance().setActive(true)
+        synthesizer.stopSpeaking(at: .immediate)
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.rate = 0.5
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+    }
+}
+
 struct ContentView: View {
     @State private var currentView: AppView = .menu
 
@@ -153,7 +167,7 @@ struct GameView: View {
     @State private var savedCurrentMatch = false
     @State private var crownValue: Double = 0
     @State private var lastCrownScore: Double = 0
-    private let synthesizer = AVSpeechSynthesizer()
+    @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
 
     private func name(for side: Side) -> String {
@@ -197,11 +211,7 @@ struct GameView: View {
 
     private func speak(_ text: String) {
         guard announceScore else { return }
-        synthesizer.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.rate = 0.5
-        utterance.volume = 1.0
-        synthesizer.speak(utterance)
+        announcer.speak(text)
     }
 
     private func announceCurrentScore() {
