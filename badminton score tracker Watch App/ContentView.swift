@@ -182,9 +182,12 @@ struct PreMatchView: View {
         (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
     }
 
+    private static let guestNames: Set<String> = ["Guest (Near)", "Guest (Far)"]
+
     private func saveToRoster(name: String) {
+        guard !name.isEmpty, !Self.guestNames.contains(name) else { return }
         var r = roster
-        if !name.isEmpty && !r.contains(where: { $0.name == name }) {
+        if !r.contains(where: { $0.name == name }) {
             let colorIndex = r.count % Player.avatarColors.count
             r.insert(Player(name: name, colorIndex: colorIndex), at: 0)
             if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
@@ -373,8 +376,10 @@ struct GameView: View {
         side == .me ? effectiveMyName : effectiveOpponentName
     }
 
+    private static let guestNames: Set<String> = ["Guest (Near)", "Guest (Far)"]
+
     private func saveToRoster(_ name: String) {
-        guard !name.isEmpty else { return }
+        guard !name.isEmpty, !Self.guestNames.contains(name) else { return }
         var roster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
         if !roster.contains(where: { $0.name == name }) {
             let colorIndex = roster.count % Player.avatarColors.count
