@@ -25,10 +25,10 @@
 // Speech
 "speech.wins_match" = "%@が試合に勝利！";
 "speech.wins_game" = "%@がゲームを取得！";
-"speech.match_point" = "マッチポイント。%d、%d";
-"speech.game_point" = "ゲームポイント。%d、%d";
-"speech.score" = "%d、%d";
-"speech.tied" = "%d オール";
+"speech.match_point" = "マッチポイント。%@ %@";
+"speech.game_point" = "ゲームポイント。%@ %@";
+"speech.score" = "%@ %@";
+"speech.tied" = "%@ オール";
 
 // Settings
 "settings.title" = "設定";

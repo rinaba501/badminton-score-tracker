@@ -9,6 +9,21 @@ import SwiftUI
 import WatchKit
 import AVFoundation
 
+private let katakanaNumbers = [
+    "ゼロ", "ワン", "ツー", "スリー", "フォー",
+    "ファイブ", "シックス", "セブン", "エイト", "ナイン",
+    "テン", "イレブン", "トゥエルブ", "サーティーン", "フォーティーン",
+    "フィフティーン", "シックスティーン", "セブンティーン", "エイティーン", "ナインティーン",
+    "トゥエンティ", "トゥエンティワン", "トゥエンティツー", "トゥエンティスリー", "トゥエンティフォー",
+    "トゥエンティファイブ", "トゥエンティシックス", "トゥエンティセブン", "トゥエンティエイト", "トゥエンティナイン",
+    "サーティ"
+]
+
+private func katakana(_ n: Int) -> String {
+    guard n >= 0 && n < katakanaNumbers.count else { return "\(n)" }
+    return katakanaNumbers[n]
+}
+
 final class ScoreAnnouncer: ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
 
@@ -221,27 +236,34 @@ struct GameView: View {
         let serverScore = match.serverIsMe ? match.myScore : match.opponentScore
         let receiverScore = match.serverIsMe ? match.opponentScore : match.myScore
         let tied = serverScore == receiverScore
+        let isJapanese = Locale.current.language.languageCode?.identifier == "ja"
+
+        func fmt(_ key: String, _ a: Int, _ b: Int) -> String {
+            if isJapanese {
+                return String(format: NSLocalizedString(key, comment: ""), katakana(a), katakana(b))
+            }
+            return String(format: NSLocalizedString(key, comment: ""), a, b)
+        }
+
+        func fmtTied(_ key: String, _ n: Int) -> String {
+            if isJapanese {
+                return String(format: NSLocalizedString(key, comment: ""), katakana(n))
+            }
+            return String(format: NSLocalizedString(key, comment: ""), n)
+        }
 
         if let winner = match.matchWinner {
             speak(String(format: NSLocalizedString("speech.wins_match", comment: ""), name(for: winner)))
         } else if let winner = match.gameWinner {
             speak(String(format: NSLocalizedString("speech.wins_game", comment: ""), name(for: winner)))
         } else if match.isMatchPoint {
-            if tied {
-                speak(String(format: NSLocalizedString("speech.tied", comment: ""), serverScore))
-            } else {
-                speak(String(format: NSLocalizedString("speech.match_point", comment: ""), serverScore, receiverScore))
-            }
+            speak(tied ? fmtTied("speech.tied", serverScore) : fmt("speech.match_point", serverScore, receiverScore))
         } else if match.isGamePoint {
-            if tied {
-                speak(String(format: NSLocalizedString("speech.tied", comment: ""), serverScore))
-            } else {
-                speak(String(format: NSLocalizedString("speech.game_point", comment: ""), serverScore, receiverScore))
-            }
+            speak(tied ? fmtTied("speech.tied", serverScore) : fmt("speech.game_point", serverScore, receiverScore))
         } else if tied {
-            speak(String(format: NSLocalizedString("speech.tied", comment: ""), serverScore))
+            speak(fmtTied("speech.tied", serverScore))
         } else {
-            speak(String(format: NSLocalizedString("speech.score", comment: ""), serverScore, receiverScore))
+            speak(fmt("speech.score", serverScore, receiverScore))
         }
     }
 
