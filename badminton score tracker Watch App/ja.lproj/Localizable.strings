@@ -1,0 +1,72 @@
+// Menu
+"menu.title" = "バドミントン スコア";
+"menu.new_match" = "新しい試合";
+"menu.history" = "試合履歴";
+"menu.settings" = "設定";
+
+// Pre-Match
+"prematch.title" = "新しい試合";
+"prematch.who_serves" = "最初にサーブするのは？";
+"prematch.back" = "戻る";
+
+// Game
+"game.menu" = "メニュー";
+"game.games" = "ゲーム";
+"game.right_court" = "右コート";
+"game.left_court" = "左コート";
+"game.game_point" = "ゲームポイント！";
+"game.match_point" = "マッチポイント！";
+"game.next_game" = "次のゲーム";
+"game.new_match" = "新しい試合";
+"game.wins_game" = "%@がゲームを取得！";
+"game.wins_match" = "%@が試合に勝利！";
+"game.games_score" = "ゲーム %@";
+
+// Speech
+"speech.wins_match" = "%@が試合に勝利！";
+"speech.wins_game" = "%@がゲームを取得！";
+"speech.match_point" = "マッチポイント。%d対%d";
+"speech.game_point" = "ゲームポイント。%d対%d";
+"speech.score" = "%d対%d";
+
+// Settings
+"settings.title" = "設定";
+"settings.back" = "戻る";
+"settings.game_mode" = "ゲームモード";
+"settings.mode" = "モード";
+"settings.singles" = "シングルス";
+"settings.doubles" = "ダブルス";
+"settings.player_names" = "プレイヤー名";
+"settings.your_name" = "あなたの名前";
+"settings.opponent_name" = "相手の名前";
+"settings.crown" = "デジタルクラウン";
+"settings.announce_score" = "スコアを読み上げる";
+"settings.court_theme" = "コートテーマ";
+"settings.theme" = "テーマ";
+"settings.match_format" = "試合形式";
+"settings.points_to_win" = "獲得ポイント";
+"settings.pts_11" = "11点";
+"settings.pts_15" = "15点";
+"settings.pts_21" = "21点";
+"settings.games_in_match" = "試合のゲーム数";
+"settings.games_1" = "1ゲーム";
+"settings.games_3" = "3ゲーム制";
+"settings.games_5" = "5ゲーム制";
+
+// History
+"history.title" = "試合履歴";
+"history.back" = "戻る";
+"history.empty" = "試合履歴がありません";
+"history.won" = "%@が勝利";
+"history.games" = "ゲーム %d - %d";
+"history.clear_title" = "履歴を削除";
+"history.clear_confirm" = "すべての試合履歴を削除しますか？この操作は元に戻せません。";
+"history.cancel" = "キャンセル";
+"history.clear" = "削除";
+
+// Court Themes
+"theme.green" = "グリーン";
+"theme.blue" = "ブルー";
+"theme.red" = "レッド";
+"theme.purple" = "パープル";
+"theme.black" = "ブラック";

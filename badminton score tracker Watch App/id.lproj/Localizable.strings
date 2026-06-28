@@ -1,0 +1,72 @@
+// Menu
+"menu.title" = "Skor Bulu Tangkis";
+"menu.new_match" = "Pertandingan Baru";
+"menu.history" = "Riwayat Pertandingan";
+"menu.settings" = "Pengaturan";
+
+// Pre-Match
+"prematch.title" = "Pertandingan Baru";
+"prematch.who_serves" = "Siapa yang servis pertama?";
+"prematch.back" = "Kembali";
+
+// Game
+"game.menu" = "Menu";
+"game.games" = "Game";
+"game.right_court" = "Kotak kanan";
+"game.left_court" = "Kotak kiri";
+"game.game_point" = "Game Point!";
+"game.match_point" = "Match Point!";
+"game.next_game" = "Game Berikutnya";
+"game.new_match" = "Pertandingan Baru";
+"game.wins_game" = "%@ menang game!";
+"game.wins_match" = "%@ menang pertandingan!";
+"game.games_score" = "Game %@";
+
+// Speech
+"speech.wins_match" = "%@ menang pertandingan!";
+"speech.wins_game" = "%@ menang game!";
+"speech.match_point" = "Match point. %d - %d";
+"speech.game_point" = "Game point. %d - %d";
+"speech.score" = "%d - %d";
+
+// Settings
+"settings.title" = "Pengaturan";
+"settings.back" = "Kembali";
+"settings.game_mode" = "Mode Permainan";
+"settings.mode" = "Mode";
+"settings.singles" = "Tunggal";
+"settings.doubles" = "Ganda";
+"settings.player_names" = "Nama Pemain";
+"settings.your_name" = "Nama Anda";
+"settings.opponent_name" = "Nama Lawan";
+"settings.crown" = "Digital Crown";
+"settings.announce_score" = "Umumkan skor";
+"settings.court_theme" = "Tema Lapangan";
+"settings.theme" = "Tema";
+"settings.match_format" = "Format Pertandingan";
+"settings.points_to_win" = "Poin untuk menang";
+"settings.pts_11" = "11 poin";
+"settings.pts_15" = "15 poin";
+"settings.pts_21" = "21 poin";
+"settings.games_in_match" = "Game dalam pertandingan";
+"settings.games_1" = "1 game";
+"settings.games_3" = "Best of 3";
+"settings.games_5" = "Best of 5";
+
+// History
+"history.title" = "Riwayat Pertandingan";
+"history.back" = "Kembali";
+"history.empty" = "Belum ada pertandingan";
+"history.won" = "%@ menang";
+"history.games" = "Game %d - %d";
+"history.clear_title" = "Hapus Riwayat";
+"history.clear_confirm" = "Yakin ingin menghapus semua riwayat pertandingan? Tindakan ini tidak dapat dibatalkan.";
+"history.cancel" = "Batal";
+"history.clear" = "Hapus";
+
+// Court Themes
+"theme.green" = "Hijau";
+"theme.blue" = "Biru";
+"theme.red" = "Merah";
+"theme.purple" = "Ungu";
+"theme.black" = "Hitam";
