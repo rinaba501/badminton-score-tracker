@@ -117,46 +117,137 @@ struct MenuView: View {
 struct PreMatchView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
-    @AppStorage("opponentName") private var opponentName = "Opponent"
     @AppStorage("iServeFirst") private var iServeFirst = true
+    @AppStorage("matchMyName") private var matchMyName = ""
+    @AppStorage("matchOpponentName") private var matchOpponentName = ""
+    @AppStorage("playerRoster") private var rosterData: Data = Data()
+
+    @State private var step: Step = .pickMyPlayer
+    @State private var showAddPlayer = false
+    @State private var newPlayerName = ""
+    @State private var addingForSide: Side = .me
+
+    enum Step { case pickMyPlayer, pickOpponent, serveFirst }
+    enum Side { case me, opponent }
+
+    private var roster: [String] {
+        (try? JSONDecoder().decode([String].self, from: rosterData)) ?? []
+    }
+
+    private func saveToRoster(_ name: String) {
+        var r = roster
+        if !name.isEmpty && !r.contains(name) {
+            r.insert(name, at: 0)
+            if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+        }
+    }
+
+    private func playerPicker(title: String, defaultLabel: String, guestLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+        let filteredRoster = roster.filter { $0 != excluding }
+        return List {
+            Section(header: Text(title)) {
+                if !defaultLabel.isEmpty {
+                    Button(defaultLabel) { onSelect(defaultLabel) }
+                }
+                Button(guestLabel) { onSelect(guestLabel) }
+            }
+            if !filteredRoster.isEmpty {
+                Section(header: Text("Saved")) {
+                    ForEach(filteredRoster, id: \.self) { name in
+                        Button(name) { onSelect(name) }
+                    }
+                }
+            }
+            Section {
+                Button(action: { showAddPlayer = true }) {
+                    Label("Add New", systemImage: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showAddPlayer) {
+            VStack(spacing: 12) {
+                Text("New Player")
+                    .font(.headline)
+                TextField("Name", text: $newPlayerName)
+                Button("Add") {
+                    let name = newPlayerName.trimmingCharacters(in: .whitespaces)
+                    if !name.isEmpty {
+                        saveToRoster(name)
+                        onSelect(name)
+                        showAddPlayer = false
+                        newPlayerName = ""
+                    }
+                }
+                .disabled(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding()
+        }
+    }
 
     var body: some View {
-        VStack(spacing: 12) {
-            Text("prematch.who_serves")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-
-            Button(action: {
-                iServeFirst = true
-                currentView = .game
-            }) {
-                Text(myName)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+        switch step {
+        case .pickMyPlayer:
+            playerPicker(title: "Near Side", defaultLabel: myName, guestLabel: "Guest (Near)") { name in
+                matchMyName = name
+                step = .pickOpponent
             }
-            .buttonStyle(.plain)
-
-            Button(action: {
-                iServeFirst = false
-                currentView = .game
-            }) {
-                Text(opponentName)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(Color.gray.opacity(0.4))
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+            .navigationTitle("prematch.title")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("prematch.back") { currentView = .menu }
+                }
             }
-            .buttonStyle(.plain)
-        }
-        .padding()
-        .navigationTitle("prematch.title")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("prematch.back") { currentView = .menu }
+
+        case .pickOpponent:
+            playerPicker(title: "Far Side", defaultLabel: "", guestLabel: "Guest (Far)", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
+                matchOpponentName = name
+                step = .serveFirst
+            }
+            .navigationTitle("prematch.title")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("prematch.back") { step = .pickMyPlayer }
+                }
+            }
+
+        case .serveFirst:
+            VStack(spacing: 12) {
+                Text("prematch.who_serves")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+
+                Button(action: {
+                    iServeFirst = true
+                    currentView = .game
+                }) {
+                    Text(matchMyName.isEmpty ? myName : matchMyName)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    iServeFirst = false
+                    currentView = .game
+                }) {
+                    Text(matchOpponentName.isEmpty ? "Opponent" : matchOpponentName)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color.gray.opacity(0.4))
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding()
+            .navigationTitle("prematch.title")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("prematch.back") { step = .pickOpponent }
+                }
             }
         }
     }
@@ -187,7 +278,9 @@ enum CourtTheme: String, Codable, CaseIterable {
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
-    @AppStorage("opponentName") private var opponentName = "Opponent"
+    @AppStorage("matchMyName") private var matchMyName = ""
+    @AppStorage("matchOpponentName") private var matchOpponentName = ""
+    @AppStorage("playerRoster") private var rosterData: Data = Data()
     @AppStorage("iServeFirst") private var iServeFirst = true
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
@@ -205,8 +298,20 @@ struct GameView: View {
     @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
 
+    private var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
+    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? "Guest" : matchOpponentName }
+
     private func name(for side: Side) -> String {
-        side == .me ? myName : opponentName
+        side == .me ? effectiveMyName : effectiveOpponentName
+    }
+
+    private func saveToRoster(_ name: String) {
+        guard !name.isEmpty else { return }
+        var roster = (try? JSONDecoder().decode([String].self, from: rosterData)) ?? []
+        if !roster.contains(name) {
+            roster.insert(name, at: 0)
+            if let encoded = try? JSONEncoder().encode(roster) { rosterData = encoded }
+        }
     }
 
     private func tap(_ side: Side) {
@@ -323,14 +428,16 @@ struct GameView: View {
     private func saveMatch() {
         guard !savedCurrentMatch, let winner = match.matchWinner else { return }
         savedCurrentMatch = true
+        saveToRoster(effectiveOpponentName)
+        saveToRoster(effectiveMyName)
         var history = decodeHistory()
         history.append(MatchRecord(
             games: match.completedGames,
             myGamesWon: match.myGamesWon,
             opponentGamesWon: match.opponentGamesWon,
             winner: name(for: winner),
-            myName: myName,
-            opponentName: opponentName,
+            myName: effectiveMyName,
+            opponentName: effectiveOpponentName,
             date: Date(),
             duration: Date().timeIntervalSince(matchStartDate)
         ))
@@ -350,14 +457,14 @@ struct GameView: View {
 
             VStack(spacing: 6) {
                 GamesWonHeader(
-                    myName: myName, opponentName: opponentName,
+                    myName: effectiveMyName, opponentName: effectiveOpponentName,
                     myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
                     canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil,
                     onUndo: undo
                 )
 
                 ScoreView(
-                    name: opponentName,
+                    name: effectiveOpponentName,
                     score: match.opponentScore,
                     isServing: match.servingSide == .opponent,
                     serveRight: match.serveFromRightCourt,
@@ -366,7 +473,7 @@ struct GameView: View {
                 )
 
                 ScoreView(
-                    name: myName,
+                    name: effectiveMyName,
                     score: match.myScore,
                     isServing: match.servingSide == .me,
                     serveRight: match.serveFromRightCourt,
