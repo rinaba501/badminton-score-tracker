@@ -187,7 +187,7 @@ struct PreMatchView: View {
     var body: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: "My Player", defaultLabel: myName) { name in
+            playerPicker(title: "Bottom Court", defaultLabel: myName) { name in
                 matchMyName = name
                 step = .pickOpponent
             }
@@ -199,7 +199,7 @@ struct PreMatchView: View {
             }
 
         case .pickOpponent:
-            playerPicker(title: "Opponent", defaultLabel: "", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
+            playerPicker(title: "Top Court", defaultLabel: "", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
                 matchOpponentName = name
                 step = .serveFirst
             }
