@@ -1,0 +1,73 @@
+// Menu
+"menu.title" = "बैडमिंटन स्कोर";
+"menu.new_match" = "नया मैच";
+"menu.history" = "मैच इतिहास";
+"menu.settings" = "सेटिंग्स";
+
+// Pre-Match
+"prematch.title" = "नया मैच";
+"prematch.who_serves" = "पहले सर्व कौन करेगा?";
+"prematch.back" = "वापस";
+
+// Game
+"game.menu" = "मेनू";
+"game.games" = "गेम्स";
+"game.right_court" = "दायाँ कोर्ट";
+"game.left_court" = "बायाँ कोर्ट";
+"game.game_point" = "गेम पॉइंट!";
+"game.match_point" = "मैच पॉइंट!";
+"game.next_game" = "अगला गेम";
+"game.new_match" = "नया मैच";
+"game.wins_game" = "%@ ने गेम जीता!";
+"game.wins_match" = "%@ ने मैच जीता!";
+"game.games_score" = "गेम्स %@";
+
+// Speech
+"speech.wins_match" = "%@ ने मैच जीता!";
+"speech.wins_game" = "%@ ने गेम जीता!";
+"speech.match_point" = "Match point. %@ - %@";
+"speech.game_point" = "Game point. %@ - %@";
+"speech.score" = "%@ - %@";
+"speech.tied" = "%@ all";
+
+// Settings
+"settings.title" = "सेटिंग्स";
+"settings.back" = "वापस";
+"settings.game_mode" = "गेम मोड";
+"settings.mode" = "मोड";
+"settings.singles" = "सिंगल्स";
+"settings.doubles" = "डबल्स";
+"settings.player_names" = "खिलाड़ी के नाम";
+"settings.your_name" = "आपका नाम";
+"settings.opponent_name" = "प्रतिद्वंद्वी का नाम";
+"settings.crown" = "डिजिटल क्राउन";
+"settings.announce_score" = "स्कोर बोलें";
+"settings.court_theme" = "कोर्ट थीम";
+"settings.theme" = "थीम";
+"settings.match_format" = "मैच प्रारूप";
+"settings.points_to_win" = "जीतने के अंक";
+"settings.pts_11" = "11 अंक";
+"settings.pts_15" = "15 अंक";
+"settings.pts_21" = "21 अंक";
+"settings.games_in_match" = "मैच में गेम्स";
+"settings.games_1" = "1 गेम";
+"settings.games_3" = "बेस्ट ऑफ 3";
+"settings.games_5" = "बेस्ट ऑफ 5";
+
+// History
+"history.title" = "मैच इतिहास";
+"history.back" = "वापस";
+"history.empty" = "अभी तक कोई मैच नहीं खेला";
+"history.won" = "%@ जीते";
+"history.games" = "गेम्स %d - %d";
+"history.clear_title" = "इतिहास साफ़ करें";
+"history.clear_confirm" = "क्या आप सभी मैच इतिहास साफ़ करना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।";
+"history.cancel" = "रद्द करें";
+"history.clear" = "साफ़ करें";
+
+// Court Themes
+"theme.green" = "हरा";
+"theme.blue" = "नीला";
+"theme.red" = "लाल";
+"theme.purple" = "बैंगनी";
+"theme.black" = "काला";

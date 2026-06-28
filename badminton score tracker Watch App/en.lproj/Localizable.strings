@@ -1,0 +1,73 @@
+// Menu
+"menu.title" = "Badminton Score";
+"menu.new_match" = "New Match";
+"menu.history" = "Match History";
+"menu.settings" = "Settings";
+
+// Pre-Match
+"prematch.title" = "New Match";
+"prematch.who_serves" = "Who serves first?";
+"prematch.back" = "Back";
+
+// Game
+"game.menu" = "Menu";
+"game.games" = "Games";
+"game.right_court" = "Right court";
+"game.left_court" = "Left court";
+"game.game_point" = "Game Point!";
+"game.match_point" = "Match Point!";
+"game.next_game" = "Next Game";
+"game.new_match" = "New Match";
+"game.wins_game" = "%@ wins the game!";
+"game.wins_match" = "%@ wins the match!";
+"game.games_score" = "Games %@";
+
+// Speech
+"speech.wins_match" = "%@ wins the match!";
+"speech.wins_game" = "%@ wins the game!";
+"speech.match_point" = "Match point. %@ - %@";
+"speech.game_point" = "Game point. %@ - %@";
+"speech.score" = "%@ - %@";
+"speech.tied" = "%@ all";
+
+// Settings
+"settings.title" = "Settings";
+"settings.back" = "Back";
+"settings.game_mode" = "Game Mode";
+"settings.mode" = "Mode";
+"settings.singles" = "Singles";
+"settings.doubles" = "Doubles";
+"settings.player_names" = "Player Names";
+"settings.your_name" = "Your Name";
+"settings.opponent_name" = "Opponent Name";
+"settings.crown" = "Digital Crown";
+"settings.announce_score" = "Announce score";
+"settings.court_theme" = "Court Theme";
+"settings.theme" = "Theme";
+"settings.match_format" = "Match Format";
+"settings.points_to_win" = "Points to win";
+"settings.pts_11" = "11 pts";
+"settings.pts_15" = "15 pts";
+"settings.pts_21" = "21 pts";
+"settings.games_in_match" = "Games in match";
+"settings.games_1" = "1 game";
+"settings.games_3" = "Best of 3";
+"settings.games_5" = "Best of 5";
+
+// History
+"history.title" = "Match History";
+"history.back" = "Back";
+"history.empty" = "No matches played yet";
+"history.won" = "%@ won";
+"history.games" = "Games %d - %d";
+"history.clear_title" = "Clear History";
+"history.clear_confirm" = "Are you sure you want to clear all match history? This cannot be undone.";
+"history.cancel" = "Cancel";
+"history.clear" = "Clear";
+
+// Court Themes
+"theme.green" = "Green";
+"theme.blue" = "Blue";
+"theme.red" = "Red";
+"theme.purple" = "Purple";
+"theme.black" = "Black";

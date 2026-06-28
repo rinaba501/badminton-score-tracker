@@ -1,0 +1,73 @@
+// Menu
+"menu.title" = "배드민턴 스코어";
+"menu.new_match" = "새 경기";
+"menu.history" = "경기 기록";
+"menu.settings" = "설정";
+
+// Pre-Match
+"prematch.title" = "새 경기";
+"prematch.who_serves" = "누가 먼저 서브합니까?";
+"prematch.back" = "뒤로";
+
+// Game
+"game.menu" = "메뉴";
+"game.games" = "게임";
+"game.right_court" = "오른쪽 코트";
+"game.left_court" = "왼쪽 코트";
+"game.game_point" = "게임 포인트!";
+"game.match_point" = "매치 포인트!";
+"game.next_game" = "다음 게임";
+"game.new_match" = "새 경기";
+"game.wins_game" = "%@ 게임 승리!";
+"game.wins_match" = "%@ 경기 승리!";
+"game.games_score" = "게임 %@";
+
+// Speech
+"speech.wins_match" = "%@ 경기 승리!";
+"speech.wins_game" = "%@ 게임 승리!";
+"speech.match_point" = "Match point. %@ - %@";
+"speech.game_point" = "Game point. %@ - %@";
+"speech.score" = "%@ - %@";
+"speech.tied" = "%@ all";
+
+// Settings
+"settings.title" = "설정";
+"settings.back" = "뒤로";
+"settings.game_mode" = "게임 모드";
+"settings.mode" = "모드";
+"settings.singles" = "단식";
+"settings.doubles" = "복식";
+"settings.player_names" = "선수 이름";
+"settings.your_name" = "내 이름";
+"settings.opponent_name" = "상대 이름";
+"settings.crown" = "디지털 크라운";
+"settings.announce_score" = "점수 읽기";
+"settings.court_theme" = "코트 테마";
+"settings.theme" = "테마";
+"settings.match_format" = "경기 형식";
+"settings.points_to_win" = "승리 점수";
+"settings.pts_11" = "11점";
+"settings.pts_15" = "15점";
+"settings.pts_21" = "21점";
+"settings.games_in_match" = "경기 게임 수";
+"settings.games_1" = "1게임";
+"settings.games_3" = "3게임제";
+"settings.games_5" = "5게임제";
+
+// History
+"history.title" = "경기 기록";
+"history.back" = "뒤로";
+"history.empty" = "경기 기록이 없습니다";
+"history.won" = "%@ 승리";
+"history.games" = "게임 %d - %d";
+"history.clear_title" = "기록 삭제";
+"history.clear_confirm" = "모든 경기 기록을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.";
+"history.cancel" = "취소";
+"history.clear" = "삭제";
+
+// Court Themes
+"theme.green" = "초록";
+"theme.blue" = "파랑";
+"theme.red" = "빨강";
+"theme.purple" = "보라";
+"theme.black" = "검정";

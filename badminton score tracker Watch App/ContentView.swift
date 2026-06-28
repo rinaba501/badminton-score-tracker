@@ -9,6 +9,25 @@ import SwiftUI
 import WatchKit
 import AVFoundation
 
+private let katakanaNumbers = [
+    "ラブ", "ワン", "ツー", "スリー", "フォー",
+    "ファイブ", "シックス", "セブン", "エイト", "ナイン",
+    "テン", "イレブン", "トゥエルブ", "サーティーン", "フォーティーン",
+    "フィフティーン", "シックスティーン", "セブンティーン", "エイティーン", "ナインティーン",
+    "トゥエンティ", "トゥエンティワン", "トゥエンティツー", "トゥエンティスリー", "トゥエンティフォー",
+    "トゥエンティファイブ", "トゥエンティシックス", "トゥエンティセブン", "トゥエンティエイト", "トゥエンティナイン",
+    "サーティ"
+]
+
+private func katakana(_ n: Int) -> String {
+    guard n >= 0 && n < katakanaNumbers.count else { return "\(n)" }
+    return katakanaNumbers[n]
+}
+
+private func loveScore(_ n: Int) -> String {
+    n == 0 ? "love" : "\(n)"
+}
+
 final class ScoreAnnouncer: ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
 
@@ -23,7 +42,8 @@ final class ScoreAnnouncer: ObservableObject {
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = 0.5
         utterance.volume = 1.0
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        let lang = Locale.current.language.languageCode?.identifier ?? "en"
+        utterance.voice = AVSpeechSynthesisVoice(language: lang) ?? AVSpeechSynthesisVoice(language: "en-US")
         synthesizer.speak(utterance)
     }
 }
@@ -61,25 +81,25 @@ struct MenuView: View {
             Button(action: { currentView = .preMatch }) {
                 HStack {
                     Image(systemName: "play.fill")
-                    Text("New Match")
+                    Text("menu.new_match")
                 }
             }
 
             Button(action: { currentView = .history }) {
                 HStack {
                     Image(systemName: "clock.arrow.circlepath")
-                    Text("Match History")
+                    Text("menu.history")
                 }
             }
 
             Button(action: { currentView = .settings }) {
                 HStack {
                     Image(systemName: "gear")
-                    Text("Settings")
+                    Text("menu.settings")
                 }
             }
         }
-        .navigationTitle("Badminton Score")
+        .navigationTitle("menu.title")
     }
 }
 
@@ -93,7 +113,7 @@ struct PreMatchView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Text("Who serves first?")
+            Text("prematch.who_serves")
                 .font(.headline)
                 .multilineTextAlignment(.center)
 
@@ -124,10 +144,10 @@ struct PreMatchView: View {
             .buttonStyle(.plain)
         }
         .padding()
-        .navigationTitle("New Match")
+        .navigationTitle("prematch.title")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Back") { currentView = .menu }
+                Button("prematch.back") { currentView = .menu }
             }
         }
     }
@@ -217,16 +237,47 @@ struct GameView: View {
     }
 
     private func announceCurrentScore() {
+        let serverScore = match.serverIsMe ? match.myScore : match.opponentScore
+        let receiverScore = match.serverIsMe ? match.opponentScore : match.myScore
+        let tied = serverScore == receiverScore
+        let langCode = Locale.current.language.languageCode?.identifier ?? "en"
+        let isJapanese = langCode == "ja"
+        let isZhHans = langCode == "zh"
+
+        func fmt(_ key: String, _ a: Int, _ b: Int) -> String {
+            if isJapanese {
+                return String(format: NSLocalizedString(key, comment: ""), katakana(a), katakana(b))
+            }
+            if isZhHans {
+                return String(format: NSLocalizedString(key, comment: ""), a, b)
+            }
+            return String(format: NSLocalizedString(key, comment: ""), loveScore(a), loveScore(b))
+        }
+
+        func fmtTied(_ key: String, _ n: Int) -> String {
+            if isJapanese {
+                return String(format: NSLocalizedString(key, comment: ""), katakana(n))
+            }
+            if isZhHans {
+                return String(format: NSLocalizedString(key, comment: ""), n)
+            }
+            // "love all" for 0-0, otherwise "8 all"
+            let word = n == 0 ? "love" : "\(n)"
+            return String(format: NSLocalizedString(key, comment: ""), word)
+        }
+
         if let winner = match.matchWinner {
-            speak("\(name(for: winner)) wins the match!")
+            speak(String(format: NSLocalizedString("speech.wins_match", comment: ""), name(for: winner)))
         } else if let winner = match.gameWinner {
-            speak("\(name(for: winner)) wins the game!")
+            speak(String(format: NSLocalizedString("speech.wins_game", comment: ""), name(for: winner)))
         } else if match.isMatchPoint {
-            speak("Match point. \(match.myScore) - \(match.opponentScore)")
+            speak(tied ? fmtTied("speech.tied", serverScore) : fmt("speech.match_point", serverScore, receiverScore))
         } else if match.isGamePoint {
-            speak("Game point. \(match.myScore) - \(match.opponentScore)")
+            speak(tied ? fmtTied("speech.tied", serverScore) : fmt("speech.game_point", serverScore, receiverScore))
+        } else if tied {
+            speak(fmtTied("speech.tied", serverScore))
         } else {
-            speak("\(match.myScore) - \(match.opponentScore)")
+            speak(fmt("speech.score", serverScore, receiverScore))
         }
     }
 
@@ -311,29 +362,29 @@ struct GameView: View {
             .padding(.horizontal, 10)
 
             if match.matchWinner == nil && match.isGamePoint {
-                bannerOverlay(match.isMatchPoint ? "Match Point!" : "Game Point!")
+                bannerOverlay(match.isMatchPoint ? NSLocalizedString("game.match_point", comment: "") : NSLocalizedString("game.game_point", comment: ""))
                     .allowsHitTesting(false)
             }
 
             if let winner = match.matchWinner {
                 MatchOverOverlay(
-                    title: "\(name(for: winner)) wins the match!",
-                    games: "\(match.myGamesWon) - \(match.opponentGamesWon)",
-                    actionTitle: "New Match",
+                    title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
+                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                    actionTitle: NSLocalizedString("game.new_match", comment: ""),
                     action: newMatch
                 )
             } else if match.gameWinner != nil {
                 MatchOverOverlay(
-                    title: "Game!",
-                    games: "\(match.myGamesWon) - \(match.opponentGamesWon)",
-                    actionTitle: "Next Game",
+                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), ""),
+                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                    actionTitle: NSLocalizedString("game.next_game", comment: ""),
                     action: startNextGame
                 )
             }
         }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Menu") { currentView = .menu }
+                Button("game.menu") { currentView = .menu }
             }
             ToolbarItem(placement: .primaryAction) {
                 Button(action: undo) {
@@ -384,7 +435,7 @@ struct GamesWonHeader: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Text("Games")
+            Text("game.games")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.white.opacity(0.8))
             Spacer()
@@ -420,7 +471,7 @@ struct ScoreView: View {
                         .lineLimit(1)
                 }
                 if isServing {
-                    Text(serveRight ? "Right court" : "Left court")
+                    Text(serveRight ? "game.right_court" : "game.left_court")
                         .font(.system(size: 9))
                         .foregroundColor(.yellow.opacity(0.9))
                 }
@@ -493,55 +544,54 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            Section(header: Text("Game Mode")) {
-                Picker("Mode", selection: $gameMode) {
-                    ForEach(GameMode.allCases, id: \.self) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
+            Section(header: Text("settings.game_mode")) {
+                Picker("settings.mode", selection: $gameMode) {
+                    Text("settings.singles").tag(GameMode.singles)
+                    Text("settings.doubles").tag(GameMode.doubles)
                 }
             }
 
-            Section(header: Text("Player Names")) {
-                TextField("Your Name", text: $myName)
-                TextField("Opponent Name", text: $opponentName)
+            Section(header: Text("settings.player_names")) {
+                TextField(NSLocalizedString("settings.your_name", comment: ""), text: $myName)
+                TextField(NSLocalizedString("settings.opponent_name", comment: ""), text: $opponentName)
             }
 
-            Section(header: Text("Digital Crown")) {
-                Toggle("Announce score", isOn: $announceScore)
+            Section(header: Text("settings.crown")) {
+                Toggle("settings.announce_score", isOn: $announceScore)
             }
 
-            Section(header: Text("Court Theme")) {
-                Picker("Theme", selection: $courtTheme) {
+            Section(header: Text("settings.court_theme")) {
+                Picker("settings.theme", selection: $courtTheme) {
                     ForEach(CourtTheme.allCases, id: \.self) { theme in
                         HStack {
                             Circle()
                                 .fill(theme.color)
                                 .frame(width: 12, height: 12)
-                            Text(theme.rawValue)
+                            Text(LocalizedStringKey("theme.\(theme.rawValue.lowercased())"))
                         }
                         .tag(theme)
                     }
                 }
             }
 
-            Section(header: Text("Match Format")) {
-                Picker("Points to win", selection: $pointsToWin) {
-                    Text("11 pts").tag(11)
-                    Text("15 pts").tag(15)
-                    Text("21 pts").tag(21)
+            Section(header: Text("settings.match_format")) {
+                Picker("settings.points_to_win", selection: $pointsToWin) {
+                    Text("settings.pts_11").tag(11)
+                    Text("settings.pts_15").tag(15)
+                    Text("settings.pts_21").tag(21)
                 }
-                Picker("Games in match", selection: $gamesInMatch) {
-                    Text("1 game").tag(1)
-                    Text("Best of 3").tag(3)
-                    Text("Best of 5").tag(5)
+                Picker("settings.games_in_match", selection: $gamesInMatch) {
+                    Text("settings.games_1").tag(1)
+                    Text("settings.games_3").tag(3)
+                    Text("settings.games_5").tag(5)
                 }
             }
         }
-        .navigationTitle("Settings")
+        .navigationTitle("settings.title")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Back") { currentView = .menu }
+                Button("settings.back") { currentView = .menu }
             }
         }
     }
@@ -574,7 +624,7 @@ struct HistoryView: View {
         List {
             if history.isEmpty {
                 Section {
-                    Text("No matches played yet")
+                    Text("history.empty")
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .listRowBackground(Color.clear)
@@ -587,17 +637,17 @@ struct HistoryView: View {
                                 Button(role: .destructive) {
                                     delete(record)
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label("history.clear", systemImage: "trash")
                                 }
                             }
                     }
                 }
             }
         }
-        .navigationTitle("Match History")
+        .navigationTitle("history.title")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Back") { currentView = .menu }
+                Button("history.back") { currentView = .menu }
             }
             if !history.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
@@ -607,11 +657,11 @@ struct HistoryView: View {
                 }
             }
         }
-        .alert("Clear History", isPresented: $showingClearConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Clear", role: .destructive) { matchHistoryData = Data() }
+        .alert(Text("history.clear_title"), isPresented: $showingClearConfirmation) {
+            Button("history.cancel", role: .cancel) { }
+            Button("history.clear", role: .destructive) { matchHistoryData = Data() }
         } message: {
-            Text("Are you sure you want to clear all match history? This cannot be undone.")
+            Text("history.clear_confirm")
         }
     }
 }
@@ -625,9 +675,9 @@ struct MatchHistoryRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text("\(record.winner) won")
+            Text(String(format: NSLocalizedString("history.won", comment: ""), record.winner))
                 .font(.headline)
-            Text("Games \(record.myGamesWon) - \(record.opponentGamesWon)")
+            Text(String(format: NSLocalizedString("history.games", comment: ""), record.myGamesWon, record.opponentGamesWon))
                 .font(.subheadline)
             if !gameLine.isEmpty {
                 Text(gameLine)

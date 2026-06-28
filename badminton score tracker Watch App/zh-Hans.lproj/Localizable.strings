@@ -1,0 +1,73 @@
+// Menu
+"menu.title" = "羽毛球计分";
+"menu.new_match" = "新比赛";
+"menu.history" = "比赛记录";
+"menu.settings" = "设置";
+
+// Pre-Match
+"prematch.title" = "新比赛";
+"prematch.who_serves" = "谁先发球？";
+"prematch.back" = "返回";
+
+// Game
+"game.menu" = "菜单";
+"game.games" = "局数";
+"game.right_court" = "右场";
+"game.left_court" = "左场";
+"game.game_point" = "局点！";
+"game.match_point" = "赛点！";
+"game.next_game" = "下一局";
+"game.new_match" = "新比赛";
+"game.wins_game" = "%@赢得本局！";
+"game.wins_match" = "%@赢得比赛！";
+"game.games_score" = "局数 %@";
+
+// Speech
+"speech.wins_match" = "%@赢得比赛！";
+"speech.wins_game" = "%@赢得本局！";
+"speech.match_point" = "赛点。%d比%d";
+"speech.game_point" = "局点。%d比%d";
+"speech.score" = "%d比%d";
+"speech.tied" = "%d平";
+
+// Settings
+"settings.title" = "设置";
+"settings.back" = "返回";
+"settings.game_mode" = "比赛模式";
+"settings.mode" = "模式";
+"settings.singles" = "单打";
+"settings.doubles" = "双打";
+"settings.player_names" = "球员名称";
+"settings.your_name" = "你的名字";
+"settings.opponent_name" = "对手名字";
+"settings.crown" = "数字表冠";
+"settings.announce_score" = "播报分数";
+"settings.court_theme" = "球场主题";
+"settings.theme" = "主题";
+"settings.match_format" = "比赛格式";
+"settings.points_to_win" = "获胜分数";
+"settings.pts_11" = "11分";
+"settings.pts_15" = "15分";
+"settings.pts_21" = "21分";
+"settings.games_in_match" = "局数";
+"settings.games_1" = "1局";
+"settings.games_3" = "三局两胜";
+"settings.games_5" = "五局三胜";
+
+// History
+"history.title" = "比赛记录";
+"history.back" = "返回";
+"history.empty" = "暂无比赛记录";
+"history.won" = "%@获胜";
+"history.games" = "局数 %d - %d";
+"history.clear_title" = "清除记录";
+"history.clear_confirm" = "确定要清除所有比赛记录吗？此操作无法撤销。";
+"history.cancel" = "取消";
+"history.clear" = "清除";
+
+// Court Themes
+"theme.green" = "绿色";
+"theme.blue" = "蓝色";
+"theme.red" = "红色";
+"theme.purple" = "紫色";
+"theme.black" = "黑色";
