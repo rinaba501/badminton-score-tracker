@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WatchKit
+import AVFoundation
 
 struct ContentView: View {
     @State private var currentView: AppView = .menu
@@ -145,9 +146,15 @@ struct GameView: View {
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
 
+    @AppStorage("announceScore") private var announceScore = true
+
     @State private var match = BadmintonMatch()
     @State private var undoStack: [BadmintonMatch] = []
     @State private var savedCurrentMatch = false
+    @State private var crownValue: Double = 0
+    @State private var lastCrownScore: Double = 0
+    private let synthesizer = AVSpeechSynthesizer()
+    private let crownThreshold: Double = 1.0
 
     private func name(for side: Side) -> String {
         side == .me ? myName : opponentName
@@ -186,6 +193,43 @@ struct GameView: View {
         match = previous
         // Distinct upward pulse so undo feels different from scoring
         WKInterfaceDevice.current().play(.directionUp)
+    }
+
+    private func speak(_ text: String) {
+        guard announceScore else { return }
+        synthesizer.stopSpeaking(at: .immediate)
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.rate = 0.5
+        utterance.volume = 1.0
+        synthesizer.speak(utterance)
+    }
+
+    private func announceCurrentScore() {
+        if let winner = match.matchWinner {
+            speak("\(name(for: winner)) wins the match!")
+        } else if let winner = match.gameWinner {
+            speak("\(name(for: winner)) wins the game!")
+        } else if match.isMatchPoint {
+            speak("Match point. \(match.myScore) - \(match.opponentScore)")
+        } else if match.isGamePoint {
+            speak("Game point. \(match.myScore) - \(match.opponentScore)")
+        } else {
+            speak("\(match.myScore) - \(match.opponentScore)")
+        }
+    }
+
+    private func onCrownChanged(_ newValue: Double) {
+        guard match.gameWinner == nil, match.matchWinner == nil else { return }
+        let delta = newValue - lastCrownScore
+        if delta >= crownThreshold {
+            lastCrownScore = newValue
+            tap(.me)
+            announceCurrentScore()
+        } else if delta <= -crownThreshold {
+            lastCrownScore = newValue
+            tap(.opponent)
+            announceCurrentScore()
+        }
     }
 
     private func startNextGame() {
@@ -288,6 +332,9 @@ struct GameView: View {
                 .disabled(undoStack.isEmpty)
             }
         }
+        .focusable()
+        .digitalCrownRotation($crownValue, sensitivity: .low, isContinuous: true)
+        .onChange(of: crownValue, perform: onCrownChanged)
         .onAppear {
             if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
                 match = BadmintonMatch(
@@ -297,6 +344,8 @@ struct GameView: View {
                     gamesToWin: (gamesInMatch / 2) + 1
                 )
             }
+            crownValue = 0
+            lastCrownScore = 0
         }
     }
 
@@ -425,6 +474,7 @@ struct SettingsView: View {
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
+    @AppStorage("announceScore") private var announceScore = true
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -444,6 +494,10 @@ struct SettingsView: View {
             Section(header: Text("Player Names")) {
                 TextField("Your Name", text: $myName)
                 TextField("Opponent Name", text: $opponentName)
+            }
+
+            Section(header: Text("Digital Crown")) {
+                Toggle("Announce score", isOn: $announceScore)
             }
 
             Section(header: Text("Court Theme")) {
