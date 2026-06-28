@@ -10,7 +10,7 @@ import WatchKit
 import AVFoundation
 
 private let katakanaNumbers = [
-    "ゼロ", "ワン", "ツー", "スリー", "フォー",
+    "ラブ", "ワン", "ツー", "スリー", "フォー",
     "ファイブ", "シックス", "セブン", "エイト", "ナイン",
     "テン", "イレブン", "トゥエルブ", "サーティーン", "フォーティーン",
     "フィフティーン", "シックスティーン", "セブンティーン", "エイティーン", "ナインティーン",
@@ -22,6 +22,10 @@ private let katakanaNumbers = [
 private func katakana(_ n: Int) -> String {
     guard n >= 0 && n < katakanaNumbers.count else { return "\(n)" }
     return katakanaNumbers[n]
+}
+
+private func loveScore(_ n: Int) -> String {
+    n == 0 ? "love" : "\(n)"
 }
 
 final class ScoreAnnouncer: ObservableObject {
@@ -236,20 +240,30 @@ struct GameView: View {
         let serverScore = match.serverIsMe ? match.myScore : match.opponentScore
         let receiverScore = match.serverIsMe ? match.opponentScore : match.myScore
         let tied = serverScore == receiverScore
-        let isJapanese = Locale.current.language.languageCode?.identifier == "ja"
+        let langCode = Locale.current.language.languageCode?.identifier ?? "en"
+        let isJapanese = langCode == "ja"
+        let isZhHans = langCode == "zh"
 
         func fmt(_ key: String, _ a: Int, _ b: Int) -> String {
             if isJapanese {
                 return String(format: NSLocalizedString(key, comment: ""), katakana(a), katakana(b))
             }
-            return String(format: NSLocalizedString(key, comment: ""), a, b)
+            if isZhHans {
+                return String(format: NSLocalizedString(key, comment: ""), a, b)
+            }
+            return String(format: NSLocalizedString(key, comment: ""), loveScore(a), loveScore(b))
         }
 
         func fmtTied(_ key: String, _ n: Int) -> String {
             if isJapanese {
                 return String(format: NSLocalizedString(key, comment: ""), katakana(n))
             }
-            return String(format: NSLocalizedString(key, comment: ""), n)
+            if isZhHans {
+                return String(format: NSLocalizedString(key, comment: ""), n)
+            }
+            // "love all" for 0-0, otherwise "8 all"
+            let word = n == 0 ? "love" : "\(n)"
+            return String(format: NSLocalizedString(key, comment: ""), word)
         }
 
         if let winner = match.matchWinner {

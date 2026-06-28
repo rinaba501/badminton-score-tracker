@@ -25,10 +25,10 @@
 // Speech
 "speech.wins_match" = "%@ 경기 승리!";
 "speech.wins_game" = "%@ 게임 승리!";
-"speech.match_point" = "Match point. %d - %d";
-"speech.game_point" = "Game point. %d - %d";
-"speech.score" = "%d - %d";
-"speech.tied" = "%d all";
+"speech.match_point" = "Match point. %@ - %@";
+"speech.game_point" = "Game point. %@ - %@";
+"speech.score" = "%@ - %@";
+"speech.tied" = "%@ all";
 
 // Settings
 "settings.title" = "설정";
