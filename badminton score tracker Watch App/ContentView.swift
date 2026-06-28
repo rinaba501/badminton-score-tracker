@@ -142,14 +142,14 @@ struct PreMatchView: View {
         }
     }
 
-    private func playerPicker(title: String, defaultLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+    private func playerPicker(title: String, defaultLabel: String, guestLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let filteredRoster = roster.filter { $0 != excluding }
         return List {
             Section(header: Text(title)) {
                 if !defaultLabel.isEmpty {
                     Button(defaultLabel) { onSelect(defaultLabel) }
                 }
-                Button("Guest") { onSelect("Guest") }
+                Button(guestLabel) { onSelect(guestLabel) }
             }
             if !filteredRoster.isEmpty {
                 Section(header: Text("Saved")) {
@@ -187,7 +187,7 @@ struct PreMatchView: View {
     var body: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: "Bottom Court", defaultLabel: myName) { name in
+            playerPicker(title: "Bottom Court", defaultLabel: myName, guestLabel: "Guest (Bottom)") { name in
                 matchMyName = name
                 step = .pickOpponent
             }
@@ -199,7 +199,7 @@ struct PreMatchView: View {
             }
 
         case .pickOpponent:
-            playerPicker(title: "Top Court", defaultLabel: "", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
+            playerPicker(title: "Top Court", defaultLabel: "", guestLabel: "Guest (Top)", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
                 matchOpponentName = name
                 step = .serveFirst
             }
