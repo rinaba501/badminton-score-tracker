@@ -142,17 +142,30 @@ struct PreMatchView: View {
         }
     }
 
-    private func playerPicker(title: String, defaultLabel: String, onSelect: @escaping (String) -> Void) -> some View {
-        List {
+    private static let quickDefaults = ["Player A", "Player B"]
+
+    private func playerPicker(title: String, defaultLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+        let filteredRoster = roster.filter { $0 != excluding }
+        return List {
             Section(header: Text(title)) {
-                Button(defaultLabel) { onSelect("") }
-                ForEach(roster, id: \.self) { name in
+                // Default name (myName for my side, nothing for opponent)
+                if !defaultLabel.isEmpty {
+                    Button(defaultLabel) { onSelect(defaultLabel) }
+                }
+                // Quick defaults
+                ForEach(Self.quickDefaults.filter { $0 != excluding }, id: \.self) { name in
                     Button(name) { onSelect(name) }
                 }
-                Button(action: {
-                    addingForSide = title == "My Player" ? .me : .opponent
-                    showAddPlayer = true
-                }) {
+            }
+            if !filteredRoster.isEmpty {
+                Section(header: Text("Saved")) {
+                    ForEach(filteredRoster, id: \.self) { name in
+                        Button(name) { onSelect(name) }
+                    }
+                }
+            }
+            Section {
+                Button(action: { showAddPlayer = true }) {
                     Label("Add New", systemImage: "plus")
                 }
             }
@@ -192,7 +205,7 @@ struct PreMatchView: View {
             }
 
         case .pickOpponent:
-            playerPicker(title: "Opponent", defaultLabel: "Default Opponent") { name in
+            playerPicker(title: "Opponent", defaultLabel: "", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
                 matchOpponentName = name
                 step = .serveFirst
             }
@@ -292,7 +305,7 @@ struct GameView: View {
     private let crownThreshold: Double = 1.0
 
     private var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
-    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? "Opponent" : matchOpponentName }
+    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? "Player B" : matchOpponentName }
 
     private func name(for side: Side) -> String {
         side == .me ? effectiveMyName : effectiveOpponentName
