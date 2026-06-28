@@ -147,6 +147,8 @@ struct MatchRecord: Identifiable, Codable, Equatable {
     let myGamesWon: Int
     let opponentGamesWon: Int
     let winner: String
+    let myName: String
+    let opponentName: String
     let date: Date
     let duration: TimeInterval
 
@@ -155,6 +157,8 @@ struct MatchRecord: Identifiable, Codable, Equatable {
          myGamesWon: Int,
          opponentGamesWon: Int,
          winner: String,
+         myName: String = "",
+         opponentName: String = "",
          date: Date,
          duration: TimeInterval = 0) {
         self.id = id
@@ -162,6 +166,8 @@ struct MatchRecord: Identifiable, Codable, Equatable {
         self.myGamesWon = myGamesWon
         self.opponentGamesWon = opponentGamesWon
         self.winner = winner
+        self.myName = myName
+        self.opponentName = opponentName
         self.date = date
         self.duration = duration
     }
