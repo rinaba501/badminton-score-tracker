@@ -13,12 +13,17 @@ final class ScoreAnnouncer: ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
 
     func speak(_ text: String) {
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-        try? AVAudioSession.sharedInstance().setActive(true)
+        try? AVAudioSession.sharedInstance().setCategory(
+            .playback,
+            mode: .spokenAudio,
+            options: [.duckOthers]
+        )
+        try? AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
         synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = 0.5
         utterance.volume = 1.0
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
         synthesizer.speak(utterance)
     }
 }
@@ -181,25 +186,22 @@ struct GameView: View {
         match.score(side)
 
         if match.matchWinner != nil {
-            // Match won — two strong pulses
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 WKInterfaceDevice.current().play(.success)
             }
             saveMatch()
         } else if match.gameWinner != nil {
-            // Game won — strong pulse followed by a softer one
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 WKInterfaceDevice.current().play(.retry)
             }
         } else if !wasGamePoint && match.isGamePoint {
-            // Just reached game/match point — alert pulse
             WKInterfaceDevice.current().play(.notification)
         } else {
-            // Regular point
             WKInterfaceDevice.current().play(.click)
         }
+        announceCurrentScore()
     }
 
     private func undo() {
@@ -234,11 +236,9 @@ struct GameView: View {
         if delta >= crownThreshold {
             lastCrownScore = newValue
             tap(.me)
-            announceCurrentScore()
         } else if delta <= -crownThreshold {
             lastCrownScore = newValue
             tap(.opponent)
-            announceCurrentScore()
         }
     }
 
