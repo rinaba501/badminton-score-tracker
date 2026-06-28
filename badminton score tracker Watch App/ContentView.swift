@@ -113,6 +113,26 @@ struct PreMatchView: View {
     }
 }
 
+// MARK: - Court Theme
+
+enum CourtTheme: String, Codable, CaseIterable {
+    case green  = "Green"
+    case blue   = "Blue"
+    case red    = "Red"
+    case purple = "Purple"
+    case black  = "Black"
+
+    var color: Color {
+        switch self {
+        case .green:  return Color(red: 0.2, green: 0.6, blue: 0.2)
+        case .blue:   return Color(red: 0.1, green: 0.4, blue: 0.8)
+        case .red:    return Color(red: 0.75, green: 0.15, blue: 0.15)
+        case .purple: return Color(red: 0.45, green: 0.2, blue: 0.7)
+        case .black:  return Color(red: 0.1, green: 0.1, blue: 0.1)
+        }
+    }
+}
+
 // MARK: - Game
 
 struct GameView: View {
@@ -123,6 +143,7 @@ struct GameView: View {
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
+    @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
 
     @State private var match = BadmintonMatch()
     @State private var undoStack: [BadmintonMatch] = []
@@ -206,7 +227,7 @@ struct GameView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.2, green: 0.6, blue: 0.2)
+            courtTheme.color
                 .ignoresSafeArea()
 
             VStack(spacing: 6) {
@@ -403,6 +424,7 @@ struct SettingsView: View {
     @AppStorage("opponentName") private var opponentName = "Opponent"
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
+    @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -422,6 +444,20 @@ struct SettingsView: View {
             Section(header: Text("Player Names")) {
                 TextField("Your Name", text: $myName)
                 TextField("Opponent Name", text: $opponentName)
+            }
+
+            Section(header: Text("Court Theme")) {
+                Picker("Theme", selection: $courtTheme) {
+                    ForEach(CourtTheme.allCases, id: \.self) { theme in
+                        HStack {
+                            Circle()
+                                .fill(theme.color)
+                                .frame(width: 12, height: 12)
+                            Text(theme.rawValue)
+                        }
+                        .tag(theme)
+                    }
+                }
             }
 
             Section(header: Text("Match Format")) {
