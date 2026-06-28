@@ -199,6 +199,7 @@ struct GameView: View {
     @State private var match = BadmintonMatch()
     @State private var undoStack: [BadmintonMatch] = []
     @State private var savedCurrentMatch = false
+    @State private var matchStartDate = Date()
     @State private var crownValue: Double = 0
     @State private var lastCrownScore: Double = 0
     @StateObject private var announcer = ScoreAnnouncer()
@@ -328,7 +329,8 @@ struct GameView: View {
             myGamesWon: match.myGamesWon,
             opponentGamesWon: match.opponentGamesWon,
             winner: name(for: winner),
-            date: Date()
+            date: Date(),
+            duration: Date().timeIntervalSince(matchStartDate)
         ))
         if let encoded = try? JSONEncoder().encode(history) {
             matchHistoryData = encoded
@@ -701,10 +703,22 @@ struct MatchHistoryRow: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            Text(record.date, format: .dateTime.month().day().hour().minute())
-                .font(.caption2)
-                .foregroundColor(.secondary)
+            HStack(spacing: 6) {
+                Text(record.date, format: .dateTime.month().day().hour().minute())
+                if record.duration > 0 {
+                    Text("·")
+                    Text(durationString(record.duration))
+                }
+            }
+            .font(.caption2)
+            .foregroundColor(.secondary)
         }
+    }
+
+    private func durationString(_ seconds: TimeInterval) -> String {
+        let m = Int(seconds) / 60
+        let s = Int(seconds) % 60
+        return m > 0 ? "\(m)m \(s)s" : "\(s)s"
     }
 }
 
@@ -732,6 +746,18 @@ struct StatsView: View {
         let total = history.flatMap { $0.games }.map { $0.my }.reduce(0, +)
         let games = history.flatMap { $0.games }.count
         return games == 0 ? 0 : Double(total) / Double(games)
+    }
+
+    private var avgMatchDuration: TimeInterval {
+        let timed = history.filter { $0.duration > 0 }
+        guard !timed.isEmpty else { return 0 }
+        return timed.map { $0.duration }.reduce(0, +) / Double(timed.count)
+    }
+
+    private func durationString(_ seconds: TimeInterval) -> String {
+        let m = Int(seconds) / 60
+        let s = Int(seconds) % 60
+        return m > 0 ? "\(m)m \(s)s" : "\(s)s"
     }
 
     private var longestStreak: Int {
@@ -765,6 +791,9 @@ struct StatsView: View {
                     StatRow(label: "Win rate", value: String(format: "%.0f%%", winRate))
                     StatRow(label: "Avg pts/game", value: String(format: "%.1f", avgPointsScored))
                     StatRow(label: "Best streak", value: "\(longestStreak)")
+                    if avgMatchDuration > 0 {
+                        StatRow(label: "Avg duration", value: durationString(avgMatchDuration))
+                    }
                 }
             }
         }
