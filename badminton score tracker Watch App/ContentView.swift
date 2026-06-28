@@ -9,6 +9,54 @@ import SwiftUI
 import WatchKit
 import AVFoundation
 
+// MARK: - Player Model
+
+struct Player: Identifiable, Codable, Equatable {
+    let id: UUID
+    var name: String
+    var colorIndex: Int
+
+    init(id: UUID = UUID(), name: String, colorIndex: Int = 0) {
+        self.id = id
+        self.name = name
+        self.colorIndex = colorIndex
+    }
+
+    static let avatarColors: [Color] = [
+        .blue, .green, .orange, .purple, .pink, .red
+    ]
+
+    var avatarColor: Color { Self.avatarColors[colorIndex % Self.avatarColors.count] }
+
+    var initials: String {
+        let words = name.split(separator: " ").prefix(2)
+        return words.compactMap { $0.first.map(String.init) }.joined().uppercased()
+    }
+}
+
+struct AvatarView: View {
+    let name: String
+    let color: Color
+    var size: CGFloat = 28
+
+    private var initials: String {
+        let words = name.split(separator: " ").prefix(2)
+        let result = words.compactMap { $0.first.map(String.init) }.joined().uppercased()
+        return result.isEmpty ? "?" : result
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(color)
+                .frame(width: size, height: size)
+            Text(initials)
+                .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+        }
+    }
+}
+
 private let katakanaNumbers = [
     "ラブ", "ワン", "ツー", "スリー", "フォー",
     "ファイブ", "シックス", "セブン", "エイト", "ナイン",
@@ -130,31 +178,51 @@ struct PreMatchView: View {
     enum Step { case pickMyPlayer, pickOpponent, serveFirst }
     enum Side { case me, opponent }
 
-    private var roster: [String] {
-        (try? JSONDecoder().decode([String].self, from: rosterData)) ?? []
+    private var roster: [Player] {
+        (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
     }
 
-    private func saveToRoster(_ name: String) {
+    private func saveToRoster(name: String) {
         var r = roster
-        if !name.isEmpty && !r.contains(name) {
-            r.insert(name, at: 0)
+        if !name.isEmpty && !r.contains(where: { $0.name == name }) {
+            let colorIndex = r.count % Player.avatarColors.count
+            r.insert(Player(name: name, colorIndex: colorIndex), at: 0)
             if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
         }
     }
 
-    private func playerPicker(title: String, defaultLabel: String, guestLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
-        let filteredRoster = roster.filter { $0 != excluding }
+    private func avatarColor(for name: String) -> Color {
+        roster.first(where: { $0.name == name })?.avatarColor ?? .gray
+    }
+
+    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+        let filteredRoster = roster.filter { $0.name != excluding }
         return List {
             Section(header: Text(title)) {
                 if !defaultLabel.isEmpty {
-                    Button(defaultLabel) { onSelect(defaultLabel) }
+                    Button(action: { onSelect(defaultLabel) }) {
+                        HStack {
+                            AvatarView(name: defaultLabel, color: defaultColor, size: 24)
+                            Text(defaultLabel)
+                        }
+                    }
                 }
-                Button(guestLabel) { onSelect(guestLabel) }
+                Button(action: { onSelect(guestLabel) }) {
+                    HStack {
+                        AvatarView(name: guestLabel, color: .gray, size: 24)
+                        Text(guestLabel)
+                    }
+                }
             }
             if !filteredRoster.isEmpty {
                 Section(header: Text("Saved")) {
-                    ForEach(filteredRoster, id: \.self) { name in
-                        Button(name) { onSelect(name) }
+                    ForEach(filteredRoster) { player in
+                        Button(action: { onSelect(player.name) }) {
+                            HStack {
+                                AvatarView(name: player.name, color: player.avatarColor, size: 24)
+                                Text(player.name)
+                            }
+                        }
                     }
                 }
             }
@@ -172,7 +240,7 @@ struct PreMatchView: View {
                 Button("Add") {
                     let name = newPlayerName.trimmingCharacters(in: .whitespaces)
                     if !name.isEmpty {
-                        saveToRoster(name)
+                        saveToRoster(name: name)
                         onSelect(name)
                         showAddPlayer = false
                         newPlayerName = ""
@@ -187,7 +255,7 @@ struct PreMatchView: View {
     var body: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: "Near Side", defaultLabel: myName, guestLabel: "Guest (Near)") { name in
+            playerPicker(title: "Near Side", defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: "Guest (Near)") { name in
                 matchMyName = name
                 step = .pickOpponent
             }
@@ -199,7 +267,7 @@ struct PreMatchView: View {
             }
 
         case .pickOpponent:
-            playerPicker(title: "Far Side", defaultLabel: "", guestLabel: "Guest (Far)", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
+            playerPicker(title: "Far Side", defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
                 matchOpponentName = name
                 step = .serveFirst
             }
@@ -307,11 +375,17 @@ struct GameView: View {
 
     private func saveToRoster(_ name: String) {
         guard !name.isEmpty else { return }
-        var roster = (try? JSONDecoder().decode([String].self, from: rosterData)) ?? []
-        if !roster.contains(name) {
-            roster.insert(name, at: 0)
+        var roster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
+        if !roster.contains(where: { $0.name == name }) {
+            let colorIndex = roster.count % Player.avatarColors.count
+            roster.insert(Player(name: name, colorIndex: colorIndex), at: 0)
             if let encoded = try? JSONEncoder().encode(roster) { rosterData = encoded }
         }
+    }
+
+    private func avatarColor(for name: String) -> Color {
+        let roster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
+        return roster.first(where: { $0.name == name })?.avatarColor ?? .gray
     }
 
     private func tap(_ side: Side) {
@@ -469,6 +543,7 @@ struct GameView: View {
                     isServing: match.servingSide == .opponent,
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .opponent,
+                    avatarColor: avatarColor(for: effectiveOpponentName),
                     onTap: { tap(.opponent) }
                 )
 
@@ -478,6 +553,7 @@ struct GameView: View {
                     isServing: match.servingSide == .me,
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .me,
+                    avatarColor: avatarColor(for: effectiveMyName),
                     onTap: { tap(.me) }
                 )
 
@@ -582,6 +658,7 @@ struct ScoreView: View {
     let isServing: Bool
     let serveRight: Bool
     let isWinner: Bool
+    let avatarColor: Color
     let onTap: () -> Void
 
     @State private var scorePulse = false
@@ -591,6 +668,7 @@ struct ScoreView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
+                    AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20)
                     if isServing {
                         Image(systemName: "circle.fill")
                             .font(.system(size: 7))
