@@ -139,13 +139,23 @@ struct GameView: View {
         match.score(side)
 
         if match.matchWinner != nil {
+            // Match won — two strong pulses
             WKInterfaceDevice.current().play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                WKInterfaceDevice.current().play(.success)
+            }
             saveMatch()
         } else if match.gameWinner != nil {
+            // Game won — strong pulse followed by a softer one
             WKInterfaceDevice.current().play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                WKInterfaceDevice.current().play(.retry)
+            }
         } else if !wasGamePoint && match.isGamePoint {
+            // Just reached game/match point — alert pulse
             WKInterfaceDevice.current().play(.notification)
         } else {
+            // Regular point
             WKInterfaceDevice.current().play(.click)
         }
     }
@@ -153,7 +163,8 @@ struct GameView: View {
     private func undo() {
         guard let previous = undoStack.popLast() else { return }
         match = previous
-        WKInterfaceDevice.current().play(.click)
+        // Distinct upward pulse so undo feels different from scoring
+        WKInterfaceDevice.current().play(.directionUp)
     }
 
     private func startNextGame() {
