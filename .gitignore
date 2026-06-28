@@ -1,27 +1,55 @@
-*.xcuserstate
+# macOS
 .DS_Store
 
-# Added by Claude Task Master
-# Logs
+# Xcode user-specific data
+*.xcuserstate
+xcuserdata/
+**/*.xcworkspace/xcuserdata/
+
+# Build products
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Packages
+.build/
+Packages/
+Package.resolved
+
+# IDE / AI tool config
+.cursor/
+.roo/
+.roomodes
+.windsurfrules
+.taskmasterconfig
+
+# AI tool scripts
+scripts/prd.txt
+scripts/example_prd.txt
+
+# Node / Task Master
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 dev-debug.log
-# Dependency directories
 node_modules/
-# Environment variables
+tasks.json
+tasks/
+
+# Environment
 .env
-# Editor directories and files
+
+# JetBrains
 .idea
 .vscode
+
+# Misc
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-# OS specific
-# Task files
-tasks.json
-tasks/ 
