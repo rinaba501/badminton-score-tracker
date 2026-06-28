@@ -10,9 +10,22 @@ import WatchKit
 
 struct ContentView: View {
     @State private var currentView: AppView = .menu
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: ColorSchemePreference = .system
 
     enum AppView {
         case menu, preMatch, game, settings, history
+    }
+
+    enum ColorSchemePreference: String, Codable {
+        case system, light, dark
+
+        var colorScheme: ColorScheme? {
+            switch self {
+            case .system: return nil
+            case .light: return .light
+            case .dark: return .dark
+            }
+        }
     }
 
     var body: some View {
@@ -30,6 +43,7 @@ struct ContentView: View {
                 HistoryView(currentView: $currentView)
             }
         }
+        .preferredColorScheme(colorSchemePreference.colorScheme)
     }
 }
 
@@ -403,6 +417,7 @@ struct SettingsView: View {
     @AppStorage("opponentName") private var opponentName = "Opponent"
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: ContentView.ColorSchemePreference = .system
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -434,6 +449,14 @@ struct SettingsView: View {
                     Text("1 game").tag(1)
                     Text("Best of 3").tag(3)
                     Text("Best of 5").tag(5)
+                }
+            }
+
+            Section(header: Text("Appearance")) {
+                Picker("Theme", selection: $colorSchemePreference) {
+                    Text("System").tag(ContentView.ColorSchemePreference.system)
+                    Text("Light").tag(ContentView.ColorSchemePreference.light)
+                    Text("Dark").tag(ContentView.ColorSchemePreference.dark)
                 }
             }
         }
