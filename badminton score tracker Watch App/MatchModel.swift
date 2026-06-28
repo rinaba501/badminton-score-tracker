@@ -148,18 +148,21 @@ struct MatchRecord: Identifiable, Codable, Equatable {
     let opponentGamesWon: Int
     let winner: String
     let date: Date
+    let duration: TimeInterval
 
     init(id: UUID = UUID(),
          games: [GameScore],
          myGamesWon: Int,
          opponentGamesWon: Int,
          winner: String,
-         date: Date) {
+         date: Date,
+         duration: TimeInterval = 0) {
         self.id = id
         self.games = games
         self.myGamesWon = myGamesWon
         self.opponentGamesWon = opponentGamesWon
         self.winner = winner
         self.date = date
+        self.duration = duration
     }
 }
