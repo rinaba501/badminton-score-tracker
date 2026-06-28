@@ -772,15 +772,25 @@ struct SettingsView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("gameMode") private var gameMode: GameMode = .singles
     @AppStorage("myName") private var myName = "Me"
-    @AppStorage("opponentName") private var opponentName = "Opponent"
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
     @AppStorage("announceScore") private var announceScore = true
+    @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
         case doubles = "Doubles"
+    }
+
+    private var roster: [Player] {
+        (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
+    }
+
+    private func deletePlayers(at offsets: IndexSet) {
+        var r = roster
+        r.remove(atOffsets: offsets)
+        if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
     }
 
     var body: some View {
@@ -792,9 +802,25 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("settings.player_names")) {
+            Section(header: Text("Your Name")) {
                 TextField(NSLocalizedString("settings.your_name", comment: ""), text: $myName)
-                TextField(NSLocalizedString("settings.opponent_name", comment: ""), text: $opponentName)
+            }
+
+            Section(header: Text("Players")) {
+                if roster.isEmpty {
+                    Text("No saved players yet")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                } else {
+                    ForEach(roster) { player in
+                        HStack(spacing: 8) {
+                            AvatarView(name: player.name, color: player.avatarColor, size: 24)
+                            Text(player.name)
+                                .font(.caption)
+                        }
+                    }
+                    .onDelete(perform: deletePlayers)
+                }
             }
 
             Section(header: Text("settings.crown")) {
