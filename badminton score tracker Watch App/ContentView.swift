@@ -122,11 +122,13 @@ struct PreMatchView: View {
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
-    @State private var step: Step = .pickOpponent
-    @State private var showAddOpponent = false
-    @State private var newOpponentName = ""
+    @State private var step: Step = .pickMyPlayer
+    @State private var showAddPlayer = false
+    @State private var newPlayerName = ""
+    @State private var addingForSide: Side = .me
 
-    enum Step { case pickOpponent, pickMyPlayer, serveFirst }
+    enum Step { case pickMyPlayer, pickOpponent, serveFirst }
+    enum Side { case me, opponent }
 
     private var roster: [String] {
         (try? JSONDecoder().decode([String].self, from: rosterData)) ?? []
@@ -140,26 +142,47 @@ struct PreMatchView: View {
         }
     }
 
-    private func selectOpponent(_ name: String) {
-        matchOpponentName = name
-        // If myName is default, skip the my-player step
-        matchMyName = myName
-        step = .serveFirst
+    private func playerPicker(title: String, defaultLabel: String, onSelect: @escaping (String) -> Void) -> some View {
+        List {
+            Section(header: Text(title)) {
+                Button(defaultLabel) { onSelect("") }
+                ForEach(roster, id: \.self) { name in
+                    Button(name) { onSelect(name) }
+                }
+                Button(action: {
+                    addingForSide = title == "My Player" ? .me : .opponent
+                    showAddPlayer = true
+                }) {
+                    Label("Add New", systemImage: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showAddPlayer) {
+            VStack(spacing: 12) {
+                Text("New Player")
+                    .font(.headline)
+                TextField("Name", text: $newPlayerName)
+                Button("Add") {
+                    let name = newPlayerName.trimmingCharacters(in: .whitespaces)
+                    if !name.isEmpty {
+                        saveToRoster(name)
+                        onSelect(name)
+                        showAddPlayer = false
+                        newPlayerName = ""
+                    }
+                }
+                .disabled(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding()
+        }
     }
 
     var body: some View {
         switch step {
-        case .pickOpponent:
-            List {
-                Section(header: Text("Opponent")) {
-                    Button("Default Opponent") { selectOpponent("") }
-                    ForEach(roster, id: \.self) { name in
-                        Button(name) { selectOpponent(name) }
-                    }
-                    Button(action: { showAddOpponent = true }) {
-                        Label("Add New", systemImage: "plus")
-                    }
-                }
+        case .pickMyPlayer:
+            playerPicker(title: "My Player", defaultLabel: myName) { name in
+                matchMyName = name
+                step = .pickOpponent
             }
             .navigationTitle("prematch.title")
             .toolbar {
@@ -167,28 +190,18 @@ struct PreMatchView: View {
                     Button("prematch.back") { currentView = .menu }
                 }
             }
-            .sheet(isPresented: $showAddOpponent) {
-                VStack(spacing: 12) {
-                    Text("New Opponent")
-                        .font(.headline)
-                    TextField("Name", text: $newOpponentName)
-                    Button("Add") {
-                        let name = newOpponentName.trimmingCharacters(in: .whitespaces)
-                        if !name.isEmpty {
-                            saveToRoster(name)
-                            selectOpponent(name)
-                            showAddOpponent = false
-                            newOpponentName = ""
-                        }
-                    }
-                    .disabled(newOpponentName.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-                .padding()
-            }
 
-        case .pickMyPlayer:
-            // Future: allow changing your own side; currently skipped
-            EmptyView()
+        case .pickOpponent:
+            playerPicker(title: "Opponent", defaultLabel: "Default Opponent") { name in
+                matchOpponentName = name
+                step = .serveFirst
+            }
+            .navigationTitle("prematch.title")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("prematch.back") { step = .pickMyPlayer }
+                }
+            }
 
         case .serveFirst:
             VStack(spacing: 12) {
