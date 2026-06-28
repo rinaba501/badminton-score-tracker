@@ -2,6 +2,7 @@
 "menu.title" = "羽毛球计分";
 "menu.new_match" = "新比赛";
 "menu.history" = "比赛记录";
+"menu.stats" = "统计";
 "menu.settings" = "设置";
 
 // Pre-Match

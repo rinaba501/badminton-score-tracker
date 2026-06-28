@@ -52,7 +52,7 @@ struct ContentView: View {
     @State private var currentView: AppView = .menu
 
     enum AppView {
-        case menu, preMatch, game, settings, history
+        case menu, preMatch, game, settings, history, stats
     }
 
     var body: some View {
@@ -68,6 +68,8 @@ struct ContentView: View {
                 SettingsView(currentView: $currentView)
             case .history:
                 HistoryView(currentView: $currentView)
+            case .stats:
+                StatsView(currentView: $currentView)
             }
         }
     }
@@ -89,6 +91,13 @@ struct MenuView: View {
                 HStack {
                     Image(systemName: "clock.arrow.circlepath")
                     Text("menu.history")
+                }
+            }
+
+            Button(action: { currentView = .stats }) {
+                HStack {
+                    Image(systemName: "chart.bar.fill")
+                    Text("menu.stats")
                 }
             }
 
@@ -695,6 +704,92 @@ struct MatchHistoryRow: View {
             Text(record.date, format: .dateTime.month().day().hour().minute())
                 .font(.caption2)
                 .foregroundColor(.secondary)
+        }
+    }
+}
+
+// MARK: - Stats
+
+struct StatsView: View {
+    @Binding var currentView: ContentView.AppView
+    @AppStorage("myName") private var myName = "Me"
+    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
+
+    private var history: [MatchRecord] {
+        (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
+    }
+
+    private var totalMatches: Int { history.count }
+    private var wins: Int { history.filter { $0.winner == myName }.count }
+    private var losses: Int { totalMatches - wins }
+
+    private var winRate: Double {
+        totalMatches == 0 ? 0 : Double(wins) / Double(totalMatches) * 100
+    }
+
+    private var avgPointsScored: Double {
+        guard !history.isEmpty else { return 0 }
+        let total = history.flatMap { $0.games }.map { $0.my }.reduce(0, +)
+        let games = history.flatMap { $0.games }.count
+        return games == 0 ? 0 : Double(total) / Double(games)
+    }
+
+    private var longestStreak: Int {
+        var best = 0
+        var current = 0
+        for record in history {
+            if record.winner == myName {
+                current += 1
+                best = max(best, current)
+            } else {
+                current = 0
+            }
+        }
+        return best
+    }
+
+    var body: some View {
+        List {
+            if history.isEmpty {
+                Section {
+                    Text("No matches yet")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowBackground(Color.clear)
+                }
+            } else {
+                Section(header: Text(myName)) {
+                    StatRow(label: "Matches", value: "\(totalMatches)")
+                    StatRow(label: "Wins", value: "\(wins)")
+                    StatRow(label: "Losses", value: "\(losses)")
+                    StatRow(label: "Win rate", value: String(format: "%.0f%%", winRate))
+                    StatRow(label: "Avg pts/game", value: String(format: "%.1f", avgPointsScored))
+                    StatRow(label: "Best streak", value: "\(longestStreak)")
+                }
+            }
+        }
+        .navigationTitle("Stats")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Back") { currentView = .menu }
+            }
+        }
+    }
+}
+
+struct StatRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .font(.caption)
+                .fontWeight(.semibold)
         }
     }
 }
