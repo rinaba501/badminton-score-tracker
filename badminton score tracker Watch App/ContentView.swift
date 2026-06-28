@@ -494,7 +494,8 @@ struct GameView: View {
                     title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
                     actionTitle: NSLocalizedString("game.new_match", comment: ""),
-                    action: newMatch
+                    action: newMatch,
+                    isMatchOver: true
                 )
             } else if match.gameWinner != nil {
                 MatchOverOverlay(
@@ -583,6 +584,9 @@ struct ScoreView: View {
     let isWinner: Bool
     let onTap: () -> Void
 
+    @State private var scorePulse = false
+    @State private var winnerGlow = false
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
@@ -608,22 +612,34 @@ struct ScoreView: View {
             Text("\(score)")
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
+                .scaleEffect(scorePulse ? 1.35 : 1.0)
+                .animation(.spring(response: 0.2, dampingFraction: 0.4), value: scorePulse)
         }
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color.black.opacity(0.25))
+                .fill(isWinner
+                      ? Color.yellow.opacity(winnerGlow ? 0.35 : 0.15)
+                      : Color.black.opacity(0.25))
+                .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: winnerGlow)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(isServing ? Color.yellow.opacity(0.8) : Color.white.opacity(0.5),
-                        lineWidth: isServing ? 2 : 1.5)
+                .stroke(isWinner ? Color.yellow : (isServing ? Color.yellow.opacity(0.8) : Color.white.opacity(0.5)),
+                        lineWidth: isWinner ? 2.5 : (isServing ? 2 : 1.5))
         )
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
         .scaleEffect(isWinner ? 1.06 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isWinner)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            scorePulse = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { scorePulse = false }
+            onTap()
+        }
+        .onChange(of: isWinner) { won in
+            winnerGlow = won
+        }
     }
 }
 
@@ -632,9 +648,19 @@ struct MatchOverOverlay: View {
     let games: String
     let actionTitle: String
     let action: () -> Void
+    var isMatchOver: Bool = false
+
+    @State private var shimmer = false
 
     var body: some View {
         VStack(spacing: 8) {
+            if isMatchOver {
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.yellow)
+                    .scaleEffect(shimmer ? 1.15 : 1.0)
+                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: shimmer)
+            }
             Text(title)
                 .font(.system(size: 17, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
@@ -646,10 +672,14 @@ struct MatchOverOverlay: View {
                 .buttonStyle(.borderedProminent)
         }
         .padding()
-        .background(Color.black.opacity(0.8))
+        .background(Color.black.opacity(0.85))
         .cornerRadius(14)
         .padding(.horizontal, 8)
-        .transition(.scale.combined(with: .opacity))
+        .transition(.asymmetric(
+            insertion: .scale(scale: 0.7).combined(with: .opacity),
+            removal: .opacity
+        ))
+        .onAppear { shimmer = true }
     }
 }
 
