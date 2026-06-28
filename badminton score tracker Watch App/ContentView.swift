@@ -12,7 +12,7 @@ struct ContentView: View {
     @State private var currentView: AppView = .menu
 
     enum AppView {
-        case menu, game, settings, history
+        case menu, preMatch, game, settings, history
     }
 
     var body: some View {
@@ -20,6 +20,8 @@ struct ContentView: View {
             switch currentView {
             case .menu:
                 MenuView(currentView: $currentView)
+            case .preMatch:
+                PreMatchView(currentView: $currentView)
             case .game:
                 GameView(currentView: $currentView)
             case .settings:
@@ -36,7 +38,7 @@ struct MenuView: View {
 
     var body: some View {
         List {
-            Button(action: { currentView = .game }) {
+            Button(action: { currentView = .preMatch }) {
                 HStack {
                     Image(systemName: "play.fill")
                     Text("New Match")
@@ -61,6 +63,56 @@ struct MenuView: View {
     }
 }
 
+// MARK: - Pre-Match
+
+struct PreMatchView: View {
+    @Binding var currentView: ContentView.AppView
+    @AppStorage("myName") private var myName = "Me"
+    @AppStorage("opponentName") private var opponentName = "Opponent"
+    @AppStorage("iServeFirst") private var iServeFirst = true
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Text("Who serves first?")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+
+            Button(action: {
+                iServeFirst = true
+                currentView = .game
+            }) {
+                Text(myName)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+
+            Button(action: {
+                iServeFirst = false
+                currentView = .game
+            }) {
+                Text(opponentName)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.gray.opacity(0.4))
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .navigationTitle("New Match")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Back") { currentView = .menu }
+            }
+        }
+    }
+}
+
 // MARK: - Game
 
 struct GameView: View {
@@ -69,6 +121,8 @@ struct GameView: View {
     @AppStorage("opponentName") private var opponentName = "Opponent"
     @AppStorage("iServeFirst") private var iServeFirst = true
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
+    @AppStorage("pointsToWin") private var pointsToWin: Int = 21
+    @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
 
     @State private var match = BadmintonMatch()
     @State private var undoStack: [BadmintonMatch] = []
@@ -109,7 +163,12 @@ struct GameView: View {
     }
 
     private func newMatch() {
-        match = BadmintonMatch(serverIsMe: iServeFirst)
+        match = BadmintonMatch(
+            serverIsMe: iServeFirst,
+            pointsToWin: pointsToWin,
+            pointCap: pointsToWin + 9,
+            gamesToWin: (gamesInMatch / 2) + 1
+        )
         undoStack.removeAll()
         savedCurrentMatch = false
     }
@@ -199,7 +258,12 @@ struct GameView: View {
         }
         .onAppear {
             if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
-                match = BadmintonMatch(serverIsMe: iServeFirst)
+                match = BadmintonMatch(
+                    serverIsMe: iServeFirst,
+                    pointsToWin: pointsToWin,
+                    pointCap: pointsToWin + 9,
+                    gamesToWin: (gamesInMatch / 2) + 1
+                )
             }
         }
     }
@@ -326,7 +390,8 @@ struct SettingsView: View {
     @AppStorage("gameMode") private var gameMode: GameMode = .singles
     @AppStorage("myName") private var myName = "Me"
     @AppStorage("opponentName") private var opponentName = "Opponent"
-    @AppStorage("iServeFirst") private var iServeFirst = true
+    @AppStorage("pointsToWin") private var pointsToWin: Int = 21
+    @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -348,8 +413,17 @@ struct SettingsView: View {
                 TextField("Opponent Name", text: $opponentName)
             }
 
-            Section(header: Text("Serve")) {
-                Toggle("I serve first", isOn: $iServeFirst)
+            Section(header: Text("Match Format")) {
+                Picker("Points to win", selection: $pointsToWin) {
+                    Text("11 pts").tag(11)
+                    Text("15 pts").tag(15)
+                    Text("21 pts").tag(21)
+                }
+                Picker("Games in match", selection: $gamesInMatch) {
+                    Text("1 game").tag(1)
+                    Text("Best of 3").tag(3)
+                    Text("Best of 5").tag(5)
+                }
             }
         }
         .navigationTitle("Settings")
