@@ -142,20 +142,14 @@ struct PreMatchView: View {
         }
     }
 
-    private static let quickDefaults = ["Player A", "Player B"]
-
     private func playerPicker(title: String, defaultLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let filteredRoster = roster.filter { $0 != excluding }
         return List {
             Section(header: Text(title)) {
-                // Default name (myName for my side, nothing for opponent)
                 if !defaultLabel.isEmpty {
                     Button(defaultLabel) { onSelect(defaultLabel) }
                 }
-                // Quick defaults
-                ForEach(Self.quickDefaults.filter { $0 != excluding }, id: \.self) { name in
-                    Button(name) { onSelect(name) }
-                }
+                Button("Guest") { onSelect("Guest") }
             }
             if !filteredRoster.isEmpty {
                 Section(header: Text("Saved")) {
@@ -305,7 +299,7 @@ struct GameView: View {
     private let crownThreshold: Double = 1.0
 
     private var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
-    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? "Player B" : matchOpponentName }
+    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? "Guest" : matchOpponentName }
 
     private func name(for side: Side) -> String {
         side == .me ? effectiveMyName : effectiveOpponentName
