@@ -329,6 +329,8 @@ struct GameView: View {
             myGamesWon: match.myGamesWon,
             opponentGamesWon: match.opponentGamesWon,
             winner: name(for: winner),
+            myName: myName,
+            opponentName: opponentName,
             date: Date(),
             duration: Date().timeIntervalSince(matchStartDate)
         ))
@@ -688,22 +690,50 @@ struct HistoryView: View {
 struct MatchHistoryRow: View {
     let record: MatchRecord
 
+    private var iWon: Bool { record.winner == record.myName }
+
     private var gameLine: String {
         record.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")
     }
 
+    private func durationString(_ seconds: TimeInterval) -> String {
+        let m = Int(seconds) / 60
+        let s = Int(seconds) % 60
+        return m > 0 ? "\(m)m \(s)s" : "\(s)s"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(String(format: NSLocalizedString("history.won", comment: ""), record.winner))
-                .font(.headline)
-            Text(String(format: NSLocalizedString("history.games", comment: ""), record.myGamesWon, record.opponentGamesWon))
-                .font(.subheadline)
+        VStack(alignment: .leading, spacing: 4) {
+            // Head-to-head score line
+            HStack(alignment: .center, spacing: 0) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(record.myName.isEmpty ? "Me" : record.myName)
+                        .font(.system(size: 12, weight: iWon ? .bold : .regular))
+                        .lineLimit(1)
+                    Text(record.opponentName.isEmpty ? "Opponent" : record.opponentName)
+                        .font(.system(size: 12, weight: iWon ? .regular : .bold))
+                        .lineLimit(1)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("\(record.myGamesWon)")
+                        .font(.system(size: 14, weight: iWon ? .bold : .regular, design: .rounded))
+                        .foregroundColor(iWon ? .green : .primary)
+                    Text("\(record.opponentGamesWon)")
+                        .font(.system(size: 14, weight: iWon ? .regular : .bold, design: .rounded))
+                        .foregroundColor(iWon ? .primary : .orange)
+                }
+            }
+
+            // Per-game scores
             if !gameLine.isEmpty {
                 Text(gameLine)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            HStack(spacing: 6) {
+
+            // Date + duration
+            HStack(spacing: 4) {
                 Text(record.date, format: .dateTime.month().day().hour().minute())
                 if record.duration > 0 {
                     Text("·")
@@ -713,12 +743,7 @@ struct MatchHistoryRow: View {
             .font(.caption2)
             .foregroundColor(.secondary)
         }
-    }
-
-    private func durationString(_ seconds: TimeInterval) -> String {
-        let m = Int(seconds) / 60
-        let s = Int(seconds) % 60
-        return m > 0 ? "\(m)m \(s)s" : "\(s)s"
+        .padding(.vertical, 2)
     }
 }
 
