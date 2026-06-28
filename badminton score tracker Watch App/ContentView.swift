@@ -30,7 +30,7 @@ struct Player: Identifiable, Codable, Equatable {
 
     var initials: String {
         let words = name.split(separator: " ").prefix(2)
-        return words.compactMap { $0.first.map(String.init) }.joined().uppercased()
+        return words.compactMap { $0.first(where: { $0.isLetter }).map(String.init) }.joined().uppercased()
     }
 }
 
@@ -41,7 +41,7 @@ struct AvatarView: View {
 
     private var initials: String {
         let words = name.split(separator: " ").prefix(2)
-        let result = words.compactMap { $0.first.map(String.init) }.joined().uppercased()
+        let result = words.compactMap { $0.first(where: { $0.isLetter }).map(String.init) }.joined().uppercased()
         return result.isEmpty ? "?" : result
     }
 
