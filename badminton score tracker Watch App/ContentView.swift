@@ -358,6 +358,16 @@ struct GameView: View {
                     isWinner: match.gameWinner == .me,
                     onTap: { tap(.me) }
                 )
+
+                if !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil {
+                    Button(action: undo) {
+                        Label("Undo", systemImage: "arrow.uturn.backward")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+                }
             }
             .padding(.horizontal, 10)
 
@@ -385,12 +395,6 @@ struct GameView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("game.menu") { currentView = .menu }
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: undo) {
-                    Image(systemName: "arrow.uturn.backward")
-                }
-                .disabled(undoStack.isEmpty)
             }
         }
         .focusable()
