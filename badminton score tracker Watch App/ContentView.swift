@@ -333,7 +333,7 @@ struct GameView: View {
             }
         }
         .focusable()
-        .digitalCrownRotation($crownValue, sensitivity: .low, isContinuous: true)
+        .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)
         .onChange(of: crownValue, perform: onCrownChanged)
         .onAppear {
             if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
