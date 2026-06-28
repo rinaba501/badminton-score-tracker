@@ -2,6 +2,7 @@
 "menu.title" = "Skor Bulu Tangkis";
 "menu.new_match" = "Pertandingan Baru";
 "menu.history" = "Riwayat Pertandingan";
+"menu.stats" = "Statistik";
 "menu.settings" = "Pengaturan";
 
 // Pre-Match

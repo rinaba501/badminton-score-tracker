@@ -2,6 +2,7 @@
 "menu.title" = "Badminton Score";
 "menu.new_match" = "New Match";
 "menu.history" = "Match History";
+"menu.stats" = "Stats";
 "menu.settings" = "Settings";
 
 // Pre-Match
