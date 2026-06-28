@@ -338,7 +338,9 @@ struct GameView: View {
             VStack(spacing: 6) {
                 GamesWonHeader(
                     myName: myName, opponentName: opponentName,
-                    myGames: match.myGamesWon, opponentGames: match.opponentGamesWon
+                    myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
+                    canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil,
+                    onUndo: undo
                 )
 
                 ScoreView(
@@ -359,15 +361,6 @@ struct GameView: View {
                     onTap: { tap(.me) }
                 )
 
-                if !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil {
-                    Button(action: undo) {
-                        Label("Undo", systemImage: "arrow.uturn.backward")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .buttonStyle(.plain)
-                    .transition(.opacity.animation(.easeInOut(duration: 0.2)))
-                }
             }
             .padding(.horizontal, 10)
 
@@ -436,6 +429,8 @@ struct GamesWonHeader: View {
     let opponentName: String
     let myGames: Int
     let opponentGames: Int
+    let canUndo: Bool
+    let onUndo: () -> Void
 
     var body: some View {
         HStack(spacing: 4) {
@@ -446,6 +441,15 @@ struct GamesWonHeader: View {
             Text("\(opponentGames) – \(myGames)")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
+            if canUndo {
+                Button(action: onUndo) {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .buttonStyle(.plain)
+                .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+            }
         }
         .padding(.horizontal, 6)
     }
