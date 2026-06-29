@@ -1162,8 +1162,8 @@ struct SettingsView: View {
                                 Button(label) { timeLimitMinutes = min(99, max(1, timeLimitMinutes + delta)) }
                                     .font(.caption2)
                                     .foregroundColor(delta < 0 ? .red : .green)
+                                    .frame(maxWidth: .infinity)
                                     .padding(.vertical, 4)
-                                    .padding(.horizontal, 6)
                                     .background(Color.secondary.opacity(0.2))
                                     .cornerRadius(6)
                                     .buttonStyle(.plain)
