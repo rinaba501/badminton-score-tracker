@@ -1158,20 +1158,17 @@ struct SettingsView: View {
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .frame(maxWidth: .infinity)
                         HStack(spacing: 6) {
-                            Button("-5") { timeLimitMinutes = max(1, timeLimitMinutes - 5) }
-                                .buttonStyle(.bordered)
-                                .tint(.red)
-                            Button("-1") { timeLimitMinutes = max(1, timeLimitMinutes - 1) }
-                                .buttonStyle(.bordered)
-                                .tint(.red)
-                            Button("+1") { timeLimitMinutes = min(99, timeLimitMinutes + 1) }
-                                .buttonStyle(.bordered)
-                                .tint(.green)
-                            Button("+5") { timeLimitMinutes = min(99, timeLimitMinutes + 5) }
-                                .buttonStyle(.bordered)
-                                .tint(.green)
+                            ForEach([(-5, "-5"), (-1, "-1"), (1, "+1"), (5, "+5")], id: \.0) { delta, label in
+                                Button(label) { timeLimitMinutes = min(99, max(1, timeLimitMinutes + delta)) }
+                                    .font(.caption2)
+                                    .foregroundColor(delta < 0 ? .red : .green)
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 6)
+                                    .background(Color.secondary.opacity(0.2))
+                                    .cornerRadius(6)
+                                    .buttonStyle(.plain)
+                            }
                         }
-                        .font(.caption)
                     }
                     .padding(.vertical, 4)
                 }
