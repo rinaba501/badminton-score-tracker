@@ -438,7 +438,6 @@ enum CourtTheme: String, Codable, CaseIterable {
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
-    @AppStorage("myName") private var myName = "Me"
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
