@@ -757,10 +757,12 @@ struct GameView: View {
                     onUndo: undo
                 )
 
+                let serveKnown = match.myScore > 0 || match.opponentScore > 0
+
                 ScoreView(
                     name: effectiveOpponentName,
                     score: match.opponentScore,
-                    isServing: match.servingSide == .opponent,
+                    isServing: serveKnown && match.servingSide == .opponent,
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .opponent,
                     avatarColor: avatarColor(for: effectiveOpponentName),
@@ -771,7 +773,7 @@ struct GameView: View {
                 ScoreView(
                     name: effectiveMyName,
                     score: match.myScore,
-                    isServing: match.servingSide == .me,
+                    isServing: serveKnown && match.servingSide == .me,
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .me,
                     avatarColor: avatarColor(for: effectiveMyName),
