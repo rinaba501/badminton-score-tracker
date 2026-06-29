@@ -883,6 +883,7 @@ struct SettingsView: View {
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     @State private var editingPlayer: Player? = nil
+    @State private var previousMyName: String = ""
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -1005,6 +1006,15 @@ struct SettingsView: View {
         }
         .sheet(item: $editingPlayer) { player in
             PlayerEditView(initialPlayer: player, onSave: savePlayerEdit)
+        }
+        .onAppear { previousMyName = myName }
+        .onChange(of: myName) { newName in
+            var r = roster
+            if let idx = r.firstIndex(where: { $0.name == previousMyName }) {
+                r[idx].name = newName
+                if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+            }
+            previousMyName = newName
         }
     }
 }
