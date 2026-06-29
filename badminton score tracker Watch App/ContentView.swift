@@ -1153,13 +1153,27 @@ struct SettingsView: View {
             Section(header: Text("Time Mode")) {
                 Toggle("Enable", isOn: $timeModeEnabled)
                 if timeModeEnabled {
-                    Picker("Duration", selection: $timeLimitMinutes) {
-                        Text("5 min").tag(5)
-                        Text("10 min").tag(10)
-                        Text("15 min").tag(15)
-                        Text("20 min").tag(20)
-                        Text("30 min").tag(30)
+                    VStack(spacing: 6) {
+                        Text("\(timeLimitMinutes) min")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                        HStack(spacing: 6) {
+                            Button("-5") { timeLimitMinutes = max(1, timeLimitMinutes - 5) }
+                                .buttonStyle(.bordered)
+                                .tint(.red)
+                            Button("-1") { timeLimitMinutes = max(1, timeLimitMinutes - 1) }
+                                .buttonStyle(.bordered)
+                                .tint(.red)
+                            Button("+1") { timeLimitMinutes = min(99, timeLimitMinutes + 1) }
+                                .buttonStyle(.bordered)
+                                .tint(.green)
+                            Button("+5") { timeLimitMinutes = min(99, timeLimitMinutes + 5) }
+                                .buttonStyle(.bordered)
+                                .tint(.green)
+                        }
+                        .font(.caption)
                     }
+                    .padding(.vertical, 4)
                 }
             }
         }
