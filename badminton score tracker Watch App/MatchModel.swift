@@ -123,6 +123,23 @@ struct BadmintonMatch: Codable, Equatable {
         opponentScore = 0
     }
 
+    /// Force-ends the current game in favour of `winner` (used for sudden death in time mode).
+    /// Records the current score as the game result and resets the board.
+    mutating func recordSuddenDeathGame(winner: Side) {
+        guard gameWinner == nil, matchWinner == nil else { return }
+        completedGames.append(GameScore(my: myScore, opponent: opponentScore))
+        if winner == .me { myGamesWon += 1 } else { opponentGamesWon += 1 }
+        serverIsMe = (winner == .me)
+        myScore = 0
+        opponentScore = 0
+    }
+
+    /// True when all games have been played and the result is a draw (only possible with an even gamesInMatch setting).
+    var isTied: Bool {
+        let totalPlayed = completedGames.count
+        return matchWinner == nil && totalPlayed >= (gamesToWin * 2 - 1) && myGamesWon == opponentGamesWon
+    }
+
     // MARK: - Helpers
 
     private func pointWouldEndGame(_ side: Side) -> Bool {
