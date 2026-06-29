@@ -959,7 +959,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("You")) {
+            Section(header: Text("Me")) {
                 Button(action: { editingPlayer = meAsPlayer() }) {
                     HStack(spacing: 8) {
                         let me = meAsPlayer()
