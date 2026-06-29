@@ -745,7 +745,7 @@ struct GameView: View {
                 MatchOverOverlay(
                     title: "It's a Tie!",
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                    actionTitle: NSLocalizedString("game.new_match", comment: ""),
+                    actionTitle: NSLocalizedString("game.rematch", comment: ""),
                     action: newMatch,
                     isMatchOver: true
                 )
@@ -753,7 +753,7 @@ struct GameView: View {
                 MatchOverOverlay(
                     title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                    actionTitle: NSLocalizedString("game.new_match", comment: ""),
+                    actionTitle: NSLocalizedString("game.rematch", comment: ""),
                     action: newMatch,
                     isMatchOver: true
                 )
