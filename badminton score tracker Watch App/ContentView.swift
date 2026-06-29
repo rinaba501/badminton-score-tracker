@@ -39,6 +39,12 @@ struct Player: Identifiable, Codable, Equatable {
         "avatar_racket_mustache", "avatar_headdress", "avatar_net"
     ]
 
+    static let sportIcons: [String] = [
+        "star.fill", "bolt.fill", "flame.fill", "crown.fill",
+        "heart.fill", "moon.fill", "sun.max.fill", "snowflake",
+        "pawprint.fill", "leaf.fill", "figure.run", "sportscourt.fill"
+    ]
+
     var avatarColor: Color { Self.avatarColors[colorIndex % Self.avatarColors.count] }
 
     var initials: String {
@@ -65,11 +71,17 @@ struct AvatarView: View {
                 .fill(color)
                 .frame(width: size, height: size)
             if let icon = iconName {
-                Image(icon)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: size, height: size)
-                    .clipShape(Circle())
+                if Player.avatarImageNames.contains(icon) {
+                    Image(icon)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: size, height: size)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: size * 0.48, weight: .medium))
+                        .foregroundColor(.white)
+                }
             } else {
                 Text(initials)
                     .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
@@ -1226,6 +1238,26 @@ struct PlayerEditView: View {
                         }
                         .frame(height: 36)
                         .onTapGesture { localPlayer.iconName = imageName }
+                    }
+                }
+
+                Text("Icons")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(Player.sportIcons, id: \.self) { icon in
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(localPlayer.iconName == icon
+                                      ? Color.blue.opacity(0.5)
+                                      : Color.secondary.opacity(0.25))
+                            Image(systemName: icon)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                        }
+                        .frame(height: 36)
+                        .onTapGesture { localPlayer.iconName = icon }
                     }
                 }
 
