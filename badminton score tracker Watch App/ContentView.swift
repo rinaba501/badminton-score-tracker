@@ -250,6 +250,8 @@ struct MenuView: View {
 struct PreMatchView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
+    @AppStorage("myColorIndex") private var myColorIndex: Int = 0
+    @AppStorage("myIconName") private var myIconName: String = ""
     @AppStorage("iServeFirst") private var iServeFirst = true
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
@@ -280,11 +282,13 @@ struct PreMatchView: View {
     }
 
     private func avatarColor(for name: String) -> Color {
-        roster.first(where: { $0.name == name })?.avatarColor ?? .gray
+        if name == myName { return Player.avatarColors[myColorIndex % Player.avatarColors.count] }
+        return roster.first(where: { $0.name == name })?.avatarColor ?? .gray
     }
 
     private func avatarIcon(for name: String) -> String? {
-        roster.first(where: { $0.name == name })?.iconName
+        if name == myName { return myIconName.isEmpty ? nil : myIconName }
+        return roster.first(where: { $0.name == name })?.iconName
     }
 
     private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
@@ -438,6 +442,9 @@ enum CourtTheme: String, Codable, CaseIterable {
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
+    @AppStorage("myName") private var myName = "Me"
+    @AppStorage("myColorIndex") private var myColorIndex: Int = 0
+    @AppStorage("myIconName") private var myIconName: String = ""
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
@@ -480,11 +487,13 @@ struct GameView: View {
     }
 
     private func avatarColor(for name: String) -> Color {
+        if name == effectiveMyName { return Player.avatarColors[myColorIndex % Player.avatarColors.count] }
         let roster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
         return roster.first(where: { $0.name == name })?.avatarColor ?? .gray
     }
 
     private func avatarIcon(for name: String) -> String? {
+        if name == effectiveMyName { return myIconName.isEmpty ? nil : myIconName }
         let roster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
         return roster.first(where: { $0.name == name })?.iconName
     }
@@ -880,9 +889,12 @@ struct SettingsView: View {
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
     @AppStorage("announceScore") private var announceScore = true
     @AppStorage("enableSounds") private var enableSounds = true
+    @AppStorage("myColorIndex") private var myColorIndex: Int = 0
+    @AppStorage("myIconName") private var myIconName: String = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     @State private var editingPlayer: Player? = nil
+    @State private var editingMe = false
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -919,6 +931,22 @@ struct SettingsView: View {
 
             Section(header: Text("Your Name")) {
                 TextField(NSLocalizedString("settings.your_name", comment: ""), text: $myName)
+                Button(action: { editingMe = true }) {
+                    HStack(spacing: 8) {
+                        AvatarView(
+                            name: myName,
+                            color: Player.avatarColors[myColorIndex % Player.avatarColors.count],
+                            size: 28,
+                            iconName: myIconName.isEmpty ? nil : myIconName
+                        )
+                        Text("Edit avatar")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
 
             Section(header: Text("Players")) {
@@ -985,6 +1013,16 @@ struct SettingsView: View {
         }
         .sheet(item: $editingPlayer) { player in
             PlayerEditView(initialPlayer: player, onSave: savePlayerEdit)
+        }
+        .sheet(isPresented: $editingMe) {
+            PlayerEditView(
+                initialPlayer: Player(name: myName, colorIndex: myColorIndex, iconName: myIconName.isEmpty ? nil : myIconName),
+                onSave: { updated in
+                    myColorIndex = updated.colorIndex
+                    myIconName = updated.iconName ?? ""
+                    editingMe = false
+                }
+            )
         }
     }
 }
