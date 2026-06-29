@@ -500,6 +500,19 @@ struct GameView: View {
     private func tap(_ side: Side) {
         guard match.gameWinner == nil, match.matchWinner == nil, !timeExpiredWinner else { return }
         undoStack.append(match)
+
+        if timeModeEnabled && suddenDeath {
+            // Sudden death: this point ends the current game immediately
+            match.score(side)
+            if match.gameWinner == nil {
+                // Point didn't naturally end the game — force it
+                match.recordSuddenDeathGame(winner: side)
+            }
+            suddenDeath = false
+            resolveAfterGame()
+            return
+        }
+
         let wasGamePoint = match.isGamePoint
         match.score(side)
 
@@ -526,11 +539,31 @@ struct GameView: View {
         announceCurrentScore()
     }
 
+    /// Called after a sudden-death game resolves — checks match state and plays appropriate sounds.
+    private func resolveAfterGame() {
+        if let winner = match.matchWinner {
+            timeModeWinner = winner
+            WKInterfaceDevice.current().play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { WKInterfaceDevice.current().play(.success) }
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveMatch()
+        } else if match.isTied {
+            // Edge case: equal games, no further games possible
+            timeModeWinner = .me  // placeholder — overlay will show "Tie"
+            saveMatch()
+        } else {
+            WKInterfaceDevice.current().play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { WKInterfaceDevice.current().play(.retry) }
+            if enableSounds { soundPlayer.playGameWin() }
+        }
+    }
+
     // True once time has expired and a winner was determined (blocks further scoring)
     private var timeExpiredWinner: Bool { timeModeWinner != nil }
 
     private func handleTimeUp() {
         guard timeModeWinner == nil else { return }
+        speak(NSLocalizedString("speech.time_up", comment: ""))
         if match.myGamesWon != match.opponentGamesWon {
             let w: Side = match.myGamesWon > match.opponentGamesWon ? .me : .opponent
             timeModeWinner = w
@@ -620,6 +653,7 @@ struct GameView: View {
 
     private func startNextGame() {
         undoStack.removeAll()
+        suddenDeath = false
         match.startNextGame()
         WKInterfaceDevice.current().play(.start)
     }
@@ -739,7 +773,15 @@ struct GameView: View {
                     .allowsHitTesting(false)
             }
 
-            if let winner = match.matchWinner ?? timeModeWinner {
+            if match.isTied {
+                MatchOverOverlay(
+                    title: "It's a Tie!",
+                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                    actionTitle: NSLocalizedString("game.new_match", comment: ""),
+                    action: newMatch,
+                    isMatchOver: true
+                )
+            } else if let winner = match.matchWinner ?? timeModeWinner {
                 MatchOverOverlay(
                     title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
