@@ -516,12 +516,14 @@ struct GameView: View {
         let wasGamePoint = match.isGamePoint
         match.score(side)
 
+        let announcementDelay: Double
         if match.matchWinner != nil {
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 WKInterfaceDevice.current().play(.success)
             }
             if enableSounds { soundPlayer.playMatchWin() }
+            announcementDelay = enableSounds ? 0.7 : 0
             saveMatch()
         } else if match.gameWinner != nil {
             WKInterfaceDevice.current().play(.success)
@@ -529,14 +531,21 @@ struct GameView: View {
                 WKInterfaceDevice.current().play(.retry)
             }
             if enableSounds { soundPlayer.playGameWin() }
+            announcementDelay = enableSounds ? 0.5 : 0
         } else if !wasGamePoint && match.isGamePoint {
             WKInterfaceDevice.current().play(.notification)
             if enableSounds { soundPlayer.playGamePoint() }
+            announcementDelay = enableSounds ? 0.25 : 0
         } else {
             WKInterfaceDevice.current().play(.click)
             if enableSounds { soundPlayer.playScore() }
+            announcementDelay = enableSounds ? 0.25 : 0
         }
-        announceCurrentScore()
+        if announcementDelay > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + announcementDelay) { announceCurrentScore() }
+        } else {
+            announceCurrentScore()
+        }
     }
 
     /// Called after a sudden-death game resolves — checks match state and plays appropriate sounds.
