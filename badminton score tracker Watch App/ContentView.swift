@@ -498,32 +498,18 @@ struct GameView: View {
     }
 
     private func tap(_ side: Side) {
-        // Sudden death: next point after a tied time-up ends the match
-        if timeModeEnabled && suddenDeath && timeModeWinner == nil {
-            match.score(side)
-            timeModeWinner = side
-            WKInterfaceDevice.current().play(.success)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                WKInterfaceDevice.current().play(.success)
-            }
-            if enableSounds { soundPlayer.playMatchWin() }
-            saveTimeModeMatch(winner: side)
-            return
-        }
-
-        guard match.gameWinner == nil, match.matchWinner == nil, timeModeWinner == nil else { return }
+        guard match.gameWinner == nil, match.matchWinner == nil, !timeExpiredWinner else { return }
         undoStack.append(match)
         let wasGamePoint = match.isGamePoint
         match.score(side)
 
-        if let winner = match.matchWinner {
-            if timeModeEnabled { timeModeWinner = winner }
+        if match.matchWinner != nil {
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 WKInterfaceDevice.current().play(.success)
             }
             if enableSounds { soundPlayer.playMatchWin() }
-            if timeModeEnabled { saveTimeModeMatch(winner: winner) } else { saveMatch() }
+            saveMatch()
         } else if match.gameWinner != nil {
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -540,53 +526,27 @@ struct GameView: View {
         announceCurrentScore()
     }
 
+    // True once time has expired and a winner was determined (blocks further scoring)
+    private var timeExpiredWinner: Bool { timeModeWinner != nil }
+
     private func handleTimeUp() {
         guard timeModeWinner == nil else { return }
-        // Determine leader: games won first, then current game score
-        let winner: Side?
         if match.myGamesWon != match.opponentGamesWon {
-            winner = match.myGamesWon > match.opponentGamesWon ? .me : .opponent
-        } else if match.myScore != match.opponentScore {
-            winner = match.myScore > match.opponentScore ? .me : .opponent
-        } else {
-            winner = nil
-        }
-        if let w = winner {
+            let w: Side = match.myGamesWon > match.opponentGamesWon ? .me : .opponent
             timeModeWinner = w
             WKInterfaceDevice.current().play(.success)
             if enableSounds { soundPlayer.playMatchWin() }
-            saveTimeModeMatch(winner: w)
+            saveMatch()
+        } else if match.myScore != match.opponentScore {
+            let w: Side = match.myScore > match.opponentScore ? .me : .opponent
+            timeModeWinner = w
+            WKInterfaceDevice.current().play(.success)
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveMatch()
         } else {
             suddenDeath = true
             WKInterfaceDevice.current().play(.notification)
         }
-    }
-
-    private func saveTimeModeMatch(winner: Side) {
-        guard !savedCurrentMatch else { return }
-        savedCurrentMatch = true
-        saveToRoster(effectiveOpponentName)
-        saveToRoster(effectiveMyName)
-        let currentRoster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
-        var history = decodeHistory()
-        // Include all completed games plus the in-progress game if any score exists
-        var games = match.completedGames
-        if match.myScore > 0 || match.opponentScore > 0 {
-            games.append(GameScore(my: match.myScore, opponent: match.opponentScore))
-        }
-        history.append(MatchRecord(
-            games: games,
-            myGamesWon: match.myGamesWon,
-            opponentGamesWon: match.opponentGamesWon,
-            winner: name(for: winner),
-            myName: effectiveMyName,
-            opponentName: effectiveOpponentName,
-            date: Date(),
-            duration: Date().timeIntervalSince(matchStartDate),
-            myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
-            opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
-        ))
-        if let encoded = try? JSONEncoder().encode(history) { matchHistoryData = encoded }
     }
 
     private func undo() {
@@ -680,14 +640,21 @@ struct GameView: View {
     }
 
     private func saveMatch() {
-        guard !savedCurrentMatch, let winner = match.matchWinner else { return }
+        // In time mode the timer may expire mid-game; use timeModeWinner as fallback
+        let winner = match.matchWinner ?? timeModeWinner
+        guard !savedCurrentMatch, let winner else { return }
         savedCurrentMatch = true
         saveToRoster(effectiveOpponentName)
         saveToRoster(effectiveMyName)
         let currentRoster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
+        var games = match.completedGames
+        // Append in-progress game when time expired mid-game
+        if timeModeEnabled && match.matchWinner == nil && (match.myScore > 0 || match.opponentScore > 0) {
+            games.append(GameScore(my: match.myScore, opponent: match.opponentScore))
+        }
         var history = decodeHistory()
         history.append(MatchRecord(
-            games: match.completedGames,
+            games: games,
             myGamesWon: match.myGamesWon,
             opponentGamesWon: match.opponentGamesWon,
             winner: name(for: winner),
@@ -698,9 +665,7 @@ struct GameView: View {
             myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
             opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
         ))
-        if let encoded = try? JSONEncoder().encode(history) {
-            matchHistoryData = encoded
-        }
+        if let encoded = try? JSONEncoder().encode(history) { matchHistoryData = encoded }
     }
 
     private func decodeHistory() -> [MatchRecord] {
@@ -731,14 +696,13 @@ struct GameView: View {
                     .padding(.vertical, 3)
                     .background(Color.black.opacity(0.4))
                     .cornerRadius(8)
-                } else {
-                    GamesWonHeader(
-                        myName: effectiveMyName, opponentName: effectiveOpponentName,
-                        myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
-                        canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil,
-                        onUndo: undo
-                    )
                 }
+                GamesWonHeader(
+                    myName: effectiveMyName, opponentName: effectiveOpponentName,
+                    myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
+                    canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil && timeModeWinner == nil,
+                    onUndo: undo
+                )
 
                 ScoreView(
                     name: effectiveOpponentName,
@@ -765,18 +729,17 @@ struct GameView: View {
             }
             .padding(.horizontal, 10)
 
-            if !timeModeEnabled && match.matchWinner == nil && match.isGamePoint {
+            if match.matchWinner == nil && timeModeWinner == nil && match.isGamePoint {
                 bannerOverlay(match.isMatchPoint ? NSLocalizedString("game.match_point", comment: "") : NSLocalizedString("game.game_point", comment: ""))
                     .allowsHitTesting(false)
             }
 
-            if timeModeEnabled && suddenDeath && timeModeWinner == nil {
+            if suddenDeath && timeModeWinner == nil {
                 bannerOverlay("Sudden Death!")
                     .allowsHitTesting(false)
             }
 
-            // Time mode match over
-            if timeModeEnabled, let winner = timeModeWinner {
+            if let winner = match.matchWinner ?? timeModeWinner {
                 MatchOverOverlay(
                     title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
@@ -784,23 +747,13 @@ struct GameView: View {
                     action: newMatch,
                     isMatchOver: true
                 )
-            } else if !timeModeEnabled {
-                if let winner = match.matchWinner {
-                    MatchOverOverlay(
-                        title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
-                        games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                        actionTitle: NSLocalizedString("game.new_match", comment: ""),
-                        action: newMatch,
-                        isMatchOver: true
-                    )
-                } else if match.gameWinner != nil {
-                    MatchOverOverlay(
-                        title: String(format: NSLocalizedString("game.wins_game", comment: ""), ""),
-                        games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                        actionTitle: NSLocalizedString("game.next_game", comment: ""),
-                        action: startNextGame
-                    )
-                }
+            } else if match.gameWinner != nil {
+                MatchOverOverlay(
+                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), ""),
+                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                    actionTitle: NSLocalizedString("game.next_game", comment: ""),
+                    action: startNextGame
+                )
             }
         }
         .toolbar {
@@ -813,7 +766,7 @@ struct GameView: View {
         .onChange(of: crownValue, perform: onCrownChanged)
         .onReceive(ticker) { _ in
             guard timeModeEnabled, timeModeWinner == nil, !suddenDeath,
-                  match.matchWinner == nil, match.gameWinner == nil else { return }
+                  match.matchWinner == nil else { return }
             if timeRemaining > 0 {
                 timeRemaining -= 1
             } else {
