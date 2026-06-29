@@ -29,10 +29,14 @@ struct Player: Identifiable, Codable, Equatable {
         .cyan, .mint, .teal, .indigo, .yellow, .brown
     ]
 
-    static let sportIcons: [String] = [
-        "star.fill", "bolt.fill", "flame.fill", "crown.fill",
-        "heart.fill", "moon.fill", "sun.max.fill", "snowflake",
-        "pawprint.fill", "leaf.fill", "figure.run", "sportscourt.fill"
+    static let avatarImageNames: [String] = [
+        "avatar_shuttlecock_happy", "avatar_shuttlecock_cute",
+        "avatar_shuttlecock_angry", "avatar_shuttlecock_simple",
+        "avatar_blonde_girl", "avatar_purple_girl",
+        "avatar_messy_bun", "avatar_blue_cap",
+        "avatar_red_cap", "avatar_cap_shuttlecock",
+        "avatar_racket_happy", "avatar_racket_cool",
+        "avatar_racket_mustache", "avatar_headdress", "avatar_net"
     ]
 
     var avatarColor: Color { Self.avatarColors[colorIndex % Self.avatarColors.count] }
@@ -61,9 +65,11 @@ struct AvatarView: View {
                 .fill(color)
                 .frame(width: size, height: size)
             if let icon = iconName {
-                Image(systemName: icon)
-                    .font(.system(size: size * 0.48, weight: .medium))
-                    .foregroundColor(.white)
+                Image(icon)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
             } else {
                 Text(initials)
                     .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
@@ -1190,7 +1196,7 @@ struct PlayerEditView: View {
                     }
                 }
 
-                Text("Icon")
+                Text("Avatar")
                     .font(.caption2)
                     .foregroundColor(.secondary)
 
@@ -1204,21 +1210,22 @@ struct PlayerEditView: View {
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                     }
-                    .frame(height: 30)
+                    .frame(height: 36)
                     .onTapGesture { localPlayer.iconName = nil }
 
-                    ForEach(Player.sportIcons, id: \.self) { icon in
+                    ForEach(Player.avatarImageNames, id: \.self) { imageName in
                         ZStack {
                             RoundedRectangle(cornerRadius: 6)
-                                .fill(localPlayer.iconName == icon
+                                .fill(localPlayer.iconName == imageName
                                       ? Color.blue.opacity(0.5)
                                       : Color.secondary.opacity(0.25))
-                            Image(systemName: icon)
-                                .font(.system(size: 13))
-                                .foregroundColor(.white)
+                            Image(imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .padding(3)
                         }
-                        .frame(height: 30)
-                        .onTapGesture { localPlayer.iconName = icon }
+                        .frame(height: 36)
+                        .onTapGesture { localPlayer.iconName = imageName }
                     }
                 }
 
