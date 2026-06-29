@@ -449,6 +449,8 @@ struct GameView: View {
 
     @AppStorage("announceScore") private var announceScore = true
     @AppStorage("enableSounds") private var enableSounds = true
+    @AppStorage("timeModeEnabled") private var timeModeEnabled = false
+    @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
     @StateObject private var soundPlayer = SoundPlayer()
 
     @State private var match = BadmintonMatch()
@@ -459,6 +461,12 @@ struct GameView: View {
     @State private var lastCrownScore: Double = 0
     @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
+
+    // Time mode
+    @State private var timeRemaining: TimeInterval = 0
+    @State private var timeModeWinner: Side? = nil
+    @State private var suddenDeath = false
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
     private var effectiveOpponentName: String { matchOpponentName.isEmpty ? "Guest" : matchOpponentName }
@@ -490,7 +498,20 @@ struct GameView: View {
     }
 
     private func tap(_ side: Side) {
-        guard match.gameWinner == nil, match.matchWinner == nil else { return }
+        // Sudden death: next point after a tied time-up ends the match
+        if timeModeEnabled && suddenDeath && timeModeWinner == nil {
+            match.score(side)
+            timeModeWinner = side
+            WKInterfaceDevice.current().play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                WKInterfaceDevice.current().play(.success)
+            }
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveTimeModeMatch(winner: side)
+            return
+        }
+
+        guard match.gameWinner == nil, match.matchWinner == nil, timeModeWinner == nil else { return }
         undoStack.append(match)
         let wasGamePoint = match.isGamePoint
         match.score(side)
@@ -516,6 +537,47 @@ struct GameView: View {
             if enableSounds { soundPlayer.playScore() }
         }
         announceCurrentScore()
+    }
+
+    private func handleTimeUp() {
+        guard timeModeWinner == nil else { return }
+        if match.myScore > match.opponentScore {
+            timeModeWinner = .me
+            WKInterfaceDevice.current().play(.success)
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveTimeModeMatch(winner: .me)
+        } else if match.opponentScore > match.myScore {
+            timeModeWinner = .opponent
+            WKInterfaceDevice.current().play(.success)
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveTimeModeMatch(winner: .opponent)
+        } else {
+            suddenDeath = true
+            WKInterfaceDevice.current().play(.notification)
+        }
+    }
+
+    private func saveTimeModeMatch(winner: Side) {
+        guard !savedCurrentMatch else { return }
+        savedCurrentMatch = true
+        saveToRoster(effectiveOpponentName)
+        saveToRoster(effectiveMyName)
+        let currentRoster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
+        var history = decodeHistory()
+        let game = GameScore(my: match.myScore, opponent: match.opponentScore)
+        history.append(MatchRecord(
+            games: [game],
+            myGamesWon: winner == .me ? 1 : 0,
+            opponentGamesWon: winner == .opponent ? 1 : 0,
+            winner: name(for: winner),
+            myName: effectiveMyName,
+            opponentName: effectiveOpponentName,
+            date: Date(),
+            duration: Date().timeIntervalSince(matchStartDate),
+            myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
+            opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
+        ))
+        if let encoded = try? JSONEncoder().encode(history) { matchHistoryData = encoded }
     }
 
     private func undo() {
@@ -594,14 +656,22 @@ struct GameView: View {
     }
 
     private func newMatch() {
-        match = BadmintonMatch(
-            serverIsMe: iServeFirst,
-            pointsToWin: pointsToWin,
-            pointCap: pointsToWin + 9,
-            gamesToWin: (gamesInMatch / 2) + 1
-        )
+        if timeModeEnabled {
+            match = BadmintonMatch(serverIsMe: iServeFirst, pointsToWin: 999, pointCap: 999, gamesToWin: 999)
+        } else {
+            match = BadmintonMatch(
+                serverIsMe: iServeFirst,
+                pointsToWin: pointsToWin,
+                pointCap: pointsToWin + 9,
+                gamesToWin: (gamesInMatch / 2) + 1
+            )
+        }
         undoStack.removeAll()
         savedCurrentMatch = false
+        timeModeWinner = nil
+        suddenDeath = false
+        timeRemaining = TimeInterval(timeLimitMinutes * 60)
+        matchStartDate = Date()
     }
 
     private func saveMatch() {
@@ -632,18 +702,38 @@ struct GameView: View {
         (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
     }
 
+    private var timerLabel: String {
+        let m = Int(timeRemaining) / 60
+        let s = Int(timeRemaining) % 60
+        return String(format: "%d:%02d", m, s)
+    }
+
     var body: some View {
         ZStack {
             courtTheme.color
                 .ignoresSafeArea()
 
             VStack(spacing: 6) {
-                GamesWonHeader(
-                    myName: effectiveMyName, opponentName: effectiveOpponentName,
-                    myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
-                    canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil,
-                    onUndo: undo
-                )
+                if timeModeEnabled {
+                    HStack {
+                        Image(systemName: "timer")
+                            .font(.caption2)
+                        Text(timerLabel)
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .foregroundColor(timeRemaining <= 30 && timeRemaining > 0 ? .red : .white)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.black.opacity(0.4))
+                    .cornerRadius(8)
+                } else {
+                    GamesWonHeader(
+                        myName: effectiveMyName, opponentName: effectiveOpponentName,
+                        myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
+                        canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil,
+                        onUndo: undo
+                    )
+                }
 
                 ScoreView(
                     name: effectiveOpponentName,
@@ -670,26 +760,42 @@ struct GameView: View {
             }
             .padding(.horizontal, 10)
 
-            if match.matchWinner == nil && match.isGamePoint {
+            if !timeModeEnabled && match.matchWinner == nil && match.isGamePoint {
                 bannerOverlay(match.isMatchPoint ? NSLocalizedString("game.match_point", comment: "") : NSLocalizedString("game.game_point", comment: ""))
                     .allowsHitTesting(false)
             }
 
-            if let winner = match.matchWinner {
+            if timeModeEnabled && suddenDeath && timeModeWinner == nil {
+                bannerOverlay("Sudden Death!")
+                    .allowsHitTesting(false)
+            }
+
+            // Time mode match over
+            if timeModeEnabled, let winner = timeModeWinner {
                 MatchOverOverlay(
                     title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
-                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                    games: "\(match.myScore) – \(match.opponentScore)",
                     actionTitle: NSLocalizedString("game.new_match", comment: ""),
                     action: newMatch,
                     isMatchOver: true
                 )
-            } else if match.gameWinner != nil {
-                MatchOverOverlay(
-                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), ""),
-                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                    actionTitle: NSLocalizedString("game.next_game", comment: ""),
-                    action: startNextGame
-                )
+            } else if !timeModeEnabled {
+                if let winner = match.matchWinner {
+                    MatchOverOverlay(
+                        title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
+                        games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                        actionTitle: NSLocalizedString("game.new_match", comment: ""),
+                        action: newMatch,
+                        isMatchOver: true
+                    )
+                } else if match.gameWinner != nil {
+                    MatchOverOverlay(
+                        title: String(format: NSLocalizedString("game.wins_game", comment: ""), ""),
+                        games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                        actionTitle: NSLocalizedString("game.next_game", comment: ""),
+                        action: startNextGame
+                    )
+                }
             }
         }
         .toolbar {
@@ -700,14 +806,27 @@ struct GameView: View {
         .focusable()
         .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)
         .onChange(of: crownValue, perform: onCrownChanged)
+        .onReceive(ticker) { _ in
+            guard timeModeEnabled, timeModeWinner == nil, !suddenDeath else { return }
+            if timeRemaining > 0 {
+                timeRemaining -= 1
+            } else {
+                handleTimeUp()
+            }
+        }
         .onAppear {
             if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
-                match = BadmintonMatch(
-                    serverIsMe: iServeFirst,
-                    pointsToWin: pointsToWin,
-                    pointCap: pointsToWin + 9,
-                    gamesToWin: (gamesInMatch / 2) + 1
-                )
+                if timeModeEnabled {
+                    match = BadmintonMatch(serverIsMe: iServeFirst, pointsToWin: 999, pointCap: 999, gamesToWin: 999)
+                    timeRemaining = TimeInterval(timeLimitMinutes * 60)
+                } else {
+                    match = BadmintonMatch(
+                        serverIsMe: iServeFirst,
+                        pointsToWin: pointsToWin,
+                        pointCap: pointsToWin + 9,
+                        gamesToWin: (gamesInMatch / 2) + 1
+                    )
+                }
             }
             crownValue = 0
             lastCrownScore = 0
@@ -882,6 +1001,8 @@ struct SettingsView: View {
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
     @AppStorage("announceScore") private var announceScore = true
+    @AppStorage("timeModeEnabled") private var timeModeEnabled = false
+    @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
     @AppStorage("enableSounds") private var enableSounds = true
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
@@ -1026,6 +1147,19 @@ struct SettingsView: View {
                     Text("settings.games_1").tag(1)
                     Text("settings.games_3").tag(3)
                     Text("settings.games_5").tag(5)
+                }
+            }
+
+            Section(header: Text("Time Mode")) {
+                Toggle("Enable", isOn: $timeModeEnabled)
+                if timeModeEnabled {
+                    Picker("Duration", selection: $timeLimitMinutes) {
+                        Text("5 min").tag(5)
+                        Text("10 min").tag(10)
+                        Text("15 min").tag(15)
+                        Text("20 min").tag(20)
+                        Text("30 min").tag(30)
+                    }
                 }
             }
         }
