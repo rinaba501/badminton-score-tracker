@@ -1151,7 +1151,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("Time Mode")) {
+            Section(header: Text("Match Timer")) {
                 Toggle("Enable", isOn: $timeModeEnabled)
                 if timeModeEnabled {
                     VStack(spacing: 6) {
