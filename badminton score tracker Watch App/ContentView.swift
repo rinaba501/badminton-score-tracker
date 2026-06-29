@@ -462,6 +462,7 @@ struct GameView: View {
     @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
     @State private var showServePicker = false
+    @State private var pendingNewMatch = false
 
     // Time mode
     @State private var timeRemaining: TimeInterval = 0
@@ -666,16 +667,25 @@ struct GameView: View {
     }
 
     private func beginNextGame(serverIsMe: Bool) {
-        undoStack.removeAll()
-        suddenDeath = false
-        showServePicker = false
-        match.startNextGame(serverIsMe: serverIsMe)
-        WKInterfaceDevice.current().play(.start)
+        if pendingNewMatch {
+            beginNewMatch(serverIsMe: serverIsMe)
+        } else {
+            undoStack.removeAll()
+            suddenDeath = false
+            showServePicker = false
+            match.startNextGame(serverIsMe: serverIsMe)
+            WKInterfaceDevice.current().play(.start)
+        }
     }
 
     private func newMatch() {
+        pendingNewMatch = true
+        showServePicker = true
+    }
+
+    private func beginNewMatch(serverIsMe: Bool) {
         match = BadmintonMatch(
-            serverIsMe: iServeFirst,
+            serverIsMe: serverIsMe,
             pointsToWin: pointsToWin,
             pointCap: pointsToWin + 9,
             gamesToWin: (gamesInMatch / 2) + 1
@@ -684,6 +694,8 @@ struct GameView: View {
         savedCurrentMatch = false
         timeModeWinner = nil
         suddenDeath = false
+        showServePicker = false
+        pendingNewMatch = false
         timeRemaining = TimeInterval(timeLimitMinutes * 60)
         matchStartDate = Date()
     }
@@ -788,7 +800,13 @@ struct GameView: View {
                     .allowsHitTesting(false)
             }
 
-            if match.isTied {
+            if showServePicker {
+                ServePickerOverlay(
+                    myName: effectiveMyName,
+                    opponentName: effectiveOpponentName,
+                    onSelect: { beginNextGame(serverIsMe: $0) }
+                )
+            } else if match.isTied {
                 MatchOverOverlay(
                     title: "It's a Tie!",
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
@@ -805,20 +823,12 @@ struct GameView: View {
                     isMatchOver: true
                 )
             } else if let gameWinner = match.gameWinner {
-                if showServePicker {
-                    ServePickerOverlay(
-                        myName: effectiveMyName,
-                        opponentName: effectiveOpponentName,
-                        onSelect: { beginNextGame(serverIsMe: $0) }
-                    )
-                } else {
-                    MatchOverOverlay(
-                        title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
-                        games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                        actionTitle: NSLocalizedString("game.next_game", comment: ""),
-                        action: startNextGame
-                    )
-                }
+                MatchOverOverlay(
+                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
+                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                    actionTitle: NSLocalizedString("game.next_game", comment: ""),
+                    action: startNextGame
+                )
             }
         }
         .toolbar {
