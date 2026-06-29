@@ -31,7 +31,7 @@ struct Player: Identifiable, Codable, Equatable {
 
     static let avatarImageNames: [String] = [
         "avatar_shuttlecock_happy", "avatar_shuttlecock_cute",
-        "avatar_shuttlecock_angry", "avatar_shuttlecock_simple",
+        "avatar_shuttlecock_angry",
         "avatar_blonde_girl", "avatar_purple_girl",
         "avatar_messy_bun", "avatar_blue_cap",
         "avatar_cap_shuttlecock", "avatar_headdress",
