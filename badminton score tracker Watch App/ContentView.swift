@@ -1013,7 +1013,6 @@ struct SettingsView: View {
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     @State private var editingPlayer: Player? = nil
-    @State private var showDuplicatePlayerNameAlert = false
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
 
     enum GameMode: String, Codable, CaseIterable {
@@ -1035,13 +1034,6 @@ struct SettingsView: View {
 
     private func savePlayerEdit(_ updated: Player) {
         let old = roster.first(where: { $0.id == updated.id })
-
-        // Reject duplicate names (excluding the player being edited)
-        if let old, old.name != updated.name,
-           roster.contains(where: { $0.id != updated.id && $0.name == updated.name }) {
-            showDuplicatePlayerNameAlert = true
-            return
-        }
 
         var r = roster
         if let idx = r.firstIndex(where: { $0.id == updated.id }) {
@@ -1119,6 +1111,14 @@ struct SettingsView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                var r = roster.filter { $0.id != player.id }
+                                if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                     }
                     .onDelete(perform: deletePlayers)
                 }
@@ -1188,12 +1188,8 @@ struct SettingsView: View {
             }
         }
         .sheet(item: $editingPlayer) { player in
-            PlayerEditView(initialPlayer: player, onSave: savePlayerEdit)
-        }
-        .alert("Name already taken", isPresented: $showDuplicatePlayerNameAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("A player with that name already exists.")
+            let others = roster.filter { $0.id != player.id }.map { $0.name }
+            PlayerEditView(initialPlayer: player, existingNames: others, onSave: savePlayerEdit)
         }
     }
 }
@@ -1433,13 +1429,24 @@ struct StatRow: View {
 struct PlayerEditView: View {
     let initialPlayer: Player
     let onSave: (Player) -> Void
+    let existingNames: [String]
 
     @State private var localPlayer: Player
+    @State private var isDuplicate = false
 
-    init(initialPlayer: Player, onSave: @escaping (Player) -> Void) {
+    init(initialPlayer: Player, existingNames: [String] = [], onSave: @escaping (Player) -> Void) {
         self.initialPlayer = initialPlayer
+        self.existingNames = existingNames
         self.onSave = onSave
         _localPlayer = State(initialValue: initialPlayer)
+    }
+
+    private var nameIsValid: Bool {
+        !localPlayer.name.trimmingCharacters(in: .whitespaces).isEmpty && !isDuplicate
+    }
+
+    private func checkDuplicate() {
+        isDuplicate = existingNames.contains(localPlayer.name.trimmingCharacters(in: .whitespaces))
     }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 4)
@@ -1465,8 +1472,15 @@ struct PlayerEditView: View {
                 TextField("Name", text: $localPlayer.name)
                     .textFieldStyle(.plain)
                     .padding(6)
-                    .background(Color.secondary.opacity(0.15))
+                    .background(isDuplicate ? Color.red.opacity(0.2) : Color.secondary.opacity(0.15))
                     .cornerRadius(8)
+                    .onSubmit { checkDuplicate() }
+                    .onChange(of: localPlayer.name) { _ in checkDuplicate() }
+                if isDuplicate {
+                    Text("Name already taken")
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                }
 
                 Text("Color")
                     .font(.caption2)
@@ -1544,6 +1558,7 @@ struct PlayerEditView: View {
                 .buttonStyle(.borderedProminent)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 4)
+                .disabled(!nameIsValid)
             }
             .padding(.horizontal, 8)
         }
