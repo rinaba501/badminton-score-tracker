@@ -886,8 +886,6 @@ struct SettingsView: View {
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     @State private var editingPlayer: Player? = nil
-    @State private var previousMyName: String = ""
-    @State private var showDuplicateNameAlert = false
     @State private var showDuplicatePlayerNameAlert = false
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
 
@@ -961,13 +959,12 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("Your Name")) {
-                TextField(NSLocalizedString("settings.your_name", comment: ""), text: $myName)
+            Section(header: Text("You")) {
                 Button(action: { editingPlayer = meAsPlayer() }) {
                     HStack(spacing: 8) {
                         let me = meAsPlayer()
                         AvatarView(name: me.name, color: me.avatarColor, size: 28, iconName: me.iconName)
-                        Text("Edit avatar")
+                        Text(myName)
                             .foregroundColor(.primary)
                         Spacer()
                         Image(systemName: "chevron.right")
@@ -1041,25 +1038,6 @@ struct SettingsView: View {
         }
         .sheet(item: $editingPlayer) { player in
             PlayerEditView(initialPlayer: player, onSave: savePlayerEdit)
-        }
-        .onAppear { previousMyName = myName }
-        .onChange(of: myName) { newName in
-            if opponents.contains(where: { $0.name == newName }) {
-                myName = previousMyName
-                showDuplicateNameAlert = true
-            } else {
-                var r = roster
-                if let idx = r.firstIndex(where: { $0.name == previousMyName }) {
-                    r[idx].name = newName
-                    if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
-                }
-                previousMyName = newName
-            }
-        }
-        .alert("Name already taken", isPresented: $showDuplicateNameAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("A player with that name already exists.")
         }
         .alert("Name already taken", isPresented: $showDuplicatePlayerNameAlert) {
             Button("OK", role: .cancel) {}
