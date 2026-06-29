@@ -462,7 +462,6 @@ struct GameView: View {
     @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
     @State private var showServePicker = false
-    @State private var pendingNewMatch = false
 
     // Time mode
     @State private var timeRemaining: TimeInterval = 0
@@ -663,23 +662,17 @@ struct GameView: View {
     }
 
     private func startNextGame() {
-        showServePicker = true
+        undoStack.removeAll()
+        suddenDeath = false
+        match.startNextGame()
+        WKInterfaceDevice.current().play(.start)
     }
 
     private func beginNextGame(serverIsMe: Bool) {
-        if pendingNewMatch {
-            beginNewMatch(serverIsMe: serverIsMe)
-        } else {
-            undoStack.removeAll()
-            suddenDeath = false
-            showServePicker = false
-            match.startNextGame(serverIsMe: serverIsMe)
-            WKInterfaceDevice.current().play(.start)
-        }
+        beginNewMatch(serverIsMe: serverIsMe)
     }
 
     private func newMatch() {
-        pendingNewMatch = true
         showServePicker = true
     }
 
@@ -695,7 +688,6 @@ struct GameView: View {
         timeModeWinner = nil
         suddenDeath = false
         showServePicker = false
-        pendingNewMatch = false
         timeRemaining = TimeInterval(timeLimitMinutes * 60)
         matchStartDate = Date()
     }
