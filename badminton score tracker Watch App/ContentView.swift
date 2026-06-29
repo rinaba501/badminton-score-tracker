@@ -609,6 +609,7 @@ struct GameView: View {
         savedCurrentMatch = true
         saveToRoster(effectiveOpponentName)
         saveToRoster(effectiveMyName)
+        let currentRoster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
         var history = decodeHistory()
         history.append(MatchRecord(
             games: match.completedGames,
@@ -618,7 +619,9 @@ struct GameView: View {
             myName: effectiveMyName,
             opponentName: effectiveOpponentName,
             date: Date(),
-            duration: Date().timeIntervalSince(matchStartDate)
+            duration: Date().timeIntervalSince(matchStartDate),
+            myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
+            opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
         ))
         if let encoded = try? JSONEncoder().encode(history) {
             matchHistoryData = encoded
@@ -885,6 +888,8 @@ struct SettingsView: View {
     @State private var editingPlayer: Player? = nil
     @State private var previousMyName: String = ""
     @State private var showDuplicateNameAlert = false
+    @State private var showDuplicatePlayerNameAlert = false
+    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -904,6 +909,15 @@ struct SettingsView: View {
     }
 
     private func savePlayerEdit(_ updated: Player) {
+        let old = roster.first(where: { $0.id == updated.id })
+
+        // Reject duplicate names (excluding the player being edited)
+        if let old, old.name != updated.name,
+           roster.contains(where: { $0.id != updated.id && $0.name == updated.name }) {
+            showDuplicatePlayerNameAlert = true
+            return
+        }
+
         var r = roster
         if let idx = r.firstIndex(where: { $0.id == updated.id }) {
             r[idx] = updated
@@ -911,6 +925,26 @@ struct SettingsView: View {
             r.insert(updated, at: 0)
         }
         if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+
+        // Propagate name change to match history via player ID
+        if let old, old.name != updated.name {
+            var history = (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
+            for i in history.indices {
+                if history[i].myPlayerId == updated.id {
+                    if history[i].winner == history[i].myName { history[i].winner = updated.name }
+                    history[i].myName = updated.name
+                }
+                if history[i].opponentPlayerId == updated.id {
+                    if history[i].winner == history[i].opponentName { history[i].winner = updated.name }
+                    history[i].opponentName = updated.name
+                }
+            }
+            if let encoded = try? JSONEncoder().encode(history) { matchHistoryData = encoded }
+
+            // Also update myName AppStorage if this is the "me" player
+            if old.name == myName { myName = updated.name }
+        }
+
         editingPlayer = nil
     }
 
@@ -1023,6 +1057,11 @@ struct SettingsView: View {
             }
         }
         .alert("Name already taken", isPresented: $showDuplicateNameAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("A player with that name already exists.")
+        }
+        .alert("Name already taken", isPresented: $showDuplicatePlayerNameAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text("A player with that name already exists.")
@@ -1290,6 +1329,15 @@ struct PlayerEditView: View {
                     Spacer()
                 }
                 .padding(.top, 4)
+
+                Text("Name")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                TextField("Name", text: $localPlayer.name)
+                    .textFieldStyle(.plain)
+                    .padding(6)
+                    .background(Color.secondary.opacity(0.15))
+                    .cornerRadius(8)
 
                 Text("Color")
                     .font(.caption2)
