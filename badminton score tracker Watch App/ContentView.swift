@@ -893,9 +893,11 @@ struct SettingsView: View {
         (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
     }
 
+    private var opponents: [Player] { roster.filter { $0.name != myName } }
+
     private func deletePlayers(at offsets: IndexSet) {
-        var r = roster
-        r.remove(atOffsets: offsets)
+        let toDelete = Set(offsets.map { opponents[$0].id })
+        var r = roster.filter { !toDelete.contains($0.id) }
         if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
     }
 
@@ -945,7 +947,7 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .font(.caption)
                 } else {
-                    ForEach(roster) { player in
+                    ForEach(opponents) { player in
                         Button(action: { editingPlayer = player }) {
                             HStack(spacing: 8) {
                                 AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
