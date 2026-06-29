@@ -2,61 +2,102 @@
 
 A **watchOS app** built with SwiftUI for tracking badminton match scores in real time.
 
+> **For the full feature specification, see [SPEC.md](SPEC.md).**
+> CLAUDE.md covers project structure, architecture, and working conventions.
+> SPEC.md covers what the app does and why.
+
+---
+
 ## Tech Stack
 - **Platform:** watchOS (Apple Watch)
 - **Language:** Swift
 - **UI Framework:** SwiftUI
-- **Audio:** AVFoundation (for score/win sound effects)
-- **Persistence:** `@AppStorage` (UserDefaults) with JSON encoding for game history
+- **Audio:** `AVAudioEngine` + `AVAudioPlayerNode` for programmatic sine-wave tones; `AVSpeechSynthesizer` for score announcements — no audio files required
+- **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs (`[Player]`, `[MatchRecord]`)
+
+---
 
 ## Project Structure
-All app code lives in a single file:
-- `badminton score tracker Watch App/ContentView.swift` — all views and logic
-- `badminton score tracker Watch App/badminton_score_trackerApp.swift` — app entry point
-- `badminton score tracker Watch App/Assets.xcassets/` — images (racket asset used in animation)
 
-## Current Features
-- **Menu screen** — New Game, Game History, Settings
-- **Game screen** — tap to score, long-press to reset, match point indicator, winner overlay
-- **Scoring rules** — win at 21 with 2-point lead, cap at 30 (deuce rules implemented)
-- **Racket animation** — plays on game start before the score UI appears
-- **Sound effects** — score sound and win sound via AVAudioPlayer (sound files must be in bundle)
-- **Game history** — saved to AppStorage, viewable in HistoryView
-- **Settings** — player names (myName / opponentName), game mode (singles/doubles enum exists but doubles not fully implemented)
+```
+badminton score tracker Watch App/
+  ContentView.swift          — all views and UI logic
+  MatchModel.swift           — BadmintonMatch, GameScore, MatchRecord, Side
+  badminton_score_trackerApp.swift — app entry point
+  Assets.xcassets/           — app icon, racket animation asset, 15 avatar images
+  *.lproj/Localizable.strings — en, ja, zh-Hans, ko, id, hi
+```
 
-## Architecture Notes
-- Navigation is state-driven via `ContentView.AppView` enum (menu/game/settings/history) — no NavigationLink
-- `@AppStorage` is used for all persistence (no CoreData or SwiftData)
-- `GameView.GameMode` enum (singles/doubles) is defined but doubles logic is not yet implemented
-- All views are in one file — consider splitting as the app grows
+### Key Models
+
+**`MatchModel.swift`**
+- `Side` — `.me` / `.opponent`
+- `GameScore` — `my: Int`, `opponent: Int` for one completed game
+- `BadmintonMatch` — pure scoring engine; no UI, no timers. Tracks scores, games won, serve side, win conditions
+- `MatchRecord` — persisted match result; stores player names + optional `UUID` player IDs for name-change tracking
+
+**`ContentView.swift`**
+- `Player` — `id: UUID`, `name`, `colorIndex`, `iconName?`; stored as JSON in `@AppStorage("playerRoster")`
+- `AvatarView` — renders asset image, SF Symbol, or initials depending on `iconName`
+- `ScoreAnnouncer` — wraps `AVSpeechSynthesizer`
+- `SoundPlayer` — wraps `AVAudioEngine` for programmatic tones
+- All screens: `MenuView`, `PreMatchView`, `GameView`, `SettingsView`, `HistoryView`, `StatsView`, `PlayerEditView`
+
+### Navigation
+State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.settings`, `.history`, `.stats`) — no `NavigationLink` at the top level.
+
+---
+
+## AppStorage Keys
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `myName` | `String` | Display name for the local player |
+| `matchMyName` | `String` | Near-side player for the current match |
+| `matchOpponentName` | `String` | Far-side player for the current match |
+| `playerRoster` | `Data` | JSON-encoded `[Player]` |
+| `matchHistory` | `Data` | JSON-encoded `[MatchRecord]` |
+| `iServeFirst` | `Bool` | Serve preference |
+| `pointsToWin` | `Int` | Default 21 |
+| `gamesInMatch` | `Int` | Default 3 |
+| `courtTheme` | `String` | `CourtTheme` raw value |
+| `announceScore` | `Bool` | Score announcement toggle |
+| `enableSounds` | `Bool` | Sound effects toggle |
+| `timeModeEnabled` | `Bool` | Match Timer mode toggle |
+| `timeLimitMinutes` | `Int` | Default 10 |
+
+---
+
+## Git Workflow — MUST FOLLOW
+
+- **Never commit directly to `main`** — all changes go through a PR
+- Create a `feature/...` or `fix/...` branch for every change
+- Every PR that adds or changes a feature **must also update `SPEC.md`**
+- Every PR that changes project structure, architecture, models, or conventions **must also update `CLAUDE.md`**
+- After merging: delete the local branch and prune remote refs (`git remote prune origin`)
+
+---
+
+## Keeping the Docs Up-to-Date
+
+When making any change, ask:
+- Does this add, remove, or change a user-facing feature? → Update **`SPEC.md`**
+- Does this add a new file, model, AppStorage key, or architectural pattern? → Update **`CLAUDE.md`**
+- Does this close a GitHub issue? → Move it from Open to Closed in **`SPEC.md`** with the PR number
+
+Both files should always reflect the current state of the codebase. A future session reading only these two files should have a complete picture of the project.
+
+---
+
+## Conventions
+- Use SwiftUI for all UI — no UIKit / WKInterfaceController
+- Keep watchOS constraints in mind: small screen (~44–46mm), large tap targets, no keyboard by default (scribble/dictation only)
+- `BadmintonMatch` must remain a pure value type — no UI, no timers, no side effects
+- Audio: tones via `AVAudioEngine`, speech via `AVSpeechSynthesizer` with `.duckOthers` — delay speech by tone duration to avoid interference
+- Localization: all user-facing strings go in `Localizable.strings` for all 6 languages (en, ja, zh-Hans, ko, id, hi)
+
+---
 
 ## GitHub Repo
 `rinaba501/badminton-score-tracker`
-
-## Open Issues (Feature Backlog)
-All tracked at https://github.com/rinaba501/badminton-score-tracker/issues
-
-| # | Feature |
-|---|---------|
-| 3 | Ask who serves first at match start |
-| 4 | Configurable match format (games & points) |
-| 5 | Time mode |
-| 6 | App icons |
-| 7 | Character selection per opponent |
-| 8 | Doubles support |
-| 9 | More animations |
-| 10 | Match history (enhanced) |
-| 11 | Player stats (win rate, streaks, avg points) |
-| 12 | Game duration tracking |
-| 13 | Share match result as image |
-| 14 | Sound effects (score, game win, match win) |
-| 15 | Dark / light mode toggle |
-| 16 | Undo last point |
-| 17 | Court color themes |
-| 18 | Custom player names with avatar/initials |
-
-## Conventions
-- Use SwiftUI for all UI — no UIKit/WKInterfaceController
-- Keep watchOS constraints in mind: small screen (~44mm/45mm), no keyboard by default, tap targets must be large
-- Sound files (`.mp3`) must be added to the Xcode bundle manually
-- Run on a real Apple Watch or watchOS Simulator for testing
+Issues: https://github.com/rinaba501/badminton-score-tracker/issues
