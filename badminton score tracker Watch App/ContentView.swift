@@ -516,13 +516,14 @@ struct GameView: View {
         let wasGamePoint = match.isGamePoint
         match.score(side)
 
-        if match.matchWinner != nil {
+        if let winner = match.matchWinner {
+            if timeModeEnabled { timeModeWinner = winner }
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 WKInterfaceDevice.current().play(.success)
             }
             if enableSounds { soundPlayer.playMatchWin() }
-            saveMatch()
+            if timeModeEnabled { saveTimeModeMatch(winner: winner) } else { saveMatch() }
         } else if match.gameWinner != nil {
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
