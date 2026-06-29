@@ -42,6 +42,7 @@
 "settings.your_name" = "你的名字";
 "settings.opponent_name" = "对手名字";
 "settings.crown" = "数字表冠";
+"settings.sound_effects" = "Sound effects";
 "settings.announce_score" = "播报分数";
 "settings.court_theme" = "球场主题";
 "settings.theme" = "主题";
