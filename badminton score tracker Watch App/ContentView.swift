@@ -884,6 +884,7 @@ struct SettingsView: View {
 
     @State private var editingPlayer: Player? = nil
     @State private var previousMyName: String = ""
+    @State private var showDuplicateNameAlert = false
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -1009,12 +1010,22 @@ struct SettingsView: View {
         }
         .onAppear { previousMyName = myName }
         .onChange(of: myName) { newName in
-            var r = roster
-            if let idx = r.firstIndex(where: { $0.name == previousMyName }) {
-                r[idx].name = newName
-                if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+            if opponents.contains(where: { $0.name == newName }) {
+                myName = previousMyName
+                showDuplicateNameAlert = true
+            } else {
+                var r = roster
+                if let idx = r.firstIndex(where: { $0.name == previousMyName }) {
+                    r[idx].name = newName
+                    if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+                }
+                previousMyName = newName
             }
-            previousMyName = newName
+        }
+        .alert("Name already taken", isPresented: $showDuplicateNameAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("A player with that name already exists.")
         }
     }
 }
