@@ -131,6 +131,56 @@ final class ScoreAnnouncer: ObservableObject {
     }
 }
 
+final class SoundPlayer: ObservableObject {
+    private let engine = AVAudioEngine()
+    private let node = AVAudioPlayerNode()
+    private let sampleRate: Double = 44100
+    private lazy var format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+
+    init() {
+        engine.attach(node)
+        engine.connect(node, to: engine.mainMixerNode, format: format)
+        try? engine.start()
+    }
+
+    private func tone(frequency: Float, duration: Float, amplitude: Float = 0.45) -> AVAudioPCMBuffer {
+        let frames = AVAudioFrameCount(Float(sampleRate) * duration)
+        let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames)!
+        buf.frameLength = frames
+        let data = buf.floatChannelData![0]
+        let sr = Float(sampleRate)
+        let decaySamples = sr * duration * 0.4
+        for i in 0..<Int(frames) {
+            let env = exp(-Float(i) / decaySamples)
+            data[i] = amplitude * env * sin(2 * .pi * frequency * Float(i) / sr)
+        }
+        return buf
+    }
+
+    private func schedule(_ buf: AVAudioPCMBuffer, after delay: Double = 0) {
+        let block = {
+            if !self.engine.isRunning { try? self.engine.start() }
+            self.node.scheduleBuffer(buf)
+            if !self.node.isPlaying { self.node.play() }
+        }
+        if delay == 0 { block() } else { DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: block) }
+    }
+
+    func playScore()     { schedule(tone(frequency: 880, duration: 0.18)) }
+    func playGamePoint() { schedule(tone(frequency: 740, duration: 0.18)) }
+
+    func playGameWin() {
+        schedule(tone(frequency: 523, duration: 0.2))
+        schedule(tone(frequency: 659, duration: 0.25), after: 0.18)
+    }
+
+    func playMatchWin() {
+        schedule(tone(frequency: 523, duration: 0.15))
+        schedule(tone(frequency: 659, duration: 0.15), after: 0.15)
+        schedule(tone(frequency: 784, duration: 0.35, amplitude: 0.6), after: 0.3)
+    }
+}
+
 struct ContentView: View {
     @State private var currentView: AppView = .menu
 
@@ -398,6 +448,8 @@ struct GameView: View {
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
 
     @AppStorage("announceScore") private var announceScore = true
+    @AppStorage("enableSounds") private var enableSounds = true
+    @StateObject private var soundPlayer = SoundPlayer()
 
     @State private var match = BadmintonMatch()
     @State private var undoStack: [BadmintonMatch] = []
@@ -448,16 +500,20 @@ struct GameView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 WKInterfaceDevice.current().play(.success)
             }
+            if enableSounds { soundPlayer.playMatchWin() }
             saveMatch()
         } else if match.gameWinner != nil {
             WKInterfaceDevice.current().play(.success)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 WKInterfaceDevice.current().play(.retry)
             }
+            if enableSounds { soundPlayer.playGameWin() }
         } else if !wasGamePoint && match.isGamePoint {
             WKInterfaceDevice.current().play(.notification)
+            if enableSounds { soundPlayer.playGamePoint() }
         } else {
             WKInterfaceDevice.current().play(.click)
+            if enableSounds { soundPlayer.playScore() }
         }
         announceCurrentScore()
     }
@@ -823,6 +879,7 @@ struct SettingsView: View {
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
     @AppStorage("announceScore") private var announceScore = true
+    @AppStorage("enableSounds") private var enableSounds = true
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     @State private var editingPlayer: Player? = nil
@@ -888,6 +945,7 @@ struct SettingsView: View {
             }
 
             Section(header: Text("settings.crown")) {
+                Toggle("settings.sound_effects", isOn: $enableSounds)
                 Toggle("settings.announce_score", isOn: $announceScore)
             }
 

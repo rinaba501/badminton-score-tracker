@@ -42,6 +42,7 @@
 "settings.your_name" = "Your Name";
 "settings.opponent_name" = "Opponent Name";
 "settings.crown" = "Digital Crown";
+"settings.sound_effects" = "Sound effects";
 "settings.announce_score" = "Announce score";
 "settings.court_theme" = "Court Theme";
 "settings.theme" = "Theme";
