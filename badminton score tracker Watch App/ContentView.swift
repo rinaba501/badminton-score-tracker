@@ -34,9 +34,10 @@ struct Player: Identifiable, Codable, Equatable {
         "avatar_shuttlecock_angry", "avatar_shuttlecock_simple",
         "avatar_blonde_girl", "avatar_purple_girl",
         "avatar_messy_bun", "avatar_blue_cap",
-        "avatar_red_cap", "avatar_cap_shuttlecock",
+        "avatar_cap_shuttlecock", "avatar_headdress",
         "avatar_racket_happy", "avatar_racket_cool",
-        "avatar_racket_mustache", "avatar_headdress", "avatar_net"
+        "avatar_racket_mustache", "avatar_net",
+        "avatar_red_cap", "avatar_viking"
     ]
 
     static let sportIcons: [String] = [
