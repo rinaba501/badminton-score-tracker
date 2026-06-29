@@ -154,6 +154,12 @@ struct MatchRecord: Identifiable, Codable, Equatable {
     var myPlayerId: UUID?
     var opponentPlayerId: UUID?
 
+    var shareText: String {
+        let gameLine = games.map { "\($0.my)–\($0.opponent)" }.joined(separator: ", ")
+        let result = "\(myGamesWon)–\(opponentGamesWon)"
+        return "🏸 \(myName) vs \(opponentName)\n🏆 \(winner) wins (\(result))\n\(gameLine)"
+    }
+
     init(id: UUID = UUID(),
          games: [GameScore],
          myGamesWon: Int,

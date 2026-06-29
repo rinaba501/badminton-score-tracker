@@ -676,12 +676,16 @@ struct GameView: View {
             }
 
             if let winner = match.matchWinner {
+                let winnerName = name(for: winner)
+                let gameSummary = match.completedGames.map { "\($0.my)–\($0.opponent)" }.joined(separator: ", ")
+                let shareStr = "🏸 \(effectiveMyName) vs \(effectiveOpponentName)\n🏆 \(winnerName) wins (\(match.myGamesWon)–\(match.opponentGamesWon))\n\(gameSummary)"
                 MatchOverOverlay(
-                    title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
+                    title: String(format: NSLocalizedString("game.wins_match", comment: ""), winnerName),
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
                     actionTitle: NSLocalizedString("game.new_match", comment: ""),
                     action: newMatch,
-                    isMatchOver: true
+                    isMatchOver: true,
+                    shareText: shareStr
                 )
             } else if match.gameWinner != nil {
                 MatchOverOverlay(
@@ -838,6 +842,7 @@ struct MatchOverOverlay: View {
     let actionTitle: String
     let action: () -> Void
     var isMatchOver: Bool = false
+    var shareText: String? = nil
 
     @State private var shimmer = false
 
@@ -859,6 +864,13 @@ struct MatchOverOverlay: View {
                 .foregroundColor(.white.opacity(0.85))
             Button(actionTitle, action: action)
                 .buttonStyle(.borderedProminent)
+            if isMatchOver, let text = shareText {
+                ShareLink(item: text) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .font(.caption)
+                }
+                .tint(.secondary)
+            }
         }
         .padding()
         .background(Color.black.opacity(0.85))
@@ -1171,6 +1183,13 @@ struct MatchHistoryRow: View {
             }
             .font(.caption2)
             .foregroundColor(.secondary)
+
+            ShareLink(item: record.shareText) {
+                Label("Share", systemImage: "square.and.arrow.up")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 2)
     }
