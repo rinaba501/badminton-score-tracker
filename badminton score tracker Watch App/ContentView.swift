@@ -15,15 +15,35 @@ struct Player: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
     var colorIndex: Int
+    var iconName: String?
 
-    init(id: UUID = UUID(), name: String, colorIndex: Int = 0) {
+    init(id: UUID = UUID(), name: String, colorIndex: Int = 0, iconName: String? = nil) {
         self.id = id
         self.name = name
         self.colorIndex = colorIndex
+        self.iconName = iconName
     }
 
     static let avatarColors: [Color] = [
-        .blue, .green, .orange, .purple, .pink, .red
+        .blue, .green, .orange, .purple, .pink, .red,
+        .cyan, .mint, .teal, .indigo, .yellow, .brown
+    ]
+
+    static let avatarImageNames: [String] = [
+        "avatar_shuttlecock_happy", "avatar_shuttlecock_cute",
+        "avatar_shuttlecock_angry",
+        "avatar_blonde_girl", "avatar_purple_girl",
+        "avatar_messy_bun", "avatar_blue_cap",
+        "avatar_cap_shuttlecock", "avatar_headdress",
+        "avatar_racket_happy", "avatar_racket_cool",
+        "avatar_racket_mustache", "avatar_net",
+        "avatar_red_cap", "avatar_viking"
+    ]
+
+    static let sportIcons: [String] = [
+        "star.fill", "bolt.fill", "flame.fill", "crown.fill",
+        "heart.fill", "moon.fill", "sun.max.fill", "snowflake",
+        "pawprint.fill", "leaf.fill", "figure.run", "sportscourt.fill"
     ]
 
     var avatarColor: Color { Self.avatarColors[colorIndex % Self.avatarColors.count] }
@@ -38,6 +58,7 @@ struct AvatarView: View {
     let name: String
     let color: Color
     var size: CGFloat = 28
+    var iconName: String? = nil
 
     private var initials: String {
         let words = name.split(separator: " ").prefix(2)
@@ -50,9 +71,23 @@ struct AvatarView: View {
             Circle()
                 .fill(color)
                 .frame(width: size, height: size)
-            Text(initials)
-                .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+            if let icon = iconName {
+                if Player.avatarImageNames.contains(icon) {
+                    Image(icon)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: size, height: size)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: size * 0.48, weight: .medium))
+                        .foregroundColor(.white)
+                }
+            } else {
+                Text(initials)
+                    .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            }
         }
     }
 }
@@ -198,6 +233,10 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.avatarColor ?? .gray
     }
 
+    private func avatarIcon(for name: String) -> String? {
+        roster.first(where: { $0.name == name })?.iconName
+    }
+
     private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let filteredRoster = roster.filter { $0.name != excluding }
         return List {
@@ -205,7 +244,7 @@ struct PreMatchView: View {
                 if !defaultLabel.isEmpty {
                     Button(action: { onSelect(defaultLabel) }) {
                         HStack {
-                            AvatarView(name: defaultLabel, color: defaultColor, size: 24)
+                            AvatarView(name: defaultLabel, color: defaultColor, size: 24, iconName: avatarIcon(for: defaultLabel))
                             Text(defaultLabel)
                         }
                     }
@@ -222,7 +261,7 @@ struct PreMatchView: View {
                     ForEach(filteredRoster) { player in
                         Button(action: { onSelect(player.name) }) {
                             HStack {
-                                AvatarView(name: player.name, color: player.avatarColor, size: 24)
+                                AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
                                 Text(player.name)
                             }
                         }
@@ -393,6 +432,11 @@ struct GameView: View {
         return roster.first(where: { $0.name == name })?.avatarColor ?? .gray
     }
 
+    private func avatarIcon(for name: String) -> String? {
+        let roster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
+        return roster.first(where: { $0.name == name })?.iconName
+    }
+
     private func tap(_ side: Side) {
         guard match.gameWinner == nil, match.matchWinner == nil else { return }
         undoStack.append(match)
@@ -549,6 +593,7 @@ struct GameView: View {
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .opponent,
                     avatarColor: avatarColor(for: effectiveOpponentName),
+                    avatarIcon: avatarIcon(for: effectiveOpponentName),
                     onTap: { tap(.opponent) }
                 )
 
@@ -559,6 +604,7 @@ struct GameView: View {
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .me,
                     avatarColor: avatarColor(for: effectiveMyName),
+                    avatarIcon: avatarIcon(for: effectiveMyName),
                     onTap: { tap(.me) }
                 )
 
@@ -664,6 +710,7 @@ struct ScoreView: View {
     let serveRight: Bool
     let isWinner: Bool
     let avatarColor: Color
+    var avatarIcon: String? = nil
     let onTap: () -> Void
 
     @State private var scorePulse = false
@@ -673,7 +720,7 @@ struct ScoreView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
-                    AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20)
+                    AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20, iconName: avatarIcon)
                     if isServing {
                         Image(systemName: "circle.fill")
                             .font(.system(size: 7))
@@ -778,6 +825,8 @@ struct SettingsView: View {
     @AppStorage("announceScore") private var announceScore = true
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
+    @State private var editingPlayer: Player? = nil
+
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
         case doubles = "Doubles"
@@ -791,6 +840,15 @@ struct SettingsView: View {
         var r = roster
         r.remove(atOffsets: offsets)
         if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+    }
+
+    private func savePlayerEdit(_ updated: Player) {
+        var r = roster
+        if let idx = r.firstIndex(where: { $0.id == updated.id }) {
+            r[idx] = updated
+            if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+        }
+        editingPlayer = nil
     }
 
     var body: some View {
@@ -813,10 +871,16 @@ struct SettingsView: View {
                         .font(.caption)
                 } else {
                     ForEach(roster) { player in
-                        HStack(spacing: 8) {
-                            AvatarView(name: player.name, color: player.avatarColor, size: 24)
-                            Text(player.name)
-                                .font(.caption)
+                        Button(action: { editingPlayer = player }) {
+                            HStack(spacing: 8) {
+                                AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
+                                Text(player.name)
+                                    .font(.caption)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                     .onDelete(perform: deletePlayers)
@@ -860,6 +924,9 @@ struct SettingsView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("settings.back") { currentView = .menu }
             }
+        }
+        .sheet(item: $editingPlayer) { player in
+            PlayerEditView(initialPlayer: player, onSave: savePlayerEdit)
         }
     }
 }
@@ -1091,6 +1158,121 @@ struct StatRow: View {
                 .font(.caption)
                 .fontWeight(.semibold)
         }
+    }
+}
+
+// MARK: - Player Edit
+
+struct PlayerEditView: View {
+    let initialPlayer: Player
+    let onSave: (Player) -> Void
+
+    @State private var localPlayer: Player
+
+    init(initialPlayer: Player, onSave: @escaping (Player) -> Void) {
+        self.initialPlayer = initialPlayer
+        self.onSave = onSave
+        _localPlayer = State(initialValue: initialPlayer)
+    }
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 4)
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Spacer()
+                    AvatarView(
+                        name: localPlayer.name,
+                        color: localPlayer.avatarColor,
+                        size: 48,
+                        iconName: localPlayer.iconName
+                    )
+                    Spacer()
+                }
+                .padding(.top, 4)
+
+                Text("Color")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(Array(Player.avatarColors.enumerated()), id: \.offset) { i, color in
+                        Circle()
+                            .fill(color)
+                            .frame(height: 28)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: localPlayer.colorIndex == i ? 2.5 : 0)
+                            )
+                            .onTapGesture { localPlayer.colorIndex = i }
+                    }
+                }
+
+                Text("Avatar")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(localPlayer.iconName == nil
+                                  ? Color.blue.opacity(0.5)
+                                  : Color.secondary.opacity(0.25))
+                        Text("A")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .frame(height: 36)
+                    .onTapGesture { localPlayer.iconName = nil }
+
+                    ForEach(Player.avatarImageNames, id: \.self) { imageName in
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(localPlayer.iconName == imageName
+                                      ? Color.blue.opacity(0.5)
+                                      : Color.secondary.opacity(0.25))
+                            Image(imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .padding(3)
+                        }
+                        .frame(height: 36)
+                        .onTapGesture { localPlayer.iconName = imageName }
+                    }
+                }
+
+                Text("Icons")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(Player.sportIcons, id: \.self) { icon in
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(localPlayer.iconName == icon
+                                      ? Color.blue.opacity(0.5)
+                                      : Color.secondary.opacity(0.25))
+                            Image(systemName: icon)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                        }
+                        .frame(height: 36)
+                        .onTapGesture { localPlayer.iconName = icon }
+                    }
+                }
+
+                Button("Save") {
+                    onSave(localPlayer)
+                }
+                .buttonStyle(.borderedProminent)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 4)
+            }
+            .padding(.horizontal, 8)
+        }
+        .navigationTitle(localPlayer.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
