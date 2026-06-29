@@ -74,7 +74,13 @@ State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.se
 - Create a `feature/...` or `fix/...` branch for every change
 - Every PR that adds or changes a feature **must also update `SPEC.md`**
 - Every PR that changes project structure, architecture, models, or conventions **must also update `CLAUDE.md`**
-- After merging: delete the local branch and prune remote refs (`git remote prune origin`)
+- After merging a PR, always clean up without being asked:
+  ```
+  gh pr merge <number> --merge --delete-branch
+  git checkout main && git pull
+  git remote prune origin
+  ```
+- Do not leave stale local or remote branches — one branch per PR, deleted on merge
 
 ---
 
