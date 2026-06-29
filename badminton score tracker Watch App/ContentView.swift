@@ -798,9 +798,9 @@ struct GameView: View {
                     action: newMatch,
                     isMatchOver: true
                 )
-            } else if match.gameWinner != nil {
+            } else if let gameWinner = match.gameWinner {
                 MatchOverOverlay(
-                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), ""),
+                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
                     actionTitle: NSLocalizedString("game.next_game", comment: ""),
                     action: startNextGame
