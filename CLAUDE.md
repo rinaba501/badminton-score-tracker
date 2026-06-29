@@ -60,3 +60,9 @@ All tracked at https://github.com/rinaba501/badminton-score-tracker/issues
 - Keep watchOS constraints in mind: small screen (~44mm/45mm), no keyboard by default, tap targets must be large
 - Sound files (`.mp3`) must be added to the Xcode bundle manually
 - Run on a real Apple Watch or watchOS Simulator for testing
+
+## Git Workflow
+- **All changes must go through a PR** — never commit directly to `main`
+- Create a feature branch (`feature/...`) or fix branch (`fix/...`) for every change
+- Every PR that adds or changes a feature must also update `SPEC.md`
+- After merging, delete the local branch and prune remote refs
