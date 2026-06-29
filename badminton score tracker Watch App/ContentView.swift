@@ -250,7 +250,6 @@ struct MenuView: View {
 struct PreMatchView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
-    @AppStorage("iServeFirst") private var iServeFirst = true
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
@@ -260,7 +259,7 @@ struct PreMatchView: View {
     @State private var newPlayerName = ""
     @State private var addingForSide: Side = .me
 
-    enum Step { case pickMyPlayer, pickOpponent, serveFirst }
+    enum Step { case pickMyPlayer, pickOpponent }
     enum Side { case me, opponent }
 
     private var roster: [Player] {
@@ -361,52 +360,12 @@ struct PreMatchView: View {
         case .pickOpponent:
             playerPicker(title: "Far Side", defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
                 matchOpponentName = name
-                step = .serveFirst
+                currentView = .game
             }
             .navigationTitle("prematch.title")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("prematch.back") { step = .pickMyPlayer }
-                }
-            }
-
-        case .serveFirst:
-            VStack(spacing: 12) {
-                Text("prematch.who_serves")
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-
-                Button(action: {
-                    iServeFirst = true
-                    currentView = .game
-                }) {
-                    Text(matchMyName.isEmpty ? myName : matchMyName)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-
-                Button(action: {
-                    iServeFirst = false
-                    currentView = .game
-                }) {
-                    Text(matchOpponentName.isEmpty ? "Opponent" : matchOpponentName)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color.gray.opacity(0.4))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding()
-            .navigationTitle("prematch.title")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("prematch.back") { step = .pickOpponent }
                 }
             }
         }
@@ -441,7 +400,6 @@ struct GameView: View {
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
-    @AppStorage("iServeFirst") private var iServeFirst = true
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
@@ -461,7 +419,6 @@ struct GameView: View {
     @State private var lastCrownScore: Double = 0
     @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
-    @State private var showServePicker = false
 
     // Time mode
     @State private var timeRemaining: TimeInterval = 0
@@ -668,17 +625,8 @@ struct GameView: View {
         WKInterfaceDevice.current().play(.start)
     }
 
-    private func beginNextGame(serverIsMe: Bool) {
-        beginNewMatch(serverIsMe: serverIsMe)
-    }
-
     private func newMatch() {
-        showServePicker = true
-    }
-
-    private func beginNewMatch(serverIsMe: Bool) {
         match = BadmintonMatch(
-            serverIsMe: serverIsMe,
             pointsToWin: pointsToWin,
             pointCap: pointsToWin + 9,
             gamesToWin: (gamesInMatch / 2) + 1
@@ -687,7 +635,6 @@ struct GameView: View {
         savedCurrentMatch = false
         timeModeWinner = nil
         suddenDeath = false
-        showServePicker = false
         timeRemaining = TimeInterval(timeLimitMinutes * 60)
         matchStartDate = Date()
     }
@@ -794,13 +741,7 @@ struct GameView: View {
                     .allowsHitTesting(false)
             }
 
-            if showServePicker {
-                ServePickerOverlay(
-                    myName: effectiveMyName,
-                    opponentName: effectiveOpponentName,
-                    onSelect: { beginNextGame(serverIsMe: $0) }
-                )
-            } else if match.isTied {
+            if match.isTied {
                 MatchOverOverlay(
                     title: "It's a Tie!",
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
@@ -845,7 +786,6 @@ struct GameView: View {
         .onAppear {
             if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
                 match = BadmintonMatch(
-                    serverIsMe: iServeFirst,
                     pointsToWin: pointsToWin,
                     pointCap: pointsToWin + 9,
                     gamesToWin: (gamesInMatch / 2) + 1
@@ -972,46 +912,6 @@ struct ScoreView: View {
         .onChange(of: isWinner) { won in
             winnerGlow = won
         }
-    }
-}
-
-struct ServePickerOverlay: View {
-    let myName: String
-    let opponentName: String
-    let onSelect: (Bool) -> Void  // true = me serves
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("Who serves?")
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-            Button(action: { onSelect(true) }) {
-                Text(myName)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-            }
-            .buttonStyle(.plain)
-            Button(action: { onSelect(false) }) {
-                Text(opponentName)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(Color.gray.opacity(0.4))
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding()
-        .background(Color.black.opacity(0.85))
-        .cornerRadius(14)
-        .padding(.horizontal, 8)
-        .transition(.asymmetric(
-            insertion: .scale(scale: 0.7).combined(with: .opacity),
-            removal: .opacity
-        ))
     }
 }
 
