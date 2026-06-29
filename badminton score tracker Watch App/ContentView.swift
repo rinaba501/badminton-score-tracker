@@ -541,16 +541,20 @@ struct GameView: View {
 
     private func handleTimeUp() {
         guard timeModeWinner == nil else { return }
-        if match.myScore > match.opponentScore {
-            timeModeWinner = .me
+        // Determine leader: games won first, then current game score
+        let winner: Side?
+        if match.myGamesWon != match.opponentGamesWon {
+            winner = match.myGamesWon > match.opponentGamesWon ? .me : .opponent
+        } else if match.myScore != match.opponentScore {
+            winner = match.myScore > match.opponentScore ? .me : .opponent
+        } else {
+            winner = nil
+        }
+        if let w = winner {
+            timeModeWinner = w
             WKInterfaceDevice.current().play(.success)
             if enableSounds { soundPlayer.playMatchWin() }
-            saveTimeModeMatch(winner: .me)
-        } else if match.opponentScore > match.myScore {
-            timeModeWinner = .opponent
-            WKInterfaceDevice.current().play(.success)
-            if enableSounds { soundPlayer.playMatchWin() }
-            saveTimeModeMatch(winner: .opponent)
+            saveTimeModeMatch(winner: w)
         } else {
             suddenDeath = true
             WKInterfaceDevice.current().play(.notification)
@@ -564,11 +568,15 @@ struct GameView: View {
         saveToRoster(effectiveMyName)
         let currentRoster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
         var history = decodeHistory()
-        let game = GameScore(my: match.myScore, opponent: match.opponentScore)
+        // Include all completed games plus the in-progress game if any score exists
+        var games = match.completedGames
+        if match.myScore > 0 || match.opponentScore > 0 {
+            games.append(GameScore(my: match.myScore, opponent: match.opponentScore))
+        }
         history.append(MatchRecord(
-            games: [game],
-            myGamesWon: winner == .me ? 1 : 0,
-            opponentGamesWon: winner == .opponent ? 1 : 0,
+            games: games,
+            myGamesWon: match.myGamesWon,
+            opponentGamesWon: match.opponentGamesWon,
             winner: name(for: winner),
             myName: effectiveMyName,
             opponentName: effectiveOpponentName,
@@ -656,16 +664,12 @@ struct GameView: View {
     }
 
     private func newMatch() {
-        if timeModeEnabled {
-            match = BadmintonMatch(serverIsMe: iServeFirst, pointsToWin: 999, pointCap: 999, gamesToWin: 999)
-        } else {
-            match = BadmintonMatch(
-                serverIsMe: iServeFirst,
-                pointsToWin: pointsToWin,
-                pointCap: pointsToWin + 9,
-                gamesToWin: (gamesInMatch / 2) + 1
-            )
-        }
+        match = BadmintonMatch(
+            serverIsMe: iServeFirst,
+            pointsToWin: pointsToWin,
+            pointCap: pointsToWin + 9,
+            gamesToWin: (gamesInMatch / 2) + 1
+        )
         undoStack.removeAll()
         savedCurrentMatch = false
         timeModeWinner = nil
@@ -774,7 +778,7 @@ struct GameView: View {
             if timeModeEnabled, let winner = timeModeWinner {
                 MatchOverOverlay(
                     title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
-                    games: "\(match.myScore) – \(match.opponentScore)",
+                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
                     actionTitle: NSLocalizedString("game.new_match", comment: ""),
                     action: newMatch,
                     isMatchOver: true
@@ -807,7 +811,8 @@ struct GameView: View {
         .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)
         .onChange(of: crownValue, perform: onCrownChanged)
         .onReceive(ticker) { _ in
-            guard timeModeEnabled, timeModeWinner == nil, !suddenDeath else { return }
+            guard timeModeEnabled, timeModeWinner == nil, !suddenDeath,
+                  match.matchWinner == nil, match.gameWinner == nil else { return }
             if timeRemaining > 0 {
                 timeRemaining -= 1
             } else {
@@ -816,17 +821,13 @@ struct GameView: View {
         }
         .onAppear {
             if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
-                if timeModeEnabled {
-                    match = BadmintonMatch(serverIsMe: iServeFirst, pointsToWin: 999, pointCap: 999, gamesToWin: 999)
-                    timeRemaining = TimeInterval(timeLimitMinutes * 60)
-                } else {
-                    match = BadmintonMatch(
-                        serverIsMe: iServeFirst,
-                        pointsToWin: pointsToWin,
-                        pointCap: pointsToWin + 9,
-                        gamesToWin: (gamesInMatch / 2) + 1
-                    )
-                }
+                match = BadmintonMatch(
+                    serverIsMe: iServeFirst,
+                    pointsToWin: pointsToWin,
+                    pointCap: pointsToWin + 9,
+                    gamesToWin: (gamesInMatch / 2) + 1
+                )
+                if timeModeEnabled { timeRemaining = TimeInterval(timeLimitMinutes * 60) }
             }
             crownValue = 0
             lastCrownScore = 0
