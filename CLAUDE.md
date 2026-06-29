@@ -57,7 +57,6 @@ State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.se
 | `matchOpponentName` | `String` | Far-side player for the current match |
 | `playerRoster` | `Data` | JSON-encoded `[Player]` |
 | `matchHistory` | `Data` | JSON-encoded `[MatchRecord]` |
-| `iServeFirst` | `Bool` | Serve preference |
 | `pointsToWin` | `Int` | Default 21 |
 | `gamesInMatch` | `Int` | Default 3 |
 | `courtTheme` | `String` | `CourtTheme` raw value |

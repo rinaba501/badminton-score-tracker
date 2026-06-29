@@ -250,7 +250,6 @@ struct MenuView: View {
 struct PreMatchView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
-    @AppStorage("iServeFirst") private var iServeFirst = true
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
@@ -260,7 +259,7 @@ struct PreMatchView: View {
     @State private var newPlayerName = ""
     @State private var addingForSide: Side = .me
 
-    enum Step { case pickMyPlayer, pickOpponent, serveFirst }
+    enum Step { case pickMyPlayer, pickOpponent }
     enum Side { case me, opponent }
 
     private var roster: [Player] {
@@ -361,52 +360,12 @@ struct PreMatchView: View {
         case .pickOpponent:
             playerPicker(title: "Far Side", defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
                 matchOpponentName = name
-                step = .serveFirst
+                currentView = .game
             }
             .navigationTitle("prematch.title")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("prematch.back") { step = .pickMyPlayer }
-                }
-            }
-
-        case .serveFirst:
-            VStack(spacing: 12) {
-                Text("prematch.who_serves")
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-
-                Button(action: {
-                    iServeFirst = true
-                    currentView = .game
-                }) {
-                    Text(matchMyName.isEmpty ? myName : matchMyName)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-
-                Button(action: {
-                    iServeFirst = false
-                    currentView = .game
-                }) {
-                    Text(matchOpponentName.isEmpty ? "Opponent" : matchOpponentName)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color.gray.opacity(0.4))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding()
-            .navigationTitle("prematch.title")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("prematch.back") { step = .pickOpponent }
                 }
             }
         }
@@ -441,7 +400,6 @@ struct GameView: View {
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
-    @AppStorage("iServeFirst") private var iServeFirst = true
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
@@ -669,7 +627,6 @@ struct GameView: View {
 
     private func newMatch() {
         match = BadmintonMatch(
-            serverIsMe: iServeFirst,
             pointsToWin: pointsToWin,
             pointCap: pointsToWin + 9,
             gamesToWin: (gamesInMatch / 2) + 1
@@ -747,10 +704,12 @@ struct GameView: View {
                     onUndo: undo
                 )
 
+                let serveKnown = match.myScore > 0 || match.opponentScore > 0
+
                 ScoreView(
                     name: effectiveOpponentName,
                     score: match.opponentScore,
-                    isServing: match.servingSide == .opponent,
+                    isServing: serveKnown && match.servingSide == .opponent,
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .opponent,
                     avatarColor: avatarColor(for: effectiveOpponentName),
@@ -761,7 +720,7 @@ struct GameView: View {
                 ScoreView(
                     name: effectiveMyName,
                     score: match.myScore,
-                    isServing: match.servingSide == .me,
+                    isServing: serveKnown && match.servingSide == .me,
                     serveRight: match.serveFromRightCourt,
                     isWinner: match.gameWinner == .me,
                     avatarColor: avatarColor(for: effectiveMyName),
@@ -827,7 +786,6 @@ struct GameView: View {
         .onAppear {
             if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
                 match = BadmintonMatch(
-                    serverIsMe: iServeFirst,
                     pointsToWin: pointsToWin,
                     pointCap: pointsToWin + 9,
                     gamesToWin: (gamesInMatch / 2) + 1

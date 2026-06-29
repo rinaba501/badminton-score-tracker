@@ -22,10 +22,9 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - Settings → opens Settings
 
 ### Pre-Match
-Three-step flow:
+Two-step flow:
 1. **Near Side** — pick yourself or a roster player or a guest
-2. **Far Side** — pick opponent (excludes Near Side selection)
-3. **Who Serves First** — tap a player name to set serve and start the match
+2. **Far Side** — pick opponent (excludes Near Side selection); selecting immediately starts the match
 
 ### Game Screen
 - **Tap** top/bottom half to score for that player
@@ -36,7 +35,7 @@ Three-step flow:
 - **Game-point / Match-point banner** — red banner at top when either side is one point from winning
 - **Score pulse animation** — score number pulses on each point
 - **Winner glow** — winning player's avatar turns gold when game ends
-- **Game-over overlay** — shows game result and "Next Game" button between games
+- **Game-over overlay** — shows game result and "Next Game" button; serve auto-assigns to the game winner (correct badminton rules)
 - **Match-over overlay** — shows trophy, winner name, games score, "New Match" button
 
 ### Match History
@@ -67,6 +66,7 @@ Three-step flow:
 - Cap at `pointsToWin + 9` (default 30) — at 29-29 the 30th point wins
 - Win the match by winning `ceil(gamesInMatch / 2)` games (default best-of-3)
 - Serve changes on every rally won (rally point scoring)
+- Serve indicator is hidden at 0-0; appears from the first point onward
 - Service court: right when server's score is even, left when odd
 
 ### Match Timer mode
@@ -141,7 +141,6 @@ Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indon
 
 | # | Feature |
 |---|---------|
-| 3 | Ask who serves first at match start |
 | 8 | Doubles support (2v2) |
 | 10 | Match history (enhanced) |
 | 11 | Player stats (win rate, streaks, avg points) |
@@ -162,3 +161,4 @@ Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indon
 | 16 | Undo last point | #2 |
 | 17 | Court color themes | #21 |
 | 18 | Custom player names with avatar | #34, #36, #39 |
+| 49 | Reselect who serves between games | #53 |

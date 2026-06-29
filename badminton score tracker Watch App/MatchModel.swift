@@ -115,10 +115,10 @@ struct BadmintonMatch: Codable, Equatable {
         }
     }
 
-    /// Clear the board for the next game. The previous game's winner serves first.
-    mutating func startNextGame() {
+    /// Clear the board for the next game. Pass `serverIsMe` to override the automatic serve assignment.
+    mutating func startNextGame(serverIsMe: Bool? = nil) {
         guard gameWinner != nil, matchWinner == nil else { return }
-        serverIsMe = (myScore > opponentScore)
+        self.serverIsMe = serverIsMe ?? (myScore > opponentScore)
         myScore = 0
         opponentScore = 0
     }
