@@ -461,6 +461,7 @@ struct GameView: View {
     @State private var lastCrownScore: Double = 0
     @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
+    @State private var showServePicker = false
 
     // Time mode
     @State private var timeRemaining: TimeInterval = 0
@@ -661,9 +662,14 @@ struct GameView: View {
     }
 
     private func startNextGame() {
+        showServePicker = true
+    }
+
+    private func beginNextGame(serverIsMe: Bool) {
         undoStack.removeAll()
         suddenDeath = false
-        match.startNextGame()
+        showServePicker = false
+        match.startNextGame(serverIsMe: serverIsMe)
         WKInterfaceDevice.current().play(.start)
     }
 
@@ -799,12 +805,20 @@ struct GameView: View {
                     isMatchOver: true
                 )
             } else if let gameWinner = match.gameWinner {
-                MatchOverOverlay(
-                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
-                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                    actionTitle: NSLocalizedString("game.next_game", comment: ""),
-                    action: startNextGame
-                )
+                if showServePicker {
+                    ServePickerOverlay(
+                        myName: effectiveMyName,
+                        opponentName: effectiveOpponentName,
+                        onSelect: { beginNextGame(serverIsMe: $0) }
+                    )
+                } else {
+                    MatchOverOverlay(
+                        title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
+                        games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                        actionTitle: NSLocalizedString("game.next_game", comment: ""),
+                        action: startNextGame
+                    )
+                }
             }
         }
         .toolbar {
@@ -954,6 +968,46 @@ struct ScoreView: View {
         .onChange(of: isWinner) { won in
             winnerGlow = won
         }
+    }
+}
+
+struct ServePickerOverlay: View {
+    let myName: String
+    let opponentName: String
+    let onSelect: (Bool) -> Void  // true = me serves
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("Who serves?")
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+            Button(action: { onSelect(true) }) {
+                Text(myName)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+            Button(action: { onSelect(false) }) {
+                Text(opponentName)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.gray.opacity(0.4))
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(Color.black.opacity(0.85))
+        .cornerRadius(14)
+        .padding(.horizontal, 8)
+        .transition(.asymmetric(
+            insertion: .scale(scale: 0.7).combined(with: .opacity),
+            removal: .opacity
+        ))
     }
 }
 
