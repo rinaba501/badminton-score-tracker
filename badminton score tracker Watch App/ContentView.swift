@@ -609,6 +609,7 @@ struct GameView: View {
         savedCurrentMatch = true
         saveToRoster(effectiveOpponentName)
         saveToRoster(effectiveMyName)
+        let currentRoster = (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
         var history = decodeHistory()
         history.append(MatchRecord(
             games: match.completedGames,
@@ -618,7 +619,9 @@ struct GameView: View {
             myName: effectiveMyName,
             opponentName: effectiveOpponentName,
             date: Date(),
-            duration: Date().timeIntervalSince(matchStartDate)
+            duration: Date().timeIntervalSince(matchStartDate),
+            myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
+            opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
         ))
         if let encoded = try? JSONEncoder().encode(history) {
             matchHistoryData = encoded
@@ -883,6 +886,8 @@ struct SettingsView: View {
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     @State private var editingPlayer: Player? = nil
+    @State private var showDuplicatePlayerNameAlert = false
+    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -893,19 +898,56 @@ struct SettingsView: View {
         (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
     }
 
+    private var opponents: [Player] { roster.filter { $0.name != myName } }
+
     private func deletePlayers(at offsets: IndexSet) {
-        var r = roster
-        r.remove(atOffsets: offsets)
+        let toDelete = Set(offsets.map { opponents[$0].id })
+        var r = roster.filter { !toDelete.contains($0.id) }
         if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
     }
 
     private func savePlayerEdit(_ updated: Player) {
+        let old = roster.first(where: { $0.id == updated.id })
+
+        // Reject duplicate names (excluding the player being edited)
+        if let old, old.name != updated.name,
+           roster.contains(where: { $0.id != updated.id && $0.name == updated.name }) {
+            showDuplicatePlayerNameAlert = true
+            return
+        }
+
         var r = roster
         if let idx = r.firstIndex(where: { $0.id == updated.id }) {
             r[idx] = updated
-            if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+        } else {
+            r.insert(updated, at: 0)
         }
+        if let encoded = try? JSONEncoder().encode(r) { rosterData = encoded }
+
+        // Propagate name change to match history via player ID
+        if let old, old.name != updated.name {
+            var history = (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
+            for i in history.indices {
+                if history[i].myPlayerId == updated.id {
+                    if history[i].winner == history[i].myName { history[i].winner = updated.name }
+                    history[i].myName = updated.name
+                }
+                if history[i].opponentPlayerId == updated.id {
+                    if history[i].winner == history[i].opponentName { history[i].winner = updated.name }
+                    history[i].opponentName = updated.name
+                }
+            }
+            if let encoded = try? JSONEncoder().encode(history) { matchHistoryData = encoded }
+
+            // Also update myName AppStorage if this is the "me" player
+            if old.name == myName { myName = updated.name }
+        }
+
         editingPlayer = nil
+    }
+
+    private func meAsPlayer() -> Player {
+        roster.first(where: { $0.name == myName }) ?? Player(name: myName, colorIndex: 0)
     }
 
     var body: some View {
@@ -917,8 +959,19 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("Your Name")) {
-                TextField(NSLocalizedString("settings.your_name", comment: ""), text: $myName)
+            Section(header: Text("Me")) {
+                Button(action: { editingPlayer = meAsPlayer() }) {
+                    HStack(spacing: 8) {
+                        let me = meAsPlayer()
+                        AvatarView(name: me.name, color: me.avatarColor, size: 28, iconName: me.iconName)
+                        Text(myName)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
 
             Section(header: Text("Players")) {
@@ -927,7 +980,7 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .font(.caption)
                 } else {
-                    ForEach(roster) { player in
+                    ForEach(opponents) { player in
                         Button(action: { editingPlayer = player }) {
                             HStack(spacing: 8) {
                                 AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
@@ -985,6 +1038,11 @@ struct SettingsView: View {
         }
         .sheet(item: $editingPlayer) { player in
             PlayerEditView(initialPlayer: player, onSave: savePlayerEdit)
+        }
+        .alert("Name already taken", isPresented: $showDuplicatePlayerNameAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("A player with that name already exists.")
         }
     }
 }
@@ -1249,6 +1307,15 @@ struct PlayerEditView: View {
                     Spacer()
                 }
                 .padding(.top, 4)
+
+                Text("Name")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                TextField("Name", text: $localPlayer.name)
+                    .textFieldStyle(.plain)
+                    .padding(6)
+                    .background(Color.secondary.opacity(0.15))
+                    .cornerRadius(8)
 
                 Text("Color")
                     .font(.caption2)
