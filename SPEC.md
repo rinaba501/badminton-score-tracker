@@ -22,6 +22,11 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - Player Stats → opens Stats
 - Settings → opens Settings
 
+### Watch Face Complication
+- Circular, corner, inline, and rectangular complication families supported
+- Tapping any complication deep-links to Pre-Match via `badminton://newmatch`
+- Complication source in `badminton score tracker Complication/` — separate WidgetKit extension target
+
 ### Pre-Match
 Two-step flow:
 1. **Near Side** — pick yourself or a roster player or a guest
