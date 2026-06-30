@@ -92,3 +92,4 @@
 "history.filter_all" = "All Time";
 "history.filter_week" = "This Week";
 "history.filter_month" = "This Month";
+"history.clear_all" = "Clear All";

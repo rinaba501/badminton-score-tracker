@@ -92,3 +92,4 @@
 "history.filter_all" = "全部时间";
 "history.filter_week" = "本周";
 "history.filter_month" = "本月";
+"history.clear_all" = "清除全部";

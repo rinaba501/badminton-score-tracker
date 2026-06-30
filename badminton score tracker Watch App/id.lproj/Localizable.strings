@@ -92,3 +92,4 @@
 "history.filter_all" = "Semua Waktu";
 "history.filter_week" = "Minggu Ini";
 "history.filter_month" = "Bulan Ini";
+"history.clear_all" = "Hapus Semua";

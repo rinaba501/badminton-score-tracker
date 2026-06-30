@@ -93,3 +93,4 @@
 "history.filter_all" = "全期間";
 "history.filter_week" = "今週";
 "history.filter_month" = "今月";
+"history.clear_all" = "すべて削除";
