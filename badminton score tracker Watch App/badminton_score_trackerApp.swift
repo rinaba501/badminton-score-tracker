@@ -12,6 +12,14 @@ struct badminton_score_tracker_Watch_AppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in
+                    guard url.scheme == "badminton", url.host == "newmatch" else { return }
+                    NotificationCenter.default.post(name: .startNewMatch, object: nil)
+                }
         }
     }
+}
+
+extension Notification.Name {
+    static let startNewMatch = Notification.Name("startNewMatch")
 }

@@ -25,9 +25,12 @@ badminton score tracker Watch App/
   ContentView.swift          — all views and UI logic
   MatchModel.swift           — BadmintonMatch, GameScore, MatchRecord, Side
   WorkoutManager.swift       — HKWorkoutSession lifecycle; started on match begin, ended on save or discard
-  badminton_score_trackerApp.swift — app entry point
+  badminton_score_trackerApp.swift — app entry point; handles badminton://newmatch deep link
   Assets.xcassets/           — app icon, racket animation asset, 15 avatar images
   *.lproj/Localizable.strings — en, ja, zh-Hans, ko, id, hi
+
+badminton score tracker Complication/
+  BadmintonComplication.swift — WidgetKit extension; circular, corner, inline, rectangular families
 ```
 
 ### Key Models

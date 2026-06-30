@@ -206,6 +206,9 @@ struct ContentView: View {
                 StatsView(currentView: $currentView)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .startNewMatch)) { _ in
+            currentView = .preMatch
+        }
     }
 }
 
