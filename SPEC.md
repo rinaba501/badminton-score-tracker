@@ -46,6 +46,10 @@ Two-step flow:
 ### Player Stats
 - Win rate, total matches, win/loss streak per player
 - Filtered to the configured "Me" player
+- **Head-to-Head** section listing W–L record against each opponent in history
+
+### Pre-Match (opponent picker)
+- Roster rows show H2H record (`XW – YL`) against the near-side player when picking an opponent; hidden if no prior matches exist
 
 ### Settings
 - **Me** section — single tappable row showing avatar + name; opens Player Edit
