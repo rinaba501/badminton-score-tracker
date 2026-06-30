@@ -86,3 +86,10 @@
 "onboarding.hint_crown_ccw" = "Putar crown berlawanan untuk skor lawan";
 "settings.crown_scoring" = "Skor dengan Crown";
 "settings.audio" = "Audio";
+"history.filter_player" = "Pemain";
+"history.filter_all_players" = "Semua Pemain";
+"history.filter_date" = "Periode";
+"history.filter_all" = "Semua Waktu";
+"history.filter_week" = "Minggu Ini";
+"history.filter_month" = "Bulan Ini";
+"history.clear_all" = "Hapus Semua";

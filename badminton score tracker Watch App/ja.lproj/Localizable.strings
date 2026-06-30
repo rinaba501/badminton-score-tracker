@@ -87,3 +87,10 @@
 "onboarding.hint_crown_ccw" = "クラウンを反時計回りで相手に得点";
 "settings.crown_scoring" = "クラウンでスコア";
 "settings.audio" = "オーディオ";
+"history.filter_player" = "プレイヤー";
+"history.filter_all_players" = "全員";
+"history.filter_date" = "期間";
+"history.filter_all" = "全期間";
+"history.filter_week" = "今週";
+"history.filter_month" = "今月";
+"history.clear_all" = "すべて削除";

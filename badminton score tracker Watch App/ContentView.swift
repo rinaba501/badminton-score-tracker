@@ -1266,9 +1266,50 @@ struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @State private var showingClearConfirmation = false
+    @State private var showingFilters = false
+    @State private var selectedPlayer: String = ""
+    @State private var dateRange: DateRange = .all
+
+    enum DateRange: String, CaseIterable {
+        case all, week, month
+        var label: String {
+            switch self {
+            case .all:   return NSLocalizedString("history.filter_all", comment: "")
+            case .week:  return NSLocalizedString("history.filter_week", comment: "")
+            case .month: return NSLocalizedString("history.filter_month", comment: "")
+            }
+        }
+    }
 
     private var history: [MatchRecord] {
         (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
+    }
+
+    private var allPlayers: [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for record in history {
+            for name in [record.myName, record.opponentName] where !name.isEmpty {
+                if seen.insert(name).inserted { result.append(name) }
+            }
+        }
+        return result
+    }
+
+    private var filteredHistory: [MatchRecord] {
+        let cutoff: Date? = {
+            switch dateRange {
+            case .all:   return nil
+            case .week:  return Calendar.current.date(byAdding: .day, value: -7, to: Date())
+            case .month: return Calendar.current.date(byAdding: .month, value: -1, to: Date())
+            }
+        }()
+        return history.reversed().filter { record in
+            let playerMatch = selectedPlayer.isEmpty ||
+                record.myName == selectedPlayer || record.opponentName == selectedPlayer
+            let dateMatch = cutoff == nil || record.date >= cutoff!
+            return playerMatch && dateMatch
+        }
     }
 
     private func save(_ records: [MatchRecord]) {
@@ -1294,15 +1335,70 @@ struct HistoryView: View {
                 }
             } else {
                 Section {
-                    ForEach(history.reversed()) { record in
-                        MatchHistoryRow(record: record)
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    delete(record)
-                                } label: {
-                                    Label("history.clear", systemImage: "trash")
+                    VStack(spacing: 4) {
+                        HStack(spacing: 4) {
+                            ForEach(DateRange.allCases, id: \.self) { range in
+                                Button(action: { dateRange = range }) {
+                                    Text(range.label)
+                                        .font(.system(size: 11, weight: dateRange == range ? .semibold : .regular))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 4)
+                                        .background(dateRange == range ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
+                                        .foregroundColor(dateRange == range ? .yellow : .primary)
+                                        .cornerRadius(6)
                                 }
+                                .buttonStyle(.plain)
                             }
+                        }
+
+                        if allPlayers.count > 1 {
+                            Button(action: { showingFilters = true }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "person")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                    Text(selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : selectedPlayer)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color.secondary.opacity(0.15))
+                                .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                .listSectionSpacing(0)
+
+                if filteredHistory.isEmpty {
+                    Section {
+                        Text("history.empty")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .listRowBackground(Color.clear)
+                    }
+                    .listSectionSpacing(0)
+                } else {
+                    Section {
+                        ForEach(filteredHistory) { record in
+                            MatchHistoryRow(record: record)
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        delete(record)
+                                    } label: {
+                                        Label("history.clear", systemImage: "trash")
+                                    }
+                                }
+                        }
                     }
                 }
             }
@@ -1320,12 +1416,42 @@ struct HistoryView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingFilters) {
+            List {
+                Section(header: Text("history.filter_player")) {
+                    Button(action: { selectedPlayer = "" }) {
+                        HStack {
+                            Text("history.filter_all_players")
+                            Spacer()
+                            if selectedPlayer.isEmpty {
+                                Image(systemName: "checkmark").foregroundColor(.yellow)
+                            }
+                        }
+                    }
+                    ForEach(allPlayers, id: \.self) { name in
+                        Button(action: { selectedPlayer = name }) {
+                            HStack {
+                                Text(name)
+                                Spacer()
+                                if selectedPlayer == name {
+                                    Image(systemName: "checkmark").foregroundColor(.yellow)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         .alert(Text("history.clear_title"), isPresented: $showingClearConfirmation) {
             Button("history.cancel", role: .cancel) { }
             Button("history.clear", role: .destructive) { matchHistoryData = Data() }
         } message: {
             Text("history.clear_confirm")
         }
+    }
+
+    private var isFiltered: Bool {
+        !selectedPlayer.isEmpty || dateRange != .all
     }
 }
 

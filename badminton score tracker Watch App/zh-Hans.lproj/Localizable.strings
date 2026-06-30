@@ -86,3 +86,10 @@
 "onboarding.hint_crown_ccw" = "逆时针旋转表冠为对手得分";
 "settings.crown_scoring" = "表冠得分";
 "settings.audio" = "音频";
+"history.filter_player" = "球员";
+"history.filter_all_players" = "所有人";
+"history.filter_date" = "时间段";
+"history.filter_all" = "全部时间";
+"history.filter_week" = "本周";
+"history.filter_month" = "本月";
+"history.clear_all" = "清除全部";

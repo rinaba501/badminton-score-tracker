@@ -42,6 +42,8 @@ Two-step flow:
 - Each row: player names, games won, per-game scores, date, duration
 - Swipe to delete individual records
 - "Clear All" button with confirmation
+- **Filter by player** — picker to show only matches involving a specific player (hidden if only one player in history)
+- **Filter by date range** — All Time / This Week / This Month
 
 ### Player Stats
 - Win rate, total matches, win/loss streak per player
