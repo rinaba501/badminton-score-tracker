@@ -1366,7 +1366,12 @@ struct HistoryView: View {
                                         .font(.system(size: 10))
                                         .foregroundColor(.secondary)
                                 }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 4)
+                                .background(Color.secondary.opacity(0.15))
+                                .cornerRadius(6)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
