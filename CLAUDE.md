@@ -62,6 +62,7 @@ State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.se
 | `courtTheme` | `String` | `CourtTheme` raw value |
 | `announceScore` | `Bool` | Score announcement toggle |
 | `enableSounds` | `Bool` | Sound effects toggle |
+| `enableCrownScoring` | `Bool` | Digital Crown scoring toggle (default true) |
 | `timeModeEnabled` | `Bool` | Match Timer mode toggle |
 | `timeLimitMinutes` | `Int` | Default 10 |
 

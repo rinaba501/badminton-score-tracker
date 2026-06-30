@@ -84,3 +84,5 @@
 "onboarding.hint_undo" = "Tombol undo batalkan poin terakhir";
 "onboarding.hint_crown_cw" = "Putar crown searah jarum jam untuk skor kamu";
 "onboarding.hint_crown_ccw" = "Putar crown berlawanan untuk skor lawan";
+"settings.crown_scoring" = "Skor dengan Crown";
+"settings.audio" = "Audio";

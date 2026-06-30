@@ -84,3 +84,5 @@
 "onboarding.hint_undo" = "अनडू बटन से अंतिम अंक हटाएं";
 "onboarding.hint_crown_cw" = "क्राउन दक्षिणावर्त घुमाएं — अपना स्कोर";
 "onboarding.hint_crown_ccw" = "क्राउन वामावर्त घुमाएं — प्रतिद्वंद्वी का स्कोर";
+"settings.crown_scoring" = "क्राउन स्कोरिंग";
+"settings.audio" = "ऑडियो";

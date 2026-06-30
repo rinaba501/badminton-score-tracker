@@ -54,8 +54,10 @@ Two-step flow:
 - **Match Format** — Points to win (11 / 15 / 21), Games in match (1 / 3 / 5)
 - **Match Timer** — toggle on/off; when enabled, duration stepper (±1 min, ±5 min buttons; min 1, max 99, default 10)
 - **Court Theme** — Green / Blue / Red / Purple / Black
+- **Digital Crown** — toggle crown scoring on/off (default on); off prevents accidental scoring from wrist movement
 - **Score Announcement** — toggle spoken score via `AVSpeechSynthesizer`
 - **Sound Effects** — toggle programmatic tones
+- **Controls** — permanent gesture reference screen (tap, crown directions, undo)
 
 ---
 

@@ -84,3 +84,5 @@
 "onboarding.hint_undo" = "실행 취소 버튼으로 마지막 점수 취소";
 "onboarding.hint_crown_cw" = "크라운 시계 방향 → 내 득점";
 "onboarding.hint_crown_ccw" = "크라운 반시계 방향 → 상대 득점";
+"settings.crown_scoring" = "크라운 득점";
+"settings.audio" = "오디오";

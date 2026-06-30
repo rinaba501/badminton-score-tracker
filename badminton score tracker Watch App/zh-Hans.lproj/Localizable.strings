@@ -84,3 +84,5 @@
 "onboarding.hint_undo" = "撤销按钮取消上一分";
 "onboarding.hint_crown_cw" = "顺时针旋转表冠为自己得分";
 "onboarding.hint_crown_ccw" = "逆时针旋转表冠为对手得分";
+"settings.crown_scoring" = "表冠得分";
+"settings.audio" = "音频";
