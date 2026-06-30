@@ -1415,6 +1415,11 @@ struct StatsView: View {
                 if seen.insert(name).inserted { result.append(name) }
             }
         }
+        // Always show the main player first
+        if let idx = result.firstIndex(of: myName), idx != 0 {
+            result.remove(at: idx)
+            result.insert(myName, at: 0)
+        }
         return result
     }
 
