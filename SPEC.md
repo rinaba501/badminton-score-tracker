@@ -10,6 +10,7 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - **Language:** Swift / SwiftUI
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs
 - **Audio:** `AVAudioEngine` + programmatic sine-wave tone generation (no audio files)
+- **Health:** `HealthKit` — logs each match as a `.badminton` `HKWorkoutSession`; activity type indoor
 
 ---
 
