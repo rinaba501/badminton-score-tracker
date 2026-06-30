@@ -75,3 +75,7 @@
 "theme.black" = "Black";
 "speech.time_up" = "Time's up";
 "game.rematch" = "Rematch";
+"game.discard_title" = "Discard match?";
+"game.discard_message" = "Your current match score will be lost.";
+"game.discard_confirm" = "Discard";
+"game.discard_cancel" = "Keep Playing";

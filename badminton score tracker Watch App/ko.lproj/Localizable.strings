@@ -75,3 +75,7 @@
 "theme.black" = "검정";
 "speech.time_up" = "시간 종료";
 "game.rematch" = "재경기";
+"game.discard_title" = "경기를 포기할까요?";
+"game.discard_message" = "현재 점수가 사라집니다.";
+"game.discard_confirm" = "포기";
+"game.discard_cancel" = "계속하기";

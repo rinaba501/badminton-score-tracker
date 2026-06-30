@@ -76,3 +76,7 @@
 "theme.black" = "ブラック";
 "speech.time_up" = "タイムアップ";
 "game.rematch" = "再戦";
+"game.discard_title" = "試合を終了しますか？";
+"game.discard_message" = "現在のスコアは失われます。";
+"game.discard_confirm" = "終了する";
+"game.discard_cancel" = "続ける";

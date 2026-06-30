@@ -75,3 +75,7 @@
 "theme.black" = "Hitam";
 "speech.time_up" = "Waktu habis";
 "game.rematch" = "Main Lagi";
+"game.discard_title" = "Batalkan pertandingan?";
+"game.discard_message" = "Skor pertandingan saat ini akan hilang.";
+"game.discard_confirm" = "Batalkan";
+"game.discard_cancel" = "Lanjutkan";

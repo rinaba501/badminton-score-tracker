@@ -75,3 +75,7 @@
 "theme.black" = "黑色";
 "speech.time_up" = "时间到";
 "game.rematch" = "再战";
+"game.discard_title" = "放弃比赛？";
+"game.discard_message" = "当前比分将会丢失。";
+"game.discard_confirm" = "放弃";
+"game.discard_cancel" = "继续比赛";
