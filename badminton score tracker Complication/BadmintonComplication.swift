@@ -32,22 +32,24 @@ struct BadmintonComplicationEntryView: View {
         case .accessoryCircular:
             ZStack {
                 AccessoryWidgetBackground()
-                Image(systemName: "figure.badminton")
-                    .font(.system(size: 20))
-                    .foregroundColor(.yellow)
+                Image("avatar_shuttlecock_happy")
+                    .resizable()
+                    .scaledToFit()
+                    .padding(4)
             }
         case .accessoryCorner:
-            Image(systemName: "figure.badminton")
-                .font(.system(size: 20))
-                .foregroundColor(.yellow)
+            Image("avatar_shuttlecock_happy")
+                .resizable()
+                .scaledToFit()
                 .widgetLabel("Badminton")
         case .accessoryInline:
             Label("New Match", systemImage: "figure.badminton")
         case .accessoryRectangular:
             HStack(spacing: 8) {
-                Image(systemName: "figure.badminton")
-                    .font(.system(size: 24))
-                    .foregroundColor(.yellow)
+                Image("avatar_shuttlecock_happy")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Badminton")
                         .font(.headline)
@@ -58,8 +60,9 @@ struct BadmintonComplicationEntryView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         default:
-            Image(systemName: "figure.badminton")
-                .foregroundColor(.yellow)
+            Image("avatar_shuttlecock_happy")
+                .resizable()
+                .scaledToFit()
         }
     }
 }
