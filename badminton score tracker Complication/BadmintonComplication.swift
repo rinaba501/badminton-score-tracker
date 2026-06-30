@@ -23,6 +23,16 @@ struct BadmintonProvider: TimelineProvider {
 
 // MARK: - Views
 
+private struct ShuttlecockImage: View {
+    var body: some View {
+        Image("avatar_shuttlecock_happy")
+            .renderingMode(.original)
+            .resizable()
+            .widgetAccentedRenderingMode(.fullColor)
+            .scaledToFit()
+    }
+}
+
 struct BadmintonComplicationEntryView: View {
     var entry: BadmintonEntry
     @Environment(\.widgetFamily) var family
@@ -32,25 +42,18 @@ struct BadmintonComplicationEntryView: View {
         case .accessoryCircular:
             ZStack {
                 AccessoryWidgetBackground()
-                Image("avatar_shuttlecock_happy")
-                    .renderingMode(.original)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(4)
+                Image(systemName: "figure.badminton")
+                    .font(.system(size: 20))
+                    .foregroundStyle(.yellow)
             }
         case .accessoryCorner:
-            Image("avatar_shuttlecock_happy")
-                .resizable()
-                .scaledToFit()
+            ShuttlecockImage()
                 .widgetLabel("Badminton")
         case .accessoryInline:
             Label("New Match", systemImage: "figure.badminton")
         case .accessoryRectangular:
             HStack(spacing: 8) {
-                Image("avatar_shuttlecock_happy")
-                    .renderingMode(.original)
-                    .resizable()
-                    .scaledToFit()
+                ShuttlecockImage()
                     .frame(width: 32, height: 32)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Badminton")
@@ -62,9 +65,7 @@ struct BadmintonComplicationEntryView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         default:
-            Image("avatar_shuttlecock_happy")
-                .resizable()
-                .scaledToFit()
+            ShuttlecockImage()
         }
     }
 }
