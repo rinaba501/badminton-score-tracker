@@ -1400,12 +1400,6 @@ struct HistoryView: View {
                                 }
                         }
                     }
-                    Section {
-                        Button(role: .destructive, action: { showingClearConfirmation = true }) {
-                            Label("history.clear_all", systemImage: "trash")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                    }
                 }
             }
         }
@@ -1413,6 +1407,13 @@ struct HistoryView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("history.back") { currentView = .menu }
+            }
+            if !history.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showingClearConfirmation = true }) {
+                        Image(systemName: "trash").foregroundColor(.red)
+                    }
+                }
             }
         }
         .sheet(isPresented: $showingFilters) {
