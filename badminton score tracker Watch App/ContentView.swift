@@ -1335,45 +1335,43 @@ struct HistoryView: View {
                 }
             } else {
                 Section {
-                    HStack(spacing: 4) {
-                        ForEach(DateRange.allCases, id: \.self) { range in
-                            Button(action: { dateRange = range }) {
-                                Text(range.label)
-                                    .font(.system(size: 11, weight: dateRange == range ? .semibold : .regular))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 5)
-                                    .background(dateRange == range ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
-                                    .foregroundColor(dateRange == range ? .yellow : .primary)
-                                    .cornerRadius(6)
+                    VStack(spacing: 4) {
+                        HStack(spacing: 4) {
+                            ForEach(DateRange.allCases, id: \.self) { range in
+                                Button(action: { dateRange = range }) {
+                                    Text(range.label)
+                                        .font(.system(size: 11, weight: dateRange == range ? .semibold : .regular))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 4)
+                                        .background(dateRange == range ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
+                                        .foregroundColor(dateRange == range ? .yellow : .primary)
+                                        .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                        }
+
+                        if allPlayers.count > 1 {
+                            Button(action: { showingFilters = true }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "person")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                    Text(selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : selectedPlayer)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         }
                     }
                 }
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
-
-                if allPlayers.count > 1 {
-                    Section {
-                        Button(action: { showingFilters = true }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "person")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
-                                Text(selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : selectedPlayer)
-                                    .font(.system(size: 11))
-                                    .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
-                                    .lineLimit(1)
-                                Spacer()
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
-                }
+                .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
 
                 if filteredHistory.isEmpty {
                     Section {
