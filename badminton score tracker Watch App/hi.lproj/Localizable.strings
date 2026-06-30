@@ -79,3 +79,10 @@
 "game.discard_message" = "आपका वर्तमान स्कोर खो जाएगा।";
 "game.discard_confirm" = "छोड़ें";
 "game.discard_cancel" = "जारी रखें";
+"onboarding.title" = "नियंत्रण";
+"onboarding.hint_tap" = "ऊपर/नीचे टैप करें स्कोर के लिए";
+"onboarding.hint_undo" = "अनडू बटन से अंतिम अंक हटाएं";
+"onboarding.hint_crown_cw" = "क्राउन दक्षिणावर्त घुमाएं — अपना स्कोर";
+"onboarding.hint_crown_ccw" = "क्राउन वामावर्त घुमाएं — प्रतिद्वंद्वी का स्कोर";
+"settings.crown_scoring" = "क्राउन स्कोरिंग";
+"settings.audio" = "ऑडियो";

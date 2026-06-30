@@ -394,6 +394,42 @@ enum CourtTheme: String, Codable, CaseIterable {
 
 // MARK: - Game
 
+struct OnboardingView: View {
+    private struct Hint: Identifiable {
+        let id = UUID()
+        let icon: String
+        let key: String
+    }
+
+    private let hints: [Hint] = [
+        Hint(icon: "hand.tap",                      key: "onboarding.hint_tap"),
+        Hint(icon: "digitalcrown.horizontal.press", key: "onboarding.hint_crown_cw"),
+        Hint(icon: "digitalcrown.horizontal.press", key: "onboarding.hint_crown_ccw"),
+        Hint(icon: "arrow.uturn.backward",          key: "onboarding.hint_undo"),
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(hints) { hint in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: hint.icon)
+                            .font(.system(size: 16))
+                            .foregroundColor(.yellow)
+                            .frame(width: 22)
+                        Text(LocalizedStringKey(hint.key))
+                            .font(.caption2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .padding()
+        }
+        .navigationTitle(LocalizedStringKey("onboarding.title"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
@@ -407,6 +443,7 @@ struct GameView: View {
 
     @AppStorage("announceScore") private var announceScore = true
     @AppStorage("enableSounds") private var enableSounds = true
+    @AppStorage("enableCrownScoring") private var enableCrownScoring = true
     @AppStorage("timeModeEnabled") private var timeModeEnabled = false
     @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
     @StateObject private var soundPlayer = SoundPlayer()
@@ -608,7 +645,7 @@ struct GameView: View {
     }
 
     private func onCrownChanged(_ newValue: Double) {
-        guard match.gameWinner == nil, match.matchWinner == nil else { return }
+        guard enableCrownScoring, match.gameWinner == nil, match.matchWinner == nil else { return }
         let delta = newValue - lastCrownScore
         if delta >= crownThreshold {
             lastCrownScore = newValue
@@ -991,6 +1028,7 @@ struct SettingsView: View {
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
     @AppStorage("announceScore") private var announceScore = true
+    @AppStorage("enableCrownScoring") private var enableCrownScoring = true
     @AppStorage("timeModeEnabled") private var timeModeEnabled = false
     @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
     @AppStorage("enableSounds") private var enableSounds = true
@@ -1109,6 +1147,10 @@ struct SettingsView: View {
             }
 
             Section(header: Text("settings.crown")) {
+                Toggle("settings.crown_scoring", isOn: $enableCrownScoring)
+            }
+
+            Section(header: Text("settings.audio")) {
                 Toggle("settings.sound_effects", isOn: $enableSounds)
                 Toggle("settings.announce_score", isOn: $announceScore)
             }
@@ -1161,6 +1203,12 @@ struct SettingsView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                }
+            }
+
+            Section {
+                NavigationLink(destination: OnboardingView()) {
+                    Label(LocalizedStringKey("onboarding.title"), systemImage: "hand.raised")
                 }
             }
         }
