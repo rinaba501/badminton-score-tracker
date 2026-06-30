@@ -1266,9 +1266,49 @@ struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @State private var showingClearConfirmation = false
+    @State private var selectedPlayer: String = ""
+    @State private var dateRange: DateRange = .all
+
+    enum DateRange: String, CaseIterable {
+        case all, week, month
+        var label: String {
+            switch self {
+            case .all:   return NSLocalizedString("history.filter_all", comment: "")
+            case .week:  return NSLocalizedString("history.filter_week", comment: "")
+            case .month: return NSLocalizedString("history.filter_month", comment: "")
+            }
+        }
+    }
 
     private var history: [MatchRecord] {
         (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
+    }
+
+    private var allPlayers: [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for record in history {
+            for name in [record.myName, record.opponentName] where !name.isEmpty {
+                if seen.insert(name).inserted { result.append(name) }
+            }
+        }
+        return result
+    }
+
+    private var filteredHistory: [MatchRecord] {
+        let cutoff: Date? = {
+            switch dateRange {
+            case .all:   return nil
+            case .week:  return Calendar.current.date(byAdding: .day, value: -7, to: Date())
+            case .month: return Calendar.current.date(byAdding: .month, value: -1, to: Date())
+            }
+        }()
+        return history.reversed().filter { record in
+            let playerMatch = selectedPlayer.isEmpty ||
+                record.myName == selectedPlayer || record.opponentName == selectedPlayer
+            let dateMatch = cutoff == nil || record.date >= cutoff!
+            return playerMatch && dateMatch
+        }
     }
 
     private func save(_ records: [MatchRecord]) {
@@ -1294,15 +1334,40 @@ struct HistoryView: View {
                 }
             } else {
                 Section {
-                    ForEach(history.reversed()) { record in
-                        MatchHistoryRow(record: record)
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    delete(record)
-                                } label: {
-                                    Label("history.clear", systemImage: "trash")
-                                }
+                    if allPlayers.count > 1 {
+                        Picker("history.filter_player", selection: $selectedPlayer) {
+                            Text("history.filter_all_players").tag("")
+                            ForEach(allPlayers, id: \.self) { name in
+                                Text(name).tag(name)
                             }
+                        }
+                    }
+                    Picker("history.filter_date", selection: $dateRange) {
+                        ForEach(DateRange.allCases, id: \.self) { range in
+                            Text(range.label).tag(range)
+                        }
+                    }
+                }
+
+                if filteredHistory.isEmpty {
+                    Section {
+                        Text("history.empty")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .listRowBackground(Color.clear)
+                    }
+                } else {
+                    Section {
+                        ForEach(filteredHistory) { record in
+                            MatchHistoryRow(record: record)
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        delete(record)
+                                    } label: {
+                                        Label("history.clear", systemImage: "trash")
+                                    }
+                                }
+                        }
                     }
                 }
             }

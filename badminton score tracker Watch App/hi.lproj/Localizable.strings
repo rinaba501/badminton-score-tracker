@@ -86,3 +86,9 @@
 "onboarding.hint_crown_ccw" = "क्राउन वामावर्त घुमाएं — प्रतिद्वंद्वी का स्कोर";
 "settings.crown_scoring" = "क्राउन स्कोरिंग";
 "settings.audio" = "ऑडियो";
+"history.filter_player" = "खिलाड़ी";
+"history.filter_all_players" = "सभी खिलाड़ी";
+"history.filter_date" = "अवधि";
+"history.filter_all" = "सभी समय";
+"history.filter_week" = "इस सप्ताह";
+"history.filter_month" = "इस महीने";

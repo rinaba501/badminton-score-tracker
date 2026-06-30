@@ -86,3 +86,9 @@
 "onboarding.hint_crown_ccw" = "Rotate crown counter-clockwise to score for opponent";
 "settings.crown_scoring" = "Crown Scoring";
 "settings.audio" = "Audio";
+"history.filter_player" = "Player";
+"history.filter_all_players" = "All Players";
+"history.filter_date" = "Period";
+"history.filter_all" = "All Time";
+"history.filter_week" = "This Week";
+"history.filter_month" = "This Month";
