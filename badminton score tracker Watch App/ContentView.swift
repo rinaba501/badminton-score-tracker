@@ -253,6 +253,31 @@ struct PreMatchView: View {
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("playerRoster") private var rosterData: Data = Data()
+    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
+
+    private var history: [MatchRecord] {
+        (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
+    }
+
+    private func h2h(me: String, opponent: String) -> (wins: Int, losses: Int)? {
+        let mePlayer = roster.first(where: { $0.name == me })
+        let oppPlayer = roster.first(where: { $0.name == opponent })
+        let relevant = history.filter { record in
+            let namesMatch = (record.myName == me && record.opponentName == opponent) ||
+                             (record.myName == opponent && record.opponentName == me)
+            let idsMatch: Bool = {
+                guard let meId = mePlayer?.id, let oppId = oppPlayer?.id else { return false }
+                return (record.myPlayerId == meId && record.opponentPlayerId == oppId) ||
+                       (record.myPlayerId == oppId && record.opponentPlayerId == meId)
+            }()
+            return namesMatch || idsMatch
+        }
+        guard !relevant.isEmpty else { return nil }
+        let wins = relevant.filter { record in
+            (record.myName == me || record.myPlayerId == mePlayer?.id) && record.winner == me
+        }.count
+        return (wins: wins, losses: relevant.count - wins)
+    }
 
     @State private var step: Step = .pickMyPlayer
     @State private var showAddPlayer = false
@@ -286,7 +311,7 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
-    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let filteredRoster = roster.filter { $0.name != excluding }
         return List {
             Section(header: Text(title)) {
@@ -311,7 +336,15 @@ struct PreMatchView: View {
                         Button(action: { onSelect(player.name) }) {
                             HStack {
                                 AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
-                                Text(player.name)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(player.name)
+                                    if let against = h2hAgainst,
+                                       let record = h2h(me: against, opponent: player.name) {
+                                        Text("\(record.wins)W – \(record.losses)L")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
                             }
                         }
                     }
@@ -358,7 +391,8 @@ struct PreMatchView: View {
             }
 
         case .pickOpponent:
-            playerPicker(title: "Far Side", defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: matchMyName.isEmpty ? myName : matchMyName) { name in
+            let nearName = matchMyName.isEmpty ? myName : matchMyName
+            playerPicker(title: "Far Side", defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: nearName, h2hAgainst: nearName) { name in
                 matchOpponentName = name
                 currentView = .game
             }
@@ -1361,13 +1395,71 @@ struct StatsView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
+    @AppStorage("playerRoster") private var rosterData: Data = Data()
+
+    @State private var selectedPlayer: String = ""
 
     private var history: [MatchRecord] {
         (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
     }
 
-    private var totalMatches: Int { history.count }
-    private var wins: Int { history.filter { $0.winner == myName }.count }
+    private var roster: [Player] {
+        (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
+    }
+
+    private var allPlayers: [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for record in history {
+            for name in [record.myName, record.opponentName] {
+                if seen.insert(name).inserted { result.append(name) }
+            }
+        }
+        // Always show the main player first
+        if let idx = result.firstIndex(of: myName), idx != 0 {
+            result.remove(at: idx)
+            result.insert(myName, at: 0)
+        }
+        return result
+    }
+
+    private var activePlayer: String {
+        selectedPlayer.isEmpty ? myName : selectedPlayer
+    }
+
+    private var playerHistory: [MatchRecord] {
+        history.filter { $0.myName == activePlayer || $0.opponentName == activePlayer }
+    }
+
+    private var opponents: [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for record in playerHistory {
+            let opp = record.myName == activePlayer ? record.opponentName : record.myName
+            if seen.insert(opp).inserted { result.append(opp) }
+        }
+        return result
+    }
+
+    private func h2h(opponent: String) -> (wins: Int, losses: Int) {
+        let mePlayer = roster.first(where: { $0.name == activePlayer })
+        let oppPlayer = roster.first(where: { $0.name == opponent })
+        let relevant = playerHistory.filter { record in
+            let namesMatch = (record.myName == activePlayer && record.opponentName == opponent) ||
+                             (record.myName == opponent && record.opponentName == activePlayer)
+            let idsMatch: Bool = {
+                guard let meId = mePlayer?.id, let oppId = oppPlayer?.id else { return false }
+                return (record.myPlayerId == meId && record.opponentPlayerId == oppId) ||
+                       (record.myPlayerId == oppId && record.opponentPlayerId == meId)
+            }()
+            return namesMatch || idsMatch
+        }
+        let wins = relevant.filter { $0.winner == activePlayer }.count
+        return (wins: wins, losses: relevant.count - wins)
+    }
+
+    private var totalMatches: Int { playerHistory.count }
+    private var wins: Int { playerHistory.filter { $0.winner == activePlayer }.count }
     private var losses: Int { totalMatches - wins }
 
     private var winRate: Double {
@@ -1375,14 +1467,16 @@ struct StatsView: View {
     }
 
     private var avgPointsScored: Double {
-        guard !history.isEmpty else { return 0 }
-        let total = history.flatMap { $0.games }.map { $0.my }.reduce(0, +)
-        let games = history.flatMap { $0.games }.count
+        guard !playerHistory.isEmpty else { return 0 }
+        let total = playerHistory.flatMap { record -> [Int] in
+            record.myName == activePlayer ? record.games.map { $0.my } : record.games.map { $0.opponent }
+        }.reduce(0, +)
+        let games = playerHistory.flatMap { $0.games }.count
         return games == 0 ? 0 : Double(total) / Double(games)
     }
 
     private var avgMatchDuration: TimeInterval {
-        let timed = history.filter { $0.duration > 0 }
+        let timed = playerHistory.filter { $0.duration > 0 }
         guard !timed.isEmpty else { return 0 }
         return timed.map { $0.duration }.reduce(0, +) / Double(timed.count)
     }
@@ -1396,8 +1490,8 @@ struct StatsView: View {
     private var longestStreak: Int {
         var best = 0
         var current = 0
-        for record in history {
-            if record.winner == myName {
+        for record in playerHistory {
+            if record.winner == activePlayer {
                 current += 1
                 best = max(best, current)
             } else {
@@ -1417,7 +1511,22 @@ struct StatsView: View {
                         .listRowBackground(Color.clear)
                 }
             } else {
-                Section(header: Text(myName)) {
+                if allPlayers.count > 1 {
+                    Section {
+                        Picker("Player", selection: $selectedPlayer) {
+                            ForEach(allPlayers, id: \.self) { name in
+                                if name == myName {
+                                    Label(name, systemImage: "person.fill")
+                                        .tag(name)
+                                } else {
+                                    Text(name).tag(name)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Section(header: Text(activePlayer)) {
                     StatRow(label: "Matches", value: "\(totalMatches)")
                     StatRow(label: "Wins", value: "\(wins)")
                     StatRow(label: "Losses", value: "\(losses)")
@@ -1428,9 +1537,21 @@ struct StatsView: View {
                         StatRow(label: "Avg duration", value: durationString(avgMatchDuration))
                     }
                 }
+
+                if !opponents.isEmpty {
+                    Section(header: Text("Head-to-Head")) {
+                        ForEach(opponents, id: \.self) { opp in
+                            let record = h2h(opponent: opp)
+                            StatRow(label: opp, value: "\(record.wins)W – \(record.losses)L")
+                        }
+                    }
+                }
             }
         }
         .navigationTitle("Stats")
+        .onAppear {
+            if selectedPlayer.isEmpty { selectedPlayer = myName }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Back") { currentView = .menu }
