@@ -9,6 +9,10 @@ import SwiftUI
 
 @main
 struct badminton_score_tracker_Watch_AppApp: App {
+    init() {
+        Task { await CloudSyncManager.shared.start() }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

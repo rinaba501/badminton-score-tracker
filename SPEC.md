@@ -11,6 +11,7 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs
 - **Audio:** `AVAudioEngine` + programmatic sine-wave tone generation (no audio files)
 - **Health:** `HealthKit` — logs each match as a `.badminton` `HKWorkoutSession`; activity type indoor
+- **Sync:** `NSUbiquitousKeyValueStore` — syncs player roster, match history, and settings via iCloud; pushes on data change, pulls on launch and on external update
 
 ---
 
@@ -175,3 +176,4 @@ Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indon
 | 17 | Court color themes | #21 |
 | 18 | Custom player names with avatar | #34, #36, #39 |
 | 49 | Reselect who serves between games | #53 |
+| 57 | iCloud sync / data backup | #75 |

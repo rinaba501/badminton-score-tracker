@@ -14,6 +14,7 @@ A **watchOS app** built with SwiftUI for tracking badminton match scores in real
 - **UI Framework:** SwiftUI
 - **Audio:** `AVAudioEngine` + `AVAudioPlayerNode` for programmatic sine-wave tones; `AVSpeechSynthesizer` for score announcements — no audio files required
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs (`[Player]`, `[MatchRecord]`)
+- **Sync:** `NSUbiquitousKeyValueStore` (iCloud key-value store) — mirrors `playerRoster`, `matchHistory`, and settings across devices; requires `com.apple.developer.ubiquity-kvstore-identifier` entitlement
 - **Health:** `HealthKit` — `HKWorkoutSession` + `HKLiveWorkoutBuilder` for badminton workout tracking; requires HealthKit capability in Xcode + `NSHealthShareUsageDescription` / `NSHealthUpdateUsageDescription` in Info.plist
 
 ---
@@ -25,7 +26,9 @@ badminton score tracker Watch App/
   ContentView.swift          — all views and UI logic
   MatchModel.swift           — BadmintonMatch, GameScore, MatchRecord, Side
   WorkoutManager.swift       — HKWorkoutSession lifecycle; started on match begin, ended on save or discard
-  badminton_score_trackerApp.swift — app entry point; handles badminton://newmatch deep link
+  CloudSyncManager.swift     — NSUbiquitousKeyValueStore sync; pushes on data change, pulls on launch and external update
+  badminton_score_trackerApp.swift — app entry point; starts CloudSyncManager, handles badminton://newmatch deep link
+  badminton_score_tracker_Watch_App.entitlements — iCloud KV store entitlement
   Assets.xcassets/           — app icon, racket animation asset, 15 avatar images
   *.lproj/Localizable.strings — en, ja, zh-Hans, ko, id, hi
 

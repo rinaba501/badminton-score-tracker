@@ -184,6 +184,8 @@ final class SoundPlayer: ObservableObject {
 
 struct ContentView: View {
     @State private var currentView: AppView = .menu
+    @AppStorage("playerRoster") private var rosterData: Data = Data()
+    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
 
     enum AppView {
         case menu, preMatch, game, settings, history, stats
@@ -209,6 +211,8 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .startNewMatch)) { _ in
             currentView = .preMatch
         }
+        .onChange(of: rosterData) { CloudSyncManager.shared.pushToCloud() }
+        .onChange(of: matchHistoryData) { CloudSyncManager.shared.pushToCloud() }
     }
 }
 
