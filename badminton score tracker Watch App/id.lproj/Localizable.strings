@@ -81,5 +81,6 @@
 "game.discard_cancel" = "Lanjutkan";
 "onboarding.title" = "Kontrol";
 "onboarding.hint_tap" = "Ketuk atas/bawah untuk skor";
-"onboarding.hint_crown" = "Putar crown untuk skor";
 "onboarding.hint_undo" = "Tombol undo batalkan poin terakhir";
+"onboarding.hint_crown_cw" = "Putar crown searah jarum jam untuk skor kamu";
+"onboarding.hint_crown_ccw" = "Putar crown berlawanan untuk skor lawan";

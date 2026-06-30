@@ -82,5 +82,6 @@
 "game.discard_cancel" = "続ける";
 "onboarding.title" = "操作方法";
 "onboarding.hint_tap" = "上下をタップで得点";
-"onboarding.hint_crown" = "クラウンを回して得点";
 "onboarding.hint_undo" = "元に戻すボタンで直前の点を取り消し";
+"onboarding.hint_crown_cw" = "クラウンを時計回りで自分に得点";
+"onboarding.hint_crown_ccw" = "クラウンを反時計回りで相手に得点";

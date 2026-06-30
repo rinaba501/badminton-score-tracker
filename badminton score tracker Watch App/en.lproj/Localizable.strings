@@ -81,5 +81,6 @@
 "game.discard_cancel" = "Keep Playing";
 "onboarding.title" = "Controls";
 "onboarding.hint_tap" = "Tap top or bottom to score";
-"onboarding.hint_crown" = "Rotate crown to score";
 "onboarding.hint_undo" = "Undo button reverses last point";
+"onboarding.hint_crown_cw" = "Rotate crown clockwise to score for you";
+"onboarding.hint_crown_ccw" = "Rotate crown counter-clockwise to score for opponent";
