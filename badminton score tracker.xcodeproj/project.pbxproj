@@ -7,10 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4539878F2FF3F4DD0070EA74 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4539878E2FF3F4DD0070EA74 /* WidgetKit.framework */; };
+		453987912FF3F4DD0070EA74 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 453987902FF3F4DD0070EA74 /* SwiftUI.framework */; };
+		4539879E2FF3F4DE0070EA74 /* badminton score tracker ComplicationExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B32FF05A2DCB7D850008256A /* badminton score tracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		4539879C2FF3F4DE0070EA74 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B32FF04D2DCB7D850008256A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4539878B2FF3F4DD0070EA74;
+			remoteInfo = "badminton score tracker ComplicationExtension";
+		};
 		B32FF05B2DCB7D850008256A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B32FF04D2DCB7D850008256A /* Project object */;
@@ -35,6 +45,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		453987A32FF3F4DE0070EA74 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4539879E2FF3F4DE0070EA74 /* badminton score tracker ComplicationExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B32FF07F2DCB7D870008256A /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -49,15 +70,46 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "badminton score tracker ComplicationExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4539878E2FF3F4DD0070EA74 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		453987902FF3F4DD0070EA74 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		B32FF0532DCB7D850008256A /* badminton score tracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "badminton score tracker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "badminton score tracker Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B32FF0682DCB7D870008256A /* badminton score tracker Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "badminton score tracker Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B32FF0722DCB7D870008256A /* badminton score tracker Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "badminton score tracker Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4539879F2FF3F4DE0070EA74 /* Exceptions for "badminton score tracker Complication" folder in "badminton score tracker ComplicationExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4539878B2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension */;
+		};
+		B32FF0AA2DCB7D870008256A /* Exceptions for "badminton score tracker Watch App" folder in "badminton score tracker Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B32FF0582DCB7D850008256A /* badminton score tracker Watch App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		453987922FF3F4DD0070EA74 /* badminton score tracker Complication */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4539879F2FF3F4DE0070EA74 /* Exceptions for "badminton score tracker Complication" folder in "badminton score tracker ComplicationExtension" target */,
+			);
+			path = "badminton score tracker Complication";
+			sourceTree = "<group>";
+		};
 		B32FF05D2DCB7D850008256A /* badminton score tracker Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B32FF0AA2DCB7D870008256A /* Exceptions for "badminton score tracker Watch App" folder in "badminton score tracker Watch App" target */,
+			);
 			path = "badminton score tracker Watch App";
 			sourceTree = "<group>";
 		};
@@ -74,6 +126,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		453987892FF3F4DD0070EA74 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				453987912FF3F4DD0070EA74 /* SwiftUI.framework in Frameworks */,
+				4539878F2FF3F4DD0070EA74 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B32FF0562DCB7D850008256A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -98,12 +159,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4539878D2FF3F4DD0070EA74 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4539878E2FF3F4DD0070EA74 /* WidgetKit.framework */,
+				453987902FF3F4DD0070EA74 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		B32FF04C2DCB7D850008256A = {
 			isa = PBXGroup;
 			children = (
 				B32FF05D2DCB7D850008256A /* badminton score tracker Watch App */,
 				B32FF06B2DCB7D870008256A /* badminton score tracker Watch AppTests */,
 				B32FF0752DCB7D870008256A /* badminton score tracker Watch AppUITests */,
+				453987922FF3F4DD0070EA74 /* badminton score tracker Complication */,
+				4539878D2FF3F4DD0070EA74 /* Frameworks */,
 				B32FF0542DCB7D850008256A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -115,6 +187,7 @@
 				B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */,
 				B32FF0682DCB7D870008256A /* badminton score tracker Watch AppTests.xctest */,
 				B32FF0722DCB7D870008256A /* badminton score tracker Watch AppUITests.xctest */,
+				4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,6 +195,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		4539878B2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 453987A02FF3F4DE0070EA74 /* Build configuration list for PBXNativeTarget "badminton score tracker ComplicationExtension" */;
+			buildPhases = (
+				453987882FF3F4DD0070EA74 /* Sources */,
+				453987892FF3F4DD0070EA74 /* Frameworks */,
+				4539878A2FF3F4DD0070EA74 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				453987922FF3F4DD0070EA74 /* badminton score tracker Complication */,
+			);
+			name = "badminton score tracker ComplicationExtension";
+			packageProductDependencies = (
+			);
+			productName = "badminton score tracker ComplicationExtension";
+			productReference = 4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		B32FF0522DCB7D850008256A /* badminton score tracker */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B32FF0802DCB7D870008256A /* Build configuration list for PBXNativeTarget "badminton score tracker" */;
@@ -148,10 +243,12 @@
 				B32FF0552DCB7D850008256A /* Sources */,
 				B32FF0562DCB7D850008256A /* Frameworks */,
 				B32FF0572DCB7D850008256A /* Resources */,
+				453987A32FF3F4DE0070EA74 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				4539879D2FF3F4DE0070EA74 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B32FF05D2DCB7D850008256A /* badminton score tracker Watch App */,
@@ -216,9 +313,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1630;
+				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
+					4539878B2FF3F4DD0070EA74 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 					B32FF0522DCB7D850008256A = {
 						CreatedOnToolsVersion = 16.3;
 					};
@@ -258,11 +358,19 @@
 				B32FF0582DCB7D850008256A /* badminton score tracker Watch App */,
 				B32FF0672DCB7D870008256A /* badminton score tracker Watch AppTests */,
 				B32FF0712DCB7D870008256A /* badminton score tracker Watch AppUITests */,
+				4539878B2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		4539878A2FF3F4DD0070EA74 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B32FF0512DCB7D850008256A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -294,6 +402,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		453987882FF3F4DD0070EA74 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B32FF0552DCB7D850008256A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -318,6 +433,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		4539879D2FF3F4DE0070EA74 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4539878B2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension */;
+			targetProxy = 4539879C2FF3F4DE0070EA74 /* PBXContainerItemProxy */;
+		};
 		B32FF05C2DCB7D850008256A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B32FF0582DCB7D850008256A /* badminton score tracker Watch App */;
@@ -336,6 +456,71 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		453987A12FF3F4DE0070EA74 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "badminton score tracker Complication/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "badminton score tracker Complication";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "ritsuma.badminton-score-tracker.watchkitapp.badminton-score-tracker-Complication";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Debug;
+		};
+		453987A22FF3F4DE0070EA74 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "badminton score tracker Complication/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "badminton score tracker Complication";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "ritsuma.badminton-score-tracker.watchkitapp.badminton-score-tracker-Complication";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Release;
+		};
 		B32FF07A2DCB7D870008256A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -458,10 +643,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "badminton score tracker";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKWatchOnly = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "badminton score tracker Watch App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -486,10 +669,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "badminton score tracker";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKWatchOnly = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "badminton score tracker Watch App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -615,6 +796,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		453987A02FF3F4DE0070EA74 /* Build configuration list for PBXNativeTarget "badminton score tracker ComplicationExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				453987A12FF3F4DE0070EA74 /* Debug */,
+				453987A22FF3F4DE0070EA74 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		B32FF0502DCB7D850008256A /* Build configuration list for PBXProject "badminton score tracker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
