@@ -1335,23 +1335,24 @@ struct HistoryView: View {
                 }
             } else {
                 Section {
-                    HStack(spacing: 4) {
-                        ForEach(DateRange.allCases, id: \.self) { range in
-                            Button(action: { dateRange = range }) {
-                                Text(range.label)
-                                    .font(.system(size: 11, weight: dateRange == range ? .semibold : .regular))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 5)
-                                    .background(dateRange == range ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
-                                    .foregroundColor(dateRange == range ? .yellow : .primary)
-                                    .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
+                    Button(action: { showingFilters = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "line.3.horizontal.decrease")
+                                .font(.system(size: 11))
+                                .foregroundColor(isFiltered ? .yellow : .secondary)
+                            Text(filterLabel)
+                                .font(.system(size: 11))
+                                .foregroundColor(isFiltered ? .yellow : .secondary)
+                                .lineLimit(1)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary)
                         }
                     }
                 }
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
+                .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
 
                 if filteredHistory.isEmpty {
                     Section {
@@ -1383,36 +1384,45 @@ struct HistoryView: View {
             }
             if !history.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 12) {
-                        Button(action: { showingFilters = true }) {
-                            Image(systemName: "line.3.horizontal.decrease.circle")
-                                .foregroundColor(isFiltered ? .yellow : .primary)
-                        }
-                        Button(action: { showingClearConfirmation = true }) {
-                            Image(systemName: "trash").foregroundColor(.red)
-                        }
+                    Button(action: { showingClearConfirmation = true }) {
+                        Image(systemName: "trash").foregroundColor(.red)
                     }
                 }
             }
         }
         .sheet(isPresented: $showingFilters) {
             List {
-                Section(header: Text("history.filter_player")) {
-                    Button(action: { selectedPlayer = "" }) {
-                        HStack {
-                            Text("history.filter_all_players")
-                            Spacer()
-                            if selectedPlayer.isEmpty {
-                                Image(systemName: "checkmark").foregroundColor(.yellow)
+                if allPlayers.count > 1 {
+                    Section(header: Text("history.filter_player")) {
+                        Button(action: { selectedPlayer = "" }) {
+                            HStack {
+                                Text("history.filter_all_players")
+                                Spacer()
+                                if selectedPlayer.isEmpty {
+                                    Image(systemName: "checkmark").foregroundColor(.yellow)
+                                }
+                            }
+                        }
+                        ForEach(allPlayers, id: \.self) { name in
+                            Button(action: { selectedPlayer = name }) {
+                                HStack {
+                                    Text(name)
+                                    Spacer()
+                                    if selectedPlayer == name {
+                                        Image(systemName: "checkmark").foregroundColor(.yellow)
+                                    }
+                                }
                             }
                         }
                     }
-                    ForEach(allPlayers, id: \.self) { name in
-                        Button(action: { selectedPlayer = name }) {
+                }
+                Section(header: Text("history.filter_date")) {
+                    ForEach(DateRange.allCases, id: \.self) { range in
+                        Button(action: { dateRange = range }) {
                             HStack {
-                                Text(name)
+                                Text(range.label)
                                 Spacer()
-                                if selectedPlayer == name {
+                                if dateRange == range {
                                     Image(systemName: "checkmark").foregroundColor(.yellow)
                                 }
                             }
@@ -1430,7 +1440,14 @@ struct HistoryView: View {
     }
 
     private var isFiltered: Bool {
-        !selectedPlayer.isEmpty
+        !selectedPlayer.isEmpty || dateRange != .all
+    }
+
+    private var filterLabel: String {
+        var parts: [String] = []
+        if !selectedPlayer.isEmpty { parts.append(selectedPlayer) }
+        if dateRange != .all { parts.append(dateRange.label) }
+        return parts.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") + " · " + NSLocalizedString("history.filter_all", comment: "") : parts.joined(separator: " · ")
     }
 }
 
