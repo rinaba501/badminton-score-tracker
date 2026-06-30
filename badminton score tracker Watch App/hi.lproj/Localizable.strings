@@ -75,3 +75,7 @@
 "theme.black" = "काला";
 "speech.time_up" = "समय समाप्त";
 "game.rematch" = "फिर से खेलें";
+"game.discard_title" = "मैच छोड़ें?";
+"game.discard_message" = "आपका वर्तमान स्कोर खो जाएगा।";
+"game.discard_confirm" = "छोड़ें";
+"game.discard_cancel" = "जारी रखें";

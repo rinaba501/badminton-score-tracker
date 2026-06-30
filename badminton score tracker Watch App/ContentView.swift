@@ -416,6 +416,7 @@ struct GameView: View {
     @State private var savedCurrentMatch = false
     @State private var matchStartDate = Date()
     @State private var crownValue: Double = 0
+    @State private var showDiscardAlert = false
     @State private var lastCrownScore: Double = 0
     @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
@@ -770,8 +771,24 @@ struct GameView: View {
         }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("game.menu") { currentView = .menu }
+                Button("game.menu") {
+                    let matchInProgress = match.matchWinner == nil && timeModeWinner == nil &&
+                        (match.myScore > 0 || match.opponentScore > 0 || !match.completedGames.isEmpty)
+                    if matchInProgress {
+                        showDiscardAlert = true
+                    } else {
+                        currentView = .menu
+                    }
+                }
             }
+        }
+        .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $showDiscardAlert) {
+            Button(NSLocalizedString("game.discard_confirm", comment: ""), role: .destructive) {
+                currentView = .menu
+            }
+            Button(NSLocalizedString("game.discard_cancel", comment: ""), role: .cancel) {}
+        } message: {
+            Text("game.discard_message")
         }
         .focusable()
         .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)
