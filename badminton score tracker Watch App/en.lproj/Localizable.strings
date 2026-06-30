@@ -82,6 +82,5 @@
 "onboarding.title" = "How to Score";
 "onboarding.hint_tap" = "Tap top or bottom to score";
 "onboarding.hint_crown" = "Rotate crown to score";
-"onboarding.hint_longpress" = "Long-press to reset game";
 "onboarding.hint_undo" = "Undo button reverses last point";
 "onboarding.got_it" = "Got it";

@@ -406,7 +406,6 @@ struct OnboardingView: View {
     private let hints: [Hint] = [
         Hint(icon: "hand.tap",        key: "onboarding.hint_tap"),
         Hint(icon: "digitalcrown.horizontal.press", key: "onboarding.hint_crown"),
-        Hint(icon: "hand.tap.fill",   key: "onboarding.hint_longpress"),
         Hint(icon: "arrow.uturn.backward", key: "onboarding.hint_undo"),
     ]
 

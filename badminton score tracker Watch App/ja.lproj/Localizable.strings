@@ -83,6 +83,5 @@
 "onboarding.title" = "操作方法";
 "onboarding.hint_tap" = "上下をタップで得点";
 "onboarding.hint_crown" = "クラウンを回して得点";
-"onboarding.hint_longpress" = "長押しでゲームをリセット";
 "onboarding.hint_undo" = "元に戻すボタンで直前の点を取り消し";
 "onboarding.got_it" = "わかった";

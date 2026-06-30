@@ -28,7 +28,6 @@ Two-step flow:
 
 ### Game Screen
 - **Tap** top/bottom half to score for that player
-- **Long-press** to reset the current game (with confirmation)
 - **Undo** button (inline in header) — reverts last point; disabled during game-over overlay
 - **Digital Crown** — rotate to score (clockwise = me, counter-clockwise = opponent)
 - **Serve indicator** — small dot next to serving player's name; side (left/right) reflects service court (even score = right, odd = left)
