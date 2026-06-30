@@ -1515,7 +1515,12 @@ struct StatsView: View {
                     Section {
                         Picker("Player", selection: $selectedPlayer) {
                             ForEach(allPlayers, id: \.self) { name in
-                                Text(name).tag(name)
+                                if name == myName {
+                                    Label(name, systemImage: "person.fill")
+                                        .tag(name)
+                                } else {
+                                    Text(name).tag(name)
+                                }
                             }
                         }
                     }
