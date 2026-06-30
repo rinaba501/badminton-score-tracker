@@ -1372,6 +1372,7 @@ struct HistoryView: View {
                 }
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                .listSectionSpacing(0)
 
                 if filteredHistory.isEmpty {
                     Section {
@@ -1380,6 +1381,7 @@ struct HistoryView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                             .listRowBackground(Color.clear)
                     }
+                    .listSectionSpacing(0)
                 } else {
                     Section {
                         ForEach(filteredHistory) { record in
