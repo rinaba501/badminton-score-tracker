@@ -1334,6 +1334,25 @@ struct HistoryView: View {
                         .listRowBackground(Color.clear)
                 }
             } else {
+                Section {
+                    HStack(spacing: 4) {
+                        ForEach(DateRange.allCases, id: \.self) { range in
+                            Button(action: { dateRange = range }) {
+                                Text(range.label)
+                                    .font(.system(size: 11, weight: dateRange == range ? .semibold : .regular))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 5)
+                                    .background(dateRange == range ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
+                                    .foregroundColor(dateRange == range ? .yellow : .primary)
+                                    .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
+
                 if filteredHistory.isEmpty {
                     Section {
                         Text("history.empty")
@@ -1378,37 +1397,22 @@ struct HistoryView: View {
         }
         .sheet(isPresented: $showingFilters) {
             List {
-                if allPlayers.count > 1 {
-                    Section(header: Text("history.filter_player")) {
-                        Button(action: { selectedPlayer = "" }) {
-                            HStack {
-                                Text("history.filter_all_players")
-                                Spacer()
-                                if selectedPlayer.isEmpty {
-                                    Image(systemName: "checkmark").foregroundColor(.yellow)
-                                }
-                            }
-                        }
-                        ForEach(allPlayers, id: \.self) { name in
-                            Button(action: { selectedPlayer = name }) {
-                                HStack {
-                                    Text(name)
-                                    Spacer()
-                                    if selectedPlayer == name {
-                                        Image(systemName: "checkmark").foregroundColor(.yellow)
-                                    }
-                                }
+                Section(header: Text("history.filter_player")) {
+                    Button(action: { selectedPlayer = "" }) {
+                        HStack {
+                            Text("history.filter_all_players")
+                            Spacer()
+                            if selectedPlayer.isEmpty {
+                                Image(systemName: "checkmark").foregroundColor(.yellow)
                             }
                         }
                     }
-                }
-                Section(header: Text("history.filter_date")) {
-                    ForEach(DateRange.allCases, id: \.self) { range in
-                        Button(action: { dateRange = range }) {
+                    ForEach(allPlayers, id: \.self) { name in
+                        Button(action: { selectedPlayer = name }) {
                             HStack {
-                                Text(range.label)
+                                Text(name)
                                 Spacer()
-                                if dateRange == range {
+                                if selectedPlayer == name {
                                     Image(systemName: "checkmark").foregroundColor(.yellow)
                                 }
                             }
@@ -1426,7 +1430,7 @@ struct HistoryView: View {
     }
 
     private var isFiltered: Bool {
-        !selectedPlayer.isEmpty || dateRange != .all
+        !selectedPlayer.isEmpty
     }
 }
 
