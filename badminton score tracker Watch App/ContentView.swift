@@ -747,7 +747,8 @@ struct GameView: View {
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
                     actionTitle: NSLocalizedString("game.rematch", comment: ""),
                     action: newMatch,
-                    isMatchOver: true
+                    isMatchOver: true,
+                    completedGames: match.completedGames
                 )
             } else if let winner = match.matchWinner ?? timeModeWinner {
                 MatchOverOverlay(
@@ -755,7 +756,8 @@ struct GameView: View {
                     games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
                     actionTitle: NSLocalizedString("game.rematch", comment: ""),
                     action: newMatch,
-                    isMatchOver: true
+                    isMatchOver: true,
+                    completedGames: match.completedGames
                 )
             } else if let gameWinner = match.gameWinner {
                 MatchOverOverlay(
@@ -921,6 +923,7 @@ struct MatchOverOverlay: View {
     let actionTitle: String
     let action: () -> Void
     var isMatchOver: Bool = false
+    var completedGames: [GameScore] = []
 
     @State private var shimmer = false
 
@@ -940,6 +943,12 @@ struct MatchOverOverlay: View {
             Text("Games \(games)")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.85))
+            if isMatchOver && !completedGames.isEmpty {
+                Text(completedGames.map { "\($0.my)-\($0.opponent)" }.joined(separator: "  "))
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+            }
             Button(actionTitle, action: action)
                 .buttonStyle(.borderedProminent)
         }
