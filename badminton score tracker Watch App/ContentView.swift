@@ -1266,6 +1266,7 @@ struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @State private var showingClearConfirmation = false
+    @State private var showingFilters = false
     @State private var selectedPlayer: String = ""
     @State private var dateRange: DateRange = .all
 
@@ -1333,22 +1334,6 @@ struct HistoryView: View {
                         .listRowBackground(Color.clear)
                 }
             } else {
-                Section {
-                    if allPlayers.count > 1 {
-                        Picker("history.filter_player", selection: $selectedPlayer) {
-                            Text("history.filter_all_players").tag("")
-                            ForEach(allPlayers, id: \.self) { name in
-                                Text(name).tag(name)
-                            }
-                        }
-                    }
-                    Picker("history.filter_date", selection: $dateRange) {
-                        ForEach(DateRange.allCases, id: \.self) { range in
-                            Text(range.label).tag(range)
-                        }
-                    }
-                }
-
                 if filteredHistory.isEmpty {
                     Section {
                         Text("history.empty")
@@ -1379,8 +1364,55 @@ struct HistoryView: View {
             }
             if !history.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showingClearConfirmation = true }) {
-                        Image(systemName: "trash").foregroundColor(.red)
+                    HStack(spacing: 12) {
+                        Button(action: { showingFilters = true }) {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                                .foregroundColor(isFiltered ? .yellow : .primary)
+                        }
+                        Button(action: { showingClearConfirmation = true }) {
+                            Image(systemName: "trash").foregroundColor(.red)
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingFilters) {
+            List {
+                if allPlayers.count > 1 {
+                    Section(header: Text("history.filter_player")) {
+                        Button(action: { selectedPlayer = "" }) {
+                            HStack {
+                                Text("history.filter_all_players")
+                                Spacer()
+                                if selectedPlayer.isEmpty {
+                                    Image(systemName: "checkmark").foregroundColor(.yellow)
+                                }
+                            }
+                        }
+                        ForEach(allPlayers, id: \.self) { name in
+                            Button(action: { selectedPlayer = name }) {
+                                HStack {
+                                    Text(name)
+                                    Spacer()
+                                    if selectedPlayer == name {
+                                        Image(systemName: "checkmark").foregroundColor(.yellow)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Section(header: Text("history.filter_date")) {
+                    ForEach(DateRange.allCases, id: \.self) { range in
+                        Button(action: { dateRange = range }) {
+                            HStack {
+                                Text(range.label)
+                                Spacer()
+                                if dateRange == range {
+                                    Image(systemName: "checkmark").foregroundColor(.yellow)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1391,6 +1423,10 @@ struct HistoryView: View {
         } message: {
             Text("history.clear_confirm")
         }
+    }
+
+    private var isFiltered: Bool {
+        !selectedPlayer.isEmpty || dateRange != .all
     }
 }
 
