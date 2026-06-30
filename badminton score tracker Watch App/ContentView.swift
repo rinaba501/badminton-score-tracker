@@ -1397,6 +1397,8 @@ struct StatsView: View {
     @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @AppStorage("playerRoster") private var rosterData: Data = Data()
 
+    @State private var selectedPlayer: String = ""
+
     private var history: [MatchRecord] {
         (try? JSONDecoder().decode([MatchRecord].self, from: matchHistoryData)) ?? []
     }
@@ -1405,22 +1407,41 @@ struct StatsView: View {
         (try? JSONDecoder().decode([Player].self, from: rosterData)) ?? []
     }
 
-    private var opponents: [String] {
+    private var allPlayers: [String] {
         var seen = Set<String>()
         var result: [String] = []
         for record in history {
-            let opp = record.myName == myName ? record.opponentName : record.myName
-            if opp != myName && seen.insert(opp).inserted { result.append(opp) }
+            for name in [record.myName, record.opponentName] {
+                if seen.insert(name).inserted { result.append(name) }
+            }
+        }
+        return result
+    }
+
+    private var activePlayer: String {
+        selectedPlayer.isEmpty ? myName : selectedPlayer
+    }
+
+    private var playerHistory: [MatchRecord] {
+        history.filter { $0.myName == activePlayer || $0.opponentName == activePlayer }
+    }
+
+    private var opponents: [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for record in playerHistory {
+            let opp = record.myName == activePlayer ? record.opponentName : record.myName
+            if seen.insert(opp).inserted { result.append(opp) }
         }
         return result
     }
 
     private func h2h(opponent: String) -> (wins: Int, losses: Int) {
-        let mePlayer = roster.first(where: { $0.name == myName })
+        let mePlayer = roster.first(where: { $0.name == activePlayer })
         let oppPlayer = roster.first(where: { $0.name == opponent })
-        let relevant = history.filter { record in
-            let namesMatch = (record.myName == myName && record.opponentName == opponent) ||
-                             (record.myName == opponent && record.opponentName == myName)
+        let relevant = playerHistory.filter { record in
+            let namesMatch = (record.myName == activePlayer && record.opponentName == opponent) ||
+                             (record.myName == opponent && record.opponentName == activePlayer)
             let idsMatch: Bool = {
                 guard let meId = mePlayer?.id, let oppId = oppPlayer?.id else { return false }
                 return (record.myPlayerId == meId && record.opponentPlayerId == oppId) ||
@@ -1428,12 +1449,12 @@ struct StatsView: View {
             }()
             return namesMatch || idsMatch
         }
-        let wins = relevant.filter { $0.winner == myName }.count
+        let wins = relevant.filter { $0.winner == activePlayer }.count
         return (wins: wins, losses: relevant.count - wins)
     }
 
-    private var totalMatches: Int { history.count }
-    private var wins: Int { history.filter { $0.winner == myName }.count }
+    private var totalMatches: Int { playerHistory.count }
+    private var wins: Int { playerHistory.filter { $0.winner == activePlayer }.count }
     private var losses: Int { totalMatches - wins }
 
     private var winRate: Double {
@@ -1441,14 +1462,16 @@ struct StatsView: View {
     }
 
     private var avgPointsScored: Double {
-        guard !history.isEmpty else { return 0 }
-        let total = history.flatMap { $0.games }.map { $0.my }.reduce(0, +)
-        let games = history.flatMap { $0.games }.count
+        guard !playerHistory.isEmpty else { return 0 }
+        let total = playerHistory.flatMap { record -> [Int] in
+            record.myName == activePlayer ? record.games.map { $0.my } : record.games.map { $0.opponent }
+        }.reduce(0, +)
+        let games = playerHistory.flatMap { $0.games }.count
         return games == 0 ? 0 : Double(total) / Double(games)
     }
 
     private var avgMatchDuration: TimeInterval {
-        let timed = history.filter { $0.duration > 0 }
+        let timed = playerHistory.filter { $0.duration > 0 }
         guard !timed.isEmpty else { return 0 }
         return timed.map { $0.duration }.reduce(0, +) / Double(timed.count)
     }
@@ -1462,8 +1485,8 @@ struct StatsView: View {
     private var longestStreak: Int {
         var best = 0
         var current = 0
-        for record in history {
-            if record.winner == myName {
+        for record in playerHistory {
+            if record.winner == activePlayer {
                 current += 1
                 best = max(best, current)
             } else {
@@ -1483,7 +1506,17 @@ struct StatsView: View {
                         .listRowBackground(Color.clear)
                 }
             } else {
-                Section(header: Text(myName)) {
+                if allPlayers.count > 1 {
+                    Section {
+                        Picker("Player", selection: $selectedPlayer) {
+                            ForEach(allPlayers, id: \.self) { name in
+                                Text(name).tag(name)
+                            }
+                        }
+                    }
+                }
+
+                Section(header: Text(activePlayer)) {
                     StatRow(label: "Matches", value: "\(totalMatches)")
                     StatRow(label: "Wins", value: "\(wins)")
                     StatRow(label: "Losses", value: "\(losses)")
@@ -1506,6 +1539,9 @@ struct StatsView: View {
             }
         }
         .navigationTitle("Stats")
+        .onAppear {
+            if selectedPlayer.isEmpty { selectedPlayer = myName }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Back") { currentView = .menu }
