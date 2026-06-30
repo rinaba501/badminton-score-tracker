@@ -79,3 +79,9 @@
 "game.discard_message" = "현재 점수가 사라집니다.";
 "game.discard_confirm" = "포기";
 "game.discard_cancel" = "계속하기";
+"onboarding.title" = "사용 방법";
+"onboarding.hint_tap" = "위/아래 탭으로 득점";
+"onboarding.hint_crown" = "크라운 회전으로 득점";
+"onboarding.hint_longpress" = "길게 눌러 게임 초기화";
+"onboarding.hint_undo" = "실행 취소 버튼으로 마지막 점수 취소";
+"onboarding.got_it" = "확인";

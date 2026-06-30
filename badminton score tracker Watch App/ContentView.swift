@@ -394,6 +394,53 @@ enum CourtTheme: String, Codable, CaseIterable {
 
 // MARK: - Game
 
+struct OnboardingView: View {
+    let onDismiss: () -> Void
+
+    private struct Hint: Identifiable {
+        let id = UUID()
+        let icon: String
+        let key: String
+    }
+
+    private let hints: [Hint] = [
+        Hint(icon: "hand.tap",        key: "onboarding.hint_tap"),
+        Hint(icon: "digitalcrown.horizontal.press", key: "onboarding.hint_crown"),
+        Hint(icon: "hand.tap.fill",   key: "onboarding.hint_longpress"),
+        Hint(icon: "arrow.uturn.backward", key: "onboarding.hint_undo"),
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("onboarding.title")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 2)
+
+                ForEach(hints) { hint in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: hint.icon)
+                            .font(.system(size: 16))
+                            .foregroundColor(.yellow)
+                            .frame(width: 22)
+                        Text(LocalizedStringKey(hint.key))
+                            .font(.caption2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                Button(action: onDismiss) {
+                    Text("onboarding.got_it")
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 4)
+            }
+            .padding()
+        }
+    }
+}
+
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("myName") private var myName = "Me"
@@ -409,9 +456,11 @@ struct GameView: View {
     @AppStorage("enableSounds") private var enableSounds = true
     @AppStorage("timeModeEnabled") private var timeModeEnabled = false
     @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @StateObject private var soundPlayer = SoundPlayer()
 
     @State private var match = BadmintonMatch()
+    @State private var showOnboarding = false
     @State private var undoStack: [BadmintonMatch] = []
     @State private var savedCurrentMatch = false
     @State private var matchStartDate = Date()
@@ -790,6 +839,9 @@ struct GameView: View {
         } message: {
             Text("game.discard_message")
         }
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView { showOnboarding = false }
+        }
         .focusable()
         .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)
         .onChange(of: crownValue, perform: onCrownChanged)
@@ -813,6 +865,10 @@ struct GameView: View {
             }
             crownValue = 0
             lastCrownScore = 0
+            if !hasSeenOnboarding {
+                hasSeenOnboarding = true
+                showOnboarding = true
+            }
         }
     }
 

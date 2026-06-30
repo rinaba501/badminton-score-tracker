@@ -79,3 +79,9 @@
 "game.discard_message" = "当前比分将会丢失。";
 "game.discard_confirm" = "放弃";
 "game.discard_cancel" = "继续比赛";
+"onboarding.title" = "操作说明";
+"onboarding.hint_tap" = "点击上方或下方得分";
+"onboarding.hint_crown" = "旋转表冠得分";
+"onboarding.hint_longpress" = "长按重置当局";
+"onboarding.hint_undo" = "撤销按钮取消上一分";
+"onboarding.got_it" = "明白了";

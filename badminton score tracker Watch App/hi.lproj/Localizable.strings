@@ -79,3 +79,9 @@
 "game.discard_message" = "आपका वर्तमान स्कोर खो जाएगा।";
 "game.discard_confirm" = "छोड़ें";
 "game.discard_cancel" = "जारी रखें";
+"onboarding.title" = "कैसे खेलें";
+"onboarding.hint_tap" = "ऊपर/नीचे टैप करें स्कोर के लिए";
+"onboarding.hint_crown" = "क्राउन घुमाएं स्कोर के लिए";
+"onboarding.hint_longpress" = "लंबे दबाव से गेम रीसेट करें";
+"onboarding.hint_undo" = "अनडू बटन से अंतिम अंक हटाएं";
+"onboarding.got_it" = "ठीक है";
