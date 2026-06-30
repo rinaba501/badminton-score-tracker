@@ -8,6 +8,7 @@
 import SwiftUI
 import WatchKit
 import AVFoundation
+import HealthKit
 
 // MARK: - Player Model
 
@@ -481,6 +482,7 @@ struct GameView: View {
     @AppStorage("timeModeEnabled") private var timeModeEnabled = false
     @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
     @StateObject private var soundPlayer = SoundPlayer()
+    @StateObject private var workoutManager = WorkoutManager()
 
     @State private var match = BadmintonMatch()
     @State private var undoStack: [BadmintonMatch] = []
@@ -738,6 +740,7 @@ struct GameView: View {
             opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
         ))
         if let encoded = try? JSONEncoder().encode(history) { matchHistoryData = encoded }
+        Task { await workoutManager.endWorkout() }
     }
 
     private func decodeHistory() -> [MatchRecord] {
@@ -855,6 +858,7 @@ struct GameView: View {
         }
         .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $showDiscardAlert) {
             Button(NSLocalizedString("game.discard_confirm", comment: ""), role: .destructive) {
+                Task { await workoutManager.endWorkout() }
                 currentView = .menu
             }
             Button(NSLocalizedString("game.discard_cancel", comment: ""), role: .cancel) {}
@@ -881,6 +885,7 @@ struct GameView: View {
                     gamesToWin: (gamesInMatch / 2) + 1
                 )
                 if timeModeEnabled { timeRemaining = TimeInterval(timeLimitMinutes * 60) }
+                Task { await workoutManager.startWorkout(startDate: matchStartDate) }
             }
             crownValue = 0
             lastCrownScore = 0
