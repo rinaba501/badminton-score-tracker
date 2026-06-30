@@ -1198,6 +1198,12 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                 }
             }
+
+            Section {
+                NavigationLink(destination: OnboardingView()) {
+                    Label(LocalizedStringKey("onboarding.title"), systemImage: "hand.raised")
+                }
+            }
         }
         .navigationTitle("settings.title")
         .navigationBarTitleDisplayMode(.inline)
@@ -1205,16 +1211,6 @@ struct SettingsView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("settings.back") { currentView = .menu }
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            NavigationLink(destination: OnboardingView()) {
-                Label(LocalizedStringKey("onboarding.title"), systemImage: "hand.raised")
-                    .font(.caption)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 4)
         }
         .sheet(item: $editingPlayer) { player in
             let others = roster.filter { $0.id != player.id }.map { $0.name }
