@@ -33,6 +33,7 @@ struct BadmintonComplicationEntryView: View {
             ZStack {
                 AccessoryWidgetBackground()
                 Image("avatar_shuttlecock_happy")
+                    .renderingMode(.original)
                     .resizable()
                     .scaledToFit()
                     .padding(4)
@@ -47,6 +48,7 @@ struct BadmintonComplicationEntryView: View {
         case .accessoryRectangular:
             HStack(spacing: 8) {
                 Image("avatar_shuttlecock_happy")
+                    .renderingMode(.original)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
