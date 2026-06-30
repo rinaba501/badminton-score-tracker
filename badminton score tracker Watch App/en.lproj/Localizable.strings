@@ -79,7 +79,7 @@
 "game.discard_message" = "Your current match score will be lost.";
 "game.discard_confirm" = "Discard";
 "game.discard_cancel" = "Keep Playing";
-"onboarding.title" = "How to Score";
+"onboarding.title" = "Controls";
 "onboarding.hint_tap" = "Tap top or bottom to score";
 "onboarding.hint_crown" = "Rotate crown to score";
 "onboarding.hint_undo" = "Undo button reverses last point";
