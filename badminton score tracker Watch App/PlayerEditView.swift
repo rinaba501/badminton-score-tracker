@@ -48,10 +48,10 @@ struct PlayerEditView: View {
                 }
                 .padding(.top, 4)
 
-                Text("Name")
+                Text("playeredit.name")
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                TextField("Name", text: $localPlayer.name)
+                TextField("playeredit.name", text: $localPlayer.name)
                     .textFieldStyle(.plain)
                     .padding(6)
                     .background(isDuplicate ? Color.red.opacity(0.2) : Color.secondary.opacity(0.15))
@@ -59,12 +59,12 @@ struct PlayerEditView: View {
                     .onSubmit { checkDuplicate() }
                     .onChange(of: localPlayer.name) { _ in checkDuplicate() }
                 if isDuplicate {
-                    Text("Name already taken")
+                    Text("playeredit.name_taken")
                         .font(.caption2)
                         .foregroundColor(.red)
                 }
 
-                Text("Color")
+                Text("playeredit.color")
                     .font(.caption2)
                     .foregroundColor(.secondary)
 
@@ -81,7 +81,7 @@ struct PlayerEditView: View {
                     }
                 }
 
-                Text("Avatar")
+                Text("playeredit.avatar")
                     .font(.caption2)
                     .foregroundColor(.secondary)
 
@@ -114,7 +114,7 @@ struct PlayerEditView: View {
                     }
                 }
 
-                Text("Icons")
+                Text("playeredit.icons")
                     .font(.caption2)
                     .foregroundColor(.secondary)
 
@@ -134,7 +134,7 @@ struct PlayerEditView: View {
                     }
                 }
 
-                Button("Save") {
+                Button("playeredit.save") {
                     onSave(localPlayer)
                 }
                 .buttonStyle(.borderedProminent)

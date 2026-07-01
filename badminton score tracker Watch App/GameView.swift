@@ -462,7 +462,7 @@ struct GameView: View {
         }
 
         if suddenDeath && timeModeWinner == nil {
-            bannerOverlay("Sudden Death!")
+            bannerOverlay(NSLocalizedString("game.sudden_death", comment: ""))
                 .allowsHitTesting(false)
         }
     }
@@ -471,7 +471,7 @@ struct GameView: View {
     private var resultOverlay: some View {
         if match.isTied {
             MatchOverOverlay(
-                title: "It's a Tie!",
+                title: NSLocalizedString("game.tie", comment: ""),
                 games: gamesScoreText,
                 actionTitle: NSLocalizedString("game.rematch", comment: ""),
                 action: newMatch,
@@ -730,7 +730,7 @@ struct MatchOverOverlay: View {
                 .font(.system(size: 17, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-            Text("Games \(games)")
+            Text(games)
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.85))
             if isMatchOver && !completedGames.isEmpty {

@@ -89,7 +89,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("Me")) {
+            Section(header: Text("settings.me")) {
                 Button(action: { editingPlayer = meAsPlayer() }) {
                     HStack(spacing: 8) {
                         let me = meAsPlayer()
@@ -104,9 +104,9 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("Players")) {
+            Section(header: Text("settings.players")) {
                 if roster.isEmpty {
-                    Text("No saved players yet")
+                    Text("settings.no_players")
                         .foregroundColor(.secondary)
                         .font(.caption)
                 } else {
@@ -127,7 +127,7 @@ struct SettingsView: View {
                                 var r = roster.filter { $0.id != player.id }
                                 if let encoded = PersistenceStore.encodeRoster(r) { rosterData = encoded }
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label("settings.delete", systemImage: "trash")
                             }
                         }
                     }
@@ -171,11 +171,11 @@ struct SettingsView: View {
                 }
             }
 
-            Section(header: Text("Match Timer")) {
-                Toggle("Enable", isOn: $timeModeEnabled)
+            Section(header: Text("settings.timer")) {
+                Toggle("settings.timer_enable", isOn: $timeModeEnabled)
                 if timeModeEnabled {
                     VStack(spacing: 6) {
-                        Text("\(timeLimitMinutes) min")
+                        Text(String(format: NSLocalizedString("settings.minutes", comment: ""), timeLimitMinutes))
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .frame(maxWidth: .infinity)
                         HStack(spacing: 6) {
