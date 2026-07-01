@@ -92,7 +92,7 @@ struct PreMatchView: View {
                 }
             }
             if !filteredRoster.isEmpty {
-                Section(header: Text("Saved")) {
+                Section(header: Text("prematch.saved")) {
                     ForEach(filteredRoster) { player in
                         Button(action: { onSelect(player.name) }) {
                             HStack {
@@ -113,16 +113,16 @@ struct PreMatchView: View {
             }
             Section {
                 Button(action: { showAddPlayer = true }) {
-                    Label("Add New", systemImage: "plus")
+                    Label("prematch.add_new", systemImage: "plus")
                 }
             }
         }
         .sheet(isPresented: $showAddPlayer) {
             VStack(spacing: 12) {
-                Text("New Player")
+                Text("prematch.new_player")
                     .font(.headline)
-                TextField("Name", text: $newPlayerName)
-                Button("Add") {
+                TextField("prematch.name", text: $newPlayerName)
+                Button("prematch.add") {
                     let name = newPlayerName.trimmingCharacters(in: .whitespaces)
                     if !name.isEmpty {
                         saveToRoster(name: name)
@@ -140,7 +140,7 @@ struct PreMatchView: View {
     var body: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: "Near Side", defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: "Guest (Near)") { name in
+            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: "Guest (Near)") { name in
                 matchMyName = name
                 step = .pickOpponent
             }
@@ -153,7 +153,7 @@ struct PreMatchView: View {
 
         case .pickOpponent:
             let nearName = matchMyName.isEmpty ? myName : matchMyName
-            playerPicker(title: "Far Side", defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: nearName, h2hAgainst: nearName) { name in
+            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: nearName, h2hAgainst: nearName) { name in
                 matchOpponentName = name
                 currentView = .game
             }

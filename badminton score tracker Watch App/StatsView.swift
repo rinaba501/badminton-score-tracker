@@ -122,7 +122,7 @@ struct StatsView: View {
         List {
             if history.isEmpty {
                 Section {
-                    Text("No matches yet")
+                    Text("stats.no_matches")
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .listRowBackground(Color.clear)
@@ -130,7 +130,7 @@ struct StatsView: View {
             } else {
                 if allPlayers.count > 1 {
                     Section {
-                        Picker("Player", selection: $selectedPlayer) {
+                        Picker("stats.player", selection: $selectedPlayer) {
                             ForEach(allPlayers, id: \.self) { name in
                                 if name == myName {
                                     Label(name, systemImage: "person.fill")
@@ -144,19 +144,19 @@ struct StatsView: View {
                 }
 
                 Section(header: Text(activePlayer)) {
-                    StatRow(label: "Matches", value: "\(totalMatches)")
-                    StatRow(label: "Wins", value: "\(wins)")
-                    StatRow(label: "Losses", value: "\(losses)")
-                    StatRow(label: "Win rate", value: String(format: "%.0f%%", winRate))
-                    StatRow(label: "Avg pts/game", value: String(format: "%.1f", avgPointsScored))
-                    StatRow(label: "Best streak", value: "\(longestStreak)")
+                    StatRow(label: NSLocalizedString("stats.matches", comment: ""), value: "\(totalMatches)")
+                    StatRow(label: NSLocalizedString("stats.wins", comment: ""), value: "\(wins)")
+                    StatRow(label: NSLocalizedString("stats.losses", comment: ""), value: "\(losses)")
+                    StatRow(label: NSLocalizedString("stats.win_rate", comment: ""), value: String(format: "%.0f%%", winRate))
+                    StatRow(label: NSLocalizedString("stats.avg_points", comment: ""), value: String(format: "%.1f", avgPointsScored))
+                    StatRow(label: NSLocalizedString("stats.best_streak", comment: ""), value: "\(longestStreak)")
                     if avgMatchDuration > 0 {
-                        StatRow(label: "Avg duration", value: durationString(avgMatchDuration))
+                        StatRow(label: NSLocalizedString("stats.avg_duration", comment: ""), value: durationString(avgMatchDuration))
                     }
                 }
 
                 if !opponents.isEmpty {
-                    Section(header: Text("Head-to-Head")) {
+                    Section(header: Text("stats.head_to_head")) {
                         ForEach(opponents, id: \.self) { opp in
                             let record = h2h(opponent: opp)
                             StatRow(label: opp, value: "\(record.wins)W – \(record.losses)L")
@@ -165,13 +165,13 @@ struct StatsView: View {
                 }
             }
         }
-        .navigationTitle("Stats")
+        .navigationTitle("stats.title")
         .onAppear {
             if selectedPlayer.isEmpty { selectedPlayer = myName }
         }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Back") { currentView = .menu }
+                Button("stats.back") { currentView = .menu }
             }
         }
     }
