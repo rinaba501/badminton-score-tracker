@@ -93,3 +93,11 @@
 "history.filter_week" = "이번 주";
 "history.filter_month" = "이번 달";
 "history.clear_all" = "전체 삭제";
+
+// Accessibility (VoiceOver)
+"a11y.score_tile" = "%1$@, %2$d점";
+"a11y.score_tile_serving_suffix" = "%1$@, %2$@에서 서브";
+"a11y.score_hint" = "두 번 탭하여 득점";
+"a11y.undo" = "마지막 득점 취소";
+"a11y.games_won" = "획득 게임, %1$d대 %2$d";
+"a11y.timer_remaining" = "남은 시간, %@";

@@ -87,5 +87,8 @@ struct AvatarView: View {
                     .foregroundColor(.white)
             }
         }
+        // Decorative: every AvatarView is shown next to the player's name,
+        // so hide it from VoiceOver to avoid a redundant element.
+        .accessibilityHidden(true)
     }
 }
