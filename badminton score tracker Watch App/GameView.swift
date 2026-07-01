@@ -407,39 +407,49 @@ struct GameView: View {
         }
     }
 
+    private var serveKnown: Bool { match.myScore > 0 || match.opponentScore > 0 }
+
+    private var gamesHeader: some View {
+        GamesWonHeader(
+            myName: effectiveMyName, opponentName: effectiveOpponentName,
+            myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
+            canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil && timeModeWinner == nil,
+            onUndo: undo
+        )
+    }
+
+    private var opponentTile: some View {
+        ScoreView(
+            name: effectiveOpponentName,
+            score: match.opponentScore,
+            isServing: serveKnown && match.servingSide == .opponent,
+            serveRight: match.serveFromRightCourt,
+            isWinner: match.gameWinner == .opponent,
+            avatarColor: avatarColor(for: effectiveOpponentName),
+            avatarIcon: avatarIcon(for: effectiveOpponentName),
+            onTap: { tap(.opponent) }
+        )
+    }
+
+    private var myTile: some View {
+        ScoreView(
+            name: effectiveMyName,
+            score: match.myScore,
+            isServing: serveKnown && match.servingSide == .me,
+            serveRight: match.serveFromRightCourt,
+            isWinner: match.gameWinner == .me,
+            avatarColor: avatarColor(for: effectiveMyName),
+            avatarIcon: avatarIcon(for: effectiveMyName),
+            onTap: { tap(.me) }
+        )
+    }
+
     private var scoreboard: some View {
         VStack(spacing: 6) {
             timerBadge
-            GamesWonHeader(
-                myName: effectiveMyName, opponentName: effectiveOpponentName,
-                myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
-                canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil && timeModeWinner == nil,
-                onUndo: undo
-            )
-
-            let serveKnown = match.myScore > 0 || match.opponentScore > 0
-
-            ScoreView(
-                name: effectiveOpponentName,
-                score: match.opponentScore,
-                isServing: serveKnown && match.servingSide == .opponent,
-                serveRight: match.serveFromRightCourt,
-                isWinner: match.gameWinner == .opponent,
-                avatarColor: avatarColor(for: effectiveOpponentName),
-                avatarIcon: avatarIcon(for: effectiveOpponentName),
-                onTap: { tap(.opponent) }
-            )
-
-            ScoreView(
-                name: effectiveMyName,
-                score: match.myScore,
-                isServing: serveKnown && match.servingSide == .me,
-                serveRight: match.serveFromRightCourt,
-                isWinner: match.gameWinner == .me,
-                avatarColor: avatarColor(for: effectiveMyName),
-                avatarIcon: avatarIcon(for: effectiveMyName),
-                onTap: { tap(.me) }
-            )
+            gamesHeader
+            opponentTile
+            myTile
         }
         .padding(.horizontal, 10)
     }
