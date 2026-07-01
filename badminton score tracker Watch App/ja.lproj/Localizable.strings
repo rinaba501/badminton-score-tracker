@@ -94,3 +94,11 @@
 "history.filter_week" = "今週";
 "history.filter_month" = "今月";
 "history.clear_all" = "すべて削除";
+
+// Accessibility (VoiceOver)
+"a11y.score_tile" = "%1$@、%2$d点";
+"a11y.score_tile_serving_suffix" = "%1$@、%2$@からサーブ";
+"a11y.score_hint" = "ダブルタップで得点を追加";
+"a11y.undo" = "最後の得点を取り消す";
+"a11y.games_won" = "取得ゲーム、%1$d対%2$d";
+"a11y.timer_remaining" = "残り時間、%@";

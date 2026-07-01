@@ -93,3 +93,11 @@
 "history.filter_week" = "Minggu Ini";
 "history.filter_month" = "Bulan Ini";
 "history.clear_all" = "Hapus Semua";
+
+// Accessibility (VoiceOver)
+"a11y.score_tile" = "%1$@, %2$d poin";
+"a11y.score_tile_serving_suffix" = "%1$@, servis dari %2$@";
+"a11y.score_hint" = "Ketuk dua kali untuk menambah poin";
+"a11y.undo" = "Batalkan poin terakhir";
+"a11y.games_won" = "Game dimenangkan, %1$d berbanding %2$d";
+"a11y.timer_remaining" = "Sisa waktu, %@";

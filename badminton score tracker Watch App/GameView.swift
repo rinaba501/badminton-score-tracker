@@ -367,9 +367,11 @@ struct GameView: View {
                     HStack {
                         Image(systemName: "timer")
                             .font(.caption2)
+                            .accessibilityHidden(true)
                         Text(timerLabel)
                             .font(.system(size: 13, weight: .bold, design: .monospaced))
                             .foregroundColor(timeRemaining <= 30 && timeRemaining > 0 ? .red : .white)
+                            .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.timer_remaining", comment: ""), timerLabel)))
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -526,10 +528,12 @@ struct GamesWonHeader: View {
             Text("game.games")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.white.opacity(0.8))
+                .accessibilityHidden(true)
             Spacer()
             Text("\(opponentGames) – \(myGames)")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
+                .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.games_won", comment: ""), opponentGames, myGames)))
             if canUndo {
                 Button(action: onUndo) {
                     Image(systemName: "arrow.uturn.backward")
@@ -537,6 +541,7 @@ struct GamesWonHeader: View {
                         .foregroundColor(.white.opacity(0.8))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("a11y.undo")
                 .transition(.opacity.animation(.easeInOut(duration: 0.2)))
             }
         }
@@ -556,6 +561,16 @@ struct ScoreView: View {
 
     @State private var scorePulse = false
     @State private var winnerGlow = false
+
+    /// A single spoken description of the tile: player, score, and — while
+    /// serving — which service court, so VoiceOver users get the same context
+    /// the sighted layout conveys.
+    private var accessibilityDescription: String {
+        let base = String(format: NSLocalizedString("a11y.score_tile", comment: ""), name, score)
+        guard isServing else { return base }
+        let court = NSLocalizedString(serveRight ? "game.right_court" : "game.left_court", comment: "")
+        return String(format: NSLocalizedString("a11y.score_tile_serving_suffix", comment: ""), base, court)
+    }
 
     var body: some View {
         HStack {
@@ -611,6 +626,10 @@ struct ScoreView: View {
         .onChange(of: isWinner) { won in
             winnerGlow = won
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityDescription)
+        .accessibilityHint("a11y.score_hint")
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -632,6 +651,7 @@ struct MatchOverOverlay: View {
                     .foregroundColor(.yellow)
                     .scaleEffect(shimmer ? 1.15 : 1.0)
                     .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: shimmer)
+                    .accessibilityHidden(true)
             }
             Text(title)
                 .font(.system(size: 17, weight: .bold, design: .rounded))

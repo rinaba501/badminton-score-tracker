@@ -151,6 +151,16 @@ Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indon
 
 ---
 
+## Accessibility
+
+- **VoiceOver** — custom controls carry spoken labels:
+  - Each score tile reads the player, current score, and (while serving) the service court as one element, with a "double tap to add a point" hint and the button trait.
+  - The games-won readout, the undo button, and the match-timer countdown have dedicated labels.
+  - Purely decorative imagery (avatars beside names, timer/trophy icons) is hidden from VoiceOver to avoid redundant elements.
+- All accessibility strings are localized in every supported language (`a11y.*` keys in `Localizable.strings`).
+
+---
+
 ## Open Issues
 
 | # | Feature |

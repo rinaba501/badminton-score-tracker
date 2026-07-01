@@ -93,3 +93,11 @@
 "history.filter_week" = "本周";
 "history.filter_month" = "本月";
 "history.clear_all" = "清除全部";
+
+// Accessibility (VoiceOver)
+"a11y.score_tile" = "%1$@，%2$d分";
+"a11y.score_tile_serving_suffix" = "%1$@，从%2$@发球";
+"a11y.score_hint" = "双击加一分";
+"a11y.undo" = "撤销上一分";
+"a11y.games_won" = "已胜局数，%1$d比%2$d";
+"a11y.timer_remaining" = "剩余时间，%@";

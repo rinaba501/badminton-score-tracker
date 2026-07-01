@@ -124,6 +124,8 @@ Both files should always reflect the current state of the codebase. A future ses
 - `BadmintonMatch` must remain a pure value type — no UI, no timers, no side effects
 - Audio: tones via `AVAudioEngine`, speech via `AVSpeechSynthesizer` with `.duckOthers` — delay speech by tone duration to avoid interference
 - Localization: all user-facing strings go in `Localizable.strings` for all 6 languages (en, ja, zh-Hans, ko, id, hi)
+- Accessibility: custom/gesture-based controls (e.g. the score tiles) need `accessibilityLabel`/`accessibilityHint` and the right traits; decorative imagery gets `accessibilityHidden(true)`. Accessibility strings are localized like any other (`a11y.*` keys)
+- Persistence: read/write `[Player]` and `[MatchRecord]` through `PersistenceStore` — never call `JSONEncoder`/`JSONDecoder` inline in views
 
 ---
 
