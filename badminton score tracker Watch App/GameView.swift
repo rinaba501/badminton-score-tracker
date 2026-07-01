@@ -357,6 +357,33 @@ struct GameView: View {
         return String(format: "%d:%02d", m, s)
     }
 
+    // Explicitly-typed String helpers. Building these (String(format:) around
+    // string interpolation) *inside* the SwiftUI result builders below blows
+    // the Swift type-checker's time budget, so precompute them here.
+
+    private var timerAccessibilityLabel: String {
+        String(format: NSLocalizedString("a11y.timer_remaining", comment: ""), timerLabel)
+    }
+
+    private var gamePointBannerText: String {
+        match.isMatchPoint
+            ? NSLocalizedString("game.match_point", comment: "")
+            : NSLocalizedString("game.game_point", comment: "")
+    }
+
+    private var gamesScoreText: String {
+        let raw = "\(match.myGamesWon) - \(match.opponentGamesWon)"
+        return String(format: NSLocalizedString("game.games_score", comment: ""), raw)
+    }
+
+    private func winsMatchText(_ side: Side) -> String {
+        String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: side))
+    }
+
+    private func winsGameText(_ side: Side) -> String {
+        String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: side))
+    }
+
     // The scene is split into the computed subviews below. Type-checking the
     // whole ZStack as one expression exceeds the Swift compiler's time budget
     // ("unable to type-check this expression in reasonable time").
@@ -371,7 +398,7 @@ struct GameView: View {
                 Text(timerLabel)
                     .font(.system(size: 13, weight: .bold, design: .monospaced))
                     .foregroundColor(timeRemaining <= 30 && timeRemaining > 0 ? .red : .white)
-                    .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.timer_remaining", comment: ""), timerLabel)))
+                    .accessibilityLabel(Text(timerAccessibilityLabel))
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -420,7 +447,7 @@ struct GameView: View {
     @ViewBuilder
     private var pointBanners: some View {
         if match.matchWinner == nil && timeModeWinner == nil && match.isGamePoint {
-            bannerOverlay(match.isMatchPoint ? NSLocalizedString("game.match_point", comment: "") : NSLocalizedString("game.game_point", comment: ""))
+            bannerOverlay(gamePointBannerText)
                 .allowsHitTesting(false)
         }
 
@@ -435,7 +462,7 @@ struct GameView: View {
         if match.isTied {
             MatchOverOverlay(
                 title: "It's a Tie!",
-                games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                games: gamesScoreText,
                 actionTitle: NSLocalizedString("game.rematch", comment: ""),
                 action: newMatch,
                 isMatchOver: true,
@@ -443,8 +470,8 @@ struct GameView: View {
             )
         } else if let winner = match.matchWinner ?? timeModeWinner {
             MatchOverOverlay(
-                title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
-                games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                title: winsMatchText(winner),
+                games: gamesScoreText,
                 actionTitle: NSLocalizedString("game.rematch", comment: ""),
                 action: newMatch,
                 isMatchOver: true,
@@ -452,8 +479,8 @@ struct GameView: View {
             )
         } else if let gameWinner = match.gameWinner {
             MatchOverOverlay(
-                title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
-                games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                title: winsGameText(gameWinner),
+                games: gamesScoreText,
                 actionTitle: NSLocalizedString("game.next_game", comment: ""),
                 action: startNextGame
             )
