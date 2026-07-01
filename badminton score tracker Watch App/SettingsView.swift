@@ -39,7 +39,7 @@ struct SettingsView: View {
 
     private func deletePlayers(at offsets: IndexSet) {
         let toDelete = Set(offsets.map { opponents[$0].id })
-        var r = roster.filter { !toDelete.contains($0.id) }
+        let r = roster.filter { !toDelete.contains($0.id) }
         if let encoded = PersistenceStore.encodeRoster(r) { rosterData = encoded }
     }
 
@@ -124,7 +124,7 @@ struct SettingsView: View {
                         }
                         .contextMenu {
                             Button(role: .destructive) {
-                                var r = roster.filter { $0.id != player.id }
+                                let r = roster.filter { $0.id != player.id }
                                 if let encoded = PersistenceStore.encodeRoster(r) { rosterData = encoded }
                             } label: {
                                 Label("settings.delete", systemImage: "trash")

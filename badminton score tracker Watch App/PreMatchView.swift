@@ -43,10 +43,8 @@ struct PreMatchView: View {
     @State private var step: Step = .pickMyPlayer
     @State private var showAddPlayer = false
     @State private var newPlayerName = ""
-    @State private var addingForSide: Side = .me
 
     enum Step { case pickMyPlayer, pickOpponent }
-    enum Side { case me, opponent }
 
     private var roster: [Player] {
         PersistenceStore.decodeRoster(rosterData)

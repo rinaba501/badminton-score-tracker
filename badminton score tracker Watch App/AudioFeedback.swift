@@ -33,6 +33,8 @@ final class SoundPlayer: ObservableObject {
     private let engine = AVAudioEngine()
     private let node = AVAudioPlayerNode()
     private let sampleRate: Double = 44100
+    // Force-unwrap is safe: a standard PCM format at a fixed 44.1 kHz / mono
+    // is always constructible.
     private lazy var format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
 
     init() {
