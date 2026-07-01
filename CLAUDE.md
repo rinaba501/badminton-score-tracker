@@ -105,6 +105,13 @@ State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.se
   ```
 - Do not leave stale local or remote branches — one branch per PR, deleted on merge
 
+### Continuous Integration
+`.github/workflows/ci.yml` runs on every PR (and pushes to `main`):
+- **SwiftLint** — `swiftlint lint` against the config in `.swiftlint.yml` (non-strict: style issues are warnings/annotations; only error-severity rules fail)
+- **Unit Tests** — `xcodebuild test` on a watchOS simulator, running the `badminton score tracker Watch AppTests` bundle only (UI tests are skipped in CI)
+
+Run SwiftLint locally before pushing with `swiftlint` (install via `brew install swiftlint`). Keep the build green — fix or intentionally silence lint findings rather than letting warnings accumulate.
+
 ---
 
 ## Keeping the Docs Up-to-Date
