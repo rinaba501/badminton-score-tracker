@@ -23,7 +23,18 @@ A **watchOS app** built with SwiftUI for tracking badminton match scores in real
 
 ```
 badminton score tracker Watch App/
-  ContentView.swift          — all views and UI logic
+  ContentView.swift          — root view + state-driven navigation only
+  MenuView.swift             — main menu
+  PreMatchView.swift         — two-step player selection before a match
+  GameView.swift             — live scoring screen; also OnboardingView, GamesWonHeader, ScoreView, MatchOverOverlay
+  SettingsView.swift         — match format, audio, theme, timer, roster management
+  HistoryView.swift          — saved match list + filters; also MatchHistoryRow
+  StatsView.swift            — per-player stats + head-to-head; also StatRow
+  PlayerEditView.swift       — single-player editor sheet (name, color, avatar, icon)
+  Player.swift               — Player model + AvatarView
+  AudioFeedback.swift        — ScoreAnnouncer (AVSpeechSynthesizer) + SoundPlayer (AVAudioEngine)
+  CourtTheme.swift           — CourtTheme enum
+  PersistenceStore.swift     — centralized JSON encode/decode for [Player] and [MatchRecord]
   MatchModel.swift           — BadmintonMatch, GameScore, MatchRecord, Side
   WorkoutManager.swift       — HKWorkoutSession lifecycle; started on match begin, ended on save or discard
   CloudSyncManager.swift     — NSUbiquitousKeyValueStore sync; pushes on data change, pulls on launch and external update
@@ -44,12 +55,16 @@ badminton score tracker Complication/
 - `BadmintonMatch` — pure scoring engine; no UI, no timers. Tracks scores, games won, serve side, win conditions
 - `MatchRecord` — persisted match result; stores player names + optional `UUID` player IDs for name-change tracking
 
-**`ContentView.swift`**
-- `Player` — `id: UUID`, `name`, `colorIndex`, `iconName?`; stored as JSON in `@AppStorage("playerRoster")`
-- `AvatarView` — renders asset image, SF Symbol, or initials depending on `iconName`
-- `ScoreAnnouncer` — wraps `AVSpeechSynthesizer`
-- `SoundPlayer` — wraps `AVAudioEngine` for programmatic tones
-- All screens: `MenuView`, `PreMatchView`, `GameView`, `SettingsView`, `HistoryView`, `StatsView`, `PlayerEditView`
+**UI layer** (split by screen — one view file each; see Project Structure above)
+- `ContentView.swift` — root view; owns only the `AppView` routing enum
+- `Player` (`Player.swift`) — `id: UUID`, `name`, `colorIndex`, `iconName?`; stored as JSON in `@AppStorage("playerRoster")`
+- `AvatarView` (`Player.swift`) — renders asset image, SF Symbol, or initials depending on `iconName`
+- `ScoreAnnouncer` (`AudioFeedback.swift`) — wraps `AVSpeechSynthesizer`
+- `SoundPlayer` (`AudioFeedback.swift`) — wraps `AVAudioEngine` for programmatic tones
+- Screens live in their own files: `MenuView`, `PreMatchView`, `GameView`, `SettingsView`, `HistoryView`, `StatsView`, `PlayerEditView`
+
+**`PersistenceStore.swift`**
+- `PersistenceStore` — namespace of static `encodeRoster`/`decodeRoster` (`[Player]`) and `encodeHistory`/`decodeHistory` (`[MatchRecord]`) helpers. All view code goes through these instead of calling `JSONEncoder`/`JSONDecoder` inline, so the storage encoding lives in one place. Decode returns `[]` on missing/corrupt data.
 
 ### Navigation
 State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.settings`, `.history`, `.stats`) — no `NavigationLink` at the top level.
