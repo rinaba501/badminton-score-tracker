@@ -17,6 +17,10 @@ disabled_rules:
   - file_length             # a screen file (e.g. GameView) aggregates a lot
   - cyclomatic_complexity   # scoring / announcement logic branches heavily
   - todo
+  - type_name               # only fires on Xcode-generated type names — the
+                            # @main App struct and the UITest classes carry
+                            # underscores / lowercase starts that can't be
+                            # renamed. Every author-written type is conventional.
 
 opt_in_rules:
   - empty_count
@@ -38,11 +42,5 @@ identifier_name:
     warning: 1
   excluded:
     - id
-
-type_name:
-  # The @main App struct and Xcode's generated UITest classes carry
-  # underscores (e.g. `badminton_score_tracker_Watch_AppApp`) that can't be
-  # renamed cleanly. Allow underscores so these don't fail the build.
-  allowed_symbols: ["_"]
 
 reporter: "xcode"
