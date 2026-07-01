@@ -357,97 +357,117 @@ struct GameView: View {
         return String(format: "%d:%02d", m, s)
     }
 
+    // The scene is split into the computed subviews below. Type-checking the
+    // whole ZStack as one expression exceeds the Swift compiler's time budget
+    // ("unable to type-check this expression in reasonable time").
+
+    @ViewBuilder
+    private var timerBadge: some View {
+        if timeModeEnabled {
+            HStack {
+                Image(systemName: "timer")
+                    .font(.caption2)
+                    .accessibilityHidden(true)
+                Text(timerLabel)
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundColor(timeRemaining <= 30 && timeRemaining > 0 ? .red : .white)
+                    .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.timer_remaining", comment: ""), timerLabel)))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Color.black.opacity(0.4))
+            .cornerRadius(8)
+        }
+    }
+
+    private var scoreboard: some View {
+        VStack(spacing: 6) {
+            timerBadge
+            GamesWonHeader(
+                myName: effectiveMyName, opponentName: effectiveOpponentName,
+                myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
+                canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil && timeModeWinner == nil,
+                onUndo: undo
+            )
+
+            let serveKnown = match.myScore > 0 || match.opponentScore > 0
+
+            ScoreView(
+                name: effectiveOpponentName,
+                score: match.opponentScore,
+                isServing: serveKnown && match.servingSide == .opponent,
+                serveRight: match.serveFromRightCourt,
+                isWinner: match.gameWinner == .opponent,
+                avatarColor: avatarColor(for: effectiveOpponentName),
+                avatarIcon: avatarIcon(for: effectiveOpponentName),
+                onTap: { tap(.opponent) }
+            )
+
+            ScoreView(
+                name: effectiveMyName,
+                score: match.myScore,
+                isServing: serveKnown && match.servingSide == .me,
+                serveRight: match.serveFromRightCourt,
+                isWinner: match.gameWinner == .me,
+                avatarColor: avatarColor(for: effectiveMyName),
+                avatarIcon: avatarIcon(for: effectiveMyName),
+                onTap: { tap(.me) }
+            )
+        }
+        .padding(.horizontal, 10)
+    }
+
+    @ViewBuilder
+    private var pointBanners: some View {
+        if match.matchWinner == nil && timeModeWinner == nil && match.isGamePoint {
+            bannerOverlay(match.isMatchPoint ? NSLocalizedString("game.match_point", comment: "") : NSLocalizedString("game.game_point", comment: ""))
+                .allowsHitTesting(false)
+        }
+
+        if suddenDeath && timeModeWinner == nil {
+            bannerOverlay("Sudden Death!")
+                .allowsHitTesting(false)
+        }
+    }
+
+    @ViewBuilder
+    private var resultOverlay: some View {
+        if match.isTied {
+            MatchOverOverlay(
+                title: "It's a Tie!",
+                games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                actionTitle: NSLocalizedString("game.rematch", comment: ""),
+                action: newMatch,
+                isMatchOver: true,
+                completedGames: match.completedGames
+            )
+        } else if let winner = match.matchWinner ?? timeModeWinner {
+            MatchOverOverlay(
+                title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
+                games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                actionTitle: NSLocalizedString("game.rematch", comment: ""),
+                action: newMatch,
+                isMatchOver: true,
+                completedGames: match.completedGames
+            )
+        } else if let gameWinner = match.gameWinner {
+            MatchOverOverlay(
+                title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
+                games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
+                actionTitle: NSLocalizedString("game.next_game", comment: ""),
+                action: startNextGame
+            )
+        }
+    }
+
     var body: some View {
         ZStack {
             courtTheme.color
                 .ignoresSafeArea()
 
-            VStack(spacing: 6) {
-                if timeModeEnabled {
-                    HStack {
-                        Image(systemName: "timer")
-                            .font(.caption2)
-                            .accessibilityHidden(true)
-                        Text(timerLabel)
-                            .font(.system(size: 13, weight: .bold, design: .monospaced))
-                            .foregroundColor(timeRemaining <= 30 && timeRemaining > 0 ? .red : .white)
-                            .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.timer_remaining", comment: ""), timerLabel)))
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color.black.opacity(0.4))
-                    .cornerRadius(8)
-                }
-                GamesWonHeader(
-                    myName: effectiveMyName, opponentName: effectiveOpponentName,
-                    myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
-                    canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil && timeModeWinner == nil,
-                    onUndo: undo
-                )
-
-                let serveKnown = match.myScore > 0 || match.opponentScore > 0
-
-                ScoreView(
-                    name: effectiveOpponentName,
-                    score: match.opponentScore,
-                    isServing: serveKnown && match.servingSide == .opponent,
-                    serveRight: match.serveFromRightCourt,
-                    isWinner: match.gameWinner == .opponent,
-                    avatarColor: avatarColor(for: effectiveOpponentName),
-                    avatarIcon: avatarIcon(for: effectiveOpponentName),
-                    onTap: { tap(.opponent) }
-                )
-
-                ScoreView(
-                    name: effectiveMyName,
-                    score: match.myScore,
-                    isServing: serveKnown && match.servingSide == .me,
-                    serveRight: match.serveFromRightCourt,
-                    isWinner: match.gameWinner == .me,
-                    avatarColor: avatarColor(for: effectiveMyName),
-                    avatarIcon: avatarIcon(for: effectiveMyName),
-                    onTap: { tap(.me) }
-                )
-
-            }
-            .padding(.horizontal, 10)
-
-            if match.matchWinner == nil && timeModeWinner == nil && match.isGamePoint {
-                bannerOverlay(match.isMatchPoint ? NSLocalizedString("game.match_point", comment: "") : NSLocalizedString("game.game_point", comment: ""))
-                    .allowsHitTesting(false)
-            }
-
-            if suddenDeath && timeModeWinner == nil {
-                bannerOverlay("Sudden Death!")
-                    .allowsHitTesting(false)
-            }
-
-            if match.isTied {
-                MatchOverOverlay(
-                    title: "It's a Tie!",
-                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                    actionTitle: NSLocalizedString("game.rematch", comment: ""),
-                    action: newMatch,
-                    isMatchOver: true,
-                    completedGames: match.completedGames
-                )
-            } else if let winner = match.matchWinner ?? timeModeWinner {
-                MatchOverOverlay(
-                    title: String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: winner)),
-                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                    actionTitle: NSLocalizedString("game.rematch", comment: ""),
-                    action: newMatch,
-                    isMatchOver: true,
-                    completedGames: match.completedGames
-                )
-            } else if let gameWinner = match.gameWinner {
-                MatchOverOverlay(
-                    title: String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: gameWinner)),
-                    games: String(format: NSLocalizedString("game.games_score", comment: ""), "\(match.myGamesWon) - \(match.opponentGamesWon)"),
-                    actionTitle: NSLocalizedString("game.next_game", comment: ""),
-                    action: startNextGame
-                )
-            }
+            scoreboard
+            pointBanners
+            resultOverlay
         }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {

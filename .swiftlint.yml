@@ -39,4 +39,10 @@ identifier_name:
   excluded:
     - id
 
+type_name:
+  # The @main App struct and Xcode's generated UITest classes carry
+  # underscores (e.g. `badminton_score_tracker_Watch_AppApp`) that can't be
+  # renamed cleanly. Allow underscores so these don't fail the build.
+  allowed_symbols: ["_"]
+
 reporter: "xcode"
