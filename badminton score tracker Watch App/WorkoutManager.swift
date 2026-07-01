@@ -55,7 +55,10 @@ final class WorkoutManager: ObservableObject {
         do {
             try await builder.endCollection(at: Date())
             try await builder.finishWorkout()
-        } catch {}
+        } catch {
+            // Best-effort teardown: the session is ending regardless, so a
+            // failed finish has nothing actionable to recover — just proceed.
+        }
         self.session = nil
         self.builder = nil
         isActive = false

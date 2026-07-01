@@ -195,10 +195,6 @@ struct HistoryView: View {
             Text("history.clear_confirm")
         }
     }
-
-    private var isFiltered: Bool {
-        !selectedPlayer.isEmpty || dateRange != .all
-    }
 }
 
 struct MatchHistoryRow: View {
