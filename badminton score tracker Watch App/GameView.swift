@@ -629,7 +629,22 @@ struct ScoreView: View {
         return String(format: NSLocalizedString("a11y.score_tile_serving_suffix", comment: ""), base, court)
     }
 
-    var body: some View {
+    // Explicitly-typed style helpers keep these ternaries out of the modifier
+    // chain in `body`, which otherwise overruns the Swift type-checker's budget
+    // ("unable to type-check this expression in reasonable time").
+    private var backgroundFill: Color {
+        isWinner ? Color.yellow.opacity(winnerGlow ? 0.35 : 0.15) : Color.black.opacity(0.25)
+    }
+
+    private var borderColor: Color {
+        isWinner ? Color.yellow : (isServing ? Color.yellow.opacity(0.8) : Color.white.opacity(0.5))
+    }
+
+    private var borderWidth: CGFloat {
+        isWinner ? 2.5 : (isServing ? 2 : 1.5)
+    }
+
+    private var tileContent: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
@@ -658,35 +673,36 @@ struct ScoreView: View {
                 .scaleEffect(scorePulse ? 1.35 : 1.0)
                 .animation(.spring(response: 0.2, dampingFraction: 0.4), value: scorePulse)
         }
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(isWinner
-                      ? Color.yellow.opacity(winnerGlow ? 0.35 : 0.15)
-                      : Color.black.opacity(0.25))
-                .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: winnerGlow)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(isWinner ? Color.yellow : (isServing ? Color.yellow.opacity(0.8) : Color.white.opacity(0.5)),
-                        lineWidth: isWinner ? 2.5 : (isServing ? 2 : 1.5))
-        )
-        .scaleEffect(isWinner ? 1.06 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isWinner)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            scorePulse = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { scorePulse = false }
-            onTap()
-        }
-        .onChange(of: isWinner) { won in
-            winnerGlow = won
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityDescription)
-        .accessibilityHint("a11y.score_hint")
-        .accessibilityAddTraits(.isButton)
+    }
+
+    var body: some View {
+        tileContent
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(backgroundFill)
+                    .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: winnerGlow)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(borderColor, lineWidth: borderWidth)
+            )
+            .scaleEffect(isWinner ? 1.06 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isWinner)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                scorePulse = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { scorePulse = false }
+                onTap()
+            }
+            .onChange(of: isWinner) { won in
+                winnerGlow = won
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(accessibilityDescription)
+            .accessibilityHint("a11y.score_hint")
+            .accessibilityAddTraits(.isButton)
     }
 }
 
