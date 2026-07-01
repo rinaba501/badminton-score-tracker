@@ -1,0 +1,42 @@
+# SwiftLint configuration for the Badminton Score Tracker watchOS app.
+#
+# CI runs `swiftlint lint` (non-strict): style issues surface as warnings and
+# inline annotations, and only error-severity rules fail the build. SwiftUI
+# view bodies on watchOS are legitimately long, so the size/complexity rules
+# below are relaxed rather than fought.
+
+included:
+  - "badminton score tracker Watch App"
+  - "badminton score tracker Complication"
+  - "badminton score tracker Watch AppTests"
+  - "badminton score tracker Watch AppUITests"
+
+disabled_rules:
+  - type_body_length        # SwiftUI view structs are large by nature
+  - function_body_length    # `body` and event handlers legitimately run long
+  - file_length             # a screen file (e.g. GameView) aggregates a lot
+  - cyclomatic_complexity   # scoring / announcement logic branches heavily
+  - todo
+
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - collection_alignment
+  - overridden_super_call
+  - redundant_nil_coalescing
+
+line_length:
+  warning: 160
+  error: 400
+  ignores_urls: true
+  ignores_comments: true
+
+identifier_name:
+  # Short names like `m`, `s`, `r`, `i` are idiomatic in the formatting and
+  # scoring helpers here; don't warn purely on length.
+  min_length:
+    warning: 1
+  excluded:
+    - id
+
+reporter: "xcode"
