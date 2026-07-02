@@ -15,8 +15,8 @@
 "game.games" = "Game";
 "game.right_court" = "Kotak kanan";
 "game.left_court" = "Kotak kiri";
-"game.game_point" = "Game Point!";
-"game.match_point" = "Match Point!";
+"game.game_point" = "Poin Game!";
+"game.match_point" = "Poin Pertandingan!";
 "game.next_game" = "Game Berikutnya";
 "game.new_match" = "Pertandingan Baru";
 "game.wins_game" = "%@ menang game!";
@@ -26,8 +26,8 @@
 // Speech
 "speech.wins_match" = "%@ menang pertandingan!";
 "speech.wins_game" = "%@ menang game!";
-"speech.match_point" = "Match point. %@ - %@";
-"speech.game_point" = "Game point. %@ - %@";
+"speech.match_point" = "Poin pertandingan. %@ - %@";
+"speech.game_point" = "Poin game. %@ - %@";
 "speech.score" = "%@ - %@";
 "speech.tied" = "%@ all";
 
@@ -42,7 +42,7 @@
 "settings.your_name" = "Nama Anda";
 "settings.opponent_name" = "Nama Lawan";
 "settings.crown" = "Digital Crown";
-"settings.sound_effects" = "Sound effects";
+"settings.sound_effects" = "Efek suara";
 "settings.announce_score" = "Umumkan skor";
 "settings.court_theme" = "Tema Lapangan";
 "settings.theme" = "Tema";
@@ -53,8 +53,8 @@
 "settings.pts_21" = "21 poin";
 "settings.games_in_match" = "Game dalam pertandingan";
 "settings.games_1" = "1 game";
-"settings.games_3" = "Best of 3";
-"settings.games_5" = "Best of 5";
+"settings.games_3" = "Terbaik dari 3";
+"settings.games_5" = "Terbaik dari 5";
 
 // History
 "history.title" = "Riwayat Pertandingan";

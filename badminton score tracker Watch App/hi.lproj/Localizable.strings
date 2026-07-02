@@ -26,8 +26,8 @@
 // Speech
 "speech.wins_match" = "%@ ने मैच जीता!";
 "speech.wins_game" = "%@ ने गेम जीता!";
-"speech.match_point" = "Match point. %@ - %@";
-"speech.game_point" = "Game point. %@ - %@";
+"speech.match_point" = "मैच पॉइंट। %@ - %@";
+"speech.game_point" = "गेम पॉइंट। %@ - %@";
 "speech.score" = "%@ - %@";
 "speech.tied" = "%@ all";
 
@@ -42,7 +42,7 @@
 "settings.your_name" = "आपका नाम";
 "settings.opponent_name" = "प्रतिद्वंद्वी का नाम";
 "settings.crown" = "डिजिटल क्राउन";
-"settings.sound_effects" = "Sound effects";
+"settings.sound_effects" = "ध्वनि प्रभाव";
 "settings.announce_score" = "स्कोर बोलें";
 "settings.court_theme" = "कोर्ट थीम";
 "settings.theme" = "थीम";
