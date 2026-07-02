@@ -112,10 +112,10 @@ private struct ShuttlecockBody: Shape {
         var path = Path()
 
         path.move(to: pt(0.5, 0.98))
-        path.addCurve(to: pt(0.25, 0.7175), control1: pt(0.344, 0.95), control2: pt(0.25, 0.8425))
+        path.addCurve(to: pt(0.25, 0.7175), control1: pt(0.33, 0.975), control2: pt(0.25, 0.865))
         path.addCurve(to: pt(0.50, 0.5425), control1: pt(0.25, 0.611), control2: pt(0.3625, 0.5425))
         path.addCurve(to: pt(0.75, 0.7175), control1: pt(0.6375, 0.5425), control2: pt(0.75, 0.611))
-        path.addCurve(to: pt(0.5, 0.98), control1: pt(0.75, 0.8425), control2: pt(0.656, 0.95))
+        path.addCurve(to: pt(0.5, 0.98), control1: pt(0.75, 0.865), control2: pt(0.67, 0.975))
         path.closeSubpath()
 
         return path
@@ -140,11 +140,13 @@ private struct ShuttlecockFace: Shape {
             ))
         }
 
-        let mouthLeft = pt(0.434, 0.805)
-        let mouthRight = pt(0.566, 0.805)
+        // Gentle closed smile: an upward-curving crescent, thick enough to
+        // stay visible at complication size.
+        let mouthLeft = pt(0.42, 0.805)
+        let mouthRight = pt(0.58, 0.805)
         path.move(to: mouthLeft)
-        path.addQuadCurve(to: mouthRight, control: pt(0.50, 0.824))
-        path.addQuadCurve(to: mouthLeft, control: pt(0.50, 0.896))
+        path.addQuadCurve(to: mouthRight, control: pt(0.50, 0.845))
+        path.addQuadCurve(to: mouthLeft, control: pt(0.50, 0.935))
         path.closeSubpath()
 
         return path
