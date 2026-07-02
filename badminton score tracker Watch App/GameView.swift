@@ -116,7 +116,7 @@ struct GameView: View {
     }
 
     private func saveToRoster(_ name: String) {
-        guard !name.isEmpty, !Player.isGuestName(name) else { return }
+        guard Player.shouldBeStoredAsSavedPlayer(name, currentUserName: myName) else { return }
         var roster = appStore.roster
         if !roster.contains(where: { $0.name == name }) {
             let colorIndex = roster.count % Player.avatarColors.count

@@ -171,6 +171,14 @@ struct PlayerIdentityTests {
         #expect(Player.isGuestName(Player.guestFarLabel))
     }
 
+    @Test func currentUserNameIsNotStoredAsSavedPlayer() {
+        #expect(!Player.shouldBeStoredAsSavedPlayer(Player.defaultMyName, currentUserName: Player.defaultMyName))
+        #expect(!Player.shouldBeStoredAsSavedPlayer("Alex", currentUserName: "Alex"))
+        #expect(Player.shouldBeStoredAsSavedPlayer("Alex", currentUserName: Player.defaultMyName))
+        #expect(!Player.shouldBeStoredAsSavedPlayer(Player.guestNearLabel, currentUserName: Player.defaultMyName))
+        #expect(!Player.shouldBeStoredAsSavedPlayer("", currentUserName: Player.defaultMyName))
+    }
+
     @Test func realNamesAreNotGuests() {
         #expect(!Player.isGuestName("Alex"))
         #expect(!Player.isGuestName(""))

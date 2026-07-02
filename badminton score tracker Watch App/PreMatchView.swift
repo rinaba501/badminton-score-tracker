@@ -46,7 +46,7 @@ struct PreMatchView: View {
     private var roster: [Player] { appStore.roster }
 
     private func saveToRoster(name: String) {
-        guard !name.isEmpty, !Player.isGuestName(name) else { return }
+        guard Player.shouldBeStoredAsSavedPlayer(name, currentUserName: myName) else { return }
         var r = roster
         if !r.contains(where: { $0.name == name }) {
             let colorIndex = r.count % Player.avatarColors.count
@@ -64,7 +64,9 @@ struct PreMatchView: View {
     }
 
     private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
-        let filteredRoster = roster.filter { $0.name != excluding }
+        let filteredRoster = roster.filter { player in
+            player.name != myName && player.name != excluding
+        }
         return List {
             Section(header: Text(title)) {
                 if !defaultLabel.isEmpty {
