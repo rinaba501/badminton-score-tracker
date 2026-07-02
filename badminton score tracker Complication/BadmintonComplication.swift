@@ -37,51 +37,73 @@ private struct ShuttlecockImage: View {
 /// strip color from bitmap images and render them as a flat monochrome mask.
 /// Unlike `ShuttlecockImage`, a vector `Shape` filled with `foregroundStyle`
 /// tints correctly in that mode instead of disappearing into a plain circle.
-/// The mascot from `avatar_shuttlecock_happy`, reduced to a flat monochrome
-/// silhouette: a rounded body with a smiling face, and a crown of feathers
-/// fanning up from behind it. Two yellow layers union into one shape — the
-/// feathers' hidden convergence point sits behind the body, so no stray tip
-/// pokes through the face.
+/// The `avatar_shuttlecock_happy` mascot as a vector: five petal-shaped
+/// feathers fanning out of a rounded cork body that carries the smiling
+/// face. Colored like the mascot (light-blue feathers, white body, navy
+/// face); on faces that render complications tinted/vibrant, the system
+/// reduces these to luminance shades, so the dark-on-light features still
+/// read.
+/// The petals' bases converge behind the body, so no feather tip crosses
+/// the face.
 private struct ShuttlecockGlyph: View {
     var body: some View {
         ZStack {
             ShuttlecockFeathers()
-                .fill(.yellow)
+                .fill(Color(red: 0.52, green: 0.65, blue: 0.82))
             ShuttlecockBody()
-                .fill(.yellow, style: FillStyle(eoFill: true))
+                .fill(.white)
+            ShuttlecockFace()
+                .fill(Color(red: 0.16, green: 0.21, blue: 0.33))
         }
     }
 }
 
-/// Scalloped crown of feathers converging to a point low in the frame; the
-/// lower half is covered by the body, so only the fanned tips show above it.
+/// Five distinct feather petals radiating from a hub hidden inside the body
+/// — separate lobes with visible gaps, like the mascot's feather crown,
+/// rather than one continuous scalloped fan.
 private struct ShuttlecockFeathers: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height
-        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
-        let tip = pt(0.5, 0.58)
+        let hub = CGPoint(x: w * 0.5, y: h * 0.68)
+        let anglesDegrees: [CGFloat] = [-40, -20, 0, 20, 40]
+        let lengths: [CGFloat] = [0.50, 0.57, 0.62, 0.57, 0.50]
+        let halfWidth = 0.105 * w
         var path = Path()
 
-        path.move(to: tip)
-        path.addQuadCurve(to: pt(0.14, 0.08), control: pt(0.16, 0.42))
-        path.addQuadCurve(to: pt(0.23, 0.16), control: pt(0.20, 0.15))
-        path.addQuadCurve(to: pt(0.32, 0.06), control: pt(0.28, 0.08))
-        path.addQuadCurve(to: pt(0.41, 0.16), control: pt(0.37, 0.15))
-        path.addQuadCurve(to: pt(0.50, 0.05), control: pt(0.46, 0.06))
-        path.addQuadCurve(to: pt(0.59, 0.16), control: pt(0.54, 0.06))
-        path.addQuadCurve(to: pt(0.68, 0.06), control: pt(0.63, 0.08))
-        path.addQuadCurve(to: pt(0.77, 0.16), control: pt(0.72, 0.15))
-        path.addQuadCurve(to: pt(0.86, 0.08), control: pt(0.80, 0.15))
-        path.addQuadCurve(to: tip, control: pt(0.84, 0.42))
-        path.closeSubpath()
+        for (angleDegrees, length) in zip(anglesDegrees, lengths) {
+            let angle = angleDegrees * .pi / 180
+            let along = CGVector(dx: sin(angle), dy: -cos(angle))
+            let across = CGVector(dx: cos(angle), dy: sin(angle))
+            // Point at distance `t` from the hub along the petal axis,
+            // shifted `s` sideways.
+            func at(_ t: CGFloat, _ s: CGFloat) -> CGPoint {
+                CGPoint(
+                    x: hub.x + along.dx * t * h + across.dx * s,
+                    y: hub.y + along.dy * t * h + across.dy * s
+                )
+            }
+            path.move(to: at(0, -halfWidth))
+            path.addQuadCurve(
+                to: at(length, -halfWidth * 0.85),
+                control: at(length * 0.55, -halfWidth * 1.05)
+            )
+            path.addQuadCurve(
+                to: at(length, halfWidth * 0.85),
+                control: at(length + 0.05, 0)
+            )
+            path.addQuadCurve(
+                to: at(0, halfWidth),
+                control: at(length * 0.55, halfWidth * 1.05)
+            )
+            path.closeSubpath()
+        }
 
         return path
     }
 }
 
-/// Rounded bell-shaped body with the mascot's eyes and smile punched out as
-/// holes (even-odd fill). Drawn over the feathers so it hides their base.
+/// Rounded cork body, drawn over the feathers so it hides their bases.
 private struct ShuttlecockBody: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width
@@ -89,27 +111,40 @@ private struct ShuttlecockBody: Shape {
         func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
         var path = Path()
 
-        path.move(to: pt(0.5, 0.97))
-        path.addCurve(to: pt(0.22, 0.60), control1: pt(0.26, 0.93), control2: pt(0.20, 0.78))
-        path.addCurve(to: pt(0.50, 0.42), control1: pt(0.24, 0.46), control2: pt(0.36, 0.42))
-        path.addCurve(to: pt(0.78, 0.60), control1: pt(0.64, 0.42), control2: pt(0.76, 0.46))
-        path.addCurve(to: pt(0.5, 0.97), control1: pt(0.80, 0.78), control2: pt(0.74, 0.93))
+        path.move(to: pt(0.5, 0.98))
+        path.addCurve(to: pt(0.30, 0.77), control1: pt(0.375, 0.956), control2: pt(0.30, 0.87))
+        path.addCurve(to: pt(0.50, 0.63), control1: pt(0.30, 0.685), control2: pt(0.39, 0.63))
+        path.addCurve(to: pt(0.70, 0.77), control1: pt(0.61, 0.63), control2: pt(0.70, 0.685))
+        path.addCurve(to: pt(0.5, 0.98), control1: pt(0.70, 0.87), control2: pt(0.625, 0.956))
         path.closeSubpath()
 
-        let eyeRadius = w * 0.06
-        for cx in [CGFloat(0.40), CGFloat(0.60)] {
-            let center = pt(cx, 0.60)
+        return path
+    }
+}
+
+/// The mascot's face — two round eyes and a small smile — drawn on the
+/// white cork body in a dark contrasting fill, where the artwork puts it.
+private struct ShuttlecockFace: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
+        var path = Path()
+
+        let eyeRadius = w * 0.0425
+        for cx in [CGFloat(0.405), CGFloat(0.595)] {
+            let center = pt(cx, 0.7625)
             path.addEllipse(in: CGRect(
                 x: center.x - eyeRadius, y: center.y - eyeRadius,
                 width: eyeRadius * 2, height: eyeRadius * 2
             ))
         }
 
-        let mouthLeft = pt(0.43, 0.74)
-        let mouthRight = pt(0.57, 0.74)
+        let mouthLeft = pt(0.447, 0.8375)
+        let mouthRight = pt(0.553, 0.8375)
         path.move(to: mouthLeft)
-        path.addQuadCurve(to: mouthRight, control: pt(0.50, 0.73))
-        path.addQuadCurve(to: mouthLeft, control: pt(0.50, 0.84))
+        path.addQuadCurve(to: mouthRight, control: pt(0.50, 0.855))
+        path.addQuadCurve(to: mouthLeft, control: pt(0.50, 0.9125))
         path.closeSubpath()
 
         return path
