@@ -119,6 +119,15 @@
 "settings.players" = "खिलाड़ी";
 "settings.no_players" = "अभी तक कोई सहेजा खिलाड़ी नहीं";
 "settings.add_player" = "खिलाड़ी जोड़ें";
+"settings.sort_order" = "क्रम चुनें";
+"settings.sort_created" = "जोड़ा गया";
+"settings.sort_name" = "नाम";
+"settings.sort_name_desc" = "नाम (Z-A)";
+"settings.sort_most_played" = "सबसे ज़्यादा खेले गए";
+"settings.sort_recently_used" = "हाल ही में इस्तेमाल किए गए";
+"settings.sort_pinned" = "पिन किए गए";
+"settings.pin_player" = "खिलाड़ी पिन करें";
+"settings.unpin_player" = "खिलाड़ी अनपिन करें";
 "settings.timer" = "मैच टाइमर";
 "settings.timer_enable" = "सक्षम करें";
 "settings.minutes" = "%d मिनट";

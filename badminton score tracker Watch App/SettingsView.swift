@@ -21,6 +21,7 @@ struct SettingsView: View {
     @AppStorage("timeModeEnabled") private var timeModeEnabled = false
     @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
     @AppStorage("enableSounds") private var enableSounds = true
+    @AppStorage("playerSortOrder") private var playerSortOrder: Player.SortOrder = .name
     @EnvironmentObject private var appStore: AppStore
     @State private var editingPlayer: Player? = nil
     @State private var showAddPlayer = false
@@ -32,7 +33,9 @@ struct SettingsView: View {
 
     private var roster: [Player] { appStore.roster }
 
-    private var opponents: [Player] { roster.filter { $0.name != myName } }
+    private var opponents: [Player] {
+        Player.sortedPlayers(roster.filter { $0.name != myName }, order: playerSortOrder, history: appStore.history)
+    }
 
     private func deletePlayers(at offsets: IndexSet) {
         let toDelete = Set(offsets.map { opponents[$0].id })
@@ -101,6 +104,14 @@ struct SettingsView: View {
             }
 
             Section(header: Text("settings.players")) {
+                Picker("settings.sort_order", selection: $playerSortOrder) {
+                    Text("settings.sort_name").tag(Player.SortOrder.name)
+                    Text("settings.sort_most_played").tag(Player.SortOrder.mostPlayed)
+                    Text("settings.sort_recently_used").tag(Player.SortOrder.recentlyUsed)
+                    Text("settings.sort_created").tag(Player.SortOrder.created)
+                    Text("settings.sort_name_desc").tag(Player.SortOrder.nameDescending)
+                }
+
                 if roster.isEmpty {
                     Text("settings.no_players")
                         .foregroundColor(.secondary)

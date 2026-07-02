@@ -14,6 +14,7 @@ struct PreMatchView: View {
     @AppStorage("myName") private var myName = Player.defaultMyName
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
+    @AppStorage("playerSortOrder") private var playerSortOrder: Player.SortOrder = .name
 
     private var history: [MatchRecord] { appStore.history }
 
@@ -66,9 +67,13 @@ struct PreMatchView: View {
     }
 
     private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
-        let filteredRoster = roster.filter { player in
-            player.name != myName && player.name != excluding
-        }
+        let filteredRoster = Player.sortedPlayers(
+            roster.filter { player in
+                player.name != myName && player.name != excluding
+            },
+            order: playerSortOrder,
+            history: history
+        )
         let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 4)
         return List {
             Section(header: Text(title)) {
@@ -89,6 +94,14 @@ struct PreMatchView: View {
             }
             if !filteredRoster.isEmpty {
                 Section(header: Text("prematch.saved")) {
+                    Picker("settings.sort_order", selection: $playerSortOrder) {
+                        Text("settings.sort_name").tag(Player.SortOrder.name)
+                        Text("settings.sort_most_played").tag(Player.SortOrder.mostPlayed)
+                        Text("settings.sort_recently_used").tag(Player.SortOrder.recentlyUsed)
+                        Text("settings.sort_created").tag(Player.SortOrder.created)
+                        Text("settings.sort_name_desc").tag(Player.SortOrder.nameDescending)
+                    }
+
                     ForEach(filteredRoster) { player in
                         Button(action: { onSelect(player.name) }) {
                             HStack {

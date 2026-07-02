@@ -58,7 +58,7 @@ badminton score tracker Complication/
 
 **UI layer** (split by screen — one view file each; see Project Structure above)
 - `ContentView.swift` — root view; owns only the `AppView` routing enum
-- `Player` (`Player.swift`) — `id: UUID`, `name`, `colorIndex`, `iconName?`; stored as JSON in `@AppStorage("playerRoster")`
+- `Player` (`Player.swift`) — `id: UUID`, `name`, `colorIndex`, `iconName?`, `isPinned: Bool`; stored as JSON in `@AppStorage("playerRoster")`
 - `AvatarView` (`Player.swift`) — renders asset image, SF Symbol, or initials depending on `iconName`
 - `Player.defaultMyName` / `.guestNearLabel` / `.guestFarLabel` / `.isGuestName(_:)` (`Player.swift`) — the single source of truth for the "me"/guest sentinel display names, localized via `NSLocalizedString`. Every screen that offers or recognizes these labels reads from here, so a guest selection is always recognized as a guest (and never persisted to the roster) regardless of locale
 - `ScoreAnnouncer` (`AudioFeedback.swift`) — wraps `AVSpeechSynthesizer`
