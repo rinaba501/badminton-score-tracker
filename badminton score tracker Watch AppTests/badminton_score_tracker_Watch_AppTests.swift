@@ -5,6 +5,7 @@
 //  Created by Inaba, Ritsuma | Ritsuma | TDD on 2025/05/07.
 //
 
+import Foundation
 import Testing
 @testable import badminton_score_tracker_Watch_App
 
