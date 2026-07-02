@@ -39,22 +39,88 @@ private struct ShuttlecockImage: View {
 /// tints correctly in that mode instead of disappearing into a plain circle.
 /// The `avatar_shuttlecock_happy` mascot as a vector: five petal-shaped
 /// feathers fanning out of a rounded cork body that carries the smiling
-/// face. Colored like the mascot (light-blue feathers, white body, navy
-/// face); on faces that render complications tinted/vibrant, the system
-/// reduces these to luminance shades, so the dark-on-light features still
-/// read.
+/// face. Drawn sticker-style like the artwork — every shape gets a dark
+/// contour outline, the feathers get rib lines, and a red collar band marks
+/// where the body meets the crown. On faces that render complications
+/// tinted/vibrant, the system reduces the colors to luminance shades, so
+/// the dark-on-light features still read.
 /// The petals' bases converge behind the body, so no feather tip crosses
 /// the face.
 private struct ShuttlecockGlyph: View {
+    private static let featherBlue = Color(red: 0.52, green: 0.65, blue: 0.82)
+    private static let inkNavy = Color(red: 0.16, green: 0.21, blue: 0.33)
+    private static let collarRed = Color(red: 0.79, green: 0.31, blue: 0.31)
+    private static let outline = StrokeStyle(lineWidth: 0.85, lineJoin: .round)
+
     var body: some View {
         ZStack {
+            feathers
+            ShuttlecockRibs()
+                .stroke(Self.inkNavy, style: StrokeStyle(lineWidth: 0.5, lineCap: .round))
+                .opacity(0.55)
+            corkBody
+            ShuttlecockCollar()
+                .stroke(Self.collarRed, style: StrokeStyle(lineWidth: 1.05, lineCap: .round))
+            ShuttlecockFace()
+                .fill(Self.inkNavy)
+        }
+    }
+
+    private var feathers: some View {
+        ZStack {
             ShuttlecockFeathers()
-                .fill(Color(red: 0.52, green: 0.65, blue: 0.82))
+                .fill(Self.featherBlue)
+            ShuttlecockFeathers()
+                .stroke(Self.inkNavy, style: Self.outline)
+        }
+    }
+
+    private var corkBody: some View {
+        ZStack {
             ShuttlecockBody()
                 .fill(.white)
-            ShuttlecockFace()
-                .fill(Color(red: 0.16, green: 0.21, blue: 0.33))
+            ShuttlecockBody()
+                .stroke(Self.inkNavy, style: Self.outline)
         }
+    }
+}
+
+/// One rib line down the middle of each feather petal, matching the fan's
+/// petal angles.
+private struct ShuttlecockRibs: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
+        var path = Path()
+
+        path.move(to: pt(0.206, 0.288))
+        path.addQuadCurve(to: pt(0.45, 0.55), control: pt(0.325, 0.413))
+        path.move(to: pt(0.306, 0.156))
+        path.addQuadCurve(to: pt(0.45, 0.5625), control: pt(0.375, 0.344))
+        path.move(to: pt(0.5, 0.075))
+        path.addLine(to: pt(0.5, 0.55))
+        path.move(to: pt(0.694, 0.156))
+        path.addQuadCurve(to: pt(0.55, 0.5625), control: pt(0.625, 0.344))
+        path.move(to: pt(0.794, 0.288))
+        path.addQuadCurve(to: pt(0.55, 0.55), control: pt(0.675, 0.413))
+
+        return path
+    }
+}
+
+/// The red collar band across the top of the cork body.
+private struct ShuttlecockCollar: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
+        var path = Path()
+
+        path.move(to: pt(0.259, 0.656))
+        path.addQuadCurve(to: pt(0.741, 0.656), control: pt(0.5, 0.575))
+
+        return path
     }
 }
 
