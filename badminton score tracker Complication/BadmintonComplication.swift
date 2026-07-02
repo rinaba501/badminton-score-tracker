@@ -33,6 +33,39 @@ private struct ShuttlecockImage: View {
     }
 }
 
+/// Vector shuttlecock silhouette for slots (like the circular Modular face) that
+/// strip color from bitmap images and render them as a flat monochrome mask.
+/// Unlike `ShuttlecockImage`, a vector `Shape` filled with `foregroundStyle`
+/// tints correctly in that mode instead of disappearing into a plain circle.
+private struct ShuttlecockGlyph: View {
+    var body: some View {
+        ZStack {
+            ShuttlecockSkirt()
+                .fill(.yellow)
+            Circle()
+                .fill(.yellow)
+                .frame(width: 4, height: 4)
+                .offset(y: 6.5)
+        }
+    }
+}
+
+private struct ShuttlecockSkirt: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        var path = Path()
+        path.move(to: CGPoint(x: w * 0.5, y: h * 0.6))
+        path.addLine(to: CGPoint(x: w * 0.12, y: h * 0.05))
+        path.addLine(to: CGPoint(x: w * 0.32, y: h * 0.05))
+        path.addLine(to: CGPoint(x: w * 0.5, y: h * 0.6))
+        path.addLine(to: CGPoint(x: w * 0.68, y: h * 0.05))
+        path.addLine(to: CGPoint(x: w * 0.88, y: h * 0.05))
+        path.closeSubpath()
+        return path
+    }
+}
+
 struct BadmintonComplicationEntryView: View {
     var entry: BadmintonEntry
     @Environment(\.widgetFamily) var family
@@ -42,9 +75,8 @@ struct BadmintonComplicationEntryView: View {
         case .accessoryCircular:
             ZStack {
                 AccessoryWidgetBackground()
-                Image(systemName: "figure.badminton")
-                    .font(.system(size: 20))
-                    .foregroundStyle(.yellow)
+                ShuttlecockGlyph()
+                    .frame(width: 20, height: 20)
             }
         case .accessoryCorner:
             ShuttlecockImage()
