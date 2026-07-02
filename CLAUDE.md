@@ -125,8 +125,14 @@ When making any change, ask:
 - Does this add, remove, or change a user-facing feature? → Update **`SPEC.md`**
 - Does this add a new file, model, AppStorage key, or architectural pattern? → Update **`CLAUDE.md`**
 - Does this close a GitHub issue? → Move it from Open to Closed in **`SPEC.md`** with the PR number
+- Does this change how the app is built/run, or add a top-level doc/workflow file? → Update **`README.md`**
 
-Both files should always reflect the current state of the codebase. A future session reading only these two files should have a complete picture of the project.
+Both `CLAUDE.md` and `SPEC.md` should always reflect the current state of the codebase. A future session reading only these two files should have a complete picture of the project. `README.md` is the human-facing entry point and should stay short — link out to `SPEC.md`/`CLAUDE.md` for detail rather than duplicating it.
+
+### Other repo docs
+- `README.md` — human-facing overview: what the app is, screenshots, build instructions. Rarely changes.
+- `.github/PULL_REQUEST_TEMPLATE.md` / `.github/ISSUE_TEMPLATE/report.md` — the PR/issue shape used throughout this project's history (Summary/Changes/Verification; Problem/Proposed approach/Acceptance criteria). Follow them when opening PRs/issues even if a tool doesn't auto-populate them.
+- `docs/` — `privacy-policy.md` and `app-store-metadata.md` (App Store submission content) and `index.md` (the GitHub Pages host for the privacy policy link). Not living specs; update only when their specific subject changes.
 
 ---
 
