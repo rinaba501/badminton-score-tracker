@@ -111,9 +111,11 @@ State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.se
 - Do not leave stale local or remote branches — one branch per PR, deleted on merge
 
 ### Continuous Integration
-`.github/workflows/ci.yml` runs on every PR (and pushes to `main`):
-- **SwiftLint** — `swiftlint lint` against the config in `.swiftlint.yml` (non-strict: style issues are warnings/annotations; only error-severity rules fail)
-- **Unit Tests** — `xcodebuild test` on a watchOS simulator, running the `badminton score tracker Watch AppTests` bundle only (UI tests are skipped in CI)
+`.github/workflows/ci.yml` runs on every PR (and pushes to `main`). The two jobs have no `needs:` dependency, so they run in parallel:
+- **SwiftLint** — `swiftlint lint` against the config in `.swiftlint.yml` (non-strict: style issues are warnings/annotations; only error-severity rules fail). Observed runtime: **~10-20s**.
+- **Unit Tests** — `xcodebuild test` on a watchOS simulator, running the `badminton score tracker Watch AppTests` bundle only (UI tests are skipped in CI). Observed runtime: **~2.5-4 min** — this is the long pole.
+
+A PR is checkable within **~4 minutes** of pushing. If you're polling/scheduling a check-in on a PR (e.g. an agent session without webhook access to CI success events), don't default to a long cadence like 20 minutes — check back in ~3-5 minutes first, and only back off if the run is still in progress.
 
 Run SwiftLint locally before pushing with `swiftlint` (install via `brew install swiftlint`). Keep the build green — fix or intentionally silence lint findings rather than letting warnings accumulate. When possible, also build locally (`xcodebuild build`) before pushing SwiftUI changes: CI's watchOS build is the safety net, but it's a slow feedback loop, and a local compile catches type-check timeouts and errors in seconds.
 

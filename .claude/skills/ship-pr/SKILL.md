@@ -48,4 +48,4 @@ Don't leave stale local or remote branches.
 
 ## 7. If subscribed to PR activity
 
-Webhooks deliver failures but not success/new-pushes/merge-conflict transitions. Arm a recurring check-in (~20 min cadence) that checks CI + mergeable state and merges automatically once green, then deletes itself. Don't poll manually.
+Webhooks deliver failures but not success/new-pushes/merge-conflict transitions. Arm a recurring check-in that checks CI + mergeable state and merges automatically once green, then deletes itself. Don't poll manually — but also don't default to a long cadence: this repo's CI is fast (SwiftLint ~10-20s, Unit Tests ~2.5-4 min, run in parallel — a PR is checkable within ~4 minutes of pushing). Use a ~5 minute cadence for the first check-in or two; only fall back to something longer (~20 min) if the run is still in progress after that, since it's likely stuck.
