@@ -40,6 +40,8 @@ struct PreMatchView: View {
     @State private var step: Step = .pickMyPlayer
     @State private var showAddPlayer = false
     @State private var newPlayerName = ""
+    @State private var newPlayerColorIndex = 0
+    @State private var newPlayerIconName: String? = nil
 
     enum Step { case pickMyPlayer, pickOpponent }
 
@@ -50,7 +52,7 @@ struct PreMatchView: View {
         var r = roster
         if !r.contains(where: { $0.name == name }) {
             let colorIndex = r.count % Player.avatarColors.count
-            r.insert(Player(name: name, colorIndex: colorIndex), at: 0)
+            r.insert(Player(name: name, colorIndex: newPlayerColorIndex), at: 0)
             appStore.saveRoster(r)
         }
     }
@@ -67,6 +69,7 @@ struct PreMatchView: View {
         let filteredRoster = roster.filter { player in
             player.name != myName && player.name != excluding
         }
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 4)
         return List {
             Section(header: Text(title)) {
                 if !defaultLabel.isEmpty {
@@ -111,22 +114,96 @@ struct PreMatchView: View {
             }
         }
         .sheet(isPresented: $showAddPlayer) {
-            VStack(spacing: 12) {
-                Text("prematch.new_player")
-                    .font(.headline)
-                TextField("prematch.name", text: $newPlayerName)
-                Button("prematch.add") {
-                    let name = newPlayerName.trimmingCharacters(in: .whitespaces)
-                    if !name.isEmpty {
-                        saveToRoster(name: name)
-                        onSelect(name)
-                        showAddPlayer = false
-                        newPlayerName = ""
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("prematch.new_player")
+                        .font(.headline)
+
+                    HStack {
+                        Spacer()
+                        AvatarView(name: newPlayerName, color: Player.avatarColors[newPlayerColorIndex % Player.avatarColors.count], size: 40, iconName: newPlayerIconName)
+                        Spacer()
                     }
+
+                    TextField("prematch.name", text: $newPlayerName)
+
+                    Text("playeredit.color")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    LazyVGrid(columns: columns, spacing: 8) {
+                        ForEach(Array(Player.avatarColors.enumerated()), id: \.offset) { index, color in
+                            Circle()
+                                .fill(color)
+                                .frame(height: 24)
+                                .overlay(
+                                    Circle().stroke(Color.white, lineWidth: newPlayerColorIndex == index ? 2.5 : 0)
+                                )
+                                .onTapGesture { newPlayerColorIndex = index }
+                        }
+                    }
+
+                    Text("playeredit.avatar")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    LazyVGrid(columns: columns, spacing: 8) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(newPlayerIconName == nil ? Color.blue.opacity(0.5) : Color.secondary.opacity(0.25))
+                            Text("A")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(height: 36)
+                        .onTapGesture { newPlayerIconName = nil }
+
+                        ForEach(Player.avatarImageNames, id: \.self) { imageName in
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(newPlayerIconName == imageName ? Color.blue.opacity(0.5) : Color.secondary.opacity(0.25))
+                                Image(imageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .padding(3)
+                            }
+                            .frame(height: 36)
+                            .onTapGesture { newPlayerIconName = imageName }
+                        }
+                    }
+
+                    Text("playeredit.icons")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    LazyVGrid(columns: columns, spacing: 8) {
+                        ForEach(Player.sportIcons, id: \.self) { icon in
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(newPlayerIconName == icon ? Color.blue.opacity(0.5) : Color.secondary.opacity(0.25))
+                                Image(systemName: icon)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(height: 36)
+                            .onTapGesture { newPlayerIconName = icon }
+                        }
+                    }
+
+                    Button("prematch.add") {
+                        let name = newPlayerName.trimmingCharacters(in: .whitespaces)
+                        if !name.isEmpty {
+                            saveToRoster(name: name)
+                            onSelect(name)
+                            showAddPlayer = false
+                            newPlayerName = ""
+                            newPlayerColorIndex = 0
+                            newPlayerIconName = nil
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .frame(maxWidth: .infinity)
+                    .disabled(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                .disabled(newPlayerName.trimmingCharacters(in: .whitespaces).isEmpty)
+                .padding(.horizontal, 8)
             }
-            .padding()
         }
     }
 
