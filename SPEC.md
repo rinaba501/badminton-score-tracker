@@ -25,6 +25,7 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 
 ### Watch Face Complication
 - Circular, corner, inline, and rectangular complication families supported
+- The circular family draws a vector rendition of the shuttlecock mascot (feather crown, white cork body, smiling face) in the app-icon colors; tinted/vibrant watch faces automatically reduce it to luminance shades
 - Tapping any complication deep-links to Pre-Match via `badminton://newmatch`
 - Complication source in `badminton score tracker Complication/` — separate WidgetKit extension target
 
