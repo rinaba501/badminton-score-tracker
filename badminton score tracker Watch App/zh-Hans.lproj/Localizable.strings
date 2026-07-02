@@ -118,6 +118,7 @@
 "settings.me" = "我";
 "settings.players" = "球员";
 "settings.no_players" = "暂无已保存球员";
+"settings.add_player" = "添加球员";
 "settings.timer" = "比赛计时器";
 "settings.timer_enable" = "启用";
 "settings.minutes" = "%d分钟";

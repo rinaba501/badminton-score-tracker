@@ -118,6 +118,7 @@
 "settings.me" = "Saya";
 "settings.players" = "Pemain";
 "settings.no_players" = "Belum ada pemain tersimpan";
+"settings.add_player" = "Tambah pemain";
 "settings.timer" = "Timer Pertandingan";
 "settings.timer_enable" = "Aktifkan";
 "settings.minutes" = "%d mnt";

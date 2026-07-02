@@ -118,6 +118,7 @@
 "settings.me" = "나";
 "settings.players" = "플레이어";
 "settings.no_players" = "저장된 플레이어가 없습니다";
+"settings.add_player" = "플레이어 추가";
 "settings.timer" = "경기 타이머";
 "settings.timer_enable" = "사용";
 "settings.minutes" = "%d분";

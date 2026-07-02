@@ -118,6 +118,7 @@
 "settings.me" = "Me";
 "settings.players" = "Players";
 "settings.no_players" = "No saved players yet";
+"settings.add_player" = "Add player";
 "settings.timer" = "Match Timer";
 "settings.timer_enable" = "Enable";
 "settings.minutes" = "%d min";

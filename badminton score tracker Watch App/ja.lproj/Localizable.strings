@@ -119,6 +119,7 @@
 "settings.me" = "自分";
 "settings.players" = "プレイヤー";
 "settings.no_players" = "保存されたプレイヤーがいません";
+"settings.add_player" = "プレイヤーを追加";
 "settings.timer" = "試合タイマー";
 "settings.timer_enable" = "有効";
 "settings.minutes" = "%d分";

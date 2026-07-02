@@ -118,6 +118,7 @@
 "settings.me" = "मैं";
 "settings.players" = "खिलाड़ी";
 "settings.no_players" = "अभी तक कोई सहेजा खिलाड़ी नहीं";
+"settings.add_player" = "खिलाड़ी जोड़ें";
 "settings.timer" = "मैच टाइमर";
 "settings.timer_enable" = "सक्षम करें";
 "settings.minutes" = "%d मिनट";

@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage("enableSounds") private var enableSounds = true
     @EnvironmentObject private var appStore: AppStore
     @State private var editingPlayer: Player? = nil
+    @State private var showAddPlayer = false
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -126,6 +127,10 @@ struct SettingsView: View {
                         }
                     }
                     .onDelete(perform: deletePlayers)
+                }
+
+                Button(action: { editingPlayer = Player(name: "", colorIndex: roster.count % Player.avatarColors.count) }) {
+                    Label("settings.add_player", systemImage: "plus")
                 }
             }
 
