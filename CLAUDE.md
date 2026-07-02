@@ -34,6 +34,7 @@ badminton score tracker Watch App/
   Player.swift               — Player model + AvatarView
   AudioFeedback.swift        — ScoreAnnouncer (AVSpeechSynthesizer) + SoundPlayer (AVAudioEngine)
   CourtTheme.swift           — CourtTheme enum
+  AppStore.swift             — @MainActor ObservableObject singleton; caches decoded [Player] and [MatchRecord]; all views read from here instead of decoding JSON on every render
   PersistenceStore.swift     — centralized JSON encode/decode for [Player] and [MatchRecord]
   MatchModel.swift           — BadmintonMatch, GameScore, MatchRecord, Side
   WorkoutManager.swift       — HKWorkoutSession lifecycle; started on match begin, ended on save or discard
@@ -62,6 +63,9 @@ badminton score tracker Complication/
 - `ScoreAnnouncer` (`AudioFeedback.swift`) — wraps `AVSpeechSynthesizer`
 - `SoundPlayer` (`AudioFeedback.swift`) — wraps `AVAudioEngine` for programmatic tones
 - Screens live in their own files: `MenuView`, `PreMatchView`, `GameView`, `SettingsView`, `HistoryView`, `StatsView`, `PlayerEditView`
+
+**`AppStore.swift`**
+- `AppStore` — `@MainActor` singleton `ObservableObject`. Holds `@Published private(set) var roster: [Player]` and `history: [MatchRecord]`. Decodes once on init and again when iCloud sync pulls external data (`reloadFromStorage()`). Write through `saveRoster(_:)`, `saveHistory(_:)`, or `clearHistory()` — each writes to `UserDefaults` directly, updates the published property, and calls `CloudSyncManager.shared.pushToCloud()`. Injected via `.environmentObject(AppStore.shared)` from the app entry point; all screens receive it via `@EnvironmentObject`.
 
 **`PersistenceStore.swift`**
 - `PersistenceStore` — namespace of static `encodeRoster`/`decodeRoster` (`[Player]`) and `encodeHistory`/`decodeHistory` (`[MatchRecord]`) helpers. All view code goes through these instead of calling `JSONEncoder`/`JSONDecoder` inline, so the storage encoding lives in one place. Decode returns `[]` on missing/corrupt data.

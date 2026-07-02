@@ -55,6 +55,7 @@ final class CloudSyncManager: ObservableObject {
                 defaults.set(value, forKey: key.rawValue)
             }
         }
+        AppStore.shared.reloadFromStorage()
     }
 
     @objc private func externalChange(_ notification: Notification) {
@@ -63,13 +64,19 @@ final class CloudSyncManager: ObservableObject {
         guard reason == NSUbiquitousKeyValueStoreServerChange ||
               reason == NSUbiquitousKeyValueStoreInitialSyncChange else { return }
 
+        var dataKeysChanged = false
         if let changedKeys = notification.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] {
             let defaults = UserDefaults.standard
+            let dataKeys: Set<String> = ["playerRoster", "matchHistory"]
             for key in changedKeys {
                 if let value = kvStore.object(forKey: key) {
                     defaults.set(value, forKey: key)
                 }
+                if dataKeys.contains(key) { dataKeysChanged = true }
             }
+        }
+        if dataKeysChanged {
+            AppStore.shared.reloadFromStorage()
         }
     }
 }

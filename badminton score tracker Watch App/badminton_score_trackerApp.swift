@@ -16,6 +16,7 @@ struct badminton_score_tracker_Watch_AppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(AppStore.shared)
                 .onOpenURL { url in
                     guard url.scheme == "badminton", url.host == "newmatch" else { return }
                     NotificationCenter.default.post(name: .startNewMatch, object: nil)

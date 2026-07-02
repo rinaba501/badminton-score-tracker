@@ -21,26 +21,21 @@ struct SettingsView: View {
     @AppStorage("timeModeEnabled") private var timeModeEnabled = false
     @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
     @AppStorage("enableSounds") private var enableSounds = true
-    @AppStorage("playerRoster") private var rosterData: Data = Data()
-
+    @EnvironmentObject private var appStore: AppStore
     @State private var editingPlayer: Player? = nil
-    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
         case doubles = "Doubles"
     }
 
-    private var roster: [Player] {
-        PersistenceStore.decodeRoster(rosterData)
-    }
+    private var roster: [Player] { appStore.roster }
 
     private var opponents: [Player] { roster.filter { $0.name != myName } }
 
     private func deletePlayers(at offsets: IndexSet) {
         let toDelete = Set(offsets.map { opponents[$0].id })
-        let r = roster.filter { !toDelete.contains($0.id) }
-        if let encoded = PersistenceStore.encodeRoster(r) { rosterData = encoded }
+        appStore.saveRoster(roster.filter { !toDelete.contains($0.id) })
     }
 
     private func savePlayerEdit(_ updated: Player) {
@@ -52,11 +47,11 @@ struct SettingsView: View {
         } else {
             r.insert(updated, at: 0)
         }
-        if let encoded = PersistenceStore.encodeRoster(r) { rosterData = encoded }
+        appStore.saveRoster(r)
 
         // Propagate name change to match history via player ID
         if let old, old.name != updated.name {
-            var history = PersistenceStore.decodeHistory(matchHistoryData)
+            var history = appStore.history
             for i in history.indices {
                 if history[i].myPlayerId == updated.id {
                     if history[i].winner == history[i].myName { history[i].winner = updated.name }
@@ -67,7 +62,7 @@ struct SettingsView: View {
                     history[i].opponentName = updated.name
                 }
             }
-            if let encoded = PersistenceStore.encodeHistory(history) { matchHistoryData = encoded }
+            appStore.saveHistory(history)
 
             // Also update myName AppStorage if this is the "me" player
             if old.name == myName { myName = updated.name }
@@ -124,8 +119,7 @@ struct SettingsView: View {
                         }
                         .contextMenu {
                             Button(role: .destructive) {
-                                let r = roster.filter { $0.id != player.id }
-                                if let encoded = PersistenceStore.encodeRoster(r) { rosterData = encoded }
+                                appStore.saveRoster(roster.filter { $0.id != player.id })
                             } label: {
                                 Label("settings.delete", systemImage: "trash")
                             }

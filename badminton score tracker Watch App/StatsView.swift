@@ -10,19 +10,13 @@ import SwiftUI
 
 struct StatsView: View {
     @Binding var currentView: ContentView.AppView
+    @EnvironmentObject private var appStore: AppStore
     @AppStorage("myName") private var myName = "Me"
-    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
-    @AppStorage("playerRoster") private var rosterData: Data = Data()
 
     @State private var selectedPlayer: String = ""
 
-    private var history: [MatchRecord] {
-        PersistenceStore.decodeHistory(matchHistoryData)
-    }
-
-    private var roster: [Player] {
-        PersistenceStore.decodeRoster(rosterData)
-    }
+    private var history: [MatchRecord] { appStore.history }
+    private var roster: [Player] { appStore.roster }
 
     private var allPlayers: [String] {
         var seen = Set<String>()
