@@ -117,6 +117,11 @@ State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.se
 
 Run SwiftLint locally before pushing with `swiftlint` (install via `brew install swiftlint`). Keep the build green — fix or intentionally silence lint findings rather than letting warnings accumulate. When possible, also build locally (`xcodebuild build`) before pushing SwiftUI changes: CI's watchOS build is the safety net, but it's a slow feedback loop, and a local compile catches type-check timeouts and errors in seconds.
 
+### Reviewing risky changes
+CI (lint + unit tests) proves the code compiles and the logic it covers is correct — it does not catch architectural/interaction bugs. The worst bug found in this codebase so far wasn't in any single PR: it was two independently-correct changes to `CloudSyncManager`/`AppStore` (the id-based history merge and the clear-history feature) combining to silently undo "Clear History." CI was green on both. For anything beyond mechanical changes (docs, string localization, dead-code removal):
+- Use plan mode before implementing, especially anything touching `CloudSyncManager`/`AppStore` — that's where both real bugs in this codebase have lived. A wrong plan costs one sentence to fix; a wrong diff already cost the rewrite.
+- Run a `/code-review` pass before merging non-trivial PRs. CI-green is evidence the mechanics work, not that the change is correct.
+
 ---
 
 ## Keeping the Docs Up-to-Date
@@ -138,7 +143,7 @@ Both `CLAUDE.md` and `SPEC.md` should always reflect the current state of the co
 
 ## Conventions
 - Use SwiftUI for all UI — no UIKit / WKInterfaceController
-- SwiftUI view complexity: keep `body` small. Pull sub-sections into computed `some View` properties, and hoist non-trivial values — nested ternaries, `String(format:)` around string interpolation — out of result builders into explicitly-typed helpers (`Color`, `CGFloat`, `String`). The Swift type-checker times out on large view expressions (*"unable to type-check this expression in reasonable time"*), and each computed property/function is a separate, cheaper type-check unit. `ScoreView` and `GameView` follow this pattern.
+- SwiftUI view complexity: keep `body` small. Pull sub-sections into computed `some View` properties, and hoist non-trivial values — nested ternaries, `String(format:)` around string interpolation — out of result builders into explicitly-typed helpers (`Color`, `CGFloat`, `String`). The Swift type-checker times out on large view expressions (*"unable to type-check this expression in reasonable time"*), and each computed property/function is a separate, cheaper type-check unit. `ScoreView` and `GameView` follow this pattern. The Watch App target's Debug config sets `OTHER_SWIFT_FLAGS = -Xfrontend -warn-long-expression-type-checking=100`, so a slow expression shows up as a build warning before it becomes a hard timeout — don't ignore that warning.
 - Keep watchOS constraints in mind: small screen (~44–46mm), large tap targets, no keyboard by default (scribble/dictation only)
 - `BadmintonMatch` must remain a pure value type — no UI, no timers, no side effects
 - Audio: tones via `AVAudioEngine`, speech via `AVSpeechSynthesizer` with `.duckOthers` — delay speech by tone duration to avoid interference
