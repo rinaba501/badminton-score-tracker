@@ -31,15 +31,21 @@ final class AppStore: ObservableObject {
 
     func saveHistory(_ records: [MatchRecord]) {
         guard let encoded = PersistenceStore.encodeHistory(records) else { return }
+        // A deletion (single record or "clear all") must push as an
+        // authoritative overwrite, not merge — merging would silently
+        // resurrect the record(s) being removed from iCloud's still-unshrunk
+        // copy. Appends and in-place edits (e.g. a rename) are unaffected and
+        // still merge safely.
+        let isShrink = PersistenceStore.isHistoryShrink(from: history, to: records)
         UserDefaults.standard.set(encoded, forKey: "matchHistory")
         history = records
-        CloudSyncManager.shared.pushToCloud()
+        CloudSyncManager.shared.pushToCloud(overwriteHistory: isShrink)
     }
 
     func clearHistory() {
         UserDefaults.standard.set(Data(), forKey: "matchHistory")
         history = []
-        CloudSyncManager.shared.pushToCloud()
+        CloudSyncManager.shared.pushToCloud(overwriteHistory: true)
     }
 
     // Called by CloudSyncManager after external iCloud data lands in UserDefaults

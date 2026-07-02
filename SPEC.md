@@ -116,6 +116,7 @@ Two-step flow:
 - Player IDs are stored at match-save time by looking up names in the current roster
 - Old records without IDs fall back to stored name strings
 - When a player is renamed, all history records referencing their ID are updated
+- iCloud sync reconciles history by record id (a new match recorded on either device survives a sync); deleting a match or clearing all history pushes as an authoritative overwrite instead, so the deletion isn't undone by a stale copy still on iCloud
 
 ---
 

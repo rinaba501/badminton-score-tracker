@@ -40,14 +40,31 @@ enum PersistenceStore {
     }
 
     /// Merge two match-history lists by record `id` (union), sorted
-    /// chronologically. Match records are immutable and append-only, so a
-    /// same-id record in both lists is the same match — this is a safe union
-    /// that never drops a match. Used by iCloud sync instead of overwriting
-    /// one device's history with another's (last-write-wins).
+    /// chronologically. `a`'s copy wins when both sides have the same id
+    /// (so local edits like a name-propagation rename stick), and ids present
+    /// in only one side are carried over — this is a safe union for adding
+    /// matches recorded on either device. It can only grow, never shrink, so
+    /// it must NOT be used to sync an intentional deletion (see
+    /// `isHistoryShrink`) — merging a shrunk list back against an
+    /// unshrunk one would silently resurrect what was just deleted.
     static func mergeHistory(_ a: [MatchRecord], _ b: [MatchRecord]) -> [MatchRecord] {
         var byId: [UUID: MatchRecord] = [:]
         for record in a { byId[record.id] = record }
         for record in b where byId[record.id] == nil { byId[record.id] = record }
         return byId.values.sorted { $0.date < $1.date }
+    }
+
+    /// True when `newRecords` removes at least one record present in
+    /// `oldRecords` and adds none — i.e. this write is an intentional
+    /// deletion (single record or "clear all"), not an append or an
+    /// in-place edit (e.g. a rename that keeps the same set of ids).
+    /// Callers use this to decide whether a history write is safe to
+    /// reconcile with iCloud via `mergeHistory` (grows/edits) or must be
+    /// pushed as an authoritative overwrite instead (shrinks) — merging a
+    /// deletion would silently undo it, since a union can only grow.
+    static func isHistoryShrink(from oldRecords: [MatchRecord], to newRecords: [MatchRecord]) -> Bool {
+        let oldIds = Set(oldRecords.map(\.id))
+        let newIds = Set(newRecords.map(\.id))
+        return newIds != oldIds && newIds.isSubset(of: oldIds)
     }
 }
