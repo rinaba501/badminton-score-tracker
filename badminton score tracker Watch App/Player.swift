@@ -112,4 +112,13 @@ extension Player {
     static func isGuestName(_ name: String) -> Bool {
         name == guestNearLabel || name == guestFarLabel
     }
+
+    /// Returns whether a name should be persisted as a saved roster player.
+    /// The current user is represented by the default/local name and should
+    /// remain a selector choice, not a duplicate saved player entry.
+    static func shouldBeStoredAsSavedPlayer(_ name: String, currentUserName: String? = nil) -> Bool {
+        guard !name.isEmpty, !isGuestName(name) else { return false }
+        let currentName = currentUserName ?? defaultMyName
+        return name != currentName
+    }
 }
