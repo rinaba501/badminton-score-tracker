@@ -149,6 +149,8 @@ Two-step flow:
 
 Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indonesian (id), Korean (ko), Hindi (hi)
 
+The default local-player name ("Me") and the two guest labels offered during player selection are fully localized. These strings double as identity markers (a guest selection must never be saved to the roster), so every screen reads them from a single shared source (`Player.defaultMyName`/`.guestNearLabel`/`.guestFarLabel`) rather than each hardcoding its own copy — otherwise a guest chosen in one locale's label could fail the "is this a guest" check.
+
 ---
 
 ## Accessibility
@@ -187,3 +189,4 @@ Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indon
 | 18 | Custom player names with avatar | #34, #36, #39 |
 | 49 | Reselect who serves between games | #53 |
 | 57 | iCloud sync / data backup | #75 |
+| 88 | Decouple player display name from stored identity | #91 |

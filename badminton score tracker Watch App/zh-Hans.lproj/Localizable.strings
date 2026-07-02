@@ -137,3 +137,6 @@
 "playeredit.save" = "保存";
 "game.sudden_death" = "突然死亡！";
 "game.tie" = "平局！";
+"prematch.guest_near" = "访客（近侧）";
+"prematch.guest_far" = "访客（远侧）";
+"history.opponent_fallback" = "对手";

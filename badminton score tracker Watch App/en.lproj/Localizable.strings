@@ -137,3 +137,6 @@
 "playeredit.save" = "Save";
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "It's a Tie!";
+"prematch.guest_near" = "Guest (Near)";
+"prematch.guest_far" = "Guest (Far)";
+"history.opponent_fallback" = "Opponent";

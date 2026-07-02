@@ -137,3 +137,6 @@
 "playeredit.save" = "सहेजें";
 "game.sudden_death" = "सडन डेथ!";
 "game.tie" = "बराबरी!";
+"prematch.guest_near" = "अतिथि (नज़दीक)";
+"prematch.guest_far" = "अतिथि (दूर)";
+"history.opponent_fallback" = "प्रतिद्वंद्वी";

@@ -60,6 +60,7 @@ badminton score tracker Complication/
 - `ContentView.swift` — root view; owns only the `AppView` routing enum
 - `Player` (`Player.swift`) — `id: UUID`, `name`, `colorIndex`, `iconName?`; stored as JSON in `@AppStorage("playerRoster")`
 - `AvatarView` (`Player.swift`) — renders asset image, SF Symbol, or initials depending on `iconName`
+- `Player.defaultMyName` / `.guestNearLabel` / `.guestFarLabel` / `.isGuestName(_:)` (`Player.swift`) — the single source of truth for the "me"/guest sentinel display names, localized via `NSLocalizedString`. Every screen that offers or recognizes these labels reads from here, so a guest selection is always recognized as a guest (and never persisted to the roster) regardless of locale
 - `ScoreAnnouncer` (`AudioFeedback.swift`) — wraps `AVSpeechSynthesizer`
 - `SoundPlayer` (`AudioFeedback.swift`) — wraps `AVAudioEngine` for programmatic tones
 - Screens live in their own files: `MenuView`, `PreMatchView`, `GameView`, `SettingsView`, `HistoryView`, `StatsView`, `PlayerEditView`
@@ -136,6 +137,7 @@ Both files should always reflect the current state of the codebase. A future ses
 - `BadmintonMatch` must remain a pure value type — no UI, no timers, no side effects
 - Audio: tones via `AVAudioEngine`, speech via `AVSpeechSynthesizer` with `.duckOthers` — delay speech by tone duration to avoid interference
 - Localization: all user-facing strings go in `Localizable.strings` for all 6 languages (en, ja, zh-Hans, ko, id, hi)
+- Sentinel display names (the local player's default name, guest labels) must not be hardcoded string literals — read them from `Player.defaultMyName` / `.guestNearLabel` / `.guestFarLabel` / `.isGuestName(_:)`, since these strings are both displayed *and* used for identity checks (e.g. "don't save a guest to the roster"). A hardcoded literal in one screen and a localized one in another would break that check across locales
 - Accessibility: custom/gesture-based controls (e.g. the score tiles) need `accessibilityLabel`/`accessibilityHint` and the right traits; decorative imagery gets `accessibilityHidden(true)`. Accessibility strings are localized like any other (`a11y.*` keys)
 - Persistence: read/write `[Player]` and `[MatchRecord]` through `PersistenceStore` — never call `JSONEncoder`/`JSONDecoder` inline in views
 

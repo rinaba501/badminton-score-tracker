@@ -11,7 +11,7 @@ import SwiftUI
 struct StatsView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
-    @AppStorage("myName") private var myName = "Me"
+    @AppStorage("myName") private var myName = Player.defaultMyName
 
     @State private var selectedPlayer: String = ""
 

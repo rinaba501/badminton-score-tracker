@@ -163,3 +163,23 @@ struct PersistenceStoreTests {
         #expect(PersistenceStore.mergeHistory([], [r]).map(\.id) == [r.id])
     }
 }
+
+struct PlayerIdentityTests {
+
+    @Test func guestLabelsAreRecognizedAsGuests() {
+        #expect(Player.isGuestName(Player.guestNearLabel))
+        #expect(Player.isGuestName(Player.guestFarLabel))
+    }
+
+    @Test func realNamesAreNotGuests() {
+        #expect(!Player.isGuestName("Alex"))
+        #expect(!Player.isGuestName(""))
+        #expect(!Player.isGuestName(Player.defaultMyName))
+    }
+
+    @Test func guestLabelsAreDistinctFromEachOther() {
+        // Near/far guests must not collide, or excluding "the other side's
+        // guest" from a picker would also exclude the current side's guest.
+        #expect(Player.guestNearLabel != Player.guestFarLabel)
+    }
+}

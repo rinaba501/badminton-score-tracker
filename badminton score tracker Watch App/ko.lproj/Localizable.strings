@@ -137,3 +137,6 @@
 "playeredit.save" = "저장";
 "game.sudden_death" = "서든데스!";
 "game.tie" = "무승부!";
+"prematch.guest_near" = "게스트(근거리)";
+"prematch.guest_far" = "게스트(원거리)";
+"history.opponent_fallback" = "상대";

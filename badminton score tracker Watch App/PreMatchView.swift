@@ -11,7 +11,7 @@ import SwiftUI
 struct PreMatchView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
-    @AppStorage("myName") private var myName = "Me"
+    @AppStorage("myName") private var myName = Player.defaultMyName
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
 
@@ -45,10 +45,8 @@ struct PreMatchView: View {
 
     private var roster: [Player] { appStore.roster }
 
-    private static let guestNames: Set<String> = ["Guest (Near)", "Guest (Far)"]
-
     private func saveToRoster(name: String) {
-        guard !name.isEmpty, !Self.guestNames.contains(name) else { return }
+        guard !name.isEmpty, !Player.isGuestName(name) else { return }
         var r = roster
         if !r.contains(where: { $0.name == name }) {
             let colorIndex = r.count % Player.avatarColors.count
@@ -133,7 +131,7 @@ struct PreMatchView: View {
     var body: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: "Guest (Near)") { name in
+            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: Player.guestNearLabel) { name in
                 matchMyName = name
                 step = .pickOpponent
             }
@@ -146,7 +144,7 @@ struct PreMatchView: View {
 
         case .pickOpponent:
             let nearName = matchMyName.isEmpty ? myName : matchMyName
-            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: "Guest (Far)", excluding: nearName, h2hAgainst: nearName) { name in
+            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, excluding: nearName, h2hAgainst: nearName) { name in
                 matchOpponentName = name
                 currentView = .game
             }
