@@ -119,6 +119,15 @@
 "settings.players" = "Pemain";
 "settings.no_players" = "Belum ada pemain tersimpan";
 "settings.add_player" = "Tambah pemain";
+"settings.sort_order" = "Urutan sortir";
+"settings.sort_created" = "Dibuat";
+"settings.sort_name" = "Nama";
+"settings.sort_name_desc" = "Nama (Z-A)";
+"settings.sort_most_played" = "Paling sering dimainkan";
+"settings.sort_recently_used" = "Baru-baru ini dipakai";
+"settings.sort_pinned" = "Disematkan";
+"settings.pin_player" = "Sematkan pemain";
+"settings.unpin_player" = "Lepas sematan pemain";
 "settings.timer" = "Timer Pertandingan";
 "settings.timer_enable" = "Aktifkan";
 "settings.minutes" = "%d mnt";

@@ -120,6 +120,15 @@
 "settings.players" = "プレイヤー";
 "settings.no_players" = "保存されたプレイヤーがいません";
 "settings.add_player" = "プレイヤーを追加";
+"settings.sort_order" = "並び順";
+"settings.sort_created" = "追加順";
+"settings.sort_name" = "名前";
+"settings.sort_name_desc" = "名前（降順）";
+"settings.sort_most_played" = "多くプレイした順";
+"settings.sort_recently_used" = "最近使用した順";
+"settings.sort_pinned" = "ピン留め";
+"settings.pin_player" = "プレイヤーをピン留め";
+"settings.unpin_player" = "ピン留めを解除";
 "settings.timer" = "試合タイマー";
 "settings.timer_enable" = "有効";
 "settings.minutes" = "%d分";

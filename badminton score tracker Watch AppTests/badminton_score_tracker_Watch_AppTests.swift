@@ -192,6 +192,44 @@ struct PlayerIdentityTests {
     }
 }
 
+struct PlayerSortingTests {
+
+    @Test func rosterSortOrderSupportsNameAndCreatedOrdering() {
+        let players = [
+            Player(name: "Zoe", colorIndex: 0),
+            Player(name: "Alex", colorIndex: 0),
+            Player(name: "Mina", colorIndex: 0)
+        ]
+
+        let byName = Player.sortedPlayers(players, order: .name)
+        #expect(byName.map(\.name) == ["Alex", "Mina", "Zoe"])
+
+        let byNameDescending = Player.sortedPlayers(players, order: .nameDescending)
+        #expect(byNameDescending.map(\.name) == ["Zoe", "Mina", "Alex"])
+
+        let createdOrder = Player.sortedPlayers(players, order: .created)
+        #expect(createdOrder.map(\.name) == ["Zoe", "Alex", "Mina"])
+    }
+
+    @Test func rosterSortOrderSupportsMostPlayedAndRecentlyUsedOrdering() {
+        let alex = Player(id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!, name: "Alex", colorIndex: 0)
+        let zoe = Player(id: UUID(uuidString: "22222222-2222-2222-2222-222222222222")!, name: "Zoe", colorIndex: 0)
+        let mina = Player(id: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!, name: "Mina", colorIndex: 0)
+        let players = [alex, zoe, mina]
+        let history = [
+            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Alex", myName: "Alex", opponentName: "Zoe", date: Date(), myPlayerId: alex.id, opponentPlayerId: zoe.id),
+            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Zoe", myName: "Alex", opponentName: "Zoe", date: Date().addingTimeInterval(-60), myPlayerId: alex.id, opponentPlayerId: zoe.id),
+            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Mina", myName: "Mina", opponentName: "Alex", date: Date().addingTimeInterval(-120), myPlayerId: mina.id, opponentPlayerId: alex.id)
+        ]
+
+        let mostPlayed = Player.sortedPlayers(players, order: .mostPlayed, history: history)
+        #expect(mostPlayed.map(\.name) == ["Alex", "Zoe", "Mina"])
+
+        let recentlyUsed = Player.sortedPlayers(players, order: .recentlyUsed, history: history)
+        #expect(recentlyUsed.map(\.name) == ["Alex", "Zoe", "Mina"])
+    }
+}
+
 struct HistoryShrinkTests {
 
     private func record(_ id: UUID = UUID()) -> MatchRecord {

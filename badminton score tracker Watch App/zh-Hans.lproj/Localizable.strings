@@ -119,6 +119,15 @@
 "settings.players" = "球员";
 "settings.no_players" = "暂无已保存球员";
 "settings.add_player" = "添加球员";
+"settings.sort_order" = "排序方式";
+"settings.sort_created" = "创建顺序";
+"settings.sort_name" = "名称";
+"settings.sort_name_desc" = "名称 (Z-A)";
+"settings.sort_most_played" = "最常使用";
+"settings.sort_recently_used" = "最近使用";
+"settings.sort_pinned" = "已固定";
+"settings.pin_player" = "置顶球员";
+"settings.unpin_player" = "取消置顶";
 "settings.timer" = "比赛计时器";
 "settings.timer_enable" = "启用";
 "settings.minutes" = "%d分钟";

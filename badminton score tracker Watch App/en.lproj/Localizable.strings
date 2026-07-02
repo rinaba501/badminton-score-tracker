@@ -119,6 +119,15 @@
 "settings.players" = "Players";
 "settings.no_players" = "No saved players yet";
 "settings.add_player" = "Add player";
+"settings.sort_order" = "Sort order";
+"settings.sort_created" = "Created";
+"settings.sort_name" = "Name";
+"settings.sort_name_desc" = "Name (Z-A)";
+"settings.sort_most_played" = "Most played";
+"settings.sort_recently_used" = "Recently used";
+"settings.sort_pinned" = "Pinned";
+"settings.pin_player" = "Pin player";
+"settings.unpin_player" = "Unpin player";
 "settings.timer" = "Match Timer";
 "settings.timer_enable" = "Enable";
 "settings.minutes" = "%d min";

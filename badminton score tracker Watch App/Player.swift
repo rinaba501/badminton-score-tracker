@@ -103,6 +103,14 @@ struct AvatarView: View {
 // same, current-locale value, so a screen never displays one language's
 // version while another screen's identity check expects a different one.
 extension Player {
+    enum SortOrder: String, CaseIterable, Codable {
+        case created
+        case name
+        case nameDescending
+        case mostPlayed
+        case recentlyUsed
+    }
+
     static var defaultMyName: String { NSLocalizedString("settings.me", comment: "") }
     static var guestNearLabel: String { NSLocalizedString("prematch.guest_near", comment: "") }
     static var guestFarLabel: String { NSLocalizedString("prematch.guest_far", comment: "") }
@@ -120,5 +128,64 @@ extension Player {
         guard !name.isEmpty, !isGuestName(name) else { return false }
         let currentName = currentUserName ?? defaultMyName
         return name != currentName
+    }
+
+    static func sortedPlayers(_ players: [Player], order: SortOrder, history: [MatchRecord] = []) -> [Player] {
+        switch order {
+        case .created:
+            return players
+        case .name:
+            return players.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        case .nameDescending:
+            return players.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedDescending }
+        case .mostPlayed:
+            let counts = usageCounts(for: players, history: history)
+            return players.sorted {
+                let lhsCount = counts[$0.id] ?? 0
+                let rhsCount = counts[$1.id] ?? 0
+                if lhsCount != rhsCount { return lhsCount > rhsCount }
+                return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+        case .recentlyUsed:
+            let lastUsed = lastUsedDates(for: players, history: history)
+            return players.sorted {
+                let lhsDate = lastUsed[$0.id] ?? .distantPast
+                let rhsDate = lastUsed[$1.id] ?? .distantPast
+                if lhsDate != rhsDate { return lhsDate > rhsDate }
+                return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+        }
+    }
+
+    private static func usageCounts(for players: [Player], history: [MatchRecord]) -> [UUID: Int] {
+        var counts: [UUID: Int] = [:]
+        for player in players {
+            counts[player.id] = 0
+        }
+        for record in history {
+            for player in players where recordReferences(player, in: record) {
+                counts[player.id, default: 0] += 1
+            }
+        }
+        return counts
+    }
+
+    private static func lastUsedDates(for players: [Player], history: [MatchRecord]) -> [UUID: Date] {
+        var dates: [UUID: Date] = [:]
+        for player in players {
+            dates[player.id] = .distantPast
+        }
+        for record in history {
+            for player in players where recordReferences(player, in: record) {
+                dates[player.id] = max(dates[player.id, default: .distantPast], record.date)
+            }
+        }
+        return dates
+    }
+
+    private static func recordReferences(_ player: Player, in record: MatchRecord) -> Bool {
+        if let myId = record.myPlayerId, myId == player.id { return true }
+        if let oppId = record.opponentPlayerId, oppId == player.id { return true }
+        return record.myName == player.name || record.opponentName == player.name
     }
 }

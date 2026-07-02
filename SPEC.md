@@ -108,6 +108,7 @@ Two-step flow:
 - **"Me" player** — stored in roster like any other player; shown under "Me" section in Settings, hidden from the Players list
 - Duplicate names are rejected when renaming (alert shown)
 - Renaming a player propagates to all match history records that reference their `UUID`
+- Players can be sorted by created order, name, most played, recently used, or pinned priority from Settings and the pre-match picker
 
 ---
 
