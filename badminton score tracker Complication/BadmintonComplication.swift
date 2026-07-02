@@ -112,10 +112,10 @@ private struct ShuttlecockBody: Shape {
         var path = Path()
 
         path.move(to: pt(0.5, 0.98))
-        path.addCurve(to: pt(0.30, 0.77), control1: pt(0.375, 0.956), control2: pt(0.30, 0.87))
-        path.addCurve(to: pt(0.50, 0.63), control1: pt(0.30, 0.685), control2: pt(0.39, 0.63))
-        path.addCurve(to: pt(0.70, 0.77), control1: pt(0.61, 0.63), control2: pt(0.70, 0.685))
-        path.addCurve(to: pt(0.5, 0.98), control1: pt(0.70, 0.87), control2: pt(0.625, 0.956))
+        path.addCurve(to: pt(0.25, 0.7175), control1: pt(0.344, 0.95), control2: pt(0.25, 0.8425))
+        path.addCurve(to: pt(0.50, 0.5425), control1: pt(0.25, 0.611), control2: pt(0.3625, 0.5425))
+        path.addCurve(to: pt(0.75, 0.7175), control1: pt(0.6375, 0.5425), control2: pt(0.75, 0.611))
+        path.addCurve(to: pt(0.5, 0.98), control1: pt(0.75, 0.8425), control2: pt(0.656, 0.95))
         path.closeSubpath()
 
         return path
@@ -131,20 +131,20 @@ private struct ShuttlecockFace: Shape {
         func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
         var path = Path()
 
-        let eyeRadius = w * 0.0425
-        for cx in [CGFloat(0.405), CGFloat(0.595)] {
-            let center = pt(cx, 0.7625)
+        let eyeRadius = w * 0.053
+        for cx in [CGFloat(0.381), CGFloat(0.619)] {
+            let center = pt(cx, 0.708)
             path.addEllipse(in: CGRect(
                 x: center.x - eyeRadius, y: center.y - eyeRadius,
                 width: eyeRadius * 2, height: eyeRadius * 2
             ))
         }
 
-        let mouthLeft = pt(0.447, 0.8375)
-        let mouthRight = pt(0.553, 0.8375)
+        let mouthLeft = pt(0.434, 0.805)
+        let mouthRight = pt(0.566, 0.805)
         path.move(to: mouthLeft)
-        path.addQuadCurve(to: mouthRight, control: pt(0.50, 0.855))
-        path.addQuadCurve(to: mouthLeft, control: pt(0.50, 0.9125))
+        path.addQuadCurve(to: mouthRight, control: pt(0.50, 0.824))
+        path.addQuadCurve(to: mouthLeft, control: pt(0.50, 0.896))
         path.closeSubpath()
 
         return path
