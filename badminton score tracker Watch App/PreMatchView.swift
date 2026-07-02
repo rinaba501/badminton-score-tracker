@@ -10,15 +10,12 @@ import SwiftUI
 
 struct PreMatchView: View {
     @Binding var currentView: ContentView.AppView
+    @EnvironmentObject private var appStore: AppStore
     @AppStorage("myName") private var myName = "Me"
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
-    @AppStorage("playerRoster") private var rosterData: Data = Data()
-    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
 
-    private var history: [MatchRecord] {
-        PersistenceStore.decodeHistory(matchHistoryData)
-    }
+    private var history: [MatchRecord] { appStore.history }
 
     private func h2h(me: String, opponent: String) -> (wins: Int, losses: Int)? {
         let mePlayer = roster.first(where: { $0.name == me })
@@ -46,9 +43,7 @@ struct PreMatchView: View {
 
     enum Step { case pickMyPlayer, pickOpponent }
 
-    private var roster: [Player] {
-        PersistenceStore.decodeRoster(rosterData)
-    }
+    private var roster: [Player] { appStore.roster }
 
     private static let guestNames: Set<String> = ["Guest (Near)", "Guest (Far)"]
 
@@ -58,7 +53,7 @@ struct PreMatchView: View {
         if !r.contains(where: { $0.name == name }) {
             let colorIndex = r.count % Player.avatarColors.count
             r.insert(Player(name: name, colorIndex: colorIndex), at: 0)
-            if let encoded = PersistenceStore.encodeRoster(r) { rosterData = encoded }
+            appStore.saveRoster(r)
         }
     }
 

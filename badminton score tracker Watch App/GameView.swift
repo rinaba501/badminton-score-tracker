@@ -73,11 +73,10 @@ struct OnboardingView: View {
 
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
+    @EnvironmentObject private var appStore: AppStore
     @AppStorage("myName") private var myName = "Me"
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
-    @AppStorage("playerRoster") private var rosterData: Data = Data()
-    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
@@ -117,20 +116,20 @@ struct GameView: View {
 
     private func saveToRoster(_ name: String) {
         guard !name.isEmpty, !Self.guestNames.contains(name) else { return }
-        var roster = PersistenceStore.decodeRoster(rosterData)
+        var roster = appStore.roster
         if !roster.contains(where: { $0.name == name }) {
             let colorIndex = roster.count % Player.avatarColors.count
             roster.insert(Player(name: name, colorIndex: colorIndex), at: 0)
-            if let encoded = PersistenceStore.encodeRoster(roster) { rosterData = encoded }
+            appStore.saveRoster(roster)
         }
     }
 
     private func avatarColor(for name: String) -> Color {
-        PersistenceStore.decodeRoster(rosterData).first(where: { $0.name == name })?.avatarColor ?? .gray
+        appStore.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
     }
 
     private func avatarIcon(for name: String) -> String? {
-        PersistenceStore.decodeRoster(rosterData).first(where: { $0.name == name })?.iconName
+        appStore.roster.first(where: { $0.name == name })?.iconName
     }
 
     private func tap(_ side: Side) {
@@ -324,14 +323,14 @@ struct GameView: View {
         savedCurrentMatch = true
         saveToRoster(effectiveOpponentName)
         saveToRoster(effectiveMyName)
-        let currentRoster = PersistenceStore.decodeRoster(rosterData)
+        let currentRoster = appStore.roster
         var games = match.completedGames
         // Append in-progress game when time expired mid-game
         if timeModeEnabled && match.matchWinner == nil && (match.myScore > 0 || match.opponentScore > 0) {
             games.append(GameScore(my: match.myScore, opponent: match.opponentScore))
         }
-        var history = decodeHistory()
-        history.append(MatchRecord(
+        var newHistory = appStore.history
+        newHistory.append(MatchRecord(
             games: games,
             myGamesWon: match.myGamesWon,
             opponentGamesWon: match.opponentGamesWon,
@@ -343,12 +342,8 @@ struct GameView: View {
             myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
             opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
         ))
-        if let encoded = PersistenceStore.encodeHistory(history) { matchHistoryData = encoded }
+        appStore.saveHistory(newHistory)
         Task { await workoutManager.endWorkout() }
-    }
-
-    private func decodeHistory() -> [MatchRecord] {
-        PersistenceStore.decodeHistory(matchHistoryData)
     }
 
     private var timerLabel: String {

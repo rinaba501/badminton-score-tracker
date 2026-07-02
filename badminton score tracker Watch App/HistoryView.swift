@@ -10,7 +10,7 @@ import SwiftUI
 
 struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
-    @AppStorage("matchHistory") private var matchHistoryData: Data = Data()
+    @EnvironmentObject private var appStore: AppStore
     @State private var showingClearConfirmation = false
     @State private var showingFilters = false
     @State private var selectedPlayer: String = ""
@@ -27,9 +27,7 @@ struct HistoryView: View {
         }
     }
 
-    private var history: [MatchRecord] {
-        PersistenceStore.decodeHistory(matchHistoryData)
-    }
+    private var history: [MatchRecord] { appStore.history }
 
     private var allPlayers: [String] {
         var seen = Set<String>()
@@ -59,9 +57,7 @@ struct HistoryView: View {
     }
 
     private func save(_ records: [MatchRecord]) {
-        if let encoded = PersistenceStore.encodeHistory(records) {
-            matchHistoryData = encoded
-        }
+        appStore.saveHistory(records)
     }
 
     private func delete(_ record: MatchRecord) {
@@ -190,7 +186,7 @@ struct HistoryView: View {
         }
         .alert(Text("history.clear_title"), isPresented: $showingClearConfirmation) {
             Button("history.cancel", role: .cancel) { }
-            Button("history.clear", role: .destructive) { matchHistoryData = Data() }
+            Button("history.clear", role: .destructive) { appStore.clearHistory() }
         } message: {
             Text("history.clear_confirm")
         }
