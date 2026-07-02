@@ -38,7 +38,7 @@ badminton score tracker Watch App/
   PersistenceStore.swift     — centralized JSON encode/decode for [Player] and [MatchRecord]
   MatchModel.swift           — BadmintonMatch, GameScore, MatchRecord, Side
   WorkoutManager.swift       — HKWorkoutSession lifecycle; started on match begin, ended on save or discard
-  CloudSyncManager.swift     — NSUbiquitousKeyValueStore sync; pushes on data change, pulls on launch and external update
+  CloudSyncManager.swift     — NSUbiquitousKeyValueStore sync; pushes on data change, pulls on launch and external update. Match history is merged by record id (union via PersistenceStore.mergeHistory), not last-write-wins; other keys are last-write-wins
   badminton_score_trackerApp.swift — app entry point; starts CloudSyncManager, handles badminton://newmatch deep link
   badminton_score_tracker_Watch_App.entitlements — iCloud KV store entitlement
   Assets.xcassets/           — app icon, racket animation asset, 15 avatar images
