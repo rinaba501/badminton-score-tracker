@@ -137,3 +137,6 @@
 "playeredit.save" = "Simpan";
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "Seri!";
+"prematch.guest_near" = "Tamu (Dekat)";
+"prematch.guest_far" = "Tamu (Jauh)";
+"history.opponent_fallback" = "Lawan";

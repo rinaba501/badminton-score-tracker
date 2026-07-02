@@ -92,3 +92,24 @@ struct AvatarView: View {
         .accessibilityHidden(true)
     }
 }
+
+// MARK: - Sentinel display names
+
+// Guests and the default local-player name are display text, not stored
+// player identity (guests are never added to the roster; "me" is just a
+// starting value the user can rename). Centralizing them here — instead of
+// each screen hardcoding its own English literal — is what lets them be
+// localized: every screen that offers or recognizes these labels reads the
+// same, current-locale value, so a screen never displays one language's
+// version while another screen's identity check expects a different one.
+extension Player {
+    static var defaultMyName: String { NSLocalizedString("settings.me", comment: "") }
+    static var guestNearLabel: String { NSLocalizedString("prematch.guest_near", comment: "") }
+    static var guestFarLabel: String { NSLocalizedString("prematch.guest_far", comment: "") }
+
+    /// True for either guest sentinel label offered during player selection.
+    /// Guests are intentionally never persisted to the roster.
+    static func isGuestName(_ name: String) -> Bool {
+        name == guestNearLabel || name == guestFarLabel
+    }
+}

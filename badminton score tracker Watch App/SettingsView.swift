@@ -12,7 +12,7 @@ import SwiftUI
 struct SettingsView: View {
     @Binding var currentView: ContentView.AppView
     @AppStorage("gameMode") private var gameMode: GameMode = .singles
-    @AppStorage("myName") private var myName = "Me"
+    @AppStorage("myName") private var myName = Player.defaultMyName
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
     @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
     @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green

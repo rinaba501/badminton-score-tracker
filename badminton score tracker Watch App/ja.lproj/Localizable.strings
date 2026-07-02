@@ -138,3 +138,6 @@
 "playeredit.save" = "保存";
 "game.sudden_death" = "サドンデス！";
 "game.tie" = "引き分け！";
+"prematch.guest_near" = "ゲスト（手前）";
+"prematch.guest_far" = "ゲスト（奥）";
+"history.opponent_fallback" = "対戦相手";

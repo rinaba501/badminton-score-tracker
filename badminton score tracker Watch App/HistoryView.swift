@@ -213,10 +213,10 @@ struct MatchHistoryRow: View {
             // Head-to-head score line
             HStack(alignment: .center, spacing: 0) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(record.myName.isEmpty ? "Me" : record.myName)
+                    Text(record.myName.isEmpty ? Player.defaultMyName : record.myName)
                         .font(.system(size: 12, weight: iWon ? .bold : .regular))
                         .lineLimit(1)
-                    Text(record.opponentName.isEmpty ? "Opponent" : record.opponentName)
+                    Text(record.opponentName.isEmpty ? NSLocalizedString("history.opponent_fallback", comment: "") : record.opponentName)
                         .font(.system(size: 12, weight: iWon ? .regular : .bold))
                         .lineLimit(1)
                 }

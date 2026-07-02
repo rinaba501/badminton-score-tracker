@@ -74,7 +74,7 @@ struct OnboardingView: View {
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
-    @AppStorage("myName") private var myName = "Me"
+    @AppStorage("myName") private var myName = Player.defaultMyName
     @AppStorage("matchMyName") private var matchMyName = ""
     @AppStorage("matchOpponentName") private var matchOpponentName = ""
     @AppStorage("pointsToWin") private var pointsToWin: Int = 21
@@ -106,16 +106,17 @@ struct GameView: View {
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
-    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? "Guest" : matchOpponentName }
+    // Defensive fallback for the (practically unreachable) case where GameView
+    // appears with no opponent selected. Using the same guest sentinel as the
+    // picker means Player.isGuestName still catches it below.
+    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? Player.guestFarLabel : matchOpponentName }
 
     private func name(for side: Side) -> String {
         side == .me ? effectiveMyName : effectiveOpponentName
     }
 
-    private static let guestNames: Set<String> = ["Guest (Near)", "Guest (Far)"]
-
     private func saveToRoster(_ name: String) {
-        guard !name.isEmpty, !Self.guestNames.contains(name) else { return }
+        guard !name.isEmpty, !Player.isGuestName(name) else { return }
         var roster = appStore.roster
         if !roster.contains(where: { $0.name == name }) {
             let colorIndex = roster.count % Player.avatarColors.count
