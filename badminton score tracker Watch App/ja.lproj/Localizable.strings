@@ -43,7 +43,7 @@
 "settings.your_name" = "あなたの名前";
 "settings.opponent_name" = "相手の名前";
 "settings.crown" = "デジタルクラウン";
-"settings.sound_effects" = "Sound effects";
+"settings.sound_effects" = "効果音";
 "settings.announce_score" = "スコアを読み上げる";
 "settings.court_theme" = "コートテーマ";
 "settings.theme" = "テーマ";
@@ -104,7 +104,7 @@
 "a11y.timer_remaining" = "残り時間、%@";
 
 // UI labels
-"stats.title" = "スタッツ";
+"stats.title" = "統計";
 "stats.player" = "プレイヤー";
 "stats.back" = "戻る";
 "stats.no_matches" = "まだ試合がありません";
