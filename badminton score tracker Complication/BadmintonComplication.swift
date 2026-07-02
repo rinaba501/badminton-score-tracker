@@ -37,31 +37,81 @@ private struct ShuttlecockImage: View {
 /// strip color from bitmap images and render them as a flat monochrome mask.
 /// Unlike `ShuttlecockImage`, a vector `Shape` filled with `foregroundStyle`
 /// tints correctly in that mode instead of disappearing into a plain circle.
+/// The mascot from `avatar_shuttlecock_happy`, reduced to a flat monochrome
+/// silhouette: a rounded body with a smiling face, and a crown of feathers
+/// fanning up from behind it. Two yellow layers union into one shape — the
+/// feathers' hidden convergence point sits behind the body, so no stray tip
+/// pokes through the face.
 private struct ShuttlecockGlyph: View {
     var body: some View {
         ZStack {
-            ShuttlecockSkirt()
+            ShuttlecockFeathers()
                 .fill(.yellow)
-            Circle()
-                .fill(.yellow)
-                .frame(width: 4, height: 4)
-                .offset(y: 6.5)
+            ShuttlecockBody()
+                .fill(.yellow, style: FillStyle(eoFill: true))
         }
     }
 }
 
-private struct ShuttlecockSkirt: Shape {
+/// Scalloped crown of feathers converging to a point low in the frame; the
+/// lower half is covered by the body, so only the fanned tips show above it.
+private struct ShuttlecockFeathers: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
+        let tip = pt(0.5, 0.58)
         var path = Path()
-        path.move(to: CGPoint(x: w * 0.5, y: h * 0.6))
-        path.addLine(to: CGPoint(x: w * 0.12, y: h * 0.05))
-        path.addLine(to: CGPoint(x: w * 0.32, y: h * 0.05))
-        path.addLine(to: CGPoint(x: w * 0.5, y: h * 0.6))
-        path.addLine(to: CGPoint(x: w * 0.68, y: h * 0.05))
-        path.addLine(to: CGPoint(x: w * 0.88, y: h * 0.05))
+
+        path.move(to: tip)
+        path.addQuadCurve(to: pt(0.14, 0.08), control: pt(0.16, 0.42))
+        path.addQuadCurve(to: pt(0.23, 0.16), control: pt(0.20, 0.15))
+        path.addQuadCurve(to: pt(0.32, 0.06), control: pt(0.28, 0.08))
+        path.addQuadCurve(to: pt(0.41, 0.16), control: pt(0.37, 0.15))
+        path.addQuadCurve(to: pt(0.50, 0.05), control: pt(0.46, 0.06))
+        path.addQuadCurve(to: pt(0.59, 0.16), control: pt(0.54, 0.06))
+        path.addQuadCurve(to: pt(0.68, 0.06), control: pt(0.63, 0.08))
+        path.addQuadCurve(to: pt(0.77, 0.16), control: pt(0.72, 0.15))
+        path.addQuadCurve(to: pt(0.86, 0.08), control: pt(0.80, 0.15))
+        path.addQuadCurve(to: tip, control: pt(0.84, 0.42))
         path.closeSubpath()
+
+        return path
+    }
+}
+
+/// Rounded bell-shaped body with the mascot's eyes and smile punched out as
+/// holes (even-odd fill). Drawn over the feathers so it hides their base.
+private struct ShuttlecockBody: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: w * x, y: h * y) }
+        var path = Path()
+
+        path.move(to: pt(0.5, 0.97))
+        path.addCurve(to: pt(0.22, 0.60), control1: pt(0.26, 0.93), control2: pt(0.20, 0.78))
+        path.addCurve(to: pt(0.50, 0.42), control1: pt(0.24, 0.46), control2: pt(0.36, 0.42))
+        path.addCurve(to: pt(0.78, 0.60), control1: pt(0.64, 0.42), control2: pt(0.76, 0.46))
+        path.addCurve(to: pt(0.5, 0.97), control1: pt(0.80, 0.78), control2: pt(0.74, 0.93))
+        path.closeSubpath()
+
+        let eyeRadius = w * 0.06
+        for cx in [CGFloat(0.40), CGFloat(0.60)] {
+            let center = pt(cx, 0.60)
+            path.addEllipse(in: CGRect(
+                x: center.x - eyeRadius, y: center.y - eyeRadius,
+                width: eyeRadius * 2, height: eyeRadius * 2
+            ))
+        }
+
+        let mouthLeft = pt(0.43, 0.74)
+        let mouthRight = pt(0.57, 0.74)
+        path.move(to: mouthLeft)
+        path.addQuadCurve(to: mouthRight, control: pt(0.50, 0.73))
+        path.addQuadCurve(to: mouthLeft, control: pt(0.50, 0.84))
+        path.closeSubpath()
+
         return path
     }
 }
@@ -76,7 +126,7 @@ struct BadmintonComplicationEntryView: View {
             ZStack {
                 AccessoryWidgetBackground()
                 ShuttlecockGlyph()
-                    .frame(width: 20, height: 20)
+                    .frame(width: 38, height: 38)
             }
         case .accessoryCorner:
             ShuttlecockImage()
