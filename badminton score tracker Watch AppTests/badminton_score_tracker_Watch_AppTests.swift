@@ -132,3 +132,33 @@ struct BadmintonMatchTests {
         #expect(!match.isMatchPoint)            // only 1 game won would still need another
     }
 }
+
+struct PersistenceStoreTests {
+
+    private func record(_ winner: String, at date: Date, id: UUID = UUID()) -> MatchRecord {
+        MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: winner, date: date)
+    }
+
+    @Test func mergeHistoryUnionsAndSortsByDate() {
+        let t0 = Date(timeIntervalSince1970: 1000)
+        let a = record("A", at: t0)
+        let b = record("B", at: t0.addingTimeInterval(60))
+        let c = record("C", at: t0.addingTimeInterval(120))
+        // Overlapping middle record; lists in different orders.
+        let merged = PersistenceStore.mergeHistory([b, a], [c, b])
+        #expect(merged.map(\.id) == [a.id, b.id, c.id])   // union, chronological
+    }
+
+    @Test func mergeHistoryDedupesSameId() {
+        let r = record("A", at: Date())
+        let merged = PersistenceStore.mergeHistory([r], [r])
+        #expect(merged.count == 1)
+    }
+
+    @Test func mergeHistoryHandlesEmptyInputs() {
+        let r = record("A", at: Date())
+        #expect(PersistenceStore.mergeHistory([], []).isEmpty)
+        #expect(PersistenceStore.mergeHistory([r], []).map(\.id) == [r.id])
+        #expect(PersistenceStore.mergeHistory([], [r]).map(\.id) == [r.id])
+    }
+}

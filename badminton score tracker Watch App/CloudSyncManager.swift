@@ -36,25 +36,29 @@ final class CloudSyncManager: ObservableObject {
         pullFromCloud()
     }
 
-    // Push all local UserDefaults values to iCloud
+    // Push all local UserDefaults values to iCloud. Match history is merged
+    // (see syncHistory) rather than overwritten so no device clobbers another.
     func pushToCloud() {
         let defaults = UserDefaults.standard
-        for key in SyncKey.allCases {
+        for key in SyncKey.allCases where key != .matchHistory {
             if let value = defaults.object(forKey: key.rawValue) {
                 kvStore.set(value, forKey: key.rawValue)
             }
         }
+        syncHistory()
+        AppStore.shared.reloadFromStorage()
         kvStore.synchronize()
     }
 
     // Pull iCloud values into UserDefaults, only overwriting if iCloud has data
     private func pullFromCloud() {
         let defaults = UserDefaults.standard
-        for key in SyncKey.allCases {
+        for key in SyncKey.allCases where key != .matchHistory {
             if let value = kvStore.object(forKey: key.rawValue) {
                 defaults.set(value, forKey: key.rawValue)
             }
         }
+        syncHistory()
         AppStore.shared.reloadFromStorage()
     }
 
@@ -67,16 +71,35 @@ final class CloudSyncManager: ObservableObject {
         var dataKeysChanged = false
         if let changedKeys = notification.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] {
             let defaults = UserDefaults.standard
-            let dataKeys: Set<String> = ["playerRoster", "matchHistory"]
-            for key in changedKeys {
+            for key in changedKeys where key != SyncKey.matchHistory.rawValue {
                 if let value = kvStore.object(forKey: key) {
                     defaults.set(value, forKey: key)
                 }
-                if dataKeys.contains(key) { dataKeysChanged = true }
+                if key == SyncKey.playerRoster.rawValue { dataKeysChanged = true }
+            }
+            if changedKeys.contains(SyncKey.matchHistory.rawValue) {
+                syncHistory()
+                dataKeysChanged = true
             }
         }
         if dataKeysChanged {
             AppStore.shared.reloadFromStorage()
         }
+    }
+
+    // Reconcile local and iCloud match history by merging both by record id,
+    // then write the union back to both stores. Match records are append-only,
+    // so this converges without losing matches recorded on either device.
+    private func syncHistory() {
+        let defaults = UserDefaults.standard
+        let localData = defaults.data(forKey: SyncKey.matchHistory.rawValue) ?? Data()
+        let cloudData = kvStore.data(forKey: SyncKey.matchHistory.rawValue) ?? Data()
+        let merged = PersistenceStore.mergeHistory(
+            PersistenceStore.decodeHistory(localData),
+            PersistenceStore.decodeHistory(cloudData)
+        )
+        guard let mergedData = PersistenceStore.encodeHistory(merged) else { return }
+        if mergedData != localData { defaults.set(mergedData, forKey: SyncKey.matchHistory.rawValue) }
+        if mergedData != cloudData { kvStore.set(mergedData, forKey: SyncKey.matchHistory.rawValue) }
     }
 }
