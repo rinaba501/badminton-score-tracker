@@ -183,3 +183,41 @@ struct PlayerIdentityTests {
         #expect(Player.guestNearLabel != Player.guestFarLabel)
     }
 }
+
+struct HistoryShrinkTests {
+
+    private func record(_ id: UUID = UUID()) -> MatchRecord {
+        MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "A", date: Date())
+    }
+
+    @Test func removingARecordIsAShrink() {
+        let a = record()
+        let b = record()
+        #expect(PersistenceStore.isHistoryShrink(from: [a, b], to: [a]))
+    }
+
+    @Test func clearingAllRecordsIsAShrink() {
+        let a = record()
+        #expect(PersistenceStore.isHistoryShrink(from: [a], to: []))
+    }
+
+    @Test func addingARecordIsNotAShrink() {
+        let a = record()
+        let b = record()
+        #expect(!PersistenceStore.isHistoryShrink(from: [a], to: [a, b]))
+    }
+
+    @Test func renamingInPlaceIsNotAShrink() {
+        // Same set of ids, different field values (e.g. a name-propagation
+        // rename) — must still be treated as safe to merge, not a deletion,
+        // so any record concurrently added on another device isn't dropped.
+        let id = UUID()
+        let before = MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Old", date: Date())
+        let after = MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "New", date: Date())
+        #expect(!PersistenceStore.isHistoryShrink(from: [before], to: [after]))
+    }
+
+    @Test func noOpEmptyToEmptyIsNotAShrink() {
+        #expect(!PersistenceStore.isHistoryShrink(from: [], to: []))
+    }
+}

@@ -37,15 +37,24 @@ final class CloudSyncManager: ObservableObject {
     }
 
     // Push all local UserDefaults values to iCloud. Match history is merged
-    // (see syncHistory) rather than overwritten so no device clobbers another.
-    func pushToCloud() {
+    // (see syncHistory) rather than overwritten so no device clobbers another
+    // — except when `overwriteHistory` is set, which pushes local history to
+    // iCloud as-is. Callers pass that for intentional deletions (see
+    // PersistenceStore.isHistoryShrink): merging a shrunk history against
+    // iCloud's unshrunk copy would silently resurrect what was just deleted.
+    func pushToCloud(overwriteHistory: Bool = false) {
         let defaults = UserDefaults.standard
         for key in SyncKey.allCases where key != .matchHistory {
             if let value = defaults.object(forKey: key.rawValue) {
                 kvStore.set(value, forKey: key.rawValue)
             }
         }
-        syncHistory()
+        if overwriteHistory {
+            let localData = defaults.data(forKey: SyncKey.matchHistory.rawValue) ?? Data()
+            kvStore.set(localData, forKey: SyncKey.matchHistory.rawValue)
+        } else {
+            syncHistory()
+        }
         AppStore.shared.reloadFromStorage()
         kvStore.synchronize()
     }
