@@ -31,13 +31,16 @@ BadmintonCore/                 — local Swift package; the platform-free core (
     Player.swift              — Player model + sentinel names + SortOrder + sortedPlayers (no SwiftUI; presentation lives in the app's PlayerAvatar.swift)
     StatsCalculator.swift     — pure stats/history derivations extracted from StatsView/HistoryView/PreMatchView
     AppStorageKeys.swift      — the single source of truth for every UserDefaults/@AppStorage key string
+    ScoreCallFormatter.swift  — pure locale-aware score announcement formatting (en/ja/zh); injectable `strings` closure for testing without Bundle.main
   Tests/BadmintonCoreTests/   — all core unit tests (Swift Testing); run with `swift test --package-path BadmintonCore`
 
 badminton score tracker Watch App/
   ContentView.swift          — root view + state-driven navigation only
   MenuView.swift             — main menu
   PreMatchView.swift         — two-step player selection before a match
-  GameView.swift             — live scoring screen; also OnboardingView, GamesWonHeader, ScoreView, MatchOverOverlay
+  GameView.swift             — live scoring screen (layout only): OnboardingView, GamesWonHeader, ScoreView, MatchOverOverlay; delegates all logic to GameViewModel
+  GameViewModel.swift        — @MainActor ObservableObject; owns all GameView business logic: scoring, undo, time mode, haptics coordination, match persistence, spoken announcements
+  HapticsProvider.swift      — HapticsProvider protocol + WatchHapticsProvider (wraps WKInterfaceDevice) + NoOpHapticsProvider (for tests)
   SettingsView.swift         — match format, audio, theme, timer, roster management
   HistoryView.swift          — saved match list + filters; also MatchHistoryRow
   StatsView.swift            — per-player stats + head-to-head; also StatRow (delegates the math to StatsCalculator)
@@ -54,7 +57,7 @@ badminton score tracker Watch App/
   *.lproj/Localizable.strings — en, ja, zh-Hans, ko, id, hi
 
 badminton score tracker Watch AppTests/
-  badminton_score_tracker_Watch_AppTests.swift — app-layer placeholder only; the core tests live in the package (future home of e.g. the issue #96 view-model tests)
+  badminton_score_tracker_Watch_AppTests.swift — GameViewModel tests (compile in CI via build-for-testing; run locally against a watchOS simulator). Core logic tests live in the package.
 
 badminton score tracker Complication/
   BadmintonComplication.swift — WidgetKit extension; circular, corner, inline, rectangular families
@@ -76,6 +79,7 @@ badminton score tracker Complication/
 - `PersistenceStore` — namespace of static `encodeRoster`/`decodeRoster` (`[Player]`) and `encodeHistory`/`decodeHistory` (`[MatchRecord]`) helpers, plus `mergeHistory`/`isHistoryShrink` for iCloud reconciliation. All view code goes through these instead of calling `JSONEncoder`/`JSONDecoder` inline. Decode returns `[]` on missing/corrupt data
 - `StatsCalculator` — pure static derivations over `[MatchRecord]`: participants, per-player history, win rate/streak/averages, head-to-head, history filtering, duration formatting. It deliberately carries **two** participants functions (`allPlayers` hoists the main player and keeps empty names — StatsView semantics; `participants` drops empties — HistoryView semantics) and **two** head-to-head functions (`headToHead` returns (0,0) on no data — StatsView; `headToHeadIfAny` returns nil and counts wins from the near side only — PreMatchView). They preserve each screen's original behavior; don't unify them without a product decision
 - `AppStorageKeys` — every persisted key string as a constant. New `@AppStorage`/UserDefaults keys must be added here, never inline as string literals. Typed defaults stay at the `@AppStorage` declaration sites (some reference app-only types like `CourtTheme`)
+- `ScoreCallFormatter` — pure enum; `format(match:myName:opponentName:locale:strings:)` returns a spoken score announcement string. `strings` defaults to `NSLocalizedString` (app runtime); tests inject explicit format strings so coverage doesn't require `Bundle.main`. Handles English (love-score), Japanese (katakana), and Chinese (numeric integers)
 
 **UI layer** (split by screen — one view file each; see Project Structure above)
 - `ContentView.swift` — root view; owns only the `AppView` routing enum
@@ -83,9 +87,14 @@ badminton score tracker Complication/
 - `ScoreAnnouncer` (`AudioFeedback.swift`) — wraps `AVSpeechSynthesizer`
 - `SoundPlayer` (`AudioFeedback.swift`) — wraps `AVAudioEngine` for programmatic tones
 - Screens live in their own files: `MenuView`, `PreMatchView`, `GameView`, `SettingsView`, `HistoryView`, `StatsView`, `PlayerEditView`
+- `GameView` is layout-only — all match state and actions delegate to `GameViewModel`
 
 **`AppStore.swift`** (app target)
 - `AppStore` — `@MainActor` singleton `ObservableObject`. Holds `@Published private(set) var roster: [Player]` and `history: [MatchRecord]`. Decodes once on init and again when iCloud sync pulls external data (`reloadFromStorage()`). Write through `saveRoster(_:)`, `saveHistory(_:)`, or `clearHistory()` — each writes to `UserDefaults` directly, updates the published property, and calls `CloudSyncManager.shared.pushToCloud()`. Injected via `.environmentObject(AppStore.shared)` from the app entry point; all screens receive it via `@EnvironmentObject`.
+
+**`GameViewModel.swift`** (app target)
+- `GameViewModel` — `@MainActor final class ObservableObject`. Owns all live-game business logic extracted from `GameView`: `BadmintonMatch` state, undo stack, time-mode/sudden-death, haptics (via `HapticsProvider` protocol), sound, spoken announcements (via `ScoreCallFormatter`), and match persistence. `GameView` creates one via `@StateObject` and delegates every action here. Match config is read from `@AppStorage` directly in the VM (pointsToWin, gamesInMatch, timeModeEnabled, timeLimitMinutes, announceScore, enableSounds). `enableCrownScoring` and `courtTheme` stay in the view (input binding and display respectively).
+- `HapticsProvider` — protocol with `play(_ type: WKHapticType)`. `WatchHapticsProvider` (production) wraps `WKInterfaceDevice.current().play(_:)`. `NoOpHapticsProvider` (tests) is a no-op struct. All 13 former inline `WKInterfaceDevice` calls in `GameView` are now routed through this protocol.
 
 ### Navigation
 State-driven via `ContentView.AppView` enum (`.menu`, `.preMatch`, `.game`, `.settings`, `.history`, `.stats`) — no `NavigationLink` at the top level.

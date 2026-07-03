@@ -96,7 +96,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | Phase | Issue(s) | Status |
 |-------|----------|--------|
 | 1 — BadmintonCore package | [#106](https://github.com/rinaba501/badminton-score-tracker/issues/106) | Closed by PR [#112](https://github.com/rinaba501/badminton-score-tracker/pull/112) |
-| 2 — De-view business logic | [#96](https://github.com/rinaba501/badminton-score-tracker/issues/96) | Open (pre-existing) |
+| 2 — De-view business logic | [#96](https://github.com/rinaba501/badminton-score-tracker/issues/96) | Closed by PR [#113](https://github.com/rinaba501/badminton-score-tracker/pull/113) |
 | 3 — Schema versioning / identity | [#107](https://github.com/rinaba501/badminton-score-tracker/issues/107), [#108](https://github.com/rinaba501/badminton-score-tracker/issues/108); KV quota stopgap: [#87](https://github.com/rinaba501/badminton-score-tracker/issues/87) | Open |
 | 4 — CloudKit sync | [#109](https://github.com/rinaba501/badminton-score-tracker/issues/109) | Open |
 | 5 — Cross-person sharing | design in [#93](https://github.com/rinaba501/badminton-score-tracker/issues/93); enables [#13](https://github.com/rinaba501/badminton-score-tracker/issues/13) | Deferred until Phase 4 |

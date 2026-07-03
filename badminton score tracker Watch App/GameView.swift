@@ -2,35 +2,13 @@
 //  GameView.swift
 //  badminton score tracker Watch App
 //
-//  The live scoring screen: tap/crown scoring, serve tracking, haptics,
-//  sound, spoken announcements, optional match timer, and the game/match
-//  over overlays. All rules live in the pure `BadmintonMatch` value type.
+//  The live scoring screen: tap/crown scoring, serve tracking, and the
+//  game/match over overlays. All business logic lives in GameViewModel;
+//  this file is layout and input binding only.
 //
 
 import SwiftUI
-import WatchKit
 import BadmintonCore
-
-// MARK: - Spoken score formatting helpers
-
-private let katakanaNumbers = [
-    "ラブ", "ワン", "ツー", "スリー", "フォー",
-    "ファイブ", "シックス", "セブン", "エイト", "ナイン",
-    "テン", "イレブン", "トゥエルブ", "サーティーン", "フォーティーン",
-    "フィフティーン", "シックスティーン", "セブンティーン", "エイティーン", "ナインティーン",
-    "トゥエンティ", "トゥエンティワン", "トゥエンティツー", "トゥエンティスリー", "トゥエンティフォー",
-    "トゥエンティファイブ", "トゥエンティシックス", "トゥエンティセブン", "トゥエンティエイト", "トゥエンティナイン",
-    "サーティ"
-]
-
-private func katakana(_ n: Int) -> String {
-    guard n >= 0 && n < katakanaNumbers.count else { return "\(n)" }
-    return katakanaNumbers[n]
-}
-
-private func loveScore(_ n: Int) -> String {
-    n == 0 ? "love" : "\(n)"
-}
 
 // MARK: - Onboarding
 
@@ -75,56 +53,16 @@ struct OnboardingView: View {
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
-    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.matchMyName) private var matchMyName = ""
-    @AppStorage(AppStorageKeys.matchOpponentName) private var matchOpponentName = ""
-    @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
-    @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
-
-    @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
-    @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.enableCrownScoring) private var enableCrownScoring = true
-    @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
-    @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
-    @StateObject private var soundPlayer = SoundPlayer()
-    @StateObject private var workoutManager = WorkoutManager()
 
-    @State private var match = BadmintonMatch()
-    @State private var undoStack: [BadmintonMatch] = []
-    @State private var savedCurrentMatch = false
-    @State private var matchStartDate = Date()
+    @StateObject private var viewModel = GameViewModel()
     @State private var crownValue: Double = 0
-    @State private var showDiscardAlert = false
     @State private var lastCrownScore: Double = 0
-    @StateObject private var announcer = ScoreAnnouncer()
     private let crownThreshold: Double = 1.0
-
-    // Time mode
-    @State private var timeRemaining: TimeInterval = 0
-    @State private var timeModeWinner: Side? = nil
-    @State private var suddenDeath = false
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
-    private var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
-    // Defensive fallback for the (practically unreachable) case where GameView
-    // appears with no opponent selected. Using the same guest sentinel as the
-    // picker means Player.isGuestName still catches it below.
-    private var effectiveOpponentName: String { matchOpponentName.isEmpty ? Player.guestFarLabel : matchOpponentName }
-
-    private func name(for side: Side) -> String {
-        side == .me ? effectiveMyName : effectiveOpponentName
-    }
-
-    private func saveToRoster(_ name: String) {
-        guard Player.shouldBeStoredAsSavedPlayer(name, currentUserName: myName) else { return }
-        var roster = appStore.roster
-        if !roster.contains(where: { $0.name == name }) {
-            let colorIndex = roster.count % Player.avatarColors.count
-            roster.insert(Player(name: name, colorIndex: colorIndex), at: 0)
-            appStore.saveRoster(roster)
-        }
-    }
+    // MARK: - Avatar helpers (presentation — reads published appStore.roster)
 
     private func avatarColor(for name: String) -> Color {
         appStore.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
@@ -134,267 +72,65 @@ struct GameView: View {
         appStore.roster.first(where: { $0.name == name })?.iconName
     }
 
-    private func tap(_ side: Side) {
-        guard match.gameWinner == nil, match.matchWinner == nil, !timeExpiredWinner else { return }
-        undoStack.append(match)
-
-        if timeModeEnabled && suddenDeath {
-            // Sudden death: this point ends the current game immediately
-            match.score(side)
-            if match.gameWinner == nil {
-                // Point didn't naturally end the game — force it
-                match.recordSuddenDeathGame(winner: side)
-            }
-            suddenDeath = false
-            resolveAfterGame()
-            return
-        }
-
-        let wasGamePoint = match.isGamePoint
-        match.score(side)
-
-        let announcementDelay: Double
-        if match.matchWinner != nil {
-            WKInterfaceDevice.current().play(.success)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                WKInterfaceDevice.current().play(.success)
-            }
-            if enableSounds { soundPlayer.playMatchWin() }
-            announcementDelay = enableSounds ? 0.7 : 0
-            saveMatch()
-        } else if match.gameWinner != nil {
-            WKInterfaceDevice.current().play(.success)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                WKInterfaceDevice.current().play(.retry)
-            }
-            if enableSounds { soundPlayer.playGameWin() }
-            announcementDelay = enableSounds ? 0.5 : 0
-        } else if !wasGamePoint && match.isGamePoint {
-            WKInterfaceDevice.current().play(.notification)
-            if enableSounds { soundPlayer.playGamePoint() }
-            announcementDelay = enableSounds ? 0.25 : 0
-        } else {
-            WKInterfaceDevice.current().play(.click)
-            if enableSounds { soundPlayer.playScore() }
-            announcementDelay = enableSounds ? 0.25 : 0
-        }
-        if announcementDelay > 0 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + announcementDelay) { announceCurrentScore() }
-        } else {
-            announceCurrentScore()
-        }
-    }
-
-    /// Called after a sudden-death game resolves — checks match state and plays appropriate sounds.
-    private func resolveAfterGame() {
-        if let winner = match.matchWinner {
-            timeModeWinner = winner
-            WKInterfaceDevice.current().play(.success)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { WKInterfaceDevice.current().play(.success) }
-            if enableSounds { soundPlayer.playMatchWin() }
-            saveMatch()
-        } else if match.isTied {
-            // Edge case: equal games, no further games possible
-            timeModeWinner = .me  // placeholder — overlay will show "Tie"
-            saveMatch()
-        } else {
-            WKInterfaceDevice.current().play(.success)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { WKInterfaceDevice.current().play(.retry) }
-            if enableSounds { soundPlayer.playGameWin() }
-        }
-    }
-
-    // True once time has expired and a winner was determined (blocks further scoring)
-    private var timeExpiredWinner: Bool { timeModeWinner != nil }
-
-    private func handleTimeUp() {
-        guard timeModeWinner == nil else { return }
-        speak(NSLocalizedString("speech.time_up", comment: ""))
-        if match.myGamesWon != match.opponentGamesWon {
-            let w: Side = match.myGamesWon > match.opponentGamesWon ? .me : .opponent
-            timeModeWinner = w
-            WKInterfaceDevice.current().play(.success)
-            if enableSounds { soundPlayer.playMatchWin() }
-            saveMatch()
-        } else if match.myScore != match.opponentScore {
-            let w: Side = match.myScore > match.opponentScore ? .me : .opponent
-            timeModeWinner = w
-            WKInterfaceDevice.current().play(.success)
-            if enableSounds { soundPlayer.playMatchWin() }
-            saveMatch()
-        } else {
-            suddenDeath = true
-            WKInterfaceDevice.current().play(.notification)
-        }
-    }
-
-    private func undo() {
-        guard let previous = undoStack.popLast() else { return }
-        match = previous
-        // Distinct upward pulse so undo feels different from scoring
-        WKInterfaceDevice.current().play(.directionUp)
-    }
-
-    private func speak(_ text: String) {
-        guard announceScore else { return }
-        announcer.speak(text)
-    }
-
-    private func announceCurrentScore() {
-        let serverScore = match.serverIsMe ? match.myScore : match.opponentScore
-        let receiverScore = match.serverIsMe ? match.opponentScore : match.myScore
-        let tied = serverScore == receiverScore
-        let langCode = Locale.current.language.languageCode?.identifier ?? "en"
-        let isJapanese = langCode == "ja"
-        let isZhHans = langCode == "zh"
-
-        func fmt(_ key: String, _ a: Int, _ b: Int) -> String {
-            if isJapanese {
-                return String(format: NSLocalizedString(key, comment: ""), katakana(a), katakana(b))
-            }
-            if isZhHans {
-                return String(format: NSLocalizedString(key, comment: ""), a, b)
-            }
-            return String(format: NSLocalizedString(key, comment: ""), loveScore(a), loveScore(b))
-        }
-
-        func fmtTied(_ key: String, _ n: Int) -> String {
-            if isJapanese {
-                return String(format: NSLocalizedString(key, comment: ""), katakana(n))
-            }
-            if isZhHans {
-                return String(format: NSLocalizedString(key, comment: ""), n)
-            }
-            // "love all" for 0-0, otherwise "8 all"
-            let word = n == 0 ? "love" : "\(n)"
-            return String(format: NSLocalizedString(key, comment: ""), word)
-        }
-
-        if let winner = match.matchWinner {
-            speak(String(format: NSLocalizedString("speech.wins_match", comment: ""), name(for: winner)))
-        } else if let winner = match.gameWinner {
-            speak(String(format: NSLocalizedString("speech.wins_game", comment: ""), name(for: winner)))
-        } else if match.isMatchPoint {
-            speak(tied ? fmtTied("speech.tied", serverScore) : fmt("speech.match_point", serverScore, receiverScore))
-        } else if match.isGamePoint {
-            speak(tied ? fmtTied("speech.tied", serverScore) : fmt("speech.game_point", serverScore, receiverScore))
-        } else if tied {
-            speak(fmtTied("speech.tied", serverScore))
-        } else {
-            speak(fmt("speech.score", serverScore, receiverScore))
-        }
-    }
+    // MARK: - Crown input
 
     private func onCrownChanged(_ newValue: Double) {
-        guard enableCrownScoring, match.gameWinner == nil, match.matchWinner == nil else { return }
+        guard enableCrownScoring,
+              viewModel.match.gameWinner == nil,
+              viewModel.match.matchWinner == nil else { return }
         let delta = newValue - lastCrownScore
         if delta >= crownThreshold {
             lastCrownScore = newValue
-            tap(.me)
+            viewModel.tap(.me)
         } else if delta <= -crownThreshold {
             lastCrownScore = newValue
-            tap(.opponent)
+            viewModel.tap(.opponent)
         }
     }
 
-    private func startNextGame() {
-        undoStack.removeAll()
-        suddenDeath = false
-        match.startNextGame()
-        WKInterfaceDevice.current().play(.start)
-    }
-
-    private func newMatch() {
-        match = BadmintonMatch(
-            pointsToWin: pointsToWin,
-            pointCap: pointsToWin + 9,
-            gamesToWin: (gamesInMatch / 2) + 1
-        )
-        undoStack.removeAll()
-        savedCurrentMatch = false
-        timeModeWinner = nil
-        suddenDeath = false
-        timeRemaining = TimeInterval(timeLimitMinutes * 60)
-        matchStartDate = Date()
-    }
-
-    private func saveMatch() {
-        // In time mode the timer may expire mid-game; use timeModeWinner as fallback
-        let winner = match.matchWinner ?? timeModeWinner
-        guard !savedCurrentMatch, let winner else { return }
-        savedCurrentMatch = true
-        saveToRoster(effectiveOpponentName)
-        saveToRoster(effectiveMyName)
-        let currentRoster = appStore.roster
-        var games = match.completedGames
-        // Append in-progress game when time expired mid-game
-        if timeModeEnabled && match.matchWinner == nil && (match.myScore > 0 || match.opponentScore > 0) {
-            games.append(GameScore(my: match.myScore, opponent: match.opponentScore))
-        }
-        var newHistory = appStore.history
-        newHistory.append(MatchRecord(
-            games: games,
-            myGamesWon: match.myGamesWon,
-            opponentGamesWon: match.opponentGamesWon,
-            winner: name(for: winner),
-            myName: effectiveMyName,
-            opponentName: effectiveOpponentName,
-            date: Date(),
-            duration: Date().timeIntervalSince(matchStartDate),
-            myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
-            opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
-        ))
-        appStore.saveHistory(newHistory)
-        Task { await workoutManager.endWorkout() }
-    }
+    // MARK: - Display helpers
 
     private var timerLabel: String {
-        let m = Int(timeRemaining) / 60
-        let s = Int(timeRemaining) % 60
+        let m = Int(viewModel.timeRemaining) / 60
+        let s = Int(viewModel.timeRemaining) % 60
         return String(format: "%d:%02d", m, s)
     }
-
-    // Explicitly-typed String helpers. Building these (String(format:) around
-    // string interpolation) *inside* the SwiftUI result builders below blows
-    // the Swift type-checker's time budget, so precompute them here.
 
     private var timerAccessibilityLabel: String {
         String(format: NSLocalizedString("a11y.timer_remaining", comment: ""), timerLabel)
     }
 
     private var gamePointBannerText: String {
-        match.isMatchPoint
+        viewModel.match.isMatchPoint
             ? NSLocalizedString("game.match_point", comment: "")
             : NSLocalizedString("game.game_point", comment: "")
     }
 
     private var gamesScoreText: String {
-        let raw = "\(match.myGamesWon) - \(match.opponentGamesWon)"
+        let raw = "\(viewModel.match.myGamesWon) - \(viewModel.match.opponentGamesWon)"
         return String(format: NSLocalizedString("game.games_score", comment: ""), raw)
     }
 
     private func winsMatchText(_ side: Side) -> String {
-        String(format: NSLocalizedString("game.wins_match", comment: ""), name(for: side))
+        String(format: NSLocalizedString("game.wins_match", comment: ""), viewModel.name(for: side))
     }
 
     private func winsGameText(_ side: Side) -> String {
-        String(format: NSLocalizedString("game.wins_game", comment: ""), name(for: side))
+        String(format: NSLocalizedString("game.wins_game", comment: ""), viewModel.name(for: side))
     }
 
-    // The scene is split into the computed subviews below. Type-checking the
-    // whole ZStack as one expression exceeds the Swift compiler's time budget
-    // ("unable to type-check this expression in reasonable time").
+    // MARK: - Sub-views
 
     @ViewBuilder
     private var timerBadge: some View {
-        if timeModeEnabled {
+        if viewModel.isTimeModeEnabled {
             HStack {
                 Image(systemName: "timer")
                     .font(.caption2)
                     .accessibilityHidden(true)
                 Text(timerLabel)
                     .font(.system(size: 13, weight: .bold, design: .monospaced))
-                    .foregroundColor(timeRemaining <= 30 && timeRemaining > 0 ? .red : .white)
+                    .foregroundColor(viewModel.timeRemaining <= 30 && viewModel.timeRemaining > 0 ? .red : .white)
                     .accessibilityLabel(Text(timerAccessibilityLabel))
             }
             .padding(.horizontal, 8)
@@ -404,40 +140,47 @@ struct GameView: View {
         }
     }
 
-    private var serveKnown: Bool { match.myScore > 0 || match.opponentScore > 0 }
+    private var serveKnown: Bool {
+        viewModel.match.myScore > 0 || viewModel.match.opponentScore > 0
+    }
 
     private var gamesHeader: some View {
         GamesWonHeader(
-            myName: effectiveMyName, opponentName: effectiveOpponentName,
-            myGames: match.myGamesWon, opponentGames: match.opponentGamesWon,
-            canUndo: !undoStack.isEmpty && match.gameWinner == nil && match.matchWinner == nil && timeModeWinner == nil,
-            onUndo: undo
+            myName: viewModel.effectiveMyName,
+            opponentName: viewModel.effectiveOpponentName,
+            myGames: viewModel.match.myGamesWon,
+            opponentGames: viewModel.match.opponentGamesWon,
+            canUndo: !viewModel.undoStack.isEmpty &&
+                viewModel.match.gameWinner == nil &&
+                viewModel.match.matchWinner == nil &&
+                viewModel.timeModeWinner == nil,
+            onUndo: viewModel.undo
         )
     }
 
     private var opponentTile: some View {
         ScoreView(
-            name: effectiveOpponentName,
-            score: match.opponentScore,
-            isServing: serveKnown && match.servingSide == .opponent,
-            serveRight: match.serveFromRightCourt,
-            isWinner: match.gameWinner == .opponent,
-            avatarColor: avatarColor(for: effectiveOpponentName),
-            avatarIcon: avatarIcon(for: effectiveOpponentName),
-            onTap: { tap(.opponent) }
+            name: viewModel.effectiveOpponentName,
+            score: viewModel.match.opponentScore,
+            isServing: serveKnown && viewModel.match.servingSide == .opponent,
+            serveRight: viewModel.match.serveFromRightCourt,
+            isWinner: viewModel.match.gameWinner == .opponent,
+            avatarColor: avatarColor(for: viewModel.effectiveOpponentName),
+            avatarIcon: avatarIcon(for: viewModel.effectiveOpponentName),
+            onTap: { viewModel.tap(.opponent) }
         )
     }
 
     private var myTile: some View {
         ScoreView(
-            name: effectiveMyName,
-            score: match.myScore,
-            isServing: serveKnown && match.servingSide == .me,
-            serveRight: match.serveFromRightCourt,
-            isWinner: match.gameWinner == .me,
-            avatarColor: avatarColor(for: effectiveMyName),
-            avatarIcon: avatarIcon(for: effectiveMyName),
-            onTap: { tap(.me) }
+            name: viewModel.effectiveMyName,
+            score: viewModel.match.myScore,
+            isServing: serveKnown && viewModel.match.servingSide == .me,
+            serveRight: viewModel.match.serveFromRightCourt,
+            isWinner: viewModel.match.gameWinner == .me,
+            avatarColor: avatarColor(for: viewModel.effectiveMyName),
+            avatarIcon: avatarIcon(for: viewModel.effectiveMyName),
+            onTap: { viewModel.tap(.me) }
         )
     }
 
@@ -453,12 +196,12 @@ struct GameView: View {
 
     @ViewBuilder
     private var pointBanners: some View {
-        if match.matchWinner == nil && timeModeWinner == nil && match.isGamePoint {
+        if viewModel.match.matchWinner == nil && viewModel.timeModeWinner == nil && viewModel.match.isGamePoint {
             bannerOverlay(gamePointBannerText)
                 .allowsHitTesting(false)
         }
 
-        if suddenDeath && timeModeWinner == nil {
+        if viewModel.suddenDeath && viewModel.timeModeWinner == nil {
             bannerOverlay(NSLocalizedString("game.sudden_death", comment: ""))
                 .allowsHitTesting(false)
         }
@@ -466,30 +209,30 @@ struct GameView: View {
 
     @ViewBuilder
     private var resultOverlay: some View {
-        if match.isTied {
+        if viewModel.match.isTied {
             MatchOverOverlay(
                 title: NSLocalizedString("game.tie", comment: ""),
                 games: gamesScoreText,
                 actionTitle: NSLocalizedString("game.rematch", comment: ""),
-                action: newMatch,
+                action: viewModel.newMatch,
                 isMatchOver: true,
-                completedGames: match.completedGames
+                completedGames: viewModel.match.completedGames
             )
-        } else if let winner = match.matchWinner ?? timeModeWinner {
+        } else if let winner = viewModel.match.matchWinner ?? viewModel.timeModeWinner {
             MatchOverOverlay(
                 title: winsMatchText(winner),
                 games: gamesScoreText,
                 actionTitle: NSLocalizedString("game.rematch", comment: ""),
-                action: newMatch,
+                action: viewModel.newMatch,
                 isMatchOver: true,
-                completedGames: match.completedGames
+                completedGames: viewModel.match.completedGames
             )
-        } else if let gameWinner = match.gameWinner {
+        } else if let gameWinner = viewModel.match.gameWinner {
             MatchOverOverlay(
                 title: winsGameText(gameWinner),
                 games: gamesScoreText,
                 actionTitle: NSLocalizedString("game.next_game", comment: ""),
-                action: startNextGame
+                action: viewModel.startNextGame
             )
         }
     }
@@ -506,19 +249,21 @@ struct GameView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("game.menu") {
-                    let matchInProgress = match.matchWinner == nil && timeModeWinner == nil &&
-                        (match.myScore > 0 || match.opponentScore > 0 || !match.completedGames.isEmpty)
+                    let matchInProgress = viewModel.match.matchWinner == nil &&
+                        viewModel.timeModeWinner == nil &&
+                        (viewModel.match.myScore > 0 || viewModel.match.opponentScore > 0 ||
+                         !viewModel.match.completedGames.isEmpty)
                     if matchInProgress {
-                        showDiscardAlert = true
+                        viewModel.showDiscardAlert = true
                     } else {
                         currentView = .menu
                     }
                 }
             }
         }
-        .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $showDiscardAlert) {
+        .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $viewModel.showDiscardAlert) {
             Button(NSLocalizedString("game.discard_confirm", comment: ""), role: .destructive) {
-                Task { await workoutManager.endWorkout() }
+                Task { await viewModel.discard() }
                 currentView = .menu
             }
             Button(NSLocalizedString("game.discard_cancel", comment: ""), role: .cancel) {}
@@ -528,25 +273,9 @@ struct GameView: View {
         .focusable()
         .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)
         .onChange(of: crownValue, perform: onCrownChanged)
-        .onReceive(ticker) { _ in
-            guard timeModeEnabled, timeModeWinner == nil, !suddenDeath,
-                  match.matchWinner == nil else { return }
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-            } else {
-                handleTimeUp()
-            }
-        }
+        .onReceive(ticker) { _ in viewModel.tickTimer() }
         .onAppear {
-            if match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 {
-                match = BadmintonMatch(
-                    pointsToWin: pointsToWin,
-                    pointCap: pointsToWin + 9,
-                    gamesToWin: (gamesInMatch / 2) + 1
-                )
-                if timeModeEnabled { timeRemaining = TimeInterval(timeLimitMinutes * 60) }
-                Task { await workoutManager.startWorkout(startDate: matchStartDate) }
-            }
+            viewModel.onAppear()
             crownValue = 0
             lastCrownScore = 0
         }
@@ -568,6 +297,8 @@ struct GameView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: text)
     }
 }
+
+// MARK: - Sub-structs (unchanged)
 
 struct GamesWonHeader: View {
     let myName: String
@@ -616,9 +347,6 @@ struct ScoreView: View {
     @State private var scorePulse = false
     @State private var winnerGlow = false
 
-    /// A single spoken description of the tile: player, score, and — while
-    /// serving — which service court, so VoiceOver users get the same context
-    /// the sighted layout conveys.
     private var accessibilityDescription: String {
         let base = String(format: NSLocalizedString("a11y.score_tile", comment: ""), name, score)
         guard isServing else { return base }
@@ -626,9 +354,6 @@ struct ScoreView: View {
         return String(format: NSLocalizedString("a11y.score_tile_serving_suffix", comment: ""), base, court)
     }
 
-    // Explicitly-typed style helpers keep these ternaries out of the modifier
-    // chain in `body`, which otherwise overruns the Swift type-checker's budget
-    // ("unable to type-check this expression in reasonable time").
     private var backgroundFill: Color {
         isWinner ? Color.yellow.opacity(winnerGlow ? 0.35 : 0.15) : Color.black.opacity(0.25)
     }
