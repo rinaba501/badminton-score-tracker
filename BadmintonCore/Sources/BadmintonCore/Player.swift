@@ -24,6 +24,12 @@ public struct Player: Identifiable, Codable, Equatable {
     }
 
     public var initials: String {
+        Self.initials(for: name)
+    }
+
+    /// Up-to-two-word initials ("Jane Doe" → "JD"). The single home of the
+    /// initials rule — avatar rendering in the app delegates here.
+    public static func initials(for name: String) -> String {
         let words = name.split(separator: " ").prefix(2)
         return words.compactMap { $0.first(where: { $0.isLetter }).map(String.init) }.joined().uppercased()
     }

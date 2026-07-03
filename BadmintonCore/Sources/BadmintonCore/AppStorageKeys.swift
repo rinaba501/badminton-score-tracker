@@ -6,7 +6,9 @@
 //  persists. Only the key *strings* live here — typed defaults stay at each
 //  @AppStorage declaration site, because several reference app-only types
 //  (CourtTheme, SettingsView.GameMode). New persisted keys must be added
-//  here, never as inline string literals.
+//  here, never as inline string literals — and if the new key should sync
+//  across devices, it must ALSO be added to the SyncKeys list in the app's
+//  CloudSyncManager.swift; membership there is what opts a key into iCloud.
 //
 
 import Foundation

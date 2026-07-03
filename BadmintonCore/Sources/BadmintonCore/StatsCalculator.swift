@@ -65,6 +65,22 @@ public enum StatsCalculator {
 
     // MARK: - Head-to-head
 
+    /// True when `record` is a matchup between `a` and `b`, matching either
+    /// by the stored display names or by the two roster players' ids. The
+    /// single home of the matchup contract shared by both head-to-head
+    /// functions below.
+    private static func isMatchup(_ record: MatchRecord, _ a: String, _ b: String,
+                                  aPlayer: Player?, bPlayer: Player?) -> Bool {
+        let namesMatch = (record.myName == a && record.opponentName == b) ||
+                         (record.myName == b && record.opponentName == a)
+        let idsMatch: Bool = {
+            guard let aId = aPlayer?.id, let bId = bPlayer?.id else { return false }
+            return (record.myPlayerId == aId && record.opponentPlayerId == bId) ||
+                   (record.myPlayerId == bId && record.opponentPlayerId == aId)
+        }()
+        return namesMatch || idsMatch
+    }
+
     /// StatsView semantics: filters `player`'s records to those against
     /// `opponent` (matching by names or by roster player ids), counts wins
     /// as `winner == player`. Returns (0, 0) when nothing matches.
@@ -72,15 +88,8 @@ public enum StatsCalculator {
                                   history: [MatchRecord], roster: [Player]) -> (wins: Int, losses: Int) {
         let mePlayer = roster.first(where: { $0.name == player })
         let oppPlayer = roster.first(where: { $0.name == opponent })
-        let relevant = playerHistory(history, player: player).filter { record in
-            let namesMatch = (record.myName == player && record.opponentName == opponent) ||
-                             (record.myName == opponent && record.opponentName == player)
-            let idsMatch: Bool = {
-                guard let meId = mePlayer?.id, let oppId = oppPlayer?.id else { return false }
-                return (record.myPlayerId == meId && record.opponentPlayerId == oppId) ||
-                       (record.myPlayerId == oppId && record.opponentPlayerId == meId)
-            }()
-            return namesMatch || idsMatch
+        let relevant = playerHistory(history, player: player).filter {
+            isMatchup($0, player, opponent, aPlayer: mePlayer, bPlayer: oppPlayer)
         }
         let wins = relevant.filter { $0.winner == player }.count
         return (wins: wins, losses: relevant.count - wins)
@@ -94,15 +103,8 @@ public enum StatsCalculator {
                                        history: [MatchRecord], roster: [Player]) -> (wins: Int, losses: Int)? {
         let mePlayer = roster.first(where: { $0.name == me })
         let oppPlayer = roster.first(where: { $0.name == opponent })
-        let relevant = history.filter { record in
-            let namesMatch = (record.myName == me && record.opponentName == opponent) ||
-                             (record.myName == opponent && record.opponentName == me)
-            let idsMatch: Bool = {
-                guard let meId = mePlayer?.id, let oppId = oppPlayer?.id else { return false }
-                return (record.myPlayerId == meId && record.opponentPlayerId == oppId) ||
-                       (record.myPlayerId == oppId && record.opponentPlayerId == meId)
-            }()
-            return namesMatch || idsMatch
+        let relevant = history.filter {
+            isMatchup($0, me, opponent, aPlayer: mePlayer, bPlayer: oppPlayer)
         }
         guard !relevant.isEmpty else { return nil }
         let wins = relevant.filter { record in

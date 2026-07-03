@@ -42,8 +42,7 @@ struct AvatarView: View {
     var iconName: String? = nil
 
     private var initials: String {
-        let words = name.split(separator: " ").prefix(2)
-        let result = words.compactMap { $0.first(where: { $0.isLetter }).map(String.init) }.joined().uppercased()
+        let result = Player.initials(for: name)
         return result.isEmpty ? "?" : result
     }
 

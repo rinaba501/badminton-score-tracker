@@ -57,13 +57,13 @@ jobs:
       - name: Build for watchOS Simulator
         run: |
           set -o pipefail
-          # Compile-only gate: the generic destination builds against the
-          # watchOS Simulator SDK without needing a concrete simulator device.
-          # (Runner images don't reliably ship watchOS simulators — the newest
-          # Xcode on the image can have zero concrete watch destinations, which
-          # is what the old UDID-discovery approach tripped over. Only
-          # `xcodebuild test` needs a real device.)
-          xcodebuild build \
+          # Compile-only gate: build-for-testing compiles the app AND both
+          # test bundles (so the test targets can't silently rot) without
+          # executing anything. The generic destination targets the watchOS
+          # Simulator SDK without needing a concrete simulator device —
+          # runner images don't reliably ship watchOS simulators, and only
+          # `xcodebuild test` needs a real one.
+          xcodebuild build-for-testing \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "generic/platform=watchOS Simulator" \
