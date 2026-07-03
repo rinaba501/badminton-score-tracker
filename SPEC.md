@@ -179,7 +179,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 87 | iCloud KV sync quota guard (merge-by-id already landed; quota warning remains) |
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 96 | Extract GameView business logic into a testable view model — Roadmap Phase 2 |
-| 106 | Extract shared `BadmintonCore` Swift package — Roadmap Phase 1 |
 | 107 | Schema versioning, tolerant decoding, migration hook — Roadmap Phase 3 |
 | 108 | Locale-independent player identity (ID-first matching) — Roadmap Phase 3 |
 | 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
@@ -204,3 +203,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 49 | Reselect who serves between games | #53 |
 | 57 | iCloud sync / data backup | #75 |
 | 88 | Decouple player display name from stored identity | #91 |
+| 106 | Extract shared `BadmintonCore` Swift package (Roadmap Phase 1) | #112 |
