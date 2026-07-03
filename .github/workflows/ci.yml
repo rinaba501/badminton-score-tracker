@@ -59,13 +59,17 @@ jobs:
           set -o pipefail
           # Pick a concrete, available watchOS simulator (a real UDID, which
           # skips the "Any watchOS Simulator Device" placeholder automatically).
-          dest_id=$(xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showdestinations 2>/dev/null \
+          # Capture -showdestinations output including stderr: if it fails, the
+          # job must print the actual xcodebuild error instead of dying silently
+          # on the assignment under `set -e` + pipefail.
+          dest_output=$(xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showdestinations 2>&1 || true)
+          dest_id=$(printf '%s\n' "$dest_output" \
             | grep 'platform:watchOS Simulator' \
             | grep -oiE 'id:[0-9A-F-]{36}' \
-            | head -1 | cut -d: -f2)
+            | head -1 | cut -d: -f2 || true)
           if [ -z "$dest_id" ]; then
-            echo "::error::No available watchOS Simulator destination found on this runner."
-            xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showdestinations || true
+            echo "::error::No watchOS Simulator destination found; -showdestinations output follows."
+            printf '%s\n' "$dest_output"
             exit 1
           fi
           echo "Using destination id: $dest_id"
