@@ -20,7 +20,7 @@ A watchOS app for tracking badminton match scores in real time, right from your 
 - Localized into English, Japanese, Simplified Chinese, Korean, Indonesian, and Hindi
 - VoiceOver-accessible scoring controls
 
-See [`SPEC.md`](SPEC.md) for the full feature spec, and the [Open Issues](SPEC.md#open-issues) table for what's planned next.
+See [`SPEC.md`](SPEC.md) for the full feature spec, and the [Open Issues](SPEC.md#open-issues) table for what's planned next. [`ROADMAP.md`](ROADMAP.md) lays out the long-term architecture plan — shared core package, CloudKit sync, sharing between players, and an iOS companion app.
 
 ## Requirements
 
