@@ -169,13 +169,21 @@ The default local-player name ("Me") and the two guest labels offered during pla
 
 ## Open Issues
 
+Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
+
 | # | Feature |
 |---|---------|
 | 8 | Doubles support (2v2) |
-| 10 | Match history (enhanced) |
-| 11 | Player stats (win rate, streaks, avg points) |
 | 13 | Share match result — deferred until iPhone companion app exists |
-| 41 | iPhone companion app |
+| 41 | iPhone companion app — Roadmap Phase 6 |
+| 87 | iCloud KV sync quota guard (merge-by-id already landed; quota warning remains) |
+| 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
+| 96 | Extract GameView business logic into a testable view model — Roadmap Phase 2 |
+| 106 | Extract shared `BadmintonCore` Swift package — Roadmap Phase 1 |
+| 107 | Schema versioning, tolerant decoding, migration hook — Roadmap Phase 3 |
+| 108 | Locale-independent player identity (ID-first matching) — Roadmap Phase 3 |
+| 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
+| 110 | CI guardrails: localization key-sync, coverage, Complication build — Roadmap guardrails track |
 
 ---
 
@@ -186,6 +194,8 @@ The default local-player name ("Me") and the two guest labels offered during pla
 | 5 | Match Timer mode | #42 |
 | 6 | App icon | #38 |
 | 7 | Character selection per opponent | closed (roster system covers this) |
+| 10 | Match history: save and browse past matches | closed (implemented — History screen) |
+| 11 | Player stats: win rate, average points, longest streak | closed (implemented — Stats screen) |
 | 14 | Sound effects | #37 |
 | 15 | Dark/light mode toggle | closed (Apple Watch is always dark) |
 | 16 | Undo last point | #2 |

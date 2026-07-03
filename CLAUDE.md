@@ -138,6 +138,7 @@ Both `CLAUDE.md` and `SPEC.md` should always reflect the current state of the co
 
 ### Other repo docs
 - `README.md` — human-facing overview: what the app is, screenshots, build instructions. Rarely changes.
+- `ROADMAP.md` — long-term architecture roadmap: phased plan for the shared `BadmintonCore` package, schema versioning/identity groundwork, CloudKit sync, cross-person sharing, and the iOS companion app, with a phase→issue map. Consult it before starting architectural work; update its Issue map when a phase's issue closes.
 - `.github/PULL_REQUEST_TEMPLATE.md` / `.github/ISSUE_TEMPLATE/report.md` — the PR/issue shape used throughout this project's history (Summary/Changes/Verification; Problem/Proposed approach/Acceptance criteria). Follow them when opening PRs/issues even if a tool doesn't auto-populate them.
 - `docs/` — `privacy-policy.md` and `app-store-metadata.md` (App Store submission content) and `index.md` (the GitHub Pages host for the privacy policy link). Not living specs; update only when their specific subject changes.
 
