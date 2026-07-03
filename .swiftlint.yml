@@ -10,6 +10,7 @@ included:
   - "badminton score tracker Complication"
   - "badminton score tracker Watch AppTests"
   - "badminton score tracker Watch AppUITests"
+  - BadmintonCore
 
 disabled_rules:
   - type_body_length        # SwiftUI view structs are large by nature

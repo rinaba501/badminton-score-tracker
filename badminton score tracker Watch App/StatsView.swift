@@ -7,31 +7,23 @@
 //
 
 import SwiftUI
+import BadmintonCore
 
 struct StatsView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
-    @AppStorage("myName") private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @State private var selectedPlayer: String = ""
 
     private var history: [MatchRecord] { appStore.history }
     private var roster: [Player] { appStore.roster }
 
+    // The stats engine lives in BadmintonCore.StatsCalculator; these
+    // properties just bind it to this screen's selection state.
+
     private var allPlayers: [String] {
-        var seen = Set<String>()
-        var result: [String] = []
-        for record in history {
-            for name in [record.myName, record.opponentName] {
-                if seen.insert(name).inserted { result.append(name) }
-            }
-        }
-        // Always show the main player first
-        if let idx = result.firstIndex(of: myName), idx != 0 {
-            result.remove(at: idx)
-            result.insert(myName, at: 0)
-        }
-        return result
+        StatsCalculator.allPlayers(history: history, hoisting: myName)
     }
 
     private var activePlayer: String {
@@ -39,77 +31,31 @@ struct StatsView: View {
     }
 
     private var playerHistory: [MatchRecord] {
-        history.filter { $0.myName == activePlayer || $0.opponentName == activePlayer }
+        StatsCalculator.playerHistory(history, player: activePlayer)
     }
 
     private var opponents: [String] {
-        var seen = Set<String>()
-        var result: [String] = []
-        for record in playerHistory {
-            let opp = record.myName == activePlayer ? record.opponentName : record.myName
-            if seen.insert(opp).inserted { result.append(opp) }
-        }
-        return result
-    }
-
-    private func h2h(opponent: String) -> (wins: Int, losses: Int) {
-        let mePlayer = roster.first(where: { $0.name == activePlayer })
-        let oppPlayer = roster.first(where: { $0.name == opponent })
-        let relevant = playerHistory.filter { record in
-            let namesMatch = (record.myName == activePlayer && record.opponentName == opponent) ||
-                             (record.myName == opponent && record.opponentName == activePlayer)
-            let idsMatch: Bool = {
-                guard let meId = mePlayer?.id, let oppId = oppPlayer?.id else { return false }
-                return (record.myPlayerId == meId && record.opponentPlayerId == oppId) ||
-                       (record.myPlayerId == oppId && record.opponentPlayerId == meId)
-            }()
-            return namesMatch || idsMatch
-        }
-        let wins = relevant.filter { $0.winner == activePlayer }.count
-        return (wins: wins, losses: relevant.count - wins)
+        StatsCalculator.opponents(of: activePlayer, playerHistory: playerHistory)
     }
 
     private var totalMatches: Int { playerHistory.count }
-    private var wins: Int { playerHistory.filter { $0.winner == activePlayer }.count }
+    private var wins: Int { StatsCalculator.wins(player: activePlayer, playerHistory: playerHistory) }
     private var losses: Int { totalMatches - wins }
 
     private var winRate: Double {
-        totalMatches == 0 ? 0 : Double(wins) / Double(totalMatches) * 100
+        StatsCalculator.winRate(player: activePlayer, playerHistory: playerHistory)
     }
 
     private var avgPointsScored: Double {
-        guard !playerHistory.isEmpty else { return 0 }
-        let total = playerHistory.flatMap { record -> [Int] in
-            record.myName == activePlayer ? record.games.map { $0.my } : record.games.map { $0.opponent }
-        }.reduce(0, +)
-        let games = playerHistory.flatMap { $0.games }.count
-        return games == 0 ? 0 : Double(total) / Double(games)
+        StatsCalculator.avgPointsScored(player: activePlayer, playerHistory: playerHistory)
     }
 
     private var avgMatchDuration: TimeInterval {
-        let timed = playerHistory.filter { $0.duration > 0 }
-        guard !timed.isEmpty else { return 0 }
-        return timed.map { $0.duration }.reduce(0, +) / Double(timed.count)
-    }
-
-    private func durationString(_ seconds: TimeInterval) -> String {
-        let m = Int(seconds) / 60
-        let s = Int(seconds) % 60
-        return m > 0 ? "\(m)m \(s)s" : "\(s)s"
+        StatsCalculator.avgMatchDuration(playerHistory: playerHistory)
     }
 
     private var longestStreak: Int {
-        var best = 0
-        var current = 0
-        for record in playerHistory {
-            if record.winner == activePlayer {
-                current += 1
-                best = max(best, current)
-            } else {
-                current = 0
-            }
-        }
-        return best
+        StatsCalculator.longestStreak(player: activePlayer, playerHistory: playerHistory)
     }
 
     var body: some View {
@@ -145,14 +91,14 @@ struct StatsView: View {
                     StatRow(label: NSLocalizedString("stats.avg_points", comment: ""), value: String(format: "%.1f", avgPointsScored))
                     StatRow(label: NSLocalizedString("stats.best_streak", comment: ""), value: "\(longestStreak)")
                     if avgMatchDuration > 0 {
-                        StatRow(label: NSLocalizedString("stats.avg_duration", comment: ""), value: durationString(avgMatchDuration))
+                        StatRow(label: NSLocalizedString("stats.avg_duration", comment: ""), value: StatsCalculator.durationString(avgMatchDuration))
                     }
                 }
 
                 if !opponents.isEmpty {
                     Section(header: Text("stats.head_to_head")) {
                         ForEach(opponents, id: \.self) { opp in
-                            let record = h2h(opponent: opp)
+                            let record = StatsCalculator.headToHead(player: activePlayer, opponent: opp, history: history, roster: roster)
                             StatRow(label: opp, value: "\(record.wins)W – \(record.losses)L")
                         }
                     }

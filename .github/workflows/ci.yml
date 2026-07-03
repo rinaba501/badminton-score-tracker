@@ -22,14 +22,28 @@ jobs:
       - name: Run SwiftLint
         run: swiftlint lint --reporter github-actions-logging
 
-  test:
-    name: Unit Tests
+  core-tests:
+    name: BadmintonCore Tests
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest installed Xcode
+        run: |
+          latest=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "Using $latest"
+          sudo xcode-select -s "$latest"
+          swift --version
+
+      - name: Run package tests
+        run: swift test --package-path BadmintonCore
+
+  build:
+    name: Watch App Build
     runs-on: macos-latest
     env:
       PROJECT: "badminton score tracker.xcodeproj"
       SCHEME: "badminton score tracker Watch App"
-      # The unit-test bundle only — skip the slower/flakier UI test target in CI.
-      TEST_TARGET: "badminton score tracker Watch AppTests"
     steps:
       - uses: actions/checkout@v4
 
@@ -40,27 +54,17 @@ jobs:
           sudo xcode-select -s "$latest"
           xcodebuild -version
 
-      - name: List available watchOS simulators
-        run: xcrun simctl list devices available | grep -i watch || true
-
-      - name: Run unit tests
+      - name: Build for watchOS Simulator
         run: |
           set -o pipefail
-          # Pick a concrete, available watchOS simulator (a real UDID, which
-          # skips the "Any watchOS Simulator Device" placeholder automatically).
-          dest_id=$(xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showdestinations 2>/dev/null \
-            | grep 'platform:watchOS Simulator' \
-            | grep -oiE 'id:[0-9A-F-]{36}' \
-            | head -1 | cut -d: -f2)
-          if [ -z "$dest_id" ]; then
-            echo "::error::No available watchOS Simulator destination found on this runner."
-            xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showdestinations || true
-            exit 1
-          fi
-          echo "Using destination id: $dest_id"
-          xcodebuild test \
+          # Compile-only gate: build-for-testing compiles the app AND both
+          # test bundles (so the test targets can't silently rot) without
+          # executing anything. The generic destination targets the watchOS
+          # Simulator SDK without needing a concrete simulator device —
+          # runner images don't reliably ship watchOS simulators, and only
+          # `xcodebuild test` needs a real one.
+          xcodebuild build-for-testing \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -destination "id=$dest_id" \
-            -only-testing:"$TEST_TARGET" \
+            -destination "generic/platform=watchOS Simulator" \
             CODE_SIGNING_ALLOWED=NO

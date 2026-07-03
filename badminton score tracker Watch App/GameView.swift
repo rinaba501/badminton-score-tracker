@@ -9,6 +9,7 @@
 
 import SwiftUI
 import WatchKit
+import BadmintonCore
 
 // MARK: - Spoken score formatting helpers
 
@@ -74,18 +75,18 @@ struct OnboardingView: View {
 struct GameView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
-    @AppStorage("myName") private var myName = Player.defaultMyName
-    @AppStorage("matchMyName") private var matchMyName = ""
-    @AppStorage("matchOpponentName") private var matchOpponentName = ""
-    @AppStorage("pointsToWin") private var pointsToWin: Int = 21
-    @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
-    @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.matchMyName) private var matchMyName = ""
+    @AppStorage(AppStorageKeys.matchOpponentName) private var matchOpponentName = ""
+    @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
+    @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
+    @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
 
-    @AppStorage("announceScore") private var announceScore = true
-    @AppStorage("enableSounds") private var enableSounds = true
-    @AppStorage("enableCrownScoring") private var enableCrownScoring = true
-    @AppStorage("timeModeEnabled") private var timeModeEnabled = false
-    @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
+    @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
+    @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
+    @AppStorage(AppStorageKeys.enableCrownScoring) private var enableCrownScoring = true
+    @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
+    @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
     @StateObject private var soundPlayer = SoundPlayer()
     @StateObject private var workoutManager = WorkoutManager()
 

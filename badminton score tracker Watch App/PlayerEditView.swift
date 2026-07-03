@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import BadmintonCore
 
 struct PlayerEditView: View {
     let initialPlayer: Player

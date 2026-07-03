@@ -8,20 +8,21 @@
 //
 
 import SwiftUI
+import BadmintonCore
 
 struct SettingsView: View {
     @Binding var currentView: ContentView.AppView
-    @AppStorage("gameMode") private var gameMode: GameMode = .singles
-    @AppStorage("myName") private var myName = Player.defaultMyName
-    @AppStorage("pointsToWin") private var pointsToWin: Int = 21
-    @AppStorage("gamesInMatch") private var gamesInMatch: Int = 3
-    @AppStorage("courtTheme") private var courtTheme: CourtTheme = .green
-    @AppStorage("announceScore") private var announceScore = true
-    @AppStorage("enableCrownScoring") private var enableCrownScoring = true
-    @AppStorage("timeModeEnabled") private var timeModeEnabled = false
-    @AppStorage("timeLimitMinutes") private var timeLimitMinutes = 10
-    @AppStorage("enableSounds") private var enableSounds = true
-    @AppStorage("playerSortOrder") private var playerSortOrder: Player.SortOrder = .name
+    @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
+    @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
+    @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
+    @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
+    @AppStorage(AppStorageKeys.enableCrownScoring) private var enableCrownScoring = true
+    @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
+    @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
+    @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
+    @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
     @EnvironmentObject private var appStore: AppStore
     @State private var editingPlayer: Player? = nil
     @State private var showAddPlayer = false
