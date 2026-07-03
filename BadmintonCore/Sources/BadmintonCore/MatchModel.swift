@@ -1,24 +1,24 @@
 //
 //  MatchModel.swift
-//  badminton score tracker Watch App
+//  BadmintonCore
 //
 //  Pure, testable scoring logic for a best-of-three badminton match.
 //
 
 import Foundation
 
-enum Side: String, Codable, Equatable {
+public enum Side: String, Codable, Equatable {
     case me
     case opponent
 }
 
 /// Final score of a single completed game within a match.
-struct GameScore: Codable, Equatable, Identifiable {
-    var id = UUID()
-    let my: Int
-    let opponent: Int
+public struct GameScore: Codable, Equatable, Identifiable {
+    public var id = UUID()
+    public let my: Int
+    public let opponent: Int
 
-    init(id: UUID = UUID(), my: Int, opponent: Int) {
+    public init(id: UUID = UUID(), my: Int, opponent: Int) {
         self.id = id
         self.my = my
         self.opponent = opponent
@@ -27,23 +27,23 @@ struct GameScore: Codable, Equatable, Identifiable {
 
 /// Drives a single badminton match. No timers, no UI — every transition is a
 /// pure function of the current state, which makes the rules unit-testable.
-struct BadmintonMatch: Codable, Equatable {
-    let pointsToWin: Int   // 21
-    let pointCap: Int      // 30 — at 29-29 the 30th point wins
-    let gamesToWin: Int    // 2  — best of three
+public struct BadmintonMatch: Codable, Equatable {
+    public let pointsToWin: Int   // 21
+    public let pointCap: Int      // 30 — at 29-29 the 30th point wins
+    public let gamesToWin: Int    // 2  — best of three
 
-    private(set) var myScore: Int = 0
-    private(set) var opponentScore: Int = 0
-    private(set) var myGamesWon: Int = 0
-    private(set) var opponentGamesWon: Int = 0
-    private(set) var completedGames: [GameScore] = []
+    public private(set) var myScore: Int = 0
+    public private(set) var opponentScore: Int = 0
+    public private(set) var myGamesWon: Int = 0
+    public private(set) var opponentGamesWon: Int = 0
+    public private(set) var completedGames: [GameScore] = []
     /// Whoever won the previous rally serves next. Court side is derived from this.
-    private(set) var serverIsMe: Bool
+    public private(set) var serverIsMe: Bool
 
-    init(serverIsMe: Bool = true,
-         pointsToWin: Int = 21,
-         pointCap: Int = 30,
-         gamesToWin: Int = 2) {
+    public init(serverIsMe: Bool = true,
+                pointsToWin: Int = 21,
+                pointCap: Int = 30,
+                gamesToWin: Int = 2) {
         self.serverIsMe = serverIsMe
         self.pointsToWin = pointsToWin
         self.pointCap = pointCap
@@ -54,7 +54,7 @@ struct BadmintonMatch: Codable, Equatable {
 
     /// Winner of the *current* game, if it has just been decided. Stays non-nil
     /// (scores are left on screen) until `startNextGame()` clears the board.
-    var gameWinner: Side? {
+    public var gameWinner: Side? {
         if myScore >= pointCap { return .me }
         if opponentScore >= pointCap { return .opponent }
         if myScore >= pointsToWin && myScore - opponentScore >= 2 { return .me }
@@ -62,34 +62,34 @@ struct BadmintonMatch: Codable, Equatable {
         return nil
     }
 
-    var matchWinner: Side? {
+    public var matchWinner: Side? {
         if myGamesWon >= gamesToWin { return .me }
         if opponentGamesWon >= gamesToWin { return .opponent }
         return nil
     }
 
-    var isMatchOver: Bool { matchWinner != nil }
+    public var isMatchOver: Bool { matchWinner != nil }
 
     /// True while a game is decided but the next game hasn't started yet.
-    var isGameOver: Bool { gameWinner != nil }
+    public var isGameOver: Bool { gameWinner != nil }
 
     /// Either side is one rally away from winning the current game.
-    var isGamePoint: Bool {
+    public var isGamePoint: Bool {
         pointWouldEndGame(.me) || pointWouldEndGame(.opponent)
     }
 
     /// Either side is one rally away from winning the whole match.
-    var isMatchPoint: Bool {
+    public var isMatchPoint: Bool {
         pointWouldEndMatch(.me) || pointWouldEndMatch(.opponent)
     }
 
     // MARK: - Serve
 
-    var servingSide: Side { serverIsMe ? .me : .opponent }
+    public var servingSide: Side { serverIsMe ? .me : .opponent }
 
     /// In both singles and doubles the serving side serves from the right
     /// service court when its score is even, the left court when odd.
-    var serveFromRightCourt: Bool {
+    public var serveFromRightCourt: Bool {
         (serverIsMe ? myScore : opponentScore) % 2 == 0
     }
 
@@ -97,7 +97,7 @@ struct BadmintonMatch: Codable, Equatable {
 
     /// Award a rally to `side`. No-op once the current game or match is over —
     /// the caller advances with `startNextGame()`.
-    mutating func score(_ side: Side) {
+    public mutating func score(_ side: Side) {
         guard matchWinner == nil, gameWinner == nil else { return }
 
         switch side {
@@ -116,7 +116,7 @@ struct BadmintonMatch: Codable, Equatable {
     }
 
     /// Clear the board for the next game. Pass `serverIsMe` to override the automatic serve assignment.
-    mutating func startNextGame(serverIsMe: Bool? = nil) {
+    public mutating func startNextGame(serverIsMe: Bool? = nil) {
         guard gameWinner != nil, matchWinner == nil else { return }
         self.serverIsMe = serverIsMe ?? (myScore > opponentScore)
         myScore = 0
@@ -125,7 +125,7 @@ struct BadmintonMatch: Codable, Equatable {
 
     /// Force-ends the current game in favour of `winner` (used for sudden death in time mode).
     /// Records the current score as the game result and resets the board.
-    mutating func recordSuddenDeathGame(winner: Side) {
+    public mutating func recordSuddenDeathGame(winner: Side) {
         guard gameWinner == nil, matchWinner == nil else { return }
         completedGames.append(GameScore(my: myScore, opponent: opponentScore))
         if winner == .me { myGamesWon += 1 } else { opponentGamesWon += 1 }
@@ -135,7 +135,7 @@ struct BadmintonMatch: Codable, Equatable {
     }
 
     /// True when all games have been played and the result is a draw (only possible with an even gamesInMatch setting).
-    var isTied: Bool {
+    public var isTied: Bool {
         let totalPlayed = completedGames.count
         return matchWinner == nil && totalPlayed >= (gamesToWin * 2 - 1) && myGamesWon == opponentGamesWon
     }
@@ -158,30 +158,30 @@ struct BadmintonMatch: Codable, Equatable {
 }
 
 /// A finished match, persisted to history.
-struct MatchRecord: Identifiable, Codable, Equatable {
-    let id: UUID
-    let games: [GameScore]
-    let myGamesWon: Int
-    let opponentGamesWon: Int
-    var winner: String
-    var myName: String
-    var opponentName: String
-    let date: Date
-    let duration: TimeInterval
-    var myPlayerId: UUID?
-    var opponentPlayerId: UUID?
+public struct MatchRecord: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let games: [GameScore]
+    public let myGamesWon: Int
+    public let opponentGamesWon: Int
+    public var winner: String
+    public var myName: String
+    public var opponentName: String
+    public let date: Date
+    public let duration: TimeInterval
+    public var myPlayerId: UUID?
+    public var opponentPlayerId: UUID?
 
-    init(id: UUID = UUID(),
-         games: [GameScore],
-         myGamesWon: Int,
-         opponentGamesWon: Int,
-         winner: String,
-         myName: String = "",
-         opponentName: String = "",
-         date: Date,
-         duration: TimeInterval = 0,
-         myPlayerId: UUID? = nil,
-         opponentPlayerId: UUID? = nil) {
+    public init(id: UUID = UUID(),
+                games: [GameScore],
+                myGamesWon: Int,
+                opponentGamesWon: Int,
+                winner: String,
+                myName: String = "",
+                opponentName: String = "",
+                date: Date,
+                duration: TimeInterval = 0,
+                myPlayerId: UUID? = nil,
+                opponentPlayerId: UUID? = nil) {
         self.id = id
         self.games = games
         self.myGamesWon = myGamesWon

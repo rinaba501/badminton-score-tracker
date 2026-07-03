@@ -1,95 +1,31 @@
 //
 //  Player.swift
-//  badminton score tracker Watch App
+//  BadmintonCore
 //
-//  The roster player model and the avatar view that renders it.
+//  The roster player model. Presentation (avatar colors, images, AvatarView)
+//  lives in the app target — see PlayerAvatar.swift there.
 //
 
-import SwiftUI
+import Foundation
 
 // MARK: - Player Model
 
-struct Player: Identifiable, Codable, Equatable {
-    let id: UUID
-    var name: String
-    var colorIndex: Int
-    var iconName: String?
+public struct Player: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public var name: String
+    public var colorIndex: Int
+    public var iconName: String?
 
-    init(id: UUID = UUID(), name: String, colorIndex: Int = 0, iconName: String? = nil) {
+    public init(id: UUID = UUID(), name: String, colorIndex: Int = 0, iconName: String? = nil) {
         self.id = id
         self.name = name
         self.colorIndex = colorIndex
         self.iconName = iconName
     }
 
-    static let avatarColors: [Color] = [
-        .blue, .green, .orange, .purple, .pink, .red,
-        .cyan, .mint, .teal, .indigo, .yellow, .brown
-    ]
-
-    static let avatarImageNames: [String] = [
-        "avatar_shuttlecock_happy", "avatar_shuttlecock_cute",
-        "avatar_shuttlecock_angry",
-        "avatar_blonde_girl", "avatar_purple_girl",
-        "avatar_messy_bun", "avatar_blue_cap",
-        "avatar_cap_shuttlecock", "avatar_headdress",
-        "avatar_racket_happy", "avatar_racket_cool",
-        "avatar_racket_mustache", "avatar_net",
-        "avatar_red_cap", "avatar_viking"
-    ]
-
-    static let sportIcons: [String] = [
-        "star.fill", "bolt.fill", "flame.fill", "crown.fill",
-        "heart.fill", "moon.fill", "sun.max.fill", "snowflake",
-        "pawprint.fill", "leaf.fill", "figure.run", "sportscourt.fill"
-    ]
-
-    var avatarColor: Color { Self.avatarColors[colorIndex % Self.avatarColors.count] }
-
-    var initials: String {
+    public var initials: String {
         let words = name.split(separator: " ").prefix(2)
         return words.compactMap { $0.first(where: { $0.isLetter }).map(String.init) }.joined().uppercased()
-    }
-}
-
-struct AvatarView: View {
-    let name: String
-    let color: Color
-    var size: CGFloat = 28
-    var iconName: String? = nil
-
-    private var initials: String {
-        let words = name.split(separator: " ").prefix(2)
-        let result = words.compactMap { $0.first(where: { $0.isLetter }).map(String.init) }.joined().uppercased()
-        return result.isEmpty ? "?" : result
-    }
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(color)
-                .frame(width: size, height: size)
-            if let icon = iconName {
-                if Player.avatarImageNames.contains(icon) {
-                    Image(icon)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: size, height: size)
-                        .clipShape(Circle())
-                } else {
-                    Image(systemName: icon)
-                        .font(.system(size: size * 0.48, weight: .medium))
-                        .foregroundColor(.white)
-                }
-            } else {
-                Text(initials)
-                    .font(.system(size: size * 0.38, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-            }
-        }
-        // Decorative: every AvatarView is shown next to the player's name,
-        // so hide it from VoiceOver to avoid a redundant element.
-        .accessibilityHidden(true)
     }
 }
 
@@ -103,7 +39,7 @@ struct AvatarView: View {
 // same, current-locale value, so a screen never displays one language's
 // version while another screen's identity check expects a different one.
 extension Player {
-    enum SortOrder: String, CaseIterable, Codable {
+    public enum SortOrder: String, CaseIterable, Codable {
         case created
         case name
         case nameDescending
@@ -111,26 +47,31 @@ extension Player {
         case recentlyUsed
     }
 
-    static var defaultMyName: String { NSLocalizedString("settings.me", comment: "") }
-    static var guestNearLabel: String { NSLocalizedString("prematch.guest_near", comment: "") }
-    static var guestFarLabel: String { NSLocalizedString("prematch.guest_far", comment: "") }
+    // These use bare NSLocalizedString on purpose: it resolves against
+    // Bundle.main, i.e. the app bundle that owns the Localizable.strings
+    // tables (this package carries no string resources). Under `swift test`
+    // there is no app bundle, so these return the raw keys — which stay
+    // distinct and non-empty, all the identity checks below need.
+    public static var defaultMyName: String { NSLocalizedString("settings.me", comment: "") }
+    public static var guestNearLabel: String { NSLocalizedString("prematch.guest_near", comment: "") }
+    public static var guestFarLabel: String { NSLocalizedString("prematch.guest_far", comment: "") }
 
     /// True for either guest sentinel label offered during player selection.
     /// Guests are intentionally never persisted to the roster.
-    static func isGuestName(_ name: String) -> Bool {
+    public static func isGuestName(_ name: String) -> Bool {
         name == guestNearLabel || name == guestFarLabel
     }
 
     /// Returns whether a name should be persisted as a saved roster player.
     /// The current user is represented by the default/local name and should
     /// remain a selector choice, not a duplicate saved player entry.
-    static func shouldBeStoredAsSavedPlayer(_ name: String, currentUserName: String? = nil) -> Bool {
+    public static func shouldBeStoredAsSavedPlayer(_ name: String, currentUserName: String? = nil) -> Bool {
         guard !name.isEmpty, !isGuestName(name) else { return false }
         let currentName = currentUserName ?? defaultMyName
         return name != currentName
     }
 
-    static func sortedPlayers(_ players: [Player], order: SortOrder, history: [MatchRecord] = []) -> [Player] {
+    public static func sortedPlayers(_ players: [Player], order: SortOrder, history: [MatchRecord] = []) -> [Player] {
         switch order {
         case .created:
             return players

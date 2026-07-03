@@ -33,7 +33,7 @@ See [`SPEC.md`](SPEC.md) for the full feature spec, and the [Open Issues](SPEC.m
 2. Select the **badminton score tracker Watch App** scheme.
 3. Run on a watchOS Simulator or a paired Apple Watch.
 
-Unit tests live in `badminton score tracker Watch AppTests` and run via `xcodebuild test`, or ⌘U in Xcode.
+Core logic (scoring, persistence, stats) lives in the local `BadmintonCore` Swift package; its tests run with `swift test --package-path BadmintonCore` — no simulator needed. The `badminton score tracker Watch AppTests` bundle remains for app-layer tests (⌘U in Xcode).
 
 ## Project structure & conventions
 

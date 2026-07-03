@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import BadmintonCore
 
 @MainActor
 final class AppStore: ObservableObject {
@@ -16,15 +17,15 @@ final class AppStore: ObservableObject {
     @Published private(set) var history: [MatchRecord]
 
     private init() {
-        let r = UserDefaults.standard.data(forKey: "playerRoster") ?? Data()
-        let h = UserDefaults.standard.data(forKey: "matchHistory") ?? Data()
+        let r = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster) ?? Data()
+        let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
     }
 
     func saveRoster(_ players: [Player]) {
         guard let encoded = PersistenceStore.encodeRoster(players) else { return }
-        UserDefaults.standard.set(encoded, forKey: "playerRoster")
+        UserDefaults.standard.set(encoded, forKey: AppStorageKeys.playerRoster)
         roster = players
         CloudSyncManager.shared.pushToCloud()
     }
@@ -37,21 +38,21 @@ final class AppStore: ObservableObject {
         // copy. Appends and in-place edits (e.g. a rename) are unaffected and
         // still merge safely.
         let isShrink = PersistenceStore.isHistoryShrink(from: history, to: records)
-        UserDefaults.standard.set(encoded, forKey: "matchHistory")
+        UserDefaults.standard.set(encoded, forKey: AppStorageKeys.matchHistory)
         history = records
         CloudSyncManager.shared.pushToCloud(overwriteHistory: isShrink)
     }
 
     func clearHistory() {
-        UserDefaults.standard.set(Data(), forKey: "matchHistory")
+        UserDefaults.standard.set(Data(), forKey: AppStorageKeys.matchHistory)
         history = []
         CloudSyncManager.shared.pushToCloud(overwriteHistory: true)
     }
 
     // Called by CloudSyncManager after external iCloud data lands in UserDefaults
     func reloadFromStorage() {
-        let r = UserDefaults.standard.data(forKey: "playerRoster") ?? Data()
-        let h = UserDefaults.standard.data(forKey: "matchHistory") ?? Data()
+        let r = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster) ?? Data()
+        let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
     }

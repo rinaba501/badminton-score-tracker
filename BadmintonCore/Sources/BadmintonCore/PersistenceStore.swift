@@ -1,6 +1,6 @@
 //
 //  PersistenceStore.swift
-//  badminton score tracker Watch App
+//  BadmintonCore
 //
 //  Centralized JSON encode/decode for the values persisted in @AppStorage.
 //  The roster ([Player]) and match history ([MatchRecord]) are stored as
@@ -11,18 +11,18 @@
 
 import Foundation
 
-enum PersistenceStore {
+public enum PersistenceStore {
 
     // MARK: - Roster ([Player])
 
     /// Decode the player roster, returning an empty array if the data is
     /// missing or corrupt.
-    static func decodeRoster(_ data: Data) -> [Player] {
+    public static func decodeRoster(_ data: Data) -> [Player] {
         (try? JSONDecoder().decode([Player].self, from: data)) ?? []
     }
 
     /// Encode the player roster for storage, or `nil` if encoding fails.
-    static func encodeRoster(_ players: [Player]) -> Data? {
+    public static func encodeRoster(_ players: [Player]) -> Data? {
         try? JSONEncoder().encode(players)
     }
 
@@ -30,12 +30,12 @@ enum PersistenceStore {
 
     /// Decode the match history, returning an empty array if the data is
     /// missing or corrupt.
-    static func decodeHistory(_ data: Data) -> [MatchRecord] {
+    public static func decodeHistory(_ data: Data) -> [MatchRecord] {
         (try? JSONDecoder().decode([MatchRecord].self, from: data)) ?? []
     }
 
     /// Encode the match history for storage, or `nil` if encoding fails.
-    static func encodeHistory(_ records: [MatchRecord]) -> Data? {
+    public static func encodeHistory(_ records: [MatchRecord]) -> Data? {
         try? JSONEncoder().encode(records)
     }
 
@@ -47,7 +47,7 @@ enum PersistenceStore {
     /// it must NOT be used to sync an intentional deletion (see
     /// `isHistoryShrink`) — merging a shrunk list back against an
     /// unshrunk one would silently resurrect what was just deleted.
-    static func mergeHistory(_ a: [MatchRecord], _ b: [MatchRecord]) -> [MatchRecord] {
+    public static func mergeHistory(_ a: [MatchRecord], _ b: [MatchRecord]) -> [MatchRecord] {
         var byId: [UUID: MatchRecord] = [:]
         for record in a { byId[record.id] = record }
         for record in b where byId[record.id] == nil { byId[record.id] = record }
@@ -62,7 +62,7 @@ enum PersistenceStore {
     /// reconcile with iCloud via `mergeHistory` (grows/edits) or must be
     /// pushed as an authoritative overwrite instead (shrinks) — merging a
     /// deletion would silently undo it, since a union can only grow.
-    static func isHistoryShrink(from oldRecords: [MatchRecord], to newRecords: [MatchRecord]) -> Bool {
+    public static func isHistoryShrink(from oldRecords: [MatchRecord], to newRecords: [MatchRecord]) -> Bool {
         let oldIds = Set(oldRecords.map(\.id))
         let newIds = Set(newRecords.map(\.id))
         return newIds != oldIds && newIds.isSubset(of: oldIds)

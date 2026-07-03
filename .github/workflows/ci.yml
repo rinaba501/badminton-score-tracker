@@ -22,14 +22,28 @@ jobs:
       - name: Run SwiftLint
         run: swiftlint lint --reporter github-actions-logging
 
-  test:
-    name: Unit Tests
+  core-tests:
+    name: BadmintonCore Tests
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest installed Xcode
+        run: |
+          latest=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "Using $latest"
+          sudo xcode-select -s "$latest"
+          swift --version
+
+      - name: Run package tests
+        run: swift test --package-path BadmintonCore
+
+  build:
+    name: Watch App Build
     runs-on: macos-latest
     env:
       PROJECT: "badminton score tracker.xcodeproj"
       SCHEME: "badminton score tracker Watch App"
-      # The unit-test bundle only — skip the slower/flakier UI test target in CI.
-      TEST_TARGET: "badminton score tracker Watch AppTests"
     steps:
       - uses: actions/checkout@v4
 
@@ -40,10 +54,7 @@ jobs:
           sudo xcode-select -s "$latest"
           xcodebuild -version
 
-      - name: List available watchOS simulators
-        run: xcrun simctl list devices available | grep -i watch || true
-
-      - name: Run unit tests
+      - name: Build for watchOS Simulator
         run: |
           set -o pipefail
           # Pick a concrete, available watchOS simulator (a real UDID, which
@@ -58,9 +69,8 @@ jobs:
             exit 1
           fi
           echo "Using destination id: $dest_id"
-          xcodebuild test \
+          xcodebuild build \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "id=$dest_id" \
-            -only-testing:"$TEST_TARGET" \
             CODE_SIGNING_ALLOWED=NO

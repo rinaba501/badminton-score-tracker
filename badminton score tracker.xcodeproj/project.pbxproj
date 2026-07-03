@@ -11,6 +11,7 @@
 		453987912FF3F4DD0070EA74 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 453987902FF3F4DD0070EA74 /* SwiftUI.framework */; };
 		4539879E2FF3F4DE0070EA74 /* badminton score tracker ComplicationExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B32FF05A2DCB7D850008256A /* badminton score tracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */ = {isa = PBXBuildFile; productRef = B32FF0A12DCB7D850008256A /* BadmintonCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -140,6 +141,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +258,7 @@
 			);
 			name = "badminton score tracker Watch App";
 			packageProductDependencies = (
+				B32FF0A12DCB7D850008256A /* BadmintonCore */,
 			);
 			productName = "badminton score tracker Watch App";
 			productReference = B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */;
@@ -350,6 +353,9 @@
 			);
 			mainGroup = B32FF04C2DCB7D850008256A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B32FF0A02DCB7D850008256A /* XCLocalSwiftPackageReference "BadmintonCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B32FF0542DCB7D850008256A /* Products */;
 			projectDirPath = "";
@@ -855,6 +861,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B32FF0A02DCB7D850008256A /* XCLocalSwiftPackageReference "BadmintonCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = BadmintonCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B32FF0A12DCB7D850008256A /* BadmintonCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BadmintonCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B32FF04D2DCB7D850008256A /* Project object */;
 }

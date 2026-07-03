@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import BadmintonCore
 
 struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
@@ -30,14 +31,7 @@ struct HistoryView: View {
     private var history: [MatchRecord] { appStore.history }
 
     private var allPlayers: [String] {
-        var seen = Set<String>()
-        var result: [String] = []
-        for record in history {
-            for name in [record.myName, record.opponentName] where !name.isEmpty {
-                if seen.insert(name).inserted { result.append(name) }
-            }
-        }
-        return result
+        StatsCalculator.participants(history: history)
     }
 
     private var filteredHistory: [MatchRecord] {
@@ -48,12 +42,7 @@ struct HistoryView: View {
             case .month: return Calendar.current.date(byAdding: .month, value: -1, to: Date())
             }
         }()
-        return history.reversed().filter { record in
-            let playerMatch = selectedPlayer.isEmpty ||
-                record.myName == selectedPlayer || record.opponentName == selectedPlayer
-            let dateMatch = cutoff == nil || record.date >= cutoff!
-            return playerMatch && dateMatch
-        }
+        return StatsCalculator.filteredHistory(history, selectedPlayer: selectedPlayer, cutoff: cutoff)
     }
 
     private func save(_ records: [MatchRecord]) {
@@ -202,12 +191,6 @@ struct MatchHistoryRow: View {
         record.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")
     }
 
-    private func durationString(_ seconds: TimeInterval) -> String {
-        let m = Int(seconds) / 60
-        let s = Int(seconds) % 60
-        return m > 0 ? "\(m)m \(s)s" : "\(s)s"
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Head-to-head score line
@@ -243,7 +226,7 @@ struct MatchHistoryRow: View {
                 Text(record.date, format: .dateTime.month().day().hour().minute())
                 if record.duration > 0 {
                     Text("·")
-                    Text(durationString(record.duration))
+                    Text(StatsCalculator.durationString(record.duration))
                 }
             }
             .font(.caption2)

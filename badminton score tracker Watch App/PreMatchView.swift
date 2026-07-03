@@ -7,36 +7,17 @@
 //
 
 import SwiftUI
+import BadmintonCore
 
 struct PreMatchView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
-    @AppStorage("myName") private var myName = Player.defaultMyName
-    @AppStorage("matchMyName") private var matchMyName = ""
-    @AppStorage("matchOpponentName") private var matchOpponentName = ""
-    @AppStorage("playerSortOrder") private var playerSortOrder: Player.SortOrder = .name
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.matchMyName) private var matchMyName = ""
+    @AppStorage(AppStorageKeys.matchOpponentName) private var matchOpponentName = ""
+    @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
 
     private var history: [MatchRecord] { appStore.history }
-
-    private func h2h(me: String, opponent: String) -> (wins: Int, losses: Int)? {
-        let mePlayer = roster.first(where: { $0.name == me })
-        let oppPlayer = roster.first(where: { $0.name == opponent })
-        let relevant = history.filter { record in
-            let namesMatch = (record.myName == me && record.opponentName == opponent) ||
-                             (record.myName == opponent && record.opponentName == me)
-            let idsMatch: Bool = {
-                guard let meId = mePlayer?.id, let oppId = oppPlayer?.id else { return false }
-                return (record.myPlayerId == meId && record.opponentPlayerId == oppId) ||
-                       (record.myPlayerId == oppId && record.opponentPlayerId == meId)
-            }()
-            return namesMatch || idsMatch
-        }
-        guard !relevant.isEmpty else { return nil }
-        let wins = relevant.filter { record in
-            (record.myName == me || record.myPlayerId == mePlayer?.id) && record.winner == me
-        }.count
-        return (wins: wins, losses: relevant.count - wins)
-    }
 
     @State private var step: Step = .pickMyPlayer
     @State private var showAddPlayer = false
@@ -109,7 +90,7 @@ struct PreMatchView: View {
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(player.name)
                                     if let against = h2hAgainst,
-                                       let record = h2h(me: against, opponent: player.name) {
+                                       let record = StatsCalculator.headToHeadIfAny(me: against, opponent: player.name, history: history, roster: roster) {
                                         Text("\(record.wins)W – \(record.losses)L")
                                             .font(.caption2)
                                             .foregroundColor(.secondary)

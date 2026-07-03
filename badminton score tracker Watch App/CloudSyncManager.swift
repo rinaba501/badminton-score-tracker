@@ -1,19 +1,27 @@
 import Foundation
 import Combine
+import BadmintonCore
 
-// Keys synced to iCloud key-value store
-private enum SyncKey: String, CaseIterable {
-    case playerRoster
-    case matchHistory
-    case myName
-    case pointsToWin
-    case gamesInMatch
-    case courtTheme
-    case announceScore
-    case enableSounds
-    case enableCrownScoring
-    case timeModeEnabled
-    case timeLimitMinutes
+// Keys synced to iCloud key-value store. The key strings themselves live in
+// BadmintonCore.AppStorageKeys; this list selects WHICH of them sync
+// (matchMyName/matchOpponentName/playerSortOrder/gameMode intentionally
+// do not — they are per-device state).
+private enum SyncKeys {
+    static let playerRoster = AppStorageKeys.playerRoster
+    static let matchHistory = AppStorageKeys.matchHistory
+    static let all: [String] = [
+        AppStorageKeys.playerRoster,
+        AppStorageKeys.matchHistory,
+        AppStorageKeys.myName,
+        AppStorageKeys.pointsToWin,
+        AppStorageKeys.gamesInMatch,
+        AppStorageKeys.courtTheme,
+        AppStorageKeys.announceScore,
+        AppStorageKeys.enableSounds,
+        AppStorageKeys.enableCrownScoring,
+        AppStorageKeys.timeModeEnabled,
+        AppStorageKeys.timeLimitMinutes
+    ]
 }
 
 @MainActor
@@ -44,14 +52,14 @@ final class CloudSyncManager: ObservableObject {
     // iCloud's unshrunk copy would silently resurrect what was just deleted.
     func pushToCloud(overwriteHistory: Bool = false) {
         let defaults = UserDefaults.standard
-        for key in SyncKey.allCases where key != .matchHistory {
-            if let value = defaults.object(forKey: key.rawValue) {
-                kvStore.set(value, forKey: key.rawValue)
+        for key in SyncKeys.all where key != SyncKeys.matchHistory {
+            if let value = defaults.object(forKey: key) {
+                kvStore.set(value, forKey: key)
             }
         }
         if overwriteHistory {
-            let localData = defaults.data(forKey: SyncKey.matchHistory.rawValue) ?? Data()
-            kvStore.set(localData, forKey: SyncKey.matchHistory.rawValue)
+            let localData = defaults.data(forKey: SyncKeys.matchHistory) ?? Data()
+            kvStore.set(localData, forKey: SyncKeys.matchHistory)
         } else {
             syncHistory()
         }
@@ -62,9 +70,9 @@ final class CloudSyncManager: ObservableObject {
     // Pull iCloud values into UserDefaults, only overwriting if iCloud has data
     private func pullFromCloud() {
         let defaults = UserDefaults.standard
-        for key in SyncKey.allCases where key != .matchHistory {
-            if let value = kvStore.object(forKey: key.rawValue) {
-                defaults.set(value, forKey: key.rawValue)
+        for key in SyncKeys.all where key != SyncKeys.matchHistory {
+            if let value = kvStore.object(forKey: key) {
+                defaults.set(value, forKey: key)
             }
         }
         syncHistory()
@@ -80,13 +88,13 @@ final class CloudSyncManager: ObservableObject {
         var dataKeysChanged = false
         if let changedKeys = notification.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] {
             let defaults = UserDefaults.standard
-            for key in changedKeys where key != SyncKey.matchHistory.rawValue {
+            for key in changedKeys where key != SyncKeys.matchHistory {
                 if let value = kvStore.object(forKey: key) {
                     defaults.set(value, forKey: key)
                 }
-                if key == SyncKey.playerRoster.rawValue { dataKeysChanged = true }
+                if key == SyncKeys.playerRoster { dataKeysChanged = true }
             }
-            if changedKeys.contains(SyncKey.matchHistory.rawValue) {
+            if changedKeys.contains(SyncKeys.matchHistory) {
                 syncHistory()
                 dataKeysChanged = true
             }
@@ -101,14 +109,14 @@ final class CloudSyncManager: ObservableObject {
     // so this converges without losing matches recorded on either device.
     private func syncHistory() {
         let defaults = UserDefaults.standard
-        let localData = defaults.data(forKey: SyncKey.matchHistory.rawValue) ?? Data()
-        let cloudData = kvStore.data(forKey: SyncKey.matchHistory.rawValue) ?? Data()
+        let localData = defaults.data(forKey: SyncKeys.matchHistory) ?? Data()
+        let cloudData = kvStore.data(forKey: SyncKeys.matchHistory) ?? Data()
         let merged = PersistenceStore.mergeHistory(
             PersistenceStore.decodeHistory(localData),
             PersistenceStore.decodeHistory(cloudData)
         )
         guard let mergedData = PersistenceStore.encodeHistory(merged) else { return }
-        if mergedData != localData { defaults.set(mergedData, forKey: SyncKey.matchHistory.rawValue) }
-        if mergedData != cloudData { kvStore.set(mergedData, forKey: SyncKey.matchHistory.rawValue) }
+        if mergedData != localData { defaults.set(mergedData, forKey: SyncKeys.matchHistory) }
+        if mergedData != cloudData { kvStore.set(mergedData, forKey: SyncKeys.matchHistory) }
     }
 }
