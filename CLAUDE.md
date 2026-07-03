@@ -134,7 +134,7 @@ All key strings are constants in `BadmintonCore.AppStorageKeys` — declare `@Ap
 `.github/workflows/ci.yml` runs on every PR (and pushes to `main`). The three jobs have no `needs:` dependency, so they run in parallel:
 - **SwiftLint** — `swiftlint lint` against the config in `.swiftlint.yml` (non-strict: style issues are warnings/annotations; only error-severity rules fail). Observed runtime: **~10-20s**.
 - **BadmintonCore Tests** — `swift test --package-path BadmintonCore` on macOS (no simulator). All core unit tests live here; runs in well under a minute.
-- **Watch App Build** — `xcodebuild build` of the Watch App scheme on a watchOS simulator. This is the integration gate that catches project-file, linking, and app-code errors. Observed runtime: **~2.5-4 min** — this is the long pole. (The Watch AppTests bundle still exists for future app-layer tests but CI doesn't run it — it holds only a placeholder.)
+- **Watch App Build** — `xcodebuild build` of the Watch App scheme against `generic/platform=watchOS Simulator` (no concrete simulator device needed — runner images don't reliably ship watchOS simulators). This is the integration gate that catches project-file, linking, and app-code errors. Observed runtime: **~2.5-4 min** — this is the long pole. (The Watch AppTests bundle still exists for future app-layer tests but CI doesn't run it — it holds only a placeholder.)
 
 A PR is checkable within **~4 minutes** of pushing. If you're polling/scheduling a check-in on a PR (e.g. an agent session without webhook access to CI success events), don't default to a long cadence like 20 minutes — check back in ~3-5 minutes first, and only back off if the run is still in progress.
 

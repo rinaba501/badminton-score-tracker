@@ -57,24 +57,14 @@ jobs:
       - name: Build for watchOS Simulator
         run: |
           set -o pipefail
-          # Pick a concrete, available watchOS simulator (a real UDID, which
-          # skips the "Any watchOS Simulator Device" placeholder automatically).
-          # Capture -showdestinations output including stderr: if it fails, the
-          # job must print the actual xcodebuild error instead of dying silently
-          # on the assignment under `set -e` + pipefail.
-          dest_output=$(xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showdestinations 2>&1 || true)
-          dest_id=$(printf '%s\n' "$dest_output" \
-            | grep 'platform:watchOS Simulator' \
-            | grep -oiE 'id:[0-9A-F-]{36}' \
-            | head -1 | cut -d: -f2 || true)
-          if [ -z "$dest_id" ]; then
-            echo "::error::No watchOS Simulator destination found; -showdestinations output follows."
-            printf '%s\n' "$dest_output"
-            exit 1
-          fi
-          echo "Using destination id: $dest_id"
+          # Compile-only gate: the generic destination builds against the
+          # watchOS Simulator SDK without needing a concrete simulator device.
+          # (Runner images don't reliably ship watchOS simulators — the newest
+          # Xcode on the image can have zero concrete watch destinations, which
+          # is what the old UDID-discovery approach tripped over. Only
+          # `xcodebuild test` needs a real device.)
           xcodebuild build \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -destination "id=$dest_id" \
+            -destination "generic/platform=watchOS Simulator" \
             CODE_SIGNING_ALLOWED=NO
