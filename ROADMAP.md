@@ -23,7 +23,7 @@ This complements [SPEC.md](SPEC.md) (what the app does) and [CLAUDE.md](CLAUDE.m
 | # | Gap | Evidence | Why it matters long-term |
 |---|-----|----------|--------------------------|
 | 1 | **No shared module** — everything lives in the Watch App target; no Swift package | No `Package.swift`; `Player` model fused with SwiftUI (`Color`/`AvatarView` in `Player.swift`) | An iOS app (#41) can reuse nothing; portable core is trapped |
-| 2 | **Sync API dead-ends the sharing goal** | `NSUbiquitousKeyValueStore` is per-Apple-ID with a ~1 MB quota; history is one unbounded blob under one key; quota-exceeded is deliberately ignored (`CloudSyncManager.swift`) | Sync will one day *silently* stop (#87), and the API structurally cannot share between different people (#93) |
+| 2 | **Sync API dead-ends the sharing goal** | `NSUbiquitousKeyValueStore` is per-Apple-ID with a ~1 MB quota; history is one unbounded blob under one key; quota-exceeded now surfaces a warning (#87) but the ceiling itself is structural | Sync will still eventually hit the ceiling, and the API structurally cannot share between different people (#93) |
 | 3 | **Identity is display-text based** | `Player.recordReferences` falls back to name equality; guest/"Me" sentinels are localized strings used in identity checks | Renames orphan history; guests break across locales; two people cannot agree on "who is this player" — blocks sharing |
 | 4 | **No schema versioning or migration** | No version fields; `decodeHistory` returns `[]` on any error — one malformed record drops the whole history in memory | You cannot safely evolve a schema you cannot version; a prerequisite for CloudKit and an iOS app decoding the same data |
 | 5 | **Business logic lives in views** | `GameView.swift` (751 lines) mixes match-saving, sudden-death rules, a score-announcement engine, and 15 inline `WKInterfaceDevice` haptic calls; the whole stats engine is computed inside `StatsView`; helpers duplicated across 4+ views | Untestable, watchOS-locked, and the site of both real bugs so far (#96) |
@@ -69,7 +69,7 @@ Backend-agnostic changes required no matter which sync/sharing backend wins:
 
 - **#107** — schema-version field on persisted payloads, per-record tolerant decoding (one corrupt record no longer wipes the list), and a launch-time migration hook.
 - **#108** — ID-first player matching everywhere (names become display-only), locale-independent sentinel tokens for guest/"Me" identity, winner stored as `Side` rather than a display string, and a one-time backfill via the migration hook.
-- Stopgap while still on the KV store: surface (don't swallow) quota-exceeded, warn before the 1 MB ceiling — remaining scope of **#87**.
+- Stopgap while still on the KV store: surface (don't swallow) quota-exceeded, warn before the 1 MB ceiling — **#87**, done.
 
 ### Phase 4 — CloudKit private-database sync (#109)
 
@@ -97,7 +97,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 |-------|----------|--------|
 | 1 — BadmintonCore package | [#106](https://github.com/rinaba501/badminton-score-tracker/issues/106) | Closed by PR [#112](https://github.com/rinaba501/badminton-score-tracker/pull/112) |
 | 2 — De-view business logic | [#96](https://github.com/rinaba501/badminton-score-tracker/issues/96) | Closed by PR [#113](https://github.com/rinaba501/badminton-score-tracker/pull/113) |
-| 3 — Schema versioning / identity | [#107](https://github.com/rinaba501/badminton-score-tracker/issues/107) closed by PR [#114](https://github.com/rinaba501/badminton-score-tracker/pull/114); [#108](https://github.com/rinaba501/badminton-score-tracker/issues/108) closed by PR [#115](https://github.com/rinaba501/badminton-score-tracker/pull/115) (`MatchRecord.winner` type change deferred — see PR notes); KV quota stopgap: [#87](https://github.com/rinaba501/badminton-score-tracker/issues/87) still open | Mostly done |
+| 3 — Schema versioning / identity | [#107](https://github.com/rinaba501/badminton-score-tracker/issues/107) closed by PR [#114](https://github.com/rinaba501/badminton-score-tracker/pull/114); [#108](https://github.com/rinaba501/badminton-score-tracker/issues/108) closed by PR [#115](https://github.com/rinaba501/badminton-score-tracker/pull/115) (`MatchRecord.winner` type change deferred — see PR notes); KV quota stopgap: [#87](https://github.com/rinaba501/badminton-score-tracker/issues/87) closed by PR [#117](https://github.com/rinaba501/badminton-score-tracker/pull/117) | Done |
 | 4 — CloudKit sync | [#109](https://github.com/rinaba501/badminton-score-tracker/issues/109) | Open |
 | 5 — Cross-person sharing | design in [#93](https://github.com/rinaba501/badminton-score-tracker/issues/93); enables [#13](https://github.com/rinaba501/badminton-score-tracker/issues/13) | Deferred until Phase 4 |
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Open (pre-existing) |

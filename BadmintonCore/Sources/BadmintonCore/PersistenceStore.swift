@@ -153,4 +153,17 @@ public enum PersistenceStore {
         let newIds = Set(newRecords.map(\.id))
         return newIds != oldIds && newIds.isSubset(of: oldIds)
     }
+
+    // MARK: - iCloud KV-store quota
+
+    /// `NSUbiquitousKeyValueStore` caps at ~1 MB total / 1 MB per value. Warn
+    /// well before that ceiling rather than discovering it via a silently
+    /// dropped write.
+    public static let iCloudQuotaWarningThresholdBytes = 900_000
+
+    /// True once `data` (the encoded payload about to be pushed to the KV
+    /// store) has crossed the warning threshold.
+    public static func exceedsICloudQuotaWarningThreshold(_ data: Data) -> Bool {
+        data.count > iCloudQuotaWarningThresholdBytes
+    }
 }

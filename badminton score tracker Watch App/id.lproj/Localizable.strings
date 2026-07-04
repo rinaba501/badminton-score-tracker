@@ -34,6 +34,8 @@
 // Settings
 "settings.title" = "Pengaturan";
 "settings.back" = "Kembali";
+"settings.icloud_quota_warning" = "Penyimpanan sinkronisasi iCloud hampir penuh — beberapa pertandingan mungkin berhenti tersinkron.";
+"settings.icloud_quota_exceeded" = "Penyimpanan sinkronisasi iCloud penuh — pertandingan baru di perangkat ini tidak akan tersinkron sampai ruang dikosongkan.";
 "settings.game_mode" = "Mode Permainan";
 "settings.mode" = "Mode";
 "settings.singles" = "Tunggal";

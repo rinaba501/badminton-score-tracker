@@ -24,6 +24,7 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
     @EnvironmentObject private var appStore: AppStore
+    @ObservedObject private var cloudSync = CloudSyncManager.shared
     @State private var editingPlayer: Player? = nil
     @State private var showAddPlayer = false
 
@@ -82,6 +83,14 @@ struct SettingsView: View {
 
     var body: some View {
         List {
+            if let warning = cloudSync.syncWarning {
+                Section {
+                    Label(warning.messageKey, systemImage: "exclamationmark.icloud")
+                        .foregroundColor(.orange)
+                        .font(.caption)
+                }
+            }
+
             Section(header: Text("settings.game_mode")) {
                 Picker("settings.mode", selection: $gameMode) {
                     Text("settings.singles").tag(GameMode.singles)
