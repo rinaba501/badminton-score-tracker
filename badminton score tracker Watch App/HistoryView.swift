@@ -191,15 +191,33 @@ struct MatchHistoryRow: View {
         record.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")
     }
 
+    /// Combines a team's representative name with its partner's, when
+    /// present, using the same "%1$@ & %2$@" format the Game screen uses.
+    private func teamLabel(name: String, partnerName: String?) -> String {
+        guard let partnerName else { return name }
+        return String(format: NSLocalizedString("game.team_names_format", comment: ""), name, Player.displayName(for: partnerName))
+    }
+
+    private var myLabel: String {
+        teamLabel(name: record.myName.isEmpty ? Player.defaultMyName : Player.displayName(for: record.myName),
+                  partnerName: record.myPartnerName)
+    }
+
+    private var opponentLabel: String {
+        let fallback = NSLocalizedString("history.opponent_fallback", comment: "")
+        let name = record.opponentName.isEmpty ? fallback : Player.displayName(for: record.opponentName)
+        return teamLabel(name: name, partnerName: record.opponentPartnerName)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Head-to-head score line
             HStack(alignment: .center, spacing: 0) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(record.myName.isEmpty ? Player.defaultMyName : Player.displayName(for: record.myName))
+                    Text(myLabel)
                         .font(.system(size: 12, weight: iWon ? .bold : .regular))
                         .lineLimit(1)
-                    Text(record.opponentName.isEmpty ? NSLocalizedString("history.opponent_fallback", comment: "") : Player.displayName(for: record.opponentName))
+                    Text(opponentLabel)
                         .font(.system(size: 12, weight: iWon ? .regular : .bold))
                         .lineLimit(1)
                 }

@@ -50,7 +50,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 
 ### Match History
 - Lists all completed matches in reverse chronological order
-- Each row: player names, games won, per-game scores, date, duration
+- Each row: player names (Doubles rows show both partners as "Name & Partner"), games won, per-game scores, date, duration
 - Swipe to delete individual records
 - "Clear All" button with confirmation
 - **Filter by player** — picker to show only matches involving a specific player (hidden if only one player in history)
@@ -60,6 +60,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - Win rate, total matches, win/loss streak per player
 - Filtered to the configured "Me" player
 - **Head-to-Head** section listing W–L record against each opponent in history
+- Doubles matches count for both partners individually — each partner appears as their own selectable player and as their own head-to-head opponent entry (a teammate is never counted as an opponent)
 
 ### Pre-Match (opponent picker)
 - Roster rows show H2H record (`XW – YL`) against the near-side player when picking an opponent; hidden if no prior matches exist
@@ -67,7 +68,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 ### Settings
 - **Me** section — single tappable row showing avatar + name; opens Player Edit
 - **Players** section — roster list; tap to edit, swipe to delete
-- **Game Mode** — Singles / Doubles; Doubles switches Pre-Match to the 4-player flow and the Game screen to two-name team tiles. Match History and Player Stats still display only the representative near/far names — see #8
+- **Game Mode** — Singles / Doubles; Doubles switches Pre-Match to the 4-player flow, the Game screen to two-name team tiles, and Match History rows to "Name & Partner" per team
 - **Match Format** — Points to win (11 / 15 / 21), Games in match (1 / 3 / 5)
 - **Match Timer** — toggle on/off; when enabled, duration stepper (±1 min, ±5 min buttons; min 1, max 99, default 10)
 - **Court Theme** — Green / Blue / Red / Purple / Black
@@ -118,7 +119,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 
 ## Match History Storage
 
-- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`, `myPartnerName: String?`, `opponentPartnerName: String?`, `myPartnerPlayerId: UUID?`, `opponentPartnerPlayerId: UUID?`. The four partner fields are populated for Doubles matches (`nil` for Singles) — Match History and Player Stats screens don't yet render them, only the live Game screen and roster does (see #8)
+- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`, `myPartnerName: String?`, `opponentPartnerName: String?`, `myPartnerPlayerId: UUID?`, `opponentPartnerPlayerId: UUID?`. The four partner fields are populated for Doubles matches (`nil` for Singles) and rendered by the Game screen, roster, Match History, and Player Stats screens
 - Player IDs are stored at match-save time by looking up names in the current roster
 - Old records without IDs fall back to stored name strings
 - When a player is renamed, all history records referencing their ID are updated
