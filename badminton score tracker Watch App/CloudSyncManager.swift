@@ -1,6 +1,23 @@
 import Foundation
 import Combine
+import SwiftUI
+import os
 import BadmintonCore
+
+/// Non-blocking status surfaced when the iCloud KV store is close to (or has
+/// hit) its ~1 MB quota. This is a stopgap ahead of Phase 4's CloudKit
+/// migration (#109), not a full replacement for it.
+enum CloudSyncWarning {
+    case approachingLimit
+    case quotaExceeded
+
+    var messageKey: LocalizedStringKey {
+        switch self {
+        case .approachingLimit: LocalizedStringKey("settings.icloud_quota_warning")
+        case .quotaExceeded: LocalizedStringKey("settings.icloud_quota_exceeded")
+        }
+    }
+}
 
 // Keys synced to iCloud key-value store. The key strings themselves live in
 // BadmintonCore.AppStorageKeys; this list selects WHICH of them sync
@@ -31,6 +48,12 @@ final class CloudSyncManager: ObservableObject {
 
     private let kvStore = NSUbiquitousKeyValueStore.default
     private var cancellables = Set<AnyCancellable>()
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "badminton-score-tracker", category: "CloudSync")
+
+    /// Set from `syncHistory()` (recomputed on every push/pull) and escalated
+    /// by `externalChange(_:)` on an actual quota violation. `SettingsView`
+    /// observes this to show a passive, non-blocking warning.
+    @Published private(set) var syncWarning: CloudSyncWarning?
 
     private init() {}
 
@@ -82,7 +105,12 @@ final class CloudSyncManager: ObservableObject {
 
     @objc private func externalChange(_ notification: Notification) {
         guard let reason = notification.userInfo?[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int else { return }
-        // Only pull on server change or initial sync — not on quota exceeded
+        if reason == NSUbiquitousKeyValueStoreQuotaViolationChange {
+            syncWarning = .quotaExceeded
+            logger.error("iCloud KV store quota exceeded — sync has stopped for at least one key")
+            return
+        }
+        // Only pull on server change or initial sync
         guard reason == NSUbiquitousKeyValueStoreServerChange ||
               reason == NSUbiquitousKeyValueStoreInitialSyncChange else { return }
 
@@ -119,5 +147,12 @@ final class CloudSyncManager: ObservableObject {
         guard let mergedData = PersistenceStore.encodeHistory(merged) else { return }
         if mergedData != localData { defaults.set(mergedData, forKey: SyncKeys.matchHistory) }
         if mergedData != cloudData { kvStore.set(mergedData, forKey: SyncKeys.matchHistory) }
+
+        if PersistenceStore.exceedsICloudQuotaWarningThreshold(mergedData) {
+            syncWarning = .approachingLimit
+            logger.warning("iCloud KV store approaching quota: \(mergedData.count) bytes")
+        } else {
+            syncWarning = nil
+        }
     }
 }

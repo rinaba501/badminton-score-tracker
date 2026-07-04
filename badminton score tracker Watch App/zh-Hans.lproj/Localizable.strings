@@ -34,6 +34,8 @@
 // Settings
 "settings.title" = "设置";
 "settings.back" = "返回";
+"settings.icloud_quota_warning" = "iCloud 同步存储空间即将用完，部分比赛记录可能很快无法同步。";
+"settings.icloud_quota_exceeded" = "iCloud 同步存储空间已满，此设备上的新比赛将无法同步，直到释放空间。";
 "settings.game_mode" = "比赛模式";
 "settings.mode" = "模式";
 "settings.singles" = "单打";

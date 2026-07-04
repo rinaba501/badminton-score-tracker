@@ -120,6 +120,7 @@ Two-step flow:
 - Old records without IDs fall back to stored name strings
 - When a player is renamed, all history records referencing their ID are updated
 - iCloud sync reconciles history by record id (a new match recorded on either device survives a sync); deleting a match or clearing all history pushes as an authoritative overwrite instead, so the deletion isn't undone by a stale copy still on iCloud
+- If the iCloud key-value store's ~1 MB quota is approached or exceeded, a non-blocking warning banner appears at the top of Settings; an actual quota violation is also logged
 
 ---
 
@@ -176,7 +177,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 8 | Doubles support (2v2) |
 | 13 | Share match result — deferred until iPhone companion app exists |
 | 41 | iPhone companion app — Roadmap Phase 6 |
-| 87 | iCloud KV sync quota guard (merge-by-id already landed; quota warning remains) |
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
 
@@ -204,3 +204,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 107 | Schema versioning, tolerant decoding, migration hook (Roadmap Phase 3) | #114 |
 | 108 | Locale-independent player identity: guest tokens + stable "Me" id (Roadmap Phase 3) | #115 |
 | 110 | CI guardrails: localization key-sync, coverage, Complication build, deployment-target alignment (Roadmap guardrails track) | #116 |
+| 87 | iCloud KV sync quota guard: surface/log quota-exceeded, warn before the ~1 MB ceiling (merge-by-id landed earlier) | #117 |

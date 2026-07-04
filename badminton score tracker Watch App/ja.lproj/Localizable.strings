@@ -35,6 +35,8 @@
 // Settings
 "settings.title" = "設定";
 "settings.back" = "戻る";
+"settings.icloud_quota_warning" = "iCloud同期のストレージが残りわずかです。まもなく一部の試合が同期されなくなる可能性があります。";
+"settings.icloud_quota_exceeded" = "iCloud同期のストレージが上限に達しました。空き容量ができるまで、この端末の新しい試合は同期されません。";
 "settings.game_mode" = "ゲームモード";
 "settings.mode" = "モード";
 "settings.singles" = "シングルス";

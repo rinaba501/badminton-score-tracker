@@ -289,3 +289,21 @@ struct HistoryShrinkTests {
         #expect(!PersistenceStore.isHistoryShrink(from: [], to: []))
     }
 }
+
+struct ICloudQuotaTests {
+
+    @Test func smallDataDoesNotExceedThreshold() {
+        let data = Data(repeating: 0, count: 1_000)
+        #expect(!PersistenceStore.exceedsICloudQuotaWarningThreshold(data))
+    }
+
+    @Test func dataPastThresholdExceedsIt() {
+        let data = Data(repeating: 0, count: PersistenceStore.iCloudQuotaWarningThresholdBytes + 1)
+        #expect(PersistenceStore.exceedsICloudQuotaWarningThreshold(data))
+    }
+
+    @Test func dataExactlyAtThresholdDoesNotExceedIt() {
+        let data = Data(repeating: 0, count: PersistenceStore.iCloudQuotaWarningThresholdBytes)
+        #expect(!PersistenceStore.exceedsICloudQuotaWarningThreshold(data))
+    }
+}
