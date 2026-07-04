@@ -40,8 +40,8 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - **Tap** top/bottom half to score for that player (or team, in Doubles)
 - **Undo** button (inline in header) — reverts last point; disabled during game-over overlay
 - **Digital Crown** — rotate to score (clockwise = me, counter-clockwise = opponent)
-- **Serve indicator** — small dot next to the serving player's name; side (left/right) reflects service court (even score = right, odd = left). In Doubles, the dot moves to whichever partner is currently up to serve/receive, per the real doubles rotation rule: a team's two partners swap right/left court occupancy only when that team wins a rally while already serving; a side-out never moves either team's partners
-- **Doubles team tiles** — each team's tile shows both partners stacked, with the active (serving/receiving) partner highlighted and the other dimmed
+- **Serve indicator** — small dot next to the serving player's name (Singles only); side (left/right) reflects service court (even score = right, odd = left); hidden at 0-0
+- **Doubles team tiles** — each team's tile shows both partner names stacked with equal weight; the serve indicator stays team-level (tile border highlight + right/left court label), same as it is for Singles alongside the dot. The app does not track or display which specific partner is currently serving
 - **Game-point / Match-point banner** — red banner at top when either side is one point from winning
 - **Score pulse animation** — score number pulses on each point
 - **Winner glow** — winning player's avatar turns gold when game ends

@@ -165,7 +165,6 @@ struct GameView: View {
             score: viewModel.match.opponentScore,
             isServing: serveKnown && viewModel.match.servingSide == .opponent,
             serveRight: viewModel.match.serveFromRightCourt,
-            activePartnerIsSecondary: viewModel.match.currentPartnerIndex(for: .opponent) == 1,
             isWinner: viewModel.match.gameWinner == .opponent,
             avatarColor: avatarColor(for: viewModel.effectiveOpponentName),
             avatarIcon: avatarIcon(for: viewModel.effectiveOpponentName),
@@ -180,7 +179,6 @@ struct GameView: View {
             score: viewModel.match.myScore,
             isServing: serveKnown && viewModel.match.servingSide == .me,
             serveRight: viewModel.match.serveFromRightCourt,
-            activePartnerIsSecondary: viewModel.match.currentPartnerIndex(for: .me) == 1,
             isWinner: viewModel.match.gameWinner == .me,
             avatarColor: avatarColor(for: viewModel.effectiveMyName),
             avatarIcon: avatarIcon(for: viewModel.effectiveMyName),
@@ -344,7 +342,6 @@ struct ScoreView: View {
     let score: Int
     let isServing: Bool
     let serveRight: Bool
-    var activePartnerIsSecondary: Bool = false
     let isWinner: Bool
     let avatarColor: Color
     var avatarIcon: String? = nil
@@ -352,8 +349,6 @@ struct ScoreView: View {
 
     @State private var scorePulse = false
     @State private var winnerGlow = false
-
-    private var isDoubles: Bool { partnerName != nil }
 
     /// Combined team name for accessibility/announcements — "Alice" for
     /// singles, "Alice & Bob" (localized) for doubles.
@@ -382,17 +377,17 @@ struct ScoreView: View {
     }
 
     @ViewBuilder
-    private func nameRow(_ label: String, isActive: Bool) -> some View {
+    private func nameRow(_ label: String, showDot: Bool) -> some View {
         HStack(spacing: 4) {
-            if isActive && isServing {
+            if showDot {
                 Image(systemName: "circle.fill")
                     .font(.system(size: 7))
                     .foregroundColor(.yellow)
             }
             Text(label)
                 .font(.caption2)
-                .fontWeight(isActive ? .medium : .regular)
-                .foregroundColor(isActive ? .white : .white.opacity(0.6))
+                .fontWeight(.medium)
+                .foregroundColor(.white)
                 .lineLimit(1)
         }
     }
@@ -403,9 +398,9 @@ struct ScoreView: View {
                 HStack(spacing: 4) {
                     AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20, iconName: avatarIcon)
                     VStack(alignment: .leading, spacing: 1) {
-                        nameRow(name, isActive: !isDoubles || !activePartnerIsSecondary)
+                        nameRow(name, showDot: isServing && partnerName == nil)
                         if let partnerName {
-                            nameRow(partnerName, isActive: activePartnerIsSecondary)
+                            nameRow(partnerName, showDot: false)
                         }
                     }
                 }
