@@ -112,11 +112,11 @@ struct GameView: View {
     }
 
     private func winsMatchText(_ side: Side) -> String {
-        String(format: NSLocalizedString("game.wins_match", comment: ""), viewModel.name(for: side))
+        String(format: NSLocalizedString("game.wins_match", comment: ""), Player.displayName(for: viewModel.name(for: side)))
     }
 
     private func winsGameText(_ side: Side) -> String {
-        String(format: NSLocalizedString("game.wins_game", comment: ""), viewModel.name(for: side))
+        String(format: NSLocalizedString("game.wins_game", comment: ""), Player.displayName(for: viewModel.name(for: side)))
     }
 
     // MARK: - Sub-views
@@ -160,7 +160,7 @@ struct GameView: View {
 
     private var opponentTile: some View {
         ScoreView(
-            name: viewModel.effectiveOpponentName,
+            name: Player.displayName(for: viewModel.effectiveOpponentName),
             score: viewModel.match.opponentScore,
             isServing: serveKnown && viewModel.match.servingSide == .opponent,
             serveRight: viewModel.match.serveFromRightCourt,
@@ -173,7 +173,7 @@ struct GameView: View {
 
     private var myTile: some View {
         ScoreView(
-            name: viewModel.effectiveMyName,
+            name: Player.displayName(for: viewModel.effectiveMyName),
             score: viewModel.match.myScore,
             isServing: serveKnown && viewModel.match.servingSide == .me,
             serveRight: viewModel.match.serveFromRightCourt,

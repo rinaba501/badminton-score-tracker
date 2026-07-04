@@ -62,10 +62,33 @@ extension Player {
     public static var guestNearLabel: String { NSLocalizedString("prematch.guest_near", comment: "") }
     public static var guestFarLabel: String { NSLocalizedString("prematch.guest_far", comment: "") }
 
-    /// True for either guest sentinel label offered during player selection.
-    /// Guests are intentionally never persisted to the roster.
+    // Locale-independent identity tokens — what's actually stored in
+    // matchMyName/matchOpponentName and MatchRecord.myName/opponentName for a
+    // guest selection, instead of the localized label. Because these are
+    // fixed literals (never run through NSLocalizedString), guest identity no
+    // longer depends on which locale was active when the record was saved or
+    // is later read. `guestNearLabel`/`guestFarLabel` remain display-only —
+    // use `displayName(for:)` to turn a stored value back into display text.
+    public static let guestNearToken = "@@guest_near@@"
+    public static let guestFarToken = "@@guest_far@@"
+
+    /// True for a guest identity token, or (for records saved before the
+    /// tokens existed) either localized guest label under the *current*
+    /// locale. Guests are intentionally never persisted to the roster.
     public static func isGuestName(_ name: String) -> Bool {
-        name == guestNearLabel || name == guestFarLabel
+        name == guestNearToken || name == guestFarToken || name == guestNearLabel || name == guestFarLabel
+    }
+
+    /// Maps a stored identity value back to what should be shown to the
+    /// user: a guest token resolves to the current locale's guest label;
+    /// anything else (a real name, or a legacy pre-token guest label) passes
+    /// through unchanged.
+    public static func displayName(for storedName: String) -> String {
+        switch storedName {
+        case guestNearToken: return guestNearLabel
+        case guestFarToken: return guestFarLabel
+        default: return storedName
+        }
     }
 
     /// Returns whether a name should be persisted as a saved roster player.

@@ -73,17 +73,17 @@ struct StatsView: View {
                         Picker("stats.player", selection: $selectedPlayer) {
                             ForEach(allPlayers, id: \.self) { name in
                                 if name == myName {
-                                    Label(name, systemImage: "person.fill")
+                                    Label(Player.displayName(for: name), systemImage: "person.fill")
                                         .tag(name)
                                 } else {
-                                    Text(name).tag(name)
+                                    Text(Player.displayName(for: name)).tag(name)
                                 }
                             }
                         }
                     }
                 }
 
-                Section(header: Text(activePlayer)) {
+                Section(header: Text(Player.displayName(for: activePlayer))) {
                     StatRow(label: NSLocalizedString("stats.matches", comment: ""), value: "\(totalMatches)")
                     StatRow(label: NSLocalizedString("stats.wins", comment: ""), value: "\(wins)")
                     StatRow(label: NSLocalizedString("stats.losses", comment: ""), value: "\(losses)")
@@ -99,7 +99,7 @@ struct StatsView: View {
                     Section(header: Text("stats.head_to_head")) {
                         ForEach(opponents, id: \.self) { opp in
                             let record = StatsCalculator.headToHead(player: activePlayer, opponent: opp, history: history, roster: roster)
-                            StatRow(label: opp, value: "\(record.wins)W – \(record.losses)L")
+                            StatRow(label: Player.displayName(for: opp), value: "\(record.wins)W – \(record.losses)L")
                         }
                     }
                 }

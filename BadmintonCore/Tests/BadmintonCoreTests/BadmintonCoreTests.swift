@@ -192,6 +192,26 @@ struct PlayerIdentityTests {
         // guest" from a picker would also exclude the current side's guest.
         #expect(Player.guestNearLabel != Player.guestFarLabel)
     }
+
+    @Test func guestTokensAreRecognizedAsGuestsIndependentOfLocale() {
+        // Unlike the legacy localized labels, these are fixed literals never
+        // routed through NSLocalizedString — so the check can't depend on
+        // which locale happens to be active.
+        #expect(Player.isGuestName(Player.guestNearToken))
+        #expect(Player.isGuestName(Player.guestFarToken))
+        #expect(Player.guestNearToken != Player.guestFarToken)
+        #expect(!Player.shouldBeStoredAsSavedPlayer(Player.guestNearToken, currentUserName: Player.defaultMyName))
+        #expect(!Player.shouldBeStoredAsSavedPlayer(Player.guestFarToken, currentUserName: Player.defaultMyName))
+    }
+
+    @Test func displayNameMapsGuestTokensToLabels() {
+        #expect(Player.displayName(for: Player.guestNearToken) == Player.guestNearLabel)
+        #expect(Player.displayName(for: Player.guestFarToken) == Player.guestFarLabel)
+        #expect(Player.displayName(for: "Alice") == "Alice")
+        // Legacy pre-token guest labels pass through unchanged too — they
+        // already *are* display text.
+        #expect(Player.displayName(for: Player.guestNearLabel) == Player.guestNearLabel)
+    }
 }
 
 struct PlayerSortingTests {

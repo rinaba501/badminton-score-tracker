@@ -47,7 +47,7 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
-    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, excluding: String? = nil, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: String? = nil, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let filteredRoster = Player.sortedPlayers(
             roster.filter { player in
                 player.name != myName && player.name != excluding
@@ -66,7 +66,7 @@ struct PreMatchView: View {
                         }
                     }
                 }
-                Button(action: { onSelect(guestLabel) }) {
+                Button(action: { onSelect(guestToken) }) {
                     HStack {
                         AvatarView(name: guestLabel, color: .gray, size: 24)
                         Text(guestLabel)
@@ -204,7 +204,7 @@ struct PreMatchView: View {
     var body: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: Player.guestNearLabel) { name in
+            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken) { name in
                 matchMyName = name
                 step = .pickOpponent
             }
@@ -217,7 +217,7 @@ struct PreMatchView: View {
 
         case .pickOpponent:
             let nearName = matchMyName.isEmpty ? myName : matchMyName
-            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, excluding: nearName, h2hAgainst: nearName) { name in
+            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken, excluding: nearName, h2hAgainst: nearName) { name in
                 matchOpponentName = name
                 currentView = .game
             }

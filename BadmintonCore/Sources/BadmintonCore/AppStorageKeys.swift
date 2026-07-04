@@ -29,4 +29,5 @@ public enum AppStorageKeys {
     public static let timeModeEnabled = "timeModeEnabled"
     public static let timeLimitMinutes = "timeLimitMinutes"
     public static let gameMode = "gameMode"
+    public static let localPlayerId = "localPlayerId"
 }
