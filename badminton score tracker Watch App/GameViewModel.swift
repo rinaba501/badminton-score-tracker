@@ -63,8 +63,11 @@ final class GameViewModel: ObservableObject {
 
     var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
     // Defensive fallback for the (practically unreachable) case where GameView
-    // appears with no opponent selected.
-    var effectiveOpponentName: String { matchOpponentName.isEmpty ? Player.guestFarLabel : matchOpponentName }
+    // appears with no opponent selected. Falls back to the guest *token*, not
+    // guestFarLabel — this value can be persisted into MatchRecord.opponentName,
+    // and storing a localized label there would make the same guest compare as
+    // a different identity depending on the device's locale at save time.
+    var effectiveOpponentName: String { matchOpponentName.isEmpty ? Player.guestFarToken : matchOpponentName }
 
     // Guarded by `gameMode` (not just non-empty) so a stale partner name left
     // over from a previous doubles match is ignored the moment the user is

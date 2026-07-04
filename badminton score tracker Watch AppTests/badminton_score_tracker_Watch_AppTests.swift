@@ -137,4 +137,22 @@ struct GameViewModelTests {
         #expect(AppStore.shared.history.last?.opponentPlayerId == nil)
         #expect(AppStore.shared.history.last?.opponentName == Player.guestFarToken)
     }
+
+    @Test func saveMatchStoresGuestTokenNotLocalizedLabelWhenOpponentNameIsUnset() {
+        // Reproduces the reported bug: with matchOpponentName left at its
+        // empty @AppStorage default, the saved record's opponentName must be
+        // the locale-independent guestFarToken, never guestFarLabel — storing
+        // the localized label would make the same guest compare as a
+        // different identity depending on the device's locale at save time.
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: AppStorageKeys.matchOpponentName)
+
+        let vm = GameViewModel(hapticsProvider: NoOpHapticsProvider())
+        #expect(vm.effectiveOpponentName == Player.guestFarToken)
+        for _ in 0..<21 { vm.tap(.me) }
+        vm.startNextGame()
+        for _ in 0..<21 { vm.tap(.me) }
+
+        #expect(AppStore.shared.history.last?.opponentName == Player.guestFarToken)
+    }
 }
