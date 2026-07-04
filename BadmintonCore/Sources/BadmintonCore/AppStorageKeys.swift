@@ -17,6 +17,8 @@ public enum AppStorageKeys {
     public static let myName = "myName"
     public static let matchMyName = "matchMyName"
     public static let matchOpponentName = "matchOpponentName"
+    public static let matchMyPartnerName = "matchMyPartnerName"
+    public static let matchOpponentPartnerName = "matchOpponentPartnerName"
     public static let playerRoster = "playerRoster"
     public static let matchHistory = "matchHistory"
     public static let playerSortOrder = "playerSortOrder"
