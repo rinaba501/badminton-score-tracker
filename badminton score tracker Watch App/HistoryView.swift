@@ -2,8 +2,8 @@
 //  HistoryView.swift
 //  badminton score tracker Watch App
 //
-//  Saved match list with date-range and per-player filtering, plus
-//  swipe-to-delete and clear-all.
+//  Saved match list with date-range and per-player filtering, date
+//  sort order, plus swipe-to-delete and clear-all.
 //
 
 import SwiftUI
@@ -16,9 +16,11 @@ struct HistoryView: View {
     @State private var showingFilters = false
     @State private var selectedPlayer: String = ""
     @State private var dateRange: DateRange = .all
+    @State private var newestFirst = true
+    @State private var matchType: StatsCalculator.MatchTypeFilter = .all
 
     enum DateRange: String, CaseIterable {
-        case all, week, month
+        case week, month, all
         var label: String {
             switch self {
             case .all:   return NSLocalizedString("history.filter_all", comment: "")
@@ -34,6 +36,28 @@ struct HistoryView: View {
         StatsCalculator.participants(history: history)
     }
 
+    /// The match-type row only makes sense to show once history actually
+    /// contains a mix of Singles and Doubles matches.
+    private var hasMixedMatchTypes: Bool {
+        history.contains { $0.isDoubles } && history.contains { !$0.isDoubles }
+    }
+
+    private func matchTypeLabel(_ type: StatsCalculator.MatchTypeFilter) -> String {
+        switch type {
+        case .all:     return NSLocalizedString("history.filter_all_types", comment: "")
+        case .singles: return NSLocalizedString("settings.singles", comment: "")
+        case .doubles: return NSLocalizedString("settings.doubles", comment: "")
+        }
+    }
+
+    private var sortLabel: String {
+        newestFirst ? NSLocalizedString("history.sort_newest", comment: "") : NSLocalizedString("history.sort_oldest", comment: "")
+    }
+
+    private var playerFilterLabel: String {
+        selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : Player.displayName(for: selectedPlayer)
+    }
+
     private var filteredHistory: [MatchRecord] {
         let cutoff: Date? = {
             switch dateRange {
@@ -42,7 +66,8 @@ struct HistoryView: View {
             case .month: return Calendar.current.date(byAdding: .month, value: -1, to: Date())
             }
         }()
-        return StatsCalculator.filteredHistory(history, selectedPlayer: selectedPlayer, cutoff: cutoff)
+        return StatsCalculator.filteredHistory(history, selectedPlayer: selectedPlayer, cutoff: cutoff,
+                                               newestFirst: newestFirst, matchType: matchType)
     }
 
     private func save(_ records: [MatchRecord]) {
@@ -82,20 +107,33 @@ struct HistoryView: View {
                             }
                         }
 
-                        if allPlayers.count > 1 {
-                            Button(action: { showingFilters = true }) {
+                        if hasMixedMatchTypes {
+                            HStack(spacing: 4) {
+                                ForEach(StatsCalculator.MatchTypeFilter.allCases, id: \.self) { type in
+                                    Button(action: { matchType = type }) {
+                                        Text(matchTypeLabel(type))
+                                            .font(.system(size: 11, weight: matchType == type ? .semibold : .regular))
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 4)
+                                            .background(matchType == type ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
+                                            .foregroundColor(matchType == type ? .yellow : .primary)
+                                            .cornerRadius(6)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+
+                        HStack(spacing: 4) {
+                            Button(action: { newestFirst.toggle() }) {
                                 HStack(spacing: 4) {
-                                    Image(systemName: "person")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
-                                    Text(selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : Player.displayName(for: selectedPlayer))
-                                        .font(.system(size: 11))
-                                        .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
-                                        .lineLimit(1)
-                                    Spacer()
-                                    Image(systemName: "chevron.up.chevron.down")
+                                    Image(systemName: newestFirst ? "arrow.down" : "arrow.up")
                                         .font(.system(size: 10))
                                         .foregroundColor(.secondary)
+                                    Text(sortLabel)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
@@ -103,6 +141,31 @@ struct HistoryView: View {
                                 .cornerRadius(6)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.history_sort_toggle", comment: ""), sortLabel)))
+                            .accessibilityHint(Text("a11y.history_sort_hint"))
+
+                            if allPlayers.count > 1 {
+                                Button(action: { showingFilters = true }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "person")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                        Text(playerFilterLabel)
+                                            .font(.system(size: 11))
+                                            .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                            .lineLimit(1)
+                                        Spacer()
+                                        Image(systemName: "chevron.up.chevron.down")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 4)
+                                    .background(Color.secondary.opacity(0.15))
+                                    .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
                 }
@@ -150,7 +213,7 @@ struct HistoryView: View {
         .sheet(isPresented: $showingFilters) {
             List {
                 Section(header: Text("history.filter_player")) {
-                    Button(action: { selectedPlayer = "" }) {
+                    Button(action: { selectedPlayer = ""; showingFilters = false }) {
                         HStack {
                             Text("history.filter_all_players")
                             Spacer()
@@ -160,7 +223,7 @@ struct HistoryView: View {
                         }
                     }
                     ForEach(allPlayers, id: \.self) { name in
-                        Button(action: { selectedPlayer = name }) {
+                        Button(action: { selectedPlayer = name; showingFilters = false }) {
                             HStack {
                                 Text(Player.displayName(for: name))
                                 Spacer()

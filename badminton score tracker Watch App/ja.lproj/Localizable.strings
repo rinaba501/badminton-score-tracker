@@ -97,6 +97,9 @@
 "history.filter_week" = "今週";
 "history.filter_month" = "今月";
 "history.clear_all" = "すべて削除";
+"history.sort_newest" = "新しい順";
+"history.sort_oldest" = "古い順";
+"history.filter_all_types" = "すべて";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@、%2$d点";
@@ -105,6 +108,8 @@
 "a11y.undo" = "最後の得点を取り消す";
 "a11y.games_won" = "取得ゲーム、%1$d対%2$d";
 "a11y.timer_remaining" = "残り時間、%@";
+"a11y.history_sort_toggle" = "並び替え: %@";
+"a11y.history_sort_hint" = "ダブルタップで並び順を変更";
 
 // UI labels
 "stats.title" = "統計";

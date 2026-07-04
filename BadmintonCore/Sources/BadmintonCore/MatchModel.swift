@@ -215,6 +215,10 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
     public var myPartnerPlayerId: UUID?
     public var opponentPartnerPlayerId: UUID?
 
+    /// True when either partner field is populated — the single home of the
+    /// "is this record a Doubles match" check (see the comment above).
+    public var isDoubles: Bool { myPartnerName != nil || opponentPartnerName != nil }
+
     public init(id: UUID = UUID(),
                 games: [GameScore],
                 myGamesWon: Int,

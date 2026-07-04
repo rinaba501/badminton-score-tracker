@@ -96,6 +96,9 @@
 "history.filter_week" = "This Week";
 "history.filter_month" = "This Month";
 "history.clear_all" = "Clear All";
+"history.sort_newest" = "Newest";
+"history.sort_oldest" = "Oldest";
+"history.filter_all_types" = "All";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@, %2$d points";
@@ -104,6 +107,8 @@
 "a11y.undo" = "Undo last point";
 "a11y.games_won" = "Games won, %1$d to %2$d";
 "a11y.timer_remaining" = "Time remaining, %@";
+"a11y.history_sort_toggle" = "Sort: %@";
+"a11y.history_sort_hint" = "Double tap to change sort order";
 
 // UI labels
 "stats.title" = "Stats";

@@ -158,6 +158,10 @@ struct StatsCalculatorTests {
         let recentOnly = StatsCalculator.filteredHistory(
             history, selectedPlayer: "", cutoff: Date(timeIntervalSince1970: 2_000))
         #expect(recentOnly.map(\.id) == [recent.id])
+
+        let oldestFirst = StatsCalculator.filteredHistory(
+            history, selectedPlayer: "", cutoff: nil, newestFirst: false)
+        #expect(oldestFirst.map(\.id) == [old.id, recent.id])
     }
 
     @Test func durationStringFormatsMinutesAndSeconds() {
@@ -241,5 +245,29 @@ struct StatsCalculatorDoublesTests {
         #expect(StatsCalculator.playerHistory(history, player: "Alice").count == 1)
         #expect(StatsCalculator.opponents(of: "Alice", playerHistory: history) == ["Bob"])
         #expect(StatsCalculator.wins(player: "Alice", playerHistory: history) == 1)
+    }
+
+    @Test func isDoublesIsTrueOnlyWhenAPartnerFieldIsSet() {
+        let doubles = doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")
+        let singles = MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
+                                  winner: "Alice", myName: "Alice", opponentName: "Bob", date: Date())
+        #expect(doubles.isDoubles)
+        #expect(!singles.isDoubles)
+    }
+
+    @Test func filteredHistoryAppliesMatchTypeFilter() {
+        let doubles = doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")
+        let singles = MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
+                                  winner: "Alice", myName: "Alice", opponentName: "Bob", date: Date())
+        let history = [singles, doubles]
+
+        let doublesOnly = StatsCalculator.filteredHistory(history, selectedPlayer: "", cutoff: nil, matchType: .doubles)
+        #expect(doublesOnly.map(\.id) == [doubles.id])
+
+        let singlesOnly = StatsCalculator.filteredHistory(history, selectedPlayer: "", cutoff: nil, matchType: .singles)
+        #expect(singlesOnly.map(\.id) == [singles.id])
+
+        let all = StatsCalculator.filteredHistory(history, selectedPlayer: "", cutoff: nil, matchType: .all)
+        #expect(all.count == 2)
     }
 }

@@ -96,6 +96,9 @@
 "history.filter_week" = "इस सप्ताह";
 "history.filter_month" = "इस महीने";
 "history.clear_all" = "सब हटाएं";
+"history.sort_newest" = "नवीनतम";
+"history.sort_oldest" = "सबसे पुराना";
+"history.filter_all_types" = "सभी";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@, %2$d अंक";
@@ -104,6 +107,8 @@
 "a11y.undo" = "अंतिम अंक पूर्ववत करें";
 "a11y.games_won" = "जीते गए गेम, %1$d बनाम %2$d";
 "a11y.timer_remaining" = "शेष समय, %@";
+"a11y.history_sort_toggle" = "क्रम: %@";
+"a11y.history_sort_hint" = "क्रम बदलने के लिए डबल टैप करें";
 
 // UI labels
 "stats.title" = "आँकड़े";
