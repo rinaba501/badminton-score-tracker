@@ -210,17 +210,18 @@ public enum StatsCalculator {
 
     /// HistoryView semantics: newest first by default (reversed stored
     /// order), or oldest first (stored order) when `newestFirst` is false;
-    /// keeping records that involve `selectedPlayer` ("" = all players) on
-    /// either team, are on or after `cutoff` (nil = all time), and match
-    /// `matchType` (`.all` = no filtering). Computing the cutoff date from a
-    /// UI range selection stays in the view.
-    public static func filteredHistory(_ history: [MatchRecord], selectedPlayer: String, cutoff: Date?,
+    /// keeping records where every name in `selectedPlayers` participated
+    /// (on either team, in any combination — empty set = no filter), are on
+    /// or after `cutoff` (nil = all time), and match `matchType` (`.all` = no
+    /// filtering). Computing the cutoff date from a UI range selection stays
+    /// in the view.
+    public static func filteredHistory(_ history: [MatchRecord], selectedPlayers: Set<String>, cutoff: Date?,
                                        newestFirst: Bool = true,
                                        matchType: MatchTypeFilter = .all) -> [MatchRecord] {
         let ordered = newestFirst ? Array(history.reversed()) : history
         return ordered.filter { record in
-            let playerMatch = selectedPlayer.isEmpty ||
-                nearTeamNames(record).contains(selectedPlayer) || farTeamNames(record).contains(selectedPlayer)
+            let participants = Set(nearTeamNames(record) + farTeamNames(record))
+            let playerMatch = selectedPlayers.isSubset(of: participants)
             let dateMatch = cutoff.map { record.date >= $0 } ?? true
             let typeMatch: Bool
             switch matchType {

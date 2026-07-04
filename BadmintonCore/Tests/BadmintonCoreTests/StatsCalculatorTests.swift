@@ -149,19 +149,32 @@ struct StatsCalculatorTests {
                             date: Date(timeIntervalSince1970: 5_000))
         let history = [old, recent]
 
-        let all = StatsCalculator.filteredHistory(history, selectedPlayer: "", cutoff: nil)
+        let all = StatsCalculator.filteredHistory(history, selectedPlayers: [], cutoff: nil)
         #expect(all.map(\.id) == [recent.id, old.id])
 
-        let bobOnly = StatsCalculator.filteredHistory(history, selectedPlayer: "Bob", cutoff: nil)
+        let bobOnly = StatsCalculator.filteredHistory(history, selectedPlayers: ["Bob"], cutoff: nil)
         #expect(bobOnly.map(\.id) == [old.id])
 
         let recentOnly = StatsCalculator.filteredHistory(
-            history, selectedPlayer: "", cutoff: Date(timeIntervalSince1970: 2_000))
+            history, selectedPlayers: [], cutoff: Date(timeIntervalSince1970: 2_000))
         #expect(recentOnly.map(\.id) == [recent.id])
 
         let oldestFirst = StatsCalculator.filteredHistory(
-            history, selectedPlayer: "", cutoff: nil, newestFirst: false)
+            history, selectedPlayers: [], cutoff: nil, newestFirst: false)
         #expect(oldestFirst.map(\.id) == [old.id, recent.id])
+    }
+
+    @Test func filteredHistoryRequiresEveryNameInSelectedPlayersSet() {
+        let aliceVsBob = record(my: "Alice", opp: "Bob", winner: "Alice")
+        let aliceVsCara = record(my: "Alice", opp: "Cara", winner: "Alice")
+        let history = [aliceVsBob, aliceVsCara]
+
+        let bothPlayed = StatsCalculator.filteredHistory(history, selectedPlayers: ["Alice", "Bob"], cutoff: nil)
+        #expect(bothPlayed.map(\.id) == [aliceVsBob.id])
+
+        // Alice + Dan never played together — nothing should match.
+        let noMatch = StatsCalculator.filteredHistory(history, selectedPlayers: ["Alice", "Dan"], cutoff: nil)
+        #expect(noMatch.isEmpty)
     }
 
     @Test func durationStringFormatsMinutesAndSeconds() {
@@ -261,13 +274,13 @@ struct StatsCalculatorDoublesTests {
                                   winner: "Alice", myName: "Alice", opponentName: "Bob", date: Date())
         let history = [singles, doubles]
 
-        let doublesOnly = StatsCalculator.filteredHistory(history, selectedPlayer: "", cutoff: nil, matchType: .doubles)
+        let doublesOnly = StatsCalculator.filteredHistory(history, selectedPlayers: [], cutoff: nil, matchType: .doubles)
         #expect(doublesOnly.map(\.id) == [doubles.id])
 
-        let singlesOnly = StatsCalculator.filteredHistory(history, selectedPlayer: "", cutoff: nil, matchType: .singles)
+        let singlesOnly = StatsCalculator.filteredHistory(history, selectedPlayers: [], cutoff: nil, matchType: .singles)
         #expect(singlesOnly.map(\.id) == [singles.id])
 
-        let all = StatsCalculator.filteredHistory(history, selectedPlayer: "", cutoff: nil, matchType: .all)
+        let all = StatsCalculator.filteredHistory(history, selectedPlayers: [], cutoff: nil, matchType: .all)
         #expect(all.count == 2)
     }
 }

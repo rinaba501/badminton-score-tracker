@@ -91,6 +91,7 @@
 "settings.crown_scoring" = "クラウンでスコア";
 "settings.audio" = "オーディオ";
 "history.filter_player" = "プレイヤー";
+"history.filter_done" = "完了";
 "history.filter_all_players" = "全員";
 "history.filter_date" = "期間";
 "history.filter_all" = "全期間";

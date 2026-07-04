@@ -90,6 +90,7 @@
 "settings.crown_scoring" = "表冠得分";
 "settings.audio" = "音频";
 "history.filter_player" = "球员";
+"history.filter_done" = "完成";
 "history.filter_all_players" = "所有人";
 "history.filter_date" = "时间段";
 "history.filter_all" = "全部时间";
