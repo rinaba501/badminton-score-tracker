@@ -168,6 +168,8 @@ struct GameView: View {
             isWinner: viewModel.match.gameWinner == .opponent,
             avatarColor: avatarColor(for: viewModel.effectiveOpponentName),
             avatarIcon: avatarIcon(for: viewModel.effectiveOpponentName),
+            partnerAvatarColor: viewModel.partnerName(for: .opponent).map(avatarColor(for:)) ?? .gray,
+            partnerAvatarIcon: viewModel.partnerName(for: .opponent).flatMap(avatarIcon(for:)),
             onTap: { viewModel.tap(.opponent) }
         )
     }
@@ -182,6 +184,8 @@ struct GameView: View {
             isWinner: viewModel.match.gameWinner == .me,
             avatarColor: avatarColor(for: viewModel.effectiveMyName),
             avatarIcon: avatarIcon(for: viewModel.effectiveMyName),
+            partnerAvatarColor: viewModel.partnerName(for: .me).map(avatarColor(for:)) ?? .gray,
+            partnerAvatarIcon: viewModel.partnerName(for: .me).flatMap(avatarIcon(for:)),
             onTap: { viewModel.tap(.me) }
         )
     }
@@ -345,6 +349,8 @@ struct ScoreView: View {
     let isWinner: Bool
     let avatarColor: Color
     var avatarIcon: String? = nil
+    var partnerAvatarColor: Color = .gray
+    var partnerAvatarIcon: String?
     let onTap: () -> Void
 
     @State private var scorePulse = false
@@ -392,18 +398,33 @@ struct ScoreView: View {
         }
     }
 
+    @ViewBuilder
+    private func avatarNameRow(_ label: String, color: Color, icon: String?) -> some View {
+        HStack(spacing: 4) {
+            AvatarView(name: label, color: color, size: 16, iconName: icon)
+            nameRow(label, showDot: false)
+        }
+    }
+
+    @ViewBuilder
+    private var leadingContent: some View {
+        if let partnerName {
+            VStack(alignment: .leading, spacing: 1) {
+                avatarNameRow(name, color: isWinner ? .yellow : avatarColor, icon: avatarIcon)
+                avatarNameRow(partnerName, color: isWinner ? .yellow : partnerAvatarColor, icon: partnerAvatarIcon)
+            }
+        } else {
+            HStack(spacing: 4) {
+                AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20, iconName: avatarIcon)
+                nameRow(name, showDot: isServing)
+            }
+        }
+    }
+
     private var tileContent: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20, iconName: avatarIcon)
-                    VStack(alignment: .leading, spacing: 1) {
-                        nameRow(name, showDot: isServing && partnerName == nil)
-                        if let partnerName {
-                            nameRow(partnerName, showDot: false)
-                        }
-                    }
-                }
+                leadingContent
                 if isServing {
                     Text(serveRight ? "game.right_court" : "game.left_court")
                         .font(.system(size: 9))
