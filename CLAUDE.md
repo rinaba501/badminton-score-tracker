@@ -31,9 +31,9 @@ BadmintonCore/                 — local Swift package; platform-free core (no S
 badminton score tracker Watch App/
   ContentView.swift          — root view; owns only the AppView routing enum (.menu/.preMatch/.game/.settings/.history/.stats — state-driven, no top-level NavigationLink)
   MenuView.swift             — main menu
-  PreMatchView.swift         — two-step player selection
-  GameView.swift             — live scoring screen, layout only; all logic delegates to GameViewModel
-  GameViewModel.swift        — @MainActor ObservableObject; owns all live-game logic: scoring, undo, time mode, haptics, persistence, announcements
+  PreMatchView.swift         — player selection: 2 steps (Singles) or 4 steps (Doubles, reading SettingsView.GameMode)
+  GameView.swift             — live scoring screen, layout only; all logic delegates to GameViewModel. ScoreView renders one or two stacked names per team depending on whether a partner is present
+  GameViewModel.swift        — @MainActor ObservableObject; owns all live-game logic: scoring, undo, time mode, haptics, persistence, announcements, doubles partner names/rotation display
   HapticsProvider.swift      — HapticsProvider protocol + Watch/NoOp implementations (tests use NoOp)
   SettingsView.swift         — match format, audio, theme, timer, roster management
   HistoryView.swift          — saved match list + filters
@@ -97,6 +97,15 @@ A future session reading CLAUDE.md + SPEC.md should have a complete picture of t
 - Sentinel identity (guests, "Me") is never a hardcoded literal: store/compare via `Player.guestNearToken`/`.guestFarToken`/`.isGuestName(_:)`/`.defaultMyName`; display/speak via `Player.displayName(for:)`/`.guestNearLabel`/`.guestFarLabel`. Tokens are stored, labels are rendered at the last moment — that's what keeps guest detection locale-independent
 - Accessibility: custom/gesture controls need `accessibilityLabel`/`Hint` + traits; decorative imagery gets `accessibilityHidden(true)`; a11y strings are localized (`a11y.*` keys)
 - Persistence: read/write `[Player]`/`[MatchRecord]` only through `PersistenceStore` — never inline `JSONEncoder`/`JSONDecoder` in views
+
+## Token Economy
+
+CLAUDE.md is loaded into every session — keep it terse when the doc-update rules require touching it:
+
+- New entries here state *what exists, where it lives, and the hard rule* in one line. Deep rationale and design history go in doc comments at the top of the source file (loaded only when that file is read) or in `docs/`, never as paragraphs here
+- Never read `project.pbxproj` (~34KB) or all 6 `Localizable.strings` files wholesale — grep for the section/key you need and edit surgically
+- SPEC.md/ROADMAP.md/docs/ are read-on-demand: link to them, don't duplicate their content here
+- If SPEC.md's Closed Issues table grows long, prune old rows — git history keeps the record
 
 ## GitHub Repo
 

@@ -22,6 +22,7 @@
 "game.wins_game" = "%@ menang game!";
 "game.wins_match" = "%@ menang pertandingan!";
 "game.games_score" = "Game %@";
+"game.team_names_format" = "%1$@ & %2$@";
 
 // Speech
 "speech.wins_match" = "%@ menang pertandingan!";
@@ -136,6 +137,8 @@
 "settings.delete" = "Hapus";
 "prematch.near_side" = "Sisi Dekat";
 "prematch.far_side" = "Sisi Jauh";
+"prematch.near_partner" = "Pasangan Sisi Dekat";
+"prematch.far_partner" = "Pasangan Sisi Jauh";
 "prematch.saved" = "Tersimpan";
 "prematch.new_player" = "Pemain Baru";
 "prematch.add_new" = "Tambah Baru";

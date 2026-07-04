@@ -30,20 +30,23 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - Complication source in `badminton score tracker Complication/` — separate WidgetKit extension target
 
 ### Pre-Match
-Two-step flow:
+Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game Mode):
 1. **Near Side** — pick yourself or a roster player or a guest
-2. **Far Side** — pick opponent (excludes Near Side selection); selecting immediately starts the match
+2. **Near Partner** (Doubles only) — pick your teammate; excludes the Near Side pick
+3. **Far Side** — pick opponent; excludes everyone already picked on the near team
+4. **Far Partner** (Doubles only) — pick the opponent's teammate; excludes everyone already picked; selecting starts the match
 
 ### Game Screen
-- **Tap** top/bottom half to score for that player
+- **Tap** top/bottom half to score for that player (or team, in Doubles)
 - **Undo** button (inline in header) — reverts last point; disabled during game-over overlay
 - **Digital Crown** — rotate to score (clockwise = me, counter-clockwise = opponent)
-- **Serve indicator** — small dot next to serving player's name; side (left/right) reflects service court (even score = right, odd = left)
+- **Serve indicator** — small dot next to the serving player's name; side (left/right) reflects service court (even score = right, odd = left). In Doubles, the dot moves to whichever partner is currently up to serve/receive, per the real doubles rotation rule: a team's two partners swap right/left court occupancy only when that team wins a rally while already serving; a side-out never moves either team's partners
+- **Doubles team tiles** — each team's tile shows both partners stacked, with the active (serving/receiving) partner highlighted and the other dimmed
 - **Game-point / Match-point banner** — red banner at top when either side is one point from winning
 - **Score pulse animation** — score number pulses on each point
 - **Winner glow** — winning player's avatar turns gold when game ends
 - **Game-over overlay** — shows game result and "Next Game" button; serve auto-assigns to the game winner (correct badminton rules)
-- **Match-over overlay** — shows trophy, winner name, games score, "New Match" button
+- **Match-over overlay** — shows trophy, winner name (both partners' names in Doubles), games score, "New Match" button
 
 ### Match History
 - Lists all completed matches in reverse chronological order
@@ -64,7 +67,7 @@ Two-step flow:
 ### Settings
 - **Me** section — single tappable row showing avatar + name; opens Player Edit
 - **Players** section — roster list; tap to edit, swipe to delete
-- **Game Mode** — Singles / Doubles (Doubles UI not yet implemented)
+- **Game Mode** — Singles / Doubles; Doubles switches Pre-Match to the 4-player flow and the Game screen to two-name team tiles. Match History and Player Stats still display only the representative near/far names — see #8
 - **Match Format** — Points to win (11 / 15 / 21), Games in match (1 / 3 / 5)
 - **Match Timer** — toggle on/off; when enabled, duration stepper (±1 min, ±5 min buttons; min 1, max 99, default 10)
 - **Court Theme** — Green / Blue / Red / Purple / Black
@@ -115,7 +118,7 @@ Two-step flow:
 
 ## Match History Storage
 
-- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`, and (reserved for doubles, not yet surfaced in any screen — see #8) `myPartnerName: String?`, `opponentPartnerName: String?`, `myPartnerPlayerId: UUID?`, `opponentPartnerPlayerId: UUID?`
+- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`, `myPartnerName: String?`, `opponentPartnerName: String?`, `myPartnerPlayerId: UUID?`, `opponentPartnerPlayerId: UUID?`. The four partner fields are populated for Doubles matches (`nil` for Singles) — Match History and Player Stats screens don't yet render them, only the live Game screen and roster does (see #8)
 - Player IDs are stored at match-save time by looking up names in the current roster
 - Old records without IDs fall back to stored name strings
 - When a player is renamed, all history records referencing their ID are updated

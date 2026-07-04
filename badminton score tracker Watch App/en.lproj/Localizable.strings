@@ -22,6 +22,7 @@
 "game.wins_game" = "%@ wins the game!";
 "game.wins_match" = "%@ wins the match!";
 "game.games_score" = "Games %@";
+"game.team_names_format" = "%1$@ & %2$@";
 
 // Speech
 "speech.wins_match" = "%@ wins the match!";
@@ -136,6 +137,8 @@
 "settings.delete" = "Delete";
 "prematch.near_side" = "Near Side";
 "prematch.far_side" = "Far Side";
+"prematch.near_partner" = "Near Partner";
+"prematch.far_partner" = "Far Partner";
 "prematch.saved" = "Saved";
 "prematch.new_player" = "New Player";
 "prematch.add_new" = "Add New";

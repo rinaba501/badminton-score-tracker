@@ -15,6 +15,9 @@ struct PreMatchView: View {
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.matchMyName) private var matchMyName = ""
     @AppStorage(AppStorageKeys.matchOpponentName) private var matchOpponentName = ""
+    @AppStorage(AppStorageKeys.matchMyPartnerName) private var matchMyPartnerName = ""
+    @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
+    @AppStorage(AppStorageKeys.gameMode) private var gameMode: SettingsView.GameMode = .singles
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
 
     private var history: [MatchRecord] { appStore.history }
@@ -25,7 +28,9 @@ struct PreMatchView: View {
     @State private var newPlayerColorIndex = 0
     @State private var newPlayerIconName: String? = nil
 
-    enum Step { case pickMyPlayer, pickOpponent }
+    enum Step { case pickMyPlayer, pickMyPartner, pickOpponent, pickOpponentPartner }
+
+    private var isDoubles: Bool { gameMode == .doubles }
 
     private var roster: [Player] { appStore.roster }
 
@@ -47,10 +52,10 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
-    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: String? = nil, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: [String] = [], h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let filteredRoster = Player.sortedPlayers(
             roster.filter { player in
-                player.name != myName && player.name != excluding
+                player.name != myName && !excluding.contains(player.name)
             },
             order: playerSortOrder,
             history: history
@@ -202,11 +207,24 @@ struct PreMatchView: View {
     }
 
     var body: some View {
+        Group {
+            content
+        }
+        .onAppear {
+            if !isDoubles {
+                matchMyPartnerName = ""
+                matchOpponentPartnerName = ""
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch step {
         case .pickMyPlayer:
             playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken) { name in
                 matchMyName = name
-                step = .pickOpponent
+                step = isDoubles ? .pickMyPartner : .pickOpponent
             }
             .navigationTitle("prematch.title")
             .toolbar {
@@ -215,16 +233,47 @@ struct PreMatchView: View {
                 }
             }
 
-        case .pickOpponent:
-            let nearName = matchMyName.isEmpty ? myName : matchMyName
-            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken, excluding: nearName, h2hAgainst: nearName) { name in
-                matchOpponentName = name
-                currentView = .game
+        case .pickMyPartner:
+            playerPicker(title: NSLocalizedString("prematch.near_partner", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken, excluding: [matchMyName]) { name in
+                matchMyPartnerName = name
+                step = .pickOpponent
             }
             .navigationTitle("prematch.title")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("prematch.back") { step = .pickMyPlayer }
+                }
+            }
+
+        case .pickOpponent:
+            let nearName = matchMyName.isEmpty ? myName : matchMyName
+            let nearExclusions = [nearName, matchMyPartnerName].filter { !$0.isEmpty }
+            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken, excluding: nearExclusions, h2hAgainst: nearName) { name in
+                matchOpponentName = name
+                if isDoubles {
+                    step = .pickOpponentPartner
+                } else {
+                    currentView = .game
+                }
+            }
+            .navigationTitle("prematch.title")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("prematch.back") { step = isDoubles ? .pickMyPartner : .pickMyPlayer }
+                }
+            }
+
+        case .pickOpponentPartner:
+            let nearName = matchMyName.isEmpty ? myName : matchMyName
+            let exclusions = [nearName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }
+            playerPicker(title: NSLocalizedString("prematch.far_partner", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken, excluding: exclusions) { name in
+                matchOpponentPartnerName = name
+                currentView = .game
+            }
+            .navigationTitle("prematch.title")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("prematch.back") { step = .pickOpponent }
                 }
             }
         }

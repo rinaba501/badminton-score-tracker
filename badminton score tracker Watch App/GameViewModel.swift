@@ -30,6 +30,9 @@ final class GameViewModel: ObservableObject {
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.matchMyName) private var matchMyName = ""
     @AppStorage(AppStorageKeys.matchOpponentName) private var matchOpponentName = ""
+    @AppStorage(AppStorageKeys.matchMyPartnerName) private var matchMyPartnerName = ""
+    @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
+    @AppStorage(AppStorageKeys.gameMode) private var gameMode: SettingsView.GameMode = .singles
     @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
     @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
     @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
@@ -63,11 +66,25 @@ final class GameViewModel: ObservableObject {
     // appears with no opponent selected.
     var effectiveOpponentName: String { matchOpponentName.isEmpty ? Player.guestFarLabel : matchOpponentName }
 
+    // Guarded by `gameMode` (not just non-empty) so a stale partner name left
+    // over from a previous doubles match is ignored the moment the user is
+    // back in singles — matches the defensive clear in PreMatchView.onAppear.
+    var effectiveMyPartnerName: String? {
+        gameMode == .doubles && !matchMyPartnerName.isEmpty ? matchMyPartnerName : nil
+    }
+    var effectiveOpponentPartnerName: String? {
+        gameMode == .doubles && !matchOpponentPartnerName.isEmpty ? matchOpponentPartnerName : nil
+    }
+
     var timeExpiredWinner: Bool { timeModeWinner != nil }
     var isTimeModeEnabled: Bool { timeModeEnabled }
 
     func name(for side: Side) -> String {
         side == .me ? effectiveMyName : effectiveOpponentName
+    }
+
+    func partnerName(for side: Side) -> String? {
+        side == .me ? effectiveMyPartnerName : effectiveOpponentPartnerName
     }
 
     // MARK: - Scoring actions
@@ -157,6 +174,8 @@ final class GameViewModel: ObservableObject {
         savedCurrentMatch = true
         saveToRoster(effectiveOpponentName)
         saveToRoster(effectiveMyName)
+        if let partner = effectiveMyPartnerName { saveToRoster(partner) }
+        if let partner = effectiveOpponentPartnerName { saveToRoster(partner) }
         let currentRoster = appStore.roster
         var games = match.completedGames
         if timeModeEnabled && match.matchWinner == nil && (match.myScore > 0 || match.opponentScore > 0) {
@@ -173,7 +192,11 @@ final class GameViewModel: ObservableObject {
             date: Date(),
             duration: Date().timeIntervalSince(matchStartDate),
             myPlayerId: resolvedPlayerId(for: effectiveMyName, isNearSide: true, roster: currentRoster),
-            opponentPlayerId: resolvedPlayerId(for: effectiveOpponentName, isNearSide: false, roster: currentRoster)
+            opponentPlayerId: resolvedPlayerId(for: effectiveOpponentName, isNearSide: false, roster: currentRoster),
+            myPartnerName: effectiveMyPartnerName,
+            opponentPartnerName: effectiveOpponentPartnerName,
+            myPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveMyPartnerName, roster: currentRoster),
+            opponentPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveOpponentPartnerName, roster: currentRoster)
         ))
         appStore.saveHistory(newHistory)
         Task { await workoutManager.endWorkout() }
@@ -260,11 +283,19 @@ final class GameViewModel: ObservableObject {
     private func announceCurrentScore() {
         let text = ScoreCallFormatter.format(
             match: match,
-            myName: Player.displayName(for: effectiveMyName),
-            opponentName: Player.displayName(for: effectiveOpponentName),
+            myName: teamDisplayName(for: .me),
+            opponentName: teamDisplayName(for: .opponent),
             locale: .current
         )
         speak(text)
+    }
+
+    /// "Alice" for singles, "Alice & Bob" (localized) for doubles — used
+    /// anywhere a team's full spoken/displayed name is needed as one string.
+    func teamDisplayName(for side: Side) -> String {
+        let primary = Player.displayName(for: name(for: side))
+        guard let partner = partnerName(for: side) else { return primary }
+        return String(format: NSLocalizedString("game.team_names_format", comment: ""), primary, Player.displayName(for: partner))
     }
 
     /// Resolves the stable identity to stamp on a `MatchRecord` field. The
@@ -279,6 +310,13 @@ final class GameViewModel: ObservableObject {
             return appStore.localPlayerId
         }
         if Player.isGuestName(name) { return nil }
+        return roster.first(where: { $0.name == name })?.id
+    }
+
+    /// Partners are never "Me" (PreMatchView's partner steps never offer that
+    /// option), so this needs none of `resolvedPlayerId`'s near-side handling.
+    private func resolvedPartnerPlayerId(for name: String?, roster: [Player]) -> UUID? {
+        guard let name, !Player.isGuestName(name) else { return nil }
         return roster.first(where: { $0.name == name })?.id
     }
 
