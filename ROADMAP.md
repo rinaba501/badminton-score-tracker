@@ -101,7 +101,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 4 — CloudKit sync | [#109](https://github.com/rinaba501/badminton-score-tracker/issues/109) | Open |
 | 5 — Cross-person sharing | design in [#93](https://github.com/rinaba501/badminton-score-tracker/issues/93); enables [#13](https://github.com/rinaba501/badminton-score-tracker/issues/13) | Deferred until Phase 4 |
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Open (pre-existing) |
-| Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Open |
+| Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.
 

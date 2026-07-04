@@ -35,8 +35,45 @@ jobs:
           sudo xcode-select -s "$latest"
           swift --version
 
-      - name: Run package tests
-        run: swift test --package-path BadmintonCore
+      - name: Run package tests with coverage
+        run: swift test --package-path BadmintonCore --enable-code-coverage
+
+      - name: Coverage summary
+        run: |
+          BIN=$(swift build --package-path BadmintonCore --show-bin-path)
+          xcrun llvm-cov report \
+            "$BIN/BadmintonCorePackageTests.xctest/Contents/MacOS/BadmintonCorePackageTests" \
+            -instr-profile "$BIN/codecov/default.profdata" \
+            -ignore-filename-regex=".build|Tests"
+
+  localization-sync:
+    name: Localization Sync
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Localizable.strings key parity
+        run: |
+          set -euo pipefail
+          # macOS runners' default /bin/bash is 3.2 (no associative arrays) —
+          # use plain temp files instead of `declare -A` for portability.
+          BASE="badminton score tracker Watch App"
+          LOCALES=(en ja ko zh-Hans id hi)
+          TMPDIR=$(mktemp -d)
+          for loc in "${LOCALES[@]}"; do
+            grep -oE '^"[^"]+"' "$BASE/$loc.lproj/Localizable.strings" | sort -u > "$TMPDIR/$loc.keys"
+          done
+          cat "$TMPDIR"/*.keys | sort -u > "$TMPDIR/all.keys"
+          FAIL=0
+          for loc in "${LOCALES[@]}"; do
+            MISSING=$(comm -23 "$TMPDIR/all.keys" "$TMPDIR/$loc.keys")
+            if [ -n "$MISSING" ]; then
+              echo "::error::Locale '$loc' is missing keys:"
+              echo "$MISSING"
+              FAIL=1
+            fi
+          done
+          exit $FAIL
 
   build:
     name: Watch App Build
@@ -64,6 +101,31 @@ jobs:
           # runner images don't reliably ship watchOS simulators, and only
           # `xcodebuild test` needs a real one.
           xcodebuild build-for-testing \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "generic/platform=watchOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO
+
+  complication-build:
+    name: Complication Build
+    runs-on: macos-latest
+    env:
+      PROJECT: "badminton score tracker.xcodeproj"
+      SCHEME: "badminton score tracker ComplicationExtension"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest installed Xcode
+        run: |
+          latest=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "Using $latest"
+          sudo xcode-select -s "$latest"
+          xcodebuild -version
+
+      - name: Build Complication extension
+        run: |
+          set -o pipefail
+          xcodebuild build \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "generic/platform=watchOS Simulator" \
