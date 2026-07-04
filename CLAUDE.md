@@ -141,10 +141,14 @@ All key strings are constants in `BadmintonCore.AppStorageKeys` — declare `@Ap
 - Do not leave stale local or remote branches — one branch per PR, deleted on merge
 
 ### Continuous Integration
-`.github/workflows/ci.yml` runs on every PR (and pushes to `main`). The three jobs have no `needs:` dependency, so they run in parallel:
+`.github/workflows/ci.yml` runs on every PR (and pushes to `main`). The five jobs have no `needs:` dependency, so they run in parallel:
 - **SwiftLint** — `swiftlint lint` against the config in `.swiftlint.yml` (non-strict: style issues are warnings/annotations; only error-severity rules fail). Observed runtime: **~10-20s**.
-- **BadmintonCore Tests** — `swift test --package-path BadmintonCore` on macOS (no simulator). All core unit tests live here; runs in well under a minute.
+- **BadmintonCore Tests** — `swift test --package-path BadmintonCore --enable-code-coverage` on macOS (no simulator). All core unit tests live here; runs in well under a minute. A follow-up step runs `xcrun llvm-cov report` against the resulting `.profdata` and prints a per-file coverage table straight into the job log (no external coverage service).
+- **Localization Sync** — extracts the key set from each of the 6 `.lproj/Localizable.strings` files and fails, naming the missing locale/key, if any locale's keys don't match the union. Pure bash/grep, no Xcode toolchain needed. Runtime: seconds.
 - **Watch App Build** — `xcodebuild build-for-testing` of the Watch App scheme against `generic/platform=watchOS Simulator` (no concrete simulator device needed — runner images don't reliably ship watchOS simulators). Compiles the app **and both test bundles** without executing them, so it's the integration gate for project-file, linking, and app-code errors, and app-layer test code can't silently rot. Observed runtime: **~1.5-4 min** — this is the long pole. Note: app-target tests are compiled but not *run* in CI (running needs a concrete simulator); the core logic that needs behavioral verification belongs in the package where `swift test` runs it.
+- **Complication Build** — `xcodebuild build` of the `badminton score tracker ComplicationExtension` scheme (shared scheme checked into `xcshareddata/xcschemes/`) against the same generic watchOS Simulator destination. Uses plain `build`, not `build-for-testing` — the WidgetKit extension has no test target. Catches breakage in `BadmintonComplication.swift` that the Watch App Build job doesn't compile.
+
+All targets' `WATCHOS_DEPLOYMENT_TARGET` are aligned at **11.4** (the Complication extension previously drifted to 26.5 with no `@available` usage requiring it — an unaligned Xcode-template default, not an intentional API dependency).
 
 A PR is checkable within **~4 minutes** of pushing. If you're polling/scheduling a check-in on a PR (e.g. an agent session without webhook access to CI success events), don't default to a long cadence like 20 minutes — check back in ~3-5 minutes first, and only back off if the run is still in progress.
 

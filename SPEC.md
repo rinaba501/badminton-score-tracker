@@ -179,7 +179,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 87 | iCloud KV sync quota guard (merge-by-id already landed; quota warning remains) |
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
-| 110 | CI guardrails: localization key-sync, coverage, Complication build — Roadmap guardrails track |
 
 ---
 
@@ -204,3 +203,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 106 | Extract shared `BadmintonCore` Swift package (Roadmap Phase 1) | #112 |
 | 107 | Schema versioning, tolerant decoding, migration hook (Roadmap Phase 3) | #114 |
 | 108 | Locale-independent player identity: guest tokens + stable "Me" id (Roadmap Phase 3) | #115 |
+| 110 | CI guardrails: localization key-sync, coverage, Complication build, deployment-target alignment (Roadmap guardrails track) | #116 |
