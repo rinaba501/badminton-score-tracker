@@ -228,13 +228,15 @@ struct HistoryView: View {
             List {
                 Section {
                     Button(action: { showingFilters = false }) {
-                        Text("history.filter_done")
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity)
-                            .fontWeight(.semibold)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.yellow)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("history.filter_done"))
                 }
+                .listRowBackground(Color.clear)
                 Section(header: Text("history.filter_player")) {
                     Button(action: { selectedPlayers = []; showingFilters = false }) {
                         HStack {
