@@ -96,6 +96,8 @@
 "history.filter_week" = "이번 주";
 "history.filter_month" = "이번 달";
 "history.clear_all" = "전체 삭제";
+"history.sort_newest" = "최신순";
+"history.sort_oldest" = "오래된순";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@, %2$d점";
@@ -104,6 +106,8 @@
 "a11y.undo" = "마지막 득점 취소";
 "a11y.games_won" = "획득 게임, %1$d대 %2$d";
 "a11y.timer_remaining" = "남은 시간, %@";
+"a11y.history_sort_toggle" = "정렬: %@";
+"a11y.history_sort_hint" = "두 번 탭하여 정렬 순서 변경";
 
 // UI labels
 "stats.title" = "통계";

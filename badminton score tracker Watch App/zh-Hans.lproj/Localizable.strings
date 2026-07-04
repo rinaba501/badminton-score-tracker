@@ -96,6 +96,8 @@
 "history.filter_week" = "本周";
 "history.filter_month" = "本月";
 "history.clear_all" = "清除全部";
+"history.sort_newest" = "最新";
+"history.sort_oldest" = "最早";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@，%2$d分";
@@ -104,6 +106,8 @@
 "a11y.undo" = "撤销上一分";
 "a11y.games_won" = "已胜局数，%1$d比%2$d";
 "a11y.timer_remaining" = "剩余时间，%@";
+"a11y.history_sort_toggle" = "排序方式：%@";
+"a11y.history_sort_hint" = "双击以更改排序方式";
 
 // UI labels
 "stats.title" = "统计";

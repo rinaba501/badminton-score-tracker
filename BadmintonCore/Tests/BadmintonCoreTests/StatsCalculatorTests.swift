@@ -158,6 +158,10 @@ struct StatsCalculatorTests {
         let recentOnly = StatsCalculator.filteredHistory(
             history, selectedPlayer: "", cutoff: Date(timeIntervalSince1970: 2_000))
         #expect(recentOnly.map(\.id) == [recent.id])
+
+        let oldestFirst = StatsCalculator.filteredHistory(
+            history, selectedPlayer: "", cutoff: nil, newestFirst: false)
+        #expect(oldestFirst.map(\.id) == [old.id, recent.id])
     }
 
     @Test func durationStringFormatsMinutesAndSeconds() {

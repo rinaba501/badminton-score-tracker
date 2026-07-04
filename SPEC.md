@@ -55,6 +55,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - "Clear All" button with confirmation
 - **Filter by player** — picker to show only matches involving a specific player (hidden if only one player in history)
 - **Filter by date range** — All Time / This Week / This Month
+- **Sort** — toggle button switches between Newest first (default) and Oldest first
 
 ### Player Stats
 - Win rate, total matches, win/loss streak per player
