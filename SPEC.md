@@ -178,7 +178,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature |
 |---|---------|
-| 8 | Doubles support (2v2) |
 | 13 | Share match result — deferred until iPhone companion app exists |
 | 41 | iPhone companion app — Roadmap Phase 6 |
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
@@ -209,3 +208,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 108 | Locale-independent player identity: guest tokens + stable "Me" id (Roadmap Phase 3) | #115 |
 | 110 | CI guardrails: localization key-sync, coverage, Complication build, deployment-target alignment (Roadmap guardrails track) | #116 |
 | 87 | iCloud KV sync quota guard: surface/log quota-exceeded, warn before the ~1 MB ceiling (merge-by-id landed earlier) | #117 |
+| 8 | Doubles support (2v2) | #118, #120, #121, #122, #123 |
