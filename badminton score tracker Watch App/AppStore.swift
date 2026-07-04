@@ -17,10 +17,24 @@ final class AppStore: ObservableObject {
     @Published private(set) var history: [MatchRecord]
 
     private init() {
+        Self.runMigrations()
         let r = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster) ?? Data()
         let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
+    }
+
+    // Upgrades on-disk data to the current schema before the first decode.
+    // The designated place for future schema migrations (see PersistenceStore).
+    private static func runMigrations() {
+        if let data = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster),
+           let migrated = PersistenceStore.migratedRosterData(from: data) {
+            UserDefaults.standard.set(migrated, forKey: AppStorageKeys.playerRoster)
+        }
+        if let data = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory),
+           let migrated = PersistenceStore.migratedHistoryData(from: data) {
+            UserDefaults.standard.set(migrated, forKey: AppStorageKeys.matchHistory)
+        }
     }
 
     func saveRoster(_ players: [Player]) {
