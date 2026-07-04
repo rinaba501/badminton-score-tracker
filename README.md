@@ -37,7 +37,7 @@ Core logic (scoring, persistence, stats) lives in the local `BadmintonCore` Swif
 
 ## Project structure & conventions
 
-[`CLAUDE.md`](CLAUDE.md) documents the file layout, key models, `@AppStorage` keys, and coding conventions this codebase follows — start there before making changes.
+[`CLAUDE.md`](CLAUDE.md) documents the file layout, key models, `@AppStorage` keys, and coding conventions this codebase follows — start there before making changes. CI job details and review guidance live in [`docs/ci.md`](docs/ci.md).
 
 ## Development
 
