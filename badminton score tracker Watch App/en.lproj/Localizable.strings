@@ -98,6 +98,7 @@
 "history.clear_all" = "Clear All";
 "history.sort_newest" = "Newest";
 "history.sort_oldest" = "Oldest";
+"history.filter_all_types" = "All";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@, %2$d points";

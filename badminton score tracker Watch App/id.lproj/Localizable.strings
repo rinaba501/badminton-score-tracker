@@ -98,6 +98,7 @@
 "history.clear_all" = "Hapus Semua";
 "history.sort_newest" = "Terbaru";
 "history.sort_oldest" = "Terlama";
+"history.filter_all_types" = "Semua";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@, %2$d poin";

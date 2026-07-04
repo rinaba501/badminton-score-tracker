@@ -98,6 +98,7 @@
 "history.clear_all" = "전체 삭제";
 "history.sort_newest" = "최신순";
 "history.sort_oldest" = "오래된순";
+"history.filter_all_types" = "전체";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@, %2$d점";

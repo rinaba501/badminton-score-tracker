@@ -99,6 +99,7 @@
 "history.clear_all" = "すべて削除";
 "history.sort_newest" = "新しい順";
 "history.sort_oldest" = "古い順";
+"history.filter_all_types" = "すべて";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@、%2$d点";

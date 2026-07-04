@@ -98,6 +98,7 @@
 "history.clear_all" = "清除全部";
 "history.sort_newest" = "最新";
 "history.sort_oldest" = "最早";
+"history.filter_all_types" = "全部";
 
 // Accessibility (VoiceOver)
 "a11y.score_tile" = "%1$@，%2$d分";

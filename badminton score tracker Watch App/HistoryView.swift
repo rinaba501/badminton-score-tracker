@@ -17,6 +17,7 @@ struct HistoryView: View {
     @State private var selectedPlayer: String = ""
     @State private var dateRange: DateRange = .all
     @State private var newestFirst = true
+    @State private var matchType: StatsCalculator.MatchTypeFilter = .all
 
     enum DateRange: String, CaseIterable {
         case all, week, month
@@ -35,6 +36,20 @@ struct HistoryView: View {
         StatsCalculator.participants(history: history)
     }
 
+    /// The match-type row only makes sense to show once history actually
+    /// contains a mix of Singles and Doubles matches.
+    private var hasMixedMatchTypes: Bool {
+        history.contains { $0.isDoubles } && history.contains { !$0.isDoubles }
+    }
+
+    private func matchTypeLabel(_ type: StatsCalculator.MatchTypeFilter) -> String {
+        switch type {
+        case .all:     return NSLocalizedString("history.filter_all_types", comment: "")
+        case .singles: return NSLocalizedString("settings.singles", comment: "")
+        case .doubles: return NSLocalizedString("settings.doubles", comment: "")
+        }
+    }
+
     private var sortLabel: String {
         newestFirst ? NSLocalizedString("history.sort_newest", comment: "") : NSLocalizedString("history.sort_oldest", comment: "")
     }
@@ -51,7 +66,8 @@ struct HistoryView: View {
             case .month: return Calendar.current.date(byAdding: .month, value: -1, to: Date())
             }
         }()
-        return StatsCalculator.filteredHistory(history, selectedPlayer: selectedPlayer, cutoff: cutoff, newestFirst: newestFirst)
+        return StatsCalculator.filteredHistory(history, selectedPlayer: selectedPlayer, cutoff: cutoff,
+                                               newestFirst: newestFirst, matchType: matchType)
     }
 
     private func save(_ records: [MatchRecord]) {
@@ -88,6 +104,23 @@ struct HistoryView: View {
                                         .cornerRadius(6)
                                 }
                                 .buttonStyle(.plain)
+                            }
+                        }
+
+                        if hasMixedMatchTypes {
+                            HStack(spacing: 4) {
+                                ForEach(StatsCalculator.MatchTypeFilter.allCases, id: \.self) { type in
+                                    Button(action: { matchType = type }) {
+                                        Text(matchTypeLabel(type))
+                                            .font(.system(size: 11, weight: matchType == type ? .semibold : .regular))
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 4)
+                                            .background(matchType == type ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
+                                            .foregroundColor(matchType == type ? .yellow : .primary)
+                                            .cornerRadius(6)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
                         }
 
@@ -180,7 +213,7 @@ struct HistoryView: View {
         .sheet(isPresented: $showingFilters) {
             List {
                 Section(header: Text("history.filter_player")) {
-                    Button(action: { selectedPlayer = "" }) {
+                    Button(action: { selectedPlayer = ""; showingFilters = false }) {
                         HStack {
                             Text("history.filter_all_players")
                             Spacer()
@@ -190,7 +223,7 @@ struct HistoryView: View {
                         }
                     }
                     ForEach(allPlayers, id: \.self) { name in
-                        Button(action: { selectedPlayer = name }) {
+                        Button(action: { selectedPlayer = name; showingFilters = false }) {
                             HStack {
                                 Text(Player.displayName(for: name))
                                 Spacer()

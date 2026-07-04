@@ -53,8 +53,9 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - Each row: player names (Doubles rows show both partners as "Name & Partner"), games won, per-game scores, date, duration
 - Swipe to delete individual records
 - "Clear All" button with confirmation
-- **Filter by player** — picker to show only matches involving a specific player (hidden if only one player in history)
+- **Filter by player** — picker to show only matches involving a specific player (hidden if only one player in history); tapping a player (or "All Players") immediately applies the filter and dismisses the picker
 - **Filter by date range** — All Time / This Week / This Month
+- **Filter by match type** — All / Singles / Doubles (hidden unless history contains both types)
 - **Sort** — toggle button switches between Newest first (default) and Oldest first
 
 ### Player Stats
@@ -120,7 +121,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 
 ## Match History Storage
 
-- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`, `myPartnerName: String?`, `opponentPartnerName: String?`, `myPartnerPlayerId: UUID?`, `opponentPartnerPlayerId: UUID?`. The four partner fields are populated for Doubles matches (`nil` for Singles) and rendered by the Game screen, roster, Match History, and Player Stats screens
+- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`, `myPartnerName: String?`, `opponentPartnerName: String?`, `myPartnerPlayerId: UUID?`, `opponentPartnerPlayerId: UUID?`. The four partner fields are populated for Doubles matches (`nil` for Singles) and rendered by the Game screen, roster, Match History, and Player Stats screens. `isDoubles` (computed: either partner field non-nil) is the single home of that check — used by Match History's match-type filter
 - Player IDs are stored at match-save time by looking up names in the current roster
 - Old records without IDs fall back to stored name strings
 - When a player is renamed, all history records referencing their ID are updated
