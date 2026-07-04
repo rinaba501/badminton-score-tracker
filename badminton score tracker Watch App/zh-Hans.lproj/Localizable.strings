@@ -22,6 +22,7 @@
 "game.wins_game" = "%@赢得本局！";
 "game.wins_match" = "%@赢得比赛！";
 "game.games_score" = "局数 %@";
+"game.team_names_format" = "%1$@和%2$@";
 
 // Speech
 "speech.wins_match" = "%@赢得比赛！";
@@ -136,6 +137,8 @@
 "settings.delete" = "删除";
 "prematch.near_side" = "近侧";
 "prematch.far_side" = "远侧";
+"prematch.near_partner" = "近侧搭档";
+"prematch.far_partner" = "远侧搭档";
 "prematch.saved" = "已保存";
 "prematch.new_player" = "新球员";
 "prematch.add_new" = "添加新的";

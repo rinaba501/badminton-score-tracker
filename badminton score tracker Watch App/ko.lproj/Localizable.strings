@@ -22,6 +22,7 @@
 "game.wins_game" = "%@ 게임 승리!";
 "game.wins_match" = "%@ 경기 승리!";
 "game.games_score" = "게임 %@";
+"game.team_names_format" = "%1$@ & %2$@";
 
 // Speech
 "speech.wins_match" = "%@ 경기 승리!";
@@ -136,6 +137,8 @@
 "settings.delete" = "삭제";
 "prematch.near_side" = "근거리";
 "prematch.far_side" = "원거리";
+"prematch.near_partner" = "근거리 파트너";
+"prematch.far_partner" = "원거리 파트너";
 "prematch.saved" = "저장됨";
 "prematch.new_player" = "새 플레이어";
 "prematch.add_new" = "새로 추가";

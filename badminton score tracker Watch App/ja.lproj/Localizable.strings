@@ -22,6 +22,7 @@
 "game.wins_game" = "%@がゲームを取得！";
 "game.wins_match" = "%@が試合に勝利！";
 "game.games_score" = "ゲーム %@";
+"game.team_names_format" = "%1$@ ＆ %2$@";
 
 // Speech
 "speech.wins_match" = "%@が試合に勝利！";
@@ -137,6 +138,8 @@
 "settings.delete" = "削除";
 "prematch.near_side" = "手前側";
 "prematch.far_side" = "奥側";
+"prematch.near_partner" = "手前側パートナー";
+"prematch.far_partner" = "奥側パートナー";
 "prematch.saved" = "保存済み";
 "prematch.new_player" = "新規プレイヤー";
 "prematch.add_new" = "新規追加";

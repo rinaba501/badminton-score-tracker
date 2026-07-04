@@ -112,11 +112,11 @@ struct GameView: View {
     }
 
     private func winsMatchText(_ side: Side) -> String {
-        String(format: NSLocalizedString("game.wins_match", comment: ""), Player.displayName(for: viewModel.name(for: side)))
+        String(format: NSLocalizedString("game.wins_match", comment: ""), viewModel.teamDisplayName(for: side))
     }
 
     private func winsGameText(_ side: Side) -> String {
-        String(format: NSLocalizedString("game.wins_game", comment: ""), Player.displayName(for: viewModel.name(for: side)))
+        String(format: NSLocalizedString("game.wins_game", comment: ""), viewModel.teamDisplayName(for: side))
     }
 
     // MARK: - Sub-views
@@ -161,9 +161,11 @@ struct GameView: View {
     private var opponentTile: some View {
         ScoreView(
             name: Player.displayName(for: viewModel.effectiveOpponentName),
+            partnerName: viewModel.partnerName(for: .opponent).map(Player.displayName(for:)),
             score: viewModel.match.opponentScore,
             isServing: serveKnown && viewModel.match.servingSide == .opponent,
             serveRight: viewModel.match.serveFromRightCourt,
+            activePartnerIsSecondary: viewModel.match.currentPartnerIndex(for: .opponent) == 1,
             isWinner: viewModel.match.gameWinner == .opponent,
             avatarColor: avatarColor(for: viewModel.effectiveOpponentName),
             avatarIcon: avatarIcon(for: viewModel.effectiveOpponentName),
@@ -174,9 +176,11 @@ struct GameView: View {
     private var myTile: some View {
         ScoreView(
             name: Player.displayName(for: viewModel.effectiveMyName),
+            partnerName: viewModel.partnerName(for: .me).map(Player.displayName(for:)),
             score: viewModel.match.myScore,
             isServing: serveKnown && viewModel.match.servingSide == .me,
             serveRight: viewModel.match.serveFromRightCourt,
+            activePartnerIsSecondary: viewModel.match.currentPartnerIndex(for: .me) == 1,
             isWinner: viewModel.match.gameWinner == .me,
             avatarColor: avatarColor(for: viewModel.effectiveMyName),
             avatarIcon: avatarIcon(for: viewModel.effectiveMyName),
@@ -336,9 +340,11 @@ struct GamesWonHeader: View {
 
 struct ScoreView: View {
     let name: String
+    var partnerName: String?
     let score: Int
     let isServing: Bool
     let serveRight: Bool
+    var activePartnerIsSecondary: Bool = false
     let isWinner: Bool
     let avatarColor: Color
     var avatarIcon: String? = nil
@@ -347,8 +353,17 @@ struct ScoreView: View {
     @State private var scorePulse = false
     @State private var winnerGlow = false
 
+    private var isDoubles: Bool { partnerName != nil }
+
+    /// Combined team name for accessibility/announcements — "Alice" for
+    /// singles, "Alice & Bob" (localized) for doubles.
+    private var teamName: String {
+        guard let partnerName else { return name }
+        return String(format: NSLocalizedString("game.team_names_format", comment: ""), name, partnerName)
+    }
+
     private var accessibilityDescription: String {
-        let base = String(format: NSLocalizedString("a11y.score_tile", comment: ""), name, score)
+        let base = String(format: NSLocalizedString("a11y.score_tile", comment: ""), teamName, score)
         guard isServing else { return base }
         let court = NSLocalizedString(serveRight ? "game.right_court" : "game.left_court", comment: "")
         return String(format: NSLocalizedString("a11y.score_tile_serving_suffix", comment: ""), base, court)
@@ -366,21 +381,33 @@ struct ScoreView: View {
         isWinner ? 2.5 : (isServing ? 2 : 1.5)
     }
 
+    @ViewBuilder
+    private func nameRow(_ label: String, isActive: Bool) -> some View {
+        HStack(spacing: 4) {
+            if isActive && isServing {
+                Image(systemName: "circle.fill")
+                    .font(.system(size: 7))
+                    .foregroundColor(.yellow)
+            }
+            Text(label)
+                .font(.caption2)
+                .fontWeight(isActive ? .medium : .regular)
+                .foregroundColor(isActive ? .white : .white.opacity(0.6))
+                .lineLimit(1)
+        }
+    }
+
     private var tileContent: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20, iconName: avatarIcon)
-                    if isServing {
-                        Image(systemName: "circle.fill")
-                            .font(.system(size: 7))
-                            .foregroundColor(.yellow)
+                    VStack(alignment: .leading, spacing: 1) {
+                        nameRow(name, isActive: !isDoubles || !activePartnerIsSecondary)
+                        if let partnerName {
+                            nameRow(partnerName, isActive: activePartnerIsSecondary)
+                        }
                     }
-                    Text(name)
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
                 }
                 if isServing {
                     Text(serveRight ? "game.right_court" : "game.left_court")

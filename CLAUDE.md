@@ -31,9 +31,9 @@ BadmintonCore/                 — local Swift package; platform-free core (no S
 badminton score tracker Watch App/
   ContentView.swift          — root view; owns only the AppView routing enum (.menu/.preMatch/.game/.settings/.history/.stats — state-driven, no top-level NavigationLink)
   MenuView.swift             — main menu
-  PreMatchView.swift         — two-step player selection
-  GameView.swift             — live scoring screen, layout only; all logic delegates to GameViewModel
-  GameViewModel.swift        — @MainActor ObservableObject; owns all live-game logic: scoring, undo, time mode, haptics, persistence, announcements
+  PreMatchView.swift         — player selection: 2 steps (Singles) or 4 steps (Doubles, reading SettingsView.GameMode)
+  GameView.swift             — live scoring screen, layout only; all logic delegates to GameViewModel. ScoreView renders one or two stacked names per team depending on whether a partner is present
+  GameViewModel.swift        — @MainActor ObservableObject; owns all live-game logic: scoring, undo, time mode, haptics, persistence, announcements, doubles partner names/rotation display
   HapticsProvider.swift      — HapticsProvider protocol + Watch/NoOp implementations (tests use NoOp)
   SettingsView.swift         — match format, audio, theme, timer, roster management
   HistoryView.swift          — saved match list + filters
