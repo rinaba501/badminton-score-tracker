@@ -172,8 +172,8 @@ final class GameViewModel: ObservableObject {
             opponentName: effectiveOpponentName,
             date: Date(),
             duration: Date().timeIntervalSince(matchStartDate),
-            myPlayerId: currentRoster.first(where: { $0.name == effectiveMyName })?.id,
-            opponentPlayerId: currentRoster.first(where: { $0.name == effectiveOpponentName })?.id
+            myPlayerId: resolvedPlayerId(for: effectiveMyName, isNearSide: true, roster: currentRoster),
+            opponentPlayerId: resolvedPlayerId(for: effectiveOpponentName, isNearSide: false, roster: currentRoster)
         ))
         appStore.saveHistory(newHistory)
         Task { await workoutManager.endWorkout() }
@@ -260,11 +260,26 @@ final class GameViewModel: ObservableObject {
     private func announceCurrentScore() {
         let text = ScoreCallFormatter.format(
             match: match,
-            myName: effectiveMyName,
-            opponentName: effectiveOpponentName,
+            myName: Player.displayName(for: effectiveMyName),
+            opponentName: Player.displayName(for: effectiveOpponentName),
             locale: .current
         )
         speak(text)
+    }
+
+    /// Resolves the stable identity to stamp on a `MatchRecord` field. The
+    /// near side is "Me" when no explicit match player was chosen (or the
+    /// choice matches the local display name) — that identity is
+    /// `appStore.localPlayerId`, not a roster lookup, since "Me" is
+    /// deliberately never added to the roster. A guest token intentionally
+    /// resolves to `nil`: the token itself is already a locale-independent
+    /// identity marker, so no per-match UUID is needed.
+    private func resolvedPlayerId(for name: String, isNearSide: Bool, roster: [Player]) -> UUID? {
+        if isNearSide && (matchMyName.isEmpty || matchMyName == myName) {
+            return appStore.localPlayerId
+        }
+        if Player.isGuestName(name) { return nil }
+        return roster.first(where: { $0.name == name })?.id
     }
 
     private func saveToRoster(_ name: String) {

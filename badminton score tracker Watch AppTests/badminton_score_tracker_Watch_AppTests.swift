@@ -11,6 +11,7 @@
 //  via `swift test --package-path BadmintonCore` (seconds, no simulator).
 //
 
+import Foundation
 import Testing
 import BadmintonCore
 @testable import badminton_score_tracker_Watch_App
@@ -100,5 +101,40 @@ struct GameViewModelTests {
         let historyCount = AppStore.shared.history.count
         vm.saveMatch()  // second call — must be a no-op
         #expect(AppStore.shared.history.count == historyCount)
+    }
+
+    // MARK: - Player identity (#108)
+
+    @Test func saveMatchStampsStableLocalPlayerIdForMe() {
+        // Two separate matches, both played as the default near-side "Me" —
+        // the stamped id must be the same both times, and must equal the
+        // app's persisted local identity (not a roster lookup, since "Me" is
+        // never added to the roster).
+        func playAndSaveMatch() -> UUID? {
+            let vm = GameViewModel(hapticsProvider: NoOpHapticsProvider())
+            for _ in 0..<21 { vm.tap(.me) }
+            vm.startNextGame()
+            for _ in 0..<21 { vm.tap(.me) }
+            return AppStore.shared.history.last?.myPlayerId
+        }
+        let firstId = playAndSaveMatch()
+        let secondId = playAndSaveMatch()
+        #expect(firstId != nil)
+        #expect(firstId == secondId)
+        #expect(firstId == AppStore.shared.localPlayerId)
+    }
+
+    @Test func saveMatchStampsNilOpponentIdForGuest() {
+        let defaults = UserDefaults.standard
+        defaults.set(Player.guestFarToken, forKey: AppStorageKeys.matchOpponentName)
+        defer { defaults.removeObject(forKey: AppStorageKeys.matchOpponentName) }
+
+        let vm = GameViewModel(hapticsProvider: NoOpHapticsProvider())
+        for _ in 0..<21 { vm.tap(.me) }
+        vm.startNextGame()
+        for _ in 0..<21 { vm.tap(.me) }
+
+        #expect(AppStore.shared.history.last?.opponentPlayerId == nil)
+        #expect(AppStore.shared.history.last?.opponentName == Player.guestFarToken)
     }
 }

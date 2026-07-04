@@ -88,7 +88,7 @@ struct HistoryView: View {
                                     Image(systemName: "person")
                                         .font(.system(size: 11))
                                         .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
-                                    Text(selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : selectedPlayer)
+                                    Text(selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : Player.displayName(for: selectedPlayer))
                                         .font(.system(size: 11))
                                         .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
                                         .lineLimit(1)
@@ -162,7 +162,7 @@ struct HistoryView: View {
                     ForEach(allPlayers, id: \.self) { name in
                         Button(action: { selectedPlayer = name }) {
                             HStack {
-                                Text(name)
+                                Text(Player.displayName(for: name))
                                 Spacer()
                                 if selectedPlayer == name {
                                     Image(systemName: "checkmark").foregroundColor(.yellow)
@@ -196,10 +196,10 @@ struct MatchHistoryRow: View {
             // Head-to-head score line
             HStack(alignment: .center, spacing: 0) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(record.myName.isEmpty ? Player.defaultMyName : record.myName)
+                    Text(record.myName.isEmpty ? Player.defaultMyName : Player.displayName(for: record.myName))
                         .font(.system(size: 12, weight: iWon ? .bold : .regular))
                         .lineLimit(1)
-                    Text(record.opponentName.isEmpty ? NSLocalizedString("history.opponent_fallback", comment: "") : record.opponentName)
+                    Text(record.opponentName.isEmpty ? NSLocalizedString("history.opponent_fallback", comment: "") : Player.displayName(for: record.opponentName))
                         .font(.system(size: 12, weight: iWon ? .regular : .bold))
                         .lineLimit(1)
                 }

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftUI
 import BadmintonCore
 
 @MainActor
@@ -15,6 +16,19 @@ final class AppStore: ObservableObject {
 
     @Published private(set) var roster: [Player]
     @Published private(set) var history: [MatchRecord]
+
+    @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
+
+    /// A stable identity for the local user, independent of their display
+    /// name (which can be renamed) and independent of the roster ("me" is
+    /// deliberately never added there — see `Player.shouldBeStoredAsSavedPlayer`).
+    /// Generated once on first access and persisted thereafter.
+    var localPlayerId: UUID {
+        if let existing = UUID(uuidString: localPlayerIdString) { return existing }
+        let new = UUID()
+        localPlayerIdString = new.uuidString
+        return new
+    }
 
     private init() {
         Self.runMigrations()

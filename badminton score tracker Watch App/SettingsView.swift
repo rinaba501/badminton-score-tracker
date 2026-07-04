@@ -77,7 +77,7 @@ struct SettingsView: View {
     }
 
     private func meAsPlayer() -> Player {
-        roster.first(where: { $0.name == myName }) ?? Player(name: myName, colorIndex: 0)
+        roster.first(where: { $0.name == myName }) ?? Player(id: appStore.localPlayerId, name: myName, colorIndex: 0)
     }
 
     var body: some View {

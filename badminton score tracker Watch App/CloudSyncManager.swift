@@ -13,6 +13,7 @@ private enum SyncKeys {
         AppStorageKeys.playerRoster,
         AppStorageKeys.matchHistory,
         AppStorageKeys.myName,
+        AppStorageKeys.localPlayerId,
         AppStorageKeys.pointsToWin,
         AppStorageKeys.gamesInMatch,
         AppStorageKeys.courtTheme,
