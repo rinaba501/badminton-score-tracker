@@ -55,16 +55,18 @@ jobs:
       - name: Check Localizable.strings key parity
         run: |
           set -euo pipefail
+          # macOS runners' default /bin/bash is 3.2 (no associative arrays) —
+          # use plain temp files instead of `declare -A` for portability.
           BASE="badminton score tracker Watch App"
           LOCALES=(en ja ko zh-Hans id hi)
-          declare -A KEYS
+          TMPDIR=$(mktemp -d)
           for loc in "${LOCALES[@]}"; do
-            KEYS[$loc]=$(grep -oE '^"[^"]+"' "$BASE/$loc.lproj/Localizable.strings" | sort -u)
+            grep -oE '^"[^"]+"' "$BASE/$loc.lproj/Localizable.strings" | sort -u > "$TMPDIR/$loc.keys"
           done
-          ALL_KEYS=$(printf '%s\n' "${KEYS[@]}" | sort -u)
+          cat "$TMPDIR"/*.keys | sort -u > "$TMPDIR/all.keys"
           FAIL=0
           for loc in "${LOCALES[@]}"; do
-            MISSING=$(comm -23 <(echo "$ALL_KEYS") <(echo "${KEYS[$loc]}"))
+            MISSING=$(comm -23 "$TMPDIR/all.keys" "$TMPDIR/$loc.keys")
             if [ -n "$MISSING" ]; then
               echo "::error::Locale '$loc' is missing keys:"
               echo "$MISSING"
