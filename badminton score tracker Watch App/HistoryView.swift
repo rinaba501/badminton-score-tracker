@@ -225,18 +225,10 @@ struct HistoryView: View {
             }
         }
         .sheet(isPresented: $showingFilters) {
+            // No explicit dismiss control: the sheet's own top-leading close
+            // button (added automatically by watchOS) closes it, and the
+            // multi-select toggles apply live to the parent's filter state.
             List {
-                Section {
-                    Button(action: { showingFilters = false }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 18))
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("history.filter_done"))
-                }
-                .listRowBackground(Color.clear)
                 Section(header: Text("history.filter_player")) {
                     Button(action: { selectedPlayers = []; showingFilters = false }) {
                         HStack {
