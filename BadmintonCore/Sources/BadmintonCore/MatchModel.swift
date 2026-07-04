@@ -39,6 +39,10 @@ public struct BadmintonMatch: Codable, Equatable {
     public private(set) var completedGames: [GameScore] = []
     /// Whoever won the previous rally serves next. Court side is derived from this.
     public private(set) var serverIsMe: Bool
+    /// Index (0 or 1) of whichever of my team's two doubles partners currently
+    /// occupies the right-hand service court. Meaningless in singles (stays 0).
+    public private(set) var myRightBoxPartnerIndex: Int = 0
+    public private(set) var opponentRightBoxPartnerIndex: Int = 0
 
     public init(serverIsMe: Bool = true,
                 pointsToWin: Int = 21,
@@ -93,6 +97,16 @@ public struct BadmintonMatch: Codable, Equatable {
         (serverIsMe ? myScore : opponentScore) % 2 == 0
     }
 
+    /// The doubles partner index (0 or 1) who should be serving/receiving next
+    /// for `side`, given that team's current score parity and which partner
+    /// currently occupies its right-hand court. Only meaningful in doubles;
+    /// always resolves to 0 in singles (both box indices stay at their default).
+    public func currentPartnerIndex(for side: Side) -> Int {
+        let score = side == .me ? myScore : opponentScore
+        let rightBoxIndex = side == .me ? myRightBoxPartnerIndex : opponentRightBoxPartnerIndex
+        return score % 2 == 0 ? rightBoxIndex : 1 - rightBoxIndex
+    }
+
     // MARK: - Mutations
 
     /// Award a rally to `side`. No-op once the current game or match is over —
@@ -100,13 +114,22 @@ public struct BadmintonMatch: Codable, Equatable {
     public mutating func score(_ side: Side) {
         guard matchWinner == nil, gameWinner == nil else { return }
 
+        // A team's two doubles partners swap right/left court occupancy only
+        // when that team wins a rally while already serving (their service
+        // run continues); a side-out never moves either team's partners —
+        // whoever is already standing in the correct court becomes the next
+        // server once that team wins the serve back. See MatchModel.swift's
+        // header comment / plan for the derivation of this rule.
+        let wasAlreadyServing = (side == servingSide)
         switch side {
         case .me:
             myScore += 1
             serverIsMe = true
+            if wasAlreadyServing { myRightBoxPartnerIndex = 1 - myRightBoxPartnerIndex }
         case .opponent:
             opponentScore += 1
             serverIsMe = false
+            if wasAlreadyServing { opponentRightBoxPartnerIndex = 1 - opponentRightBoxPartnerIndex }
         }
 
         if let winner = gameWinner {
@@ -115,10 +138,20 @@ public struct BadmintonMatch: Codable, Equatable {
         }
     }
 
-    /// Clear the board for the next game. Pass `serverIsMe` to override the automatic serve assignment.
-    public mutating func startNextGame(serverIsMe: Bool? = nil) {
+    /// Clear the board for the next game. Pass `serverIsMe` to override the
+    /// automatic serve assignment, and the box-partner indices to set which
+    /// partner starts in the right-hand court for each team (defaults to the
+    /// first-listed partner on both teams, same UX bar as singles today,
+    /// which has no "who serves first" picker either).
+    public mutating func startNextGame(
+        serverIsMe: Bool? = nil,
+        myRightBoxPartnerIndex: Int? = nil,
+        opponentRightBoxPartnerIndex: Int? = nil
+    ) {
         guard gameWinner != nil, matchWinner == nil else { return }
         self.serverIsMe = serverIsMe ?? (myScore > opponentScore)
+        self.myRightBoxPartnerIndex = myRightBoxPartnerIndex ?? 0
+        self.opponentRightBoxPartnerIndex = opponentRightBoxPartnerIndex ?? 0
         myScore = 0
         opponentScore = 0
     }
@@ -130,6 +163,8 @@ public struct BadmintonMatch: Codable, Equatable {
         completedGames.append(GameScore(my: myScore, opponent: opponentScore))
         if winner == .me { myGamesWon += 1 } else { opponentGamesWon += 1 }
         serverIsMe = (winner == .me)
+        myRightBoxPartnerIndex = 0
+        opponentRightBoxPartnerIndex = 0
         myScore = 0
         opponentScore = 0
     }
@@ -170,6 +205,15 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
     public let duration: TimeInterval
     public var myPlayerId: UUID?
     public var opponentPlayerId: UUID?
+    /// Second player on each team, for doubles. `nil` for singles matches —
+    /// a record is "doubles" precisely when either partner field is non-nil;
+    /// there is deliberately no separate isDoubles/gameMode flag to keep in
+    /// sync. Optional so old singles records decode unaffected (no schema
+    /// migration needed — see PersistenceStoreTests/SchemaVersioningTests).
+    public var myPartnerName: String?
+    public var opponentPartnerName: String?
+    public var myPartnerPlayerId: UUID?
+    public var opponentPartnerPlayerId: UUID?
 
     public init(id: UUID = UUID(),
                 games: [GameScore],
@@ -181,7 +225,11 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
                 date: Date,
                 duration: TimeInterval = 0,
                 myPlayerId: UUID? = nil,
-                opponentPlayerId: UUID? = nil) {
+                opponentPlayerId: UUID? = nil,
+                myPartnerName: String? = nil,
+                opponentPartnerName: String? = nil,
+                myPartnerPlayerId: UUID? = nil,
+                opponentPartnerPlayerId: UUID? = nil) {
         self.id = id
         self.games = games
         self.myGamesWon = myGamesWon
@@ -193,5 +241,9 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         self.duration = duration
         self.myPlayerId = myPlayerId
         self.opponentPlayerId = opponentPlayerId
+        self.myPartnerName = myPartnerName
+        self.opponentPartnerName = opponentPartnerName
+        self.myPartnerPlayerId = myPartnerPlayerId
+        self.opponentPartnerPlayerId = opponentPartnerPlayerId
     }
 }

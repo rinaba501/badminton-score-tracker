@@ -13,6 +13,41 @@ import Foundation
 
 public enum StatsCalculator {
 
+    // MARK: - Team membership
+
+    /// A "team" is one or two names: `myName` alone for singles, plus
+    /// `myPartnerName` when the record is doubles. Every function below
+    /// reasons about team membership through these helpers instead of
+    /// comparing `record.myName`/`record.opponentName` directly, so singles
+    /// (where a team degenerates to exactly one name) and doubles share the
+    /// same logic.
+    private static func nearTeamNames(_ record: MatchRecord) -> [String] {
+        [record.myName, record.myPartnerName].compactMap { $0 }
+    }
+    private static func farTeamNames(_ record: MatchRecord) -> [String] {
+        [record.opponentName, record.opponentPartnerName].compactMap { $0 }
+    }
+    private static func nearTeamIds(_ record: MatchRecord) -> [UUID] {
+        [record.myPlayerId, record.myPartnerPlayerId].compactMap { $0 }
+    }
+    private static func farTeamIds(_ record: MatchRecord) -> [UUID] {
+        [record.opponentPlayerId, record.opponentPartnerPlayerId].compactMap { $0 }
+    }
+    private static func idMatches(_ ids: [UUID], _ id: UUID?) -> Bool {
+        guard let id else { return false }
+        return ids.contains(id)
+    }
+
+    /// True when `player`'s team won `record`. `winner` is always equal to
+    /// either `record.myName` or `record.opponentName` (the team's
+    /// representative name — see `MatchModel.swift`), so this works without
+    /// needing `winner` to know about doubles partners directly.
+    private static func teamWon(_ record: MatchRecord, player: String) -> Bool {
+        if nearTeamNames(record).contains(player) { return record.winner == record.myName }
+        if farTeamNames(record).contains(player) { return record.winner == record.opponentName }
+        return false
+    }
+
     // MARK: - Participants
 
     /// StatsView semantics: every name that appears in history (including
@@ -22,8 +57,8 @@ public enum StatsCalculator {
         var seen = Set<String>()
         var result: [String] = []
         for record in history {
-            for name in [record.myName, record.opponentName] {
-                if seen.insert(name).inserted { result.append(name) }
+            for name in nearTeamNames(record) + farTeamNames(record) where seen.insert(name).inserted {
+                result.append(name)
             }
         }
         // Always show the main player first
@@ -40,50 +75,57 @@ public enum StatsCalculator {
         var seen = Set<String>()
         var result: [String] = []
         for record in history {
-            for name in [record.myName, record.opponentName] where !name.isEmpty {
+            for name in nearTeamNames(record) + farTeamNames(record) where !name.isEmpty {
                 if seen.insert(name).inserted { result.append(name) }
             }
         }
         return result
     }
 
-    /// Records that involve `player` on either side (by name).
+    /// Records that involve `player` on either team (by name).
     public static func playerHistory(_ history: [MatchRecord], player: String) -> [MatchRecord] {
-        history.filter { $0.myName == player || $0.opponentName == player }
+        history.filter { nearTeamNames($0).contains(player) || farTeamNames($0).contains(player) }
     }
 
     /// Distinct opponents of `player` across their records, first-seen order.
+    /// In doubles this is the other team's *both* members — a teammate is
+    /// never counted as an opponent.
     public static func opponents(of player: String, playerHistory: [MatchRecord]) -> [String] {
         var seen = Set<String>()
         var result: [String] = []
         for record in playerHistory {
-            let opp = record.myName == player ? record.opponentName : record.myName
-            if seen.insert(opp).inserted { result.append(opp) }
+            let onNearTeam = nearTeamNames(record).contains(player)
+            let oppTeam = onNearTeam ? farTeamNames(record) : nearTeamNames(record)
+            for opp in oppTeam where seen.insert(opp).inserted {
+                result.append(opp)
+            }
         }
         return result
     }
 
     // MARK: - Head-to-head
 
-    /// True when `record` is a matchup between `a` and `b`, matching either
-    /// by the stored display names or by the two roster players' ids. The
-    /// single home of the matchup contract shared by both head-to-head
-    /// functions below.
+    /// True when `record` is a matchup between `a` and `b` — one on each
+    /// team — matching either by stored display names or by the two roster
+    /// players' ids. The single home of the matchup contract shared by both
+    /// head-to-head functions below.
     private static func isMatchup(_ record: MatchRecord, _ a: String, _ b: String,
                                   aPlayer: Player?, bPlayer: Player?) -> Bool {
-        let namesMatch = (record.myName == a && record.opponentName == b) ||
-                         (record.myName == b && record.opponentName == a)
+        let near = nearTeamNames(record)
+        let far = farTeamNames(record)
+        let namesMatch = (near.contains(a) && far.contains(b)) || (near.contains(b) && far.contains(a))
         let idsMatch: Bool = {
             guard let aId = aPlayer?.id, let bId = bPlayer?.id else { return false }
-            return (record.myPlayerId == aId && record.opponentPlayerId == bId) ||
-                   (record.myPlayerId == bId && record.opponentPlayerId == aId)
+            let nearIds = nearTeamIds(record)
+            let farIds = farTeamIds(record)
+            return (nearIds.contains(aId) && farIds.contains(bId)) || (nearIds.contains(bId) && farIds.contains(aId))
         }()
         return namesMatch || idsMatch
     }
 
     /// StatsView semantics: filters `player`'s records to those against
     /// `opponent` (matching by names or by roster player ids), counts wins
-    /// as `winner == player`. Returns (0, 0) when nothing matches.
+    /// via team membership. Returns (0, 0) when nothing matches.
     public static func headToHead(player: String, opponent: String,
                                   history: [MatchRecord], roster: [Player]) -> (wins: Int, losses: Int) {
         let mePlayer = roster.first(where: { $0.name == player })
@@ -91,14 +133,14 @@ public enum StatsCalculator {
         let relevant = playerHistory(history, player: player).filter {
             isMatchup($0, player, opponent, aPlayer: mePlayer, bPlayer: oppPlayer)
         }
-        let wins = relevant.filter { $0.winner == player }.count
+        let wins = relevant.filter { teamWon($0, player: player) }.count
         return (wins: wins, losses: relevant.count - wins)
     }
 
     /// PreMatchView semantics: filters the FULL history (not pre-sliced),
     /// returns nil when there are no relevant matches, and counts a win only
-    /// when the record's near side is `me` (by name or roster id) and the
-    /// winner is `me`.
+    /// when the record's near TEAM includes `me` (by name or roster id) and
+    /// that team won.
     public static func headToHeadIfAny(me: String, opponent: String,
                                        history: [MatchRecord], roster: [Player]) -> (wins: Int, losses: Int)? {
         let mePlayer = roster.first(where: { $0.name == me })
@@ -108,7 +150,8 @@ public enum StatsCalculator {
         }
         guard !relevant.isEmpty else { return nil }
         let wins = relevant.filter { record in
-            (record.myName == me || record.myPlayerId == mePlayer?.id) && record.winner == me
+            let onNearTeam = nearTeamNames(record).contains(me) || idMatches(nearTeamIds(record), mePlayer?.id)
+            return onNearTeam && record.winner == record.myName
         }.count
         return (wins: wins, losses: relevant.count - wins)
     }
@@ -116,7 +159,7 @@ public enum StatsCalculator {
     // MARK: - Aggregates
 
     public static func wins(player: String, playerHistory: [MatchRecord]) -> Int {
-        playerHistory.filter { $0.winner == player }.count
+        playerHistory.filter { teamWon($0, player: player) }.count
     }
 
     /// Win percentage 0–100; 0 when there are no matches.
@@ -124,11 +167,13 @@ public enum StatsCalculator {
         playerHistory.isEmpty ? 0 : Double(wins(player: player, playerHistory: playerHistory)) / Double(playerHistory.count) * 100
     }
 
-    /// Average points scored per *game*, from the player's side of each record.
+    /// Average points scored per *game*, from the player's team's side of
+    /// each record. Both partners on a doubles team share the same score,
+    /// so this is correct regardless of which partner `player` is.
     public static func avgPointsScored(player: String, playerHistory: [MatchRecord]) -> Double {
         guard !playerHistory.isEmpty else { return 0 }
         let total = playerHistory.flatMap { record -> [Int] in
-            record.myName == player ? record.games.map { $0.my } : record.games.map { $0.opponent }
+            nearTeamNames(record).contains(player) ? record.games.map { $0.my } : record.games.map { $0.opponent }
         }.reduce(0, +)
         let games = playerHistory.flatMap { $0.games }.count
         return games == 0 ? 0 : Double(total) / Double(games)
@@ -146,7 +191,7 @@ public enum StatsCalculator {
         var best = 0
         var current = 0
         for record in playerHistory {
-            if record.winner == player {
+            if teamWon(record, player: player) {
                 current += 1
                 best = max(best, current)
             } else {
@@ -159,14 +204,14 @@ public enum StatsCalculator {
     // MARK: - History filtering & formatting
 
     /// HistoryView semantics: newest first (reversed stored order), keeping
-    /// records that involve `selectedPlayer` ("" = all players) and are on or
-    /// after `cutoff` (nil = all time). Computing the cutoff date from a UI
-    /// range selection stays in the view.
+    /// records that involve `selectedPlayer` ("" = all players) on either
+    /// team, and are on or after `cutoff` (nil = all time). Computing the
+    /// cutoff date from a UI range selection stays in the view.
     public static func filteredHistory(_ history: [MatchRecord],
                                        selectedPlayer: String, cutoff: Date?) -> [MatchRecord] {
         history.reversed().filter { record in
             let playerMatch = selectedPlayer.isEmpty ||
-                record.myName == selectedPlayer || record.opponentName == selectedPlayer
+                nearTeamNames(record).contains(selectedPlayer) || farTeamNames(record).contains(selectedPlayer)
             let dateMatch = cutoff.map { record.date >= $0 } ?? true
             return playerMatch && dateMatch
         }

@@ -136,6 +136,113 @@ struct BadmintonMatchTests {
     }
 }
 
+struct DoublesServeRotationTests {
+
+    /// Helper: award `count` points to `side`.
+    private func score(_ match: inout BadmintonMatch, _ side: Side, _ count: Int) {
+        for _ in 0..<count { match.score(side) }
+    }
+
+    @Test func sameServerAlternatesCourtsWhileTeamKeepsWinning() {
+        // Real rule: the same individual keeps serving as long as their team
+        // keeps winning, alternating which court (right=0 parity/left=1
+        // parity) they personally stand in — captured by currentPartnerIndex
+        // staying pinned to the original server's index the whole run.
+        var match = BadmintonMatch()
+        #expect(match.currentPartnerIndex(for: .me) == 0)   // 0-0, partner 0 starts right
+        match.score(.me)                                    // 1-0, still serving
+        #expect(match.currentPartnerIndex(for: .me) == 0)   // same server, now in left court
+        match.score(.me)                                    // 2-0, still serving
+        #expect(match.currentPartnerIndex(for: .me) == 0)   // same server, back in right court
+    }
+
+    @Test func sideOutDoesNotMoveEitherTeamsPartners() {
+        var match = BadmintonMatch()
+        match.score(.me)       // 1-0, me still serving
+        match.score(.opponent) // side-out: opponent gains serve at their score 1 (odd)
+        #expect(match.servingSide == .opponent)
+        // Opponent never served yet this game, so their box assignment is
+        // still the game-start default (partner 0 in the right court) —
+        // at their score of 1 (odd), the player in the LEFT court serves,
+        // which is partner 1 (the complement of the frozen right-box index 0).
+        #expect(match.currentPartnerIndex(for: .opponent) == 1)
+        // My team's assignment is untouched by losing the rally.
+        #expect(match.currentPartnerIndex(for: .me) == 0)
+    }
+
+    @Test func receivingTeamsBoxAssignmentFreezesAcrossServiceTurns() {
+        var match = BadmintonMatch()
+        match.score(.opponent) // side-out immediately: opponent serves at 1 (odd)
+        match.score(.opponent) // opponent continues serving at 2 (even) — same server both times
+        #expect(match.currentPartnerIndex(for: .opponent) == 1)
+        match.score(.me) // side-out back to me; opponent's box assignment freezes here
+        #expect(match.currentPartnerIndex(for: .opponent) == 1) // frozen while not serving
+        match.score(.me) // me continues serving; opponent still untouched
+        #expect(match.currentPartnerIndex(for: .opponent) == 1)
+    }
+
+    @Test func startNextGameResetsBoxAssignmentsToDefaultsUnlessOverridden() {
+        var match = BadmintonMatch()
+        match.score(.me)
+        match.score(.me) // my box index has toggled away from 0
+        score(&match, .me, 19)
+        match.startNextGame()
+        #expect(match.currentPartnerIndex(for: .me) == 0)
+        #expect(match.currentPartnerIndex(for: .opponent) == 0)
+    }
+
+    @Test func startNextGameAcceptsExplicitBoxAssignments() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21)
+        match.startNextGame(myRightBoxPartnerIndex: 1, opponentRightBoxPartnerIndex: 1)
+        #expect(match.currentPartnerIndex(for: .me) == 1)
+        #expect(match.currentPartnerIndex(for: .opponent) == 1)
+    }
+
+    @Test func recordSuddenDeathGameResetsBoxAssignments() {
+        var match = BadmintonMatch()
+        match.score(.me)
+        match.score(.me)
+        match.recordSuddenDeathGame(winner: .me)
+        #expect(match.currentPartnerIndex(for: .me) == 0)
+        #expect(match.currentPartnerIndex(for: .opponent) == 0)
+    }
+}
+
+struct MatchRecordDoublesFieldsTests {
+
+    @Test func doublesFieldsRoundTripThroughEncoding() throws {
+        let record = MatchRecord(
+            games: [GameScore(my: 21, opponent: 15)],
+            myGamesWon: 1, opponentGamesWon: 0, winner: "Alice",
+            myName: "Alice", opponentName: "Carol", date: Date(),
+            myPartnerName: "Bob", opponentPartnerName: "Dana",
+            myPartnerPlayerId: UUID(), opponentPartnerPlayerId: UUID()
+        )
+        let data = try JSONEncoder().encode(record)
+        let decoded = try JSONDecoder().decode(MatchRecord.self, from: data)
+        #expect(decoded.myPartnerName == "Bob")
+        #expect(decoded.opponentPartnerName == "Dana")
+        #expect(decoded.myPartnerPlayerId == record.myPartnerPlayerId)
+        #expect(decoded.opponentPartnerPlayerId == record.opponentPartnerPlayerId)
+    }
+
+    @Test func legacySinglesJSONDecodesWithNilPartnerFields() throws {
+        // Shaped exactly like a pre-doubles record — no partner keys present.
+        let json = """
+        {"id":"\(UUID().uuidString)","games":[],"myGamesWon":1,"opponentGamesWon":0,
+        "winner":"Alice","myName":"Alice","opponentName":"Carol",
+        "date":\(Date().timeIntervalSinceReferenceDate),"duration":0}
+        """
+        let decoded = try JSONDecoder().decode(MatchRecord.self, from: Data(json.utf8))
+        #expect(decoded.myPartnerName == nil)
+        #expect(decoded.opponentPartnerName == nil)
+        #expect(decoded.myPartnerPlayerId == nil)
+        #expect(decoded.opponentPartnerPlayerId == nil)
+        #expect(decoded.myName == "Alice")
+    }
+}
+
 struct PersistenceStoreTests {
 
     private func record(_ winner: String, at date: Date, id: UUID = UUID()) -> MatchRecord {

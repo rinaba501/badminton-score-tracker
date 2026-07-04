@@ -115,7 +115,7 @@ Two-step flow:
 
 ## Match History Storage
 
-- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`
+- `MatchRecord` fields: `id`, `games: [GameScore]`, `myGamesWon`, `opponentGamesWon`, `winner`, `myName`, `opponentName`, `date`, `duration`, `myPlayerId: UUID?`, `opponentPlayerId: UUID?`, and (reserved for doubles, not yet surfaced in any screen — see #8) `myPartnerName: String?`, `opponentPartnerName: String?`, `myPartnerPlayerId: UUID?`, `opponentPartnerPlayerId: UUID?`
 - Player IDs are stored at match-save time by looking up names in the current roster
 - Old records without IDs fall back to stored name strings
 - When a player is renamed, all history records referencing their ID are updated

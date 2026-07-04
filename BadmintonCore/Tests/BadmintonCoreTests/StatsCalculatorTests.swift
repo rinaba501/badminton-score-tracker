@@ -166,3 +166,80 @@ struct StatsCalculatorTests {
         #expect(StatsCalculator.durationString(222) == "3m 42s")
     }
 }
+
+/// Doubles records mixed with singles-shaped ones (partner fields nil) —
+/// every function must keep its singles behavior unchanged while correctly
+/// attributing a partner's participation/wins on their team.
+struct StatsCalculatorDoublesTests {
+
+    private func doublesRecord(my: String, myPartner: String, opp: String, oppPartner: String,
+                               winner: String, games: [(Int, Int)] = [(21, 15)],
+                               date: Date = Date(timeIntervalSince1970: 1_000)) -> MatchRecord {
+        MatchRecord(
+            games: games.map { GameScore(my: $0.0, opponent: $0.1) },
+            myGamesWon: winner == my ? 1 : 0,
+            opponentGamesWon: winner == opp ? 1 : 0,
+            winner: winner,
+            myName: my,
+            opponentName: opp,
+            date: date,
+            myPartnerName: myPartner,
+            opponentPartnerName: oppPartner
+        )
+    }
+
+    @Test func participantsIncludesBothPartnersOnEachTeam() {
+        let history = [doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")]
+        let players = StatsCalculator.participants(history: history)
+        #expect(Set(players) == ["Alice", "Bob", "Cara", "Dan"])
+    }
+
+    @Test func playerHistoryMatchesAPartnerNotJustTheRepresentativeName() {
+        let history = [doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")]
+        // "Bob" never appears as `myName` — only as the partner — yet the
+        // record must still count as part of his history.
+        #expect(StatsCalculator.playerHistory(history, player: "Bob").count == 1)
+    }
+
+    @Test func opponentsExcludesTeammateAndListsBothOfTheOtherTeam() {
+        let history = [doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")]
+        let bobHistory = StatsCalculator.playerHistory(history, player: "Bob")
+        let opponents = StatsCalculator.opponents(of: "Bob", playerHistory: bobHistory)
+        #expect(Set(opponents) == ["Cara", "Dan"])
+        #expect(!opponents.contains("Alice")) // teammate, never an opponent
+    }
+
+    @Test func winsAndLongestStreakAttributeToPartnerViaTeamMembership() {
+        // Bob (partner, not the representative `myName`) is on the winning
+        // team both times — his personal name never appears in `winner`.
+        let history = [
+            doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice"),
+            doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")
+        ]
+        let bobHistory = StatsCalculator.playerHistory(history, player: "Bob")
+        #expect(StatsCalculator.wins(player: "Bob", playerHistory: bobHistory) == 2)
+        #expect(StatsCalculator.longestStreak(player: "Bob", playerHistory: bobHistory) == 2)
+    }
+
+    @Test func headToHeadRecognizesAPlayerOnEitherTeam() {
+        // Bob (near partner) vs Dan (far partner) — neither is the
+        // representative name stored in myName/opponentName.
+        let history = [doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")]
+        let h2h = StatsCalculator.headToHead(player: "Bob", opponent: "Dan", history: history, roster: [])
+        #expect(h2h.wins == 1)
+        #expect(h2h.losses == 0)
+    }
+
+    @Test func singlesRecordsAreUnaffectedByTeamMembershipRework() {
+        // Partner fields absent entirely (nil) — must behave exactly as a
+        // plain singles record, pinning no-regression for the rework.
+        let history = [
+            MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
+                       winner: "Alice", myName: "Alice", opponentName: "Bob", date: Date())
+        ]
+        #expect(StatsCalculator.participants(history: history) == ["Alice", "Bob"])
+        #expect(StatsCalculator.playerHistory(history, player: "Alice").count == 1)
+        #expect(StatsCalculator.opponents(of: "Alice", playerHistory: history) == ["Bob"])
+        #expect(StatsCalculator.wins(player: "Alice", playerHistory: history) == 1)
+    }
+}
