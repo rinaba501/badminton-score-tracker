@@ -94,7 +94,7 @@ struct SchemaVersioningTests {
         #expect(PersistenceStore.migratedRosterData(from: migrated!) == nil)
     }
 
-    @Test func migratedHistoryDataUpgradesLegacyFormat() {
+    @Test func migratedHistoryDataUpgradesLegacyFormat() throws {
         let record = MatchRecord(
             games: [GameScore(my: 21, opponent: 15)],
             myGamesWon: 1, opponentGamesWon: 0,
@@ -103,7 +103,7 @@ struct SchemaVersioningTests {
         )
         // Build legacy bare-array Data by encoding a plain [MatchRecord] directly
         // (bypassing PersistenceStore, which always emits the envelope now).
-        let legacyData = try! JSONEncoder().encode([record])
+        let legacyData = try JSONEncoder().encode([record])
 
         let migrated = PersistenceStore.migratedHistoryData(from: legacyData)
         #expect(migrated != nil)
