@@ -98,6 +98,15 @@ A future session reading CLAUDE.md + SPEC.md should have a complete picture of t
 - Accessibility: custom/gesture controls need `accessibilityLabel`/`Hint` + traits; decorative imagery gets `accessibilityHidden(true)`; a11y strings are localized (`a11y.*` keys)
 - Persistence: read/write `[Player]`/`[MatchRecord]` only through `PersistenceStore` — never inline `JSONEncoder`/`JSONDecoder` in views
 
+## Token Economy
+
+CLAUDE.md is loaded into every session — keep it terse when the doc-update rules require touching it:
+
+- New entries here state *what exists, where it lives, and the hard rule* in one line. Deep rationale and design history go in doc comments at the top of the source file (loaded only when that file is read) or in `docs/`, never as paragraphs here
+- Never read `project.pbxproj` (~34KB) or all 6 `Localizable.strings` files wholesale — grep for the section/key you need and edit surgically
+- SPEC.md/ROADMAP.md/docs/ are read-on-demand: link to them, don't duplicate their content here
+- If SPEC.md's Closed Issues table grows long, prune old rows — git history keeps the record
+
 ## GitHub Repo
 
 `rinaba501/badminton-score-tracker` — https://github.com/rinaba501/badminton-score-tracker/issues
