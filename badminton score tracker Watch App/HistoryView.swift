@@ -20,7 +20,7 @@ struct HistoryView: View {
     @State private var matchType: StatsCalculator.MatchTypeFilter = .all
 
     enum DateRange: String, CaseIterable {
-        case all, week, month
+        case week, month, all
         var label: String {
             switch self {
             case .all:   return NSLocalizedString("history.filter_all", comment: "")
