@@ -2,8 +2,8 @@
 //  HistoryView.swift
 //  badminton score tracker Watch App
 //
-//  Saved match list with date-range and per-player filtering, date
-//  sort order, plus swipe-to-delete and clear-all.
+//  Saved match list with date-range, match-type, and multi-player
+//  filtering, date sort order, plus swipe-to-delete and clear-all.
 //
 
 import SwiftUI
@@ -14,7 +14,9 @@ struct HistoryView: View {
     @EnvironmentObject private var appStore: AppStore
     @State private var showingClearConfirmation = false
     @State private var showingFilters = false
-    @State private var selectedPlayer: String = ""
+    /// Every name here must have participated (on either team) for a record
+    /// to pass the filter — see StatsCalculator.filteredHistory.
+    @State private var selectedPlayers: Set<String> = []
     @State private var dateRange: DateRange = .all
     @State private var newestFirst = true
     @State private var matchType: StatsCalculator.MatchTypeFilter = .all
@@ -55,7 +57,19 @@ struct HistoryView: View {
     }
 
     private var playerFilterLabel: String {
-        selectedPlayer.isEmpty ? NSLocalizedString("history.filter_all_players", comment: "") : Player.displayName(for: selectedPlayer)
+        guard !selectedPlayers.isEmpty else {
+            return NSLocalizedString("history.filter_all_players", comment: "")
+        }
+        let ordered = allPlayers.filter { selectedPlayers.contains($0) }
+        return ordered.map { Player.displayName(for: $0) }.joined(separator: ", ")
+    }
+
+    private func togglePlayer(_ name: String) {
+        if selectedPlayers.contains(name) {
+            selectedPlayers.remove(name)
+        } else {
+            selectedPlayers.insert(name)
+        }
     }
 
     private var filteredHistory: [MatchRecord] {
@@ -66,7 +80,7 @@ struct HistoryView: View {
             case .month: return Calendar.current.date(byAdding: .month, value: -1, to: Date())
             }
         }()
-        return StatsCalculator.filteredHistory(history, selectedPlayer: selectedPlayer, cutoff: cutoff,
+        return StatsCalculator.filteredHistory(history, selectedPlayers: selectedPlayers, cutoff: cutoff,
                                                newestFirst: newestFirst, matchType: matchType)
     }
 
@@ -149,10 +163,10 @@ struct HistoryView: View {
                                     HStack(spacing: 4) {
                                         Image(systemName: "person")
                                             .font(.system(size: 11))
-                                            .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                            .foregroundColor(!selectedPlayers.isEmpty ? .yellow : .secondary)
                                         Text(playerFilterLabel)
                                             .font(.system(size: 11))
-                                            .foregroundColor(!selectedPlayer.isEmpty ? .yellow : .secondary)
+                                            .foregroundColor(!selectedPlayers.isEmpty ? .yellow : .secondary)
                                             .lineLimit(1)
                                         Spacer()
                                         Image(systemName: "chevron.up.chevron.down")
@@ -212,22 +226,31 @@ struct HistoryView: View {
         }
         .sheet(isPresented: $showingFilters) {
             List {
+                Section {
+                    Button(action: { showingFilters = false }) {
+                        Text("history.filter_done")
+                            .frame(maxWidth: .infinity)
+                            .fontWeight(.semibold)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.yellow)
+                }
                 Section(header: Text("history.filter_player")) {
-                    Button(action: { selectedPlayer = ""; showingFilters = false }) {
+                    Button(action: { selectedPlayers = []; showingFilters = false }) {
                         HStack {
                             Text("history.filter_all_players")
                             Spacer()
-                            if selectedPlayer.isEmpty {
+                            if selectedPlayers.isEmpty {
                                 Image(systemName: "checkmark").foregroundColor(.yellow)
                             }
                         }
                     }
                     ForEach(allPlayers, id: \.self) { name in
-                        Button(action: { selectedPlayer = name; showingFilters = false }) {
+                        Button(action: { togglePlayer(name) }) {
                             HStack {
                                 Text(Player.displayName(for: name))
                                 Spacer()
-                                if selectedPlayer == name {
+                                if selectedPlayers.contains(name) {
                                     Image(systemName: "checkmark").foregroundColor(.yellow)
                                 }
                             }

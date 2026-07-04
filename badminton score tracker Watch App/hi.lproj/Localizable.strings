@@ -90,6 +90,7 @@
 "settings.crown_scoring" = "क्राउन स्कोरिंग";
 "settings.audio" = "ऑडियो";
 "history.filter_player" = "खिलाड़ी";
+"history.filter_done" = "पूर्ण";
 "history.filter_all_players" = "सभी खिलाड़ी";
 "history.filter_date" = "अवधि";
 "history.filter_all" = "सभी समय";

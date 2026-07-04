@@ -53,7 +53,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - Each row: player names (Doubles rows show both partners as "Name & Partner"), games won, per-game scores, date, duration
 - Swipe to delete individual records
 - "Clear All" button with confirmation
-- **Filter by player** — picker to show only matches involving a specific player (hidden if only one player in history); tapping a player (or "All Players") immediately applies the filter and dismisses the picker
+- **Filter by player** — multi-select picker (hidden if only one player in history); a record only matches once every selected player participated, on either team, in any combination — so picking two specific doubles partners finds the exact match they played together. Tapping "All Players" clears the selection and dismisses immediately; picking specific players stays open (checkmarks toggle) until "Done" is tapped
 - **Filter by date range** — All Time / This Week / This Month
 - **Filter by match type** — All / Singles / Doubles (hidden unless history contains both types)
 - **Sort** — toggle button switches between Newest first (default) and Oldest first
