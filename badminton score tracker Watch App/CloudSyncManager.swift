@@ -26,9 +26,9 @@ enum CloudSyncWarning {
 private enum SyncKeys {
     static let playerRoster = AppStorageKeys.playerRoster
     static let matchHistory = AppStorageKeys.matchHistory
-    static let all: [String] = [
-        AppStorageKeys.playerRoster,
-        AppStorageKeys.matchHistory,
+    // Scalar settings — always synced via the KV store, even once CloudKit owns
+    // history + roster (they're tiny and never approach the ~1 MB quota).
+    static let scalars: [String] = [
         AppStorageKeys.myName,
         AppStorageKeys.localPlayerId,
         AppStorageKeys.pointsToWin,
@@ -40,6 +40,7 @@ private enum SyncKeys {
         AppStorageKeys.timeModeEnabled,
         AppStorageKeys.timeLimitMinutes
     ]
+    static let all: [String] = scalars + [playerRoster, matchHistory]
 }
 
 @MainActor
@@ -56,6 +57,18 @@ final class CloudSyncManager: ObservableObject {
     @Published private(set) var syncWarning: CloudSyncWarning?
 
     private init() {}
+
+    // When CloudKit owns history + roster (the flag is on), the KV store carries
+    // scalar settings only. Default-off, so this is `true` today and every path
+    // below behaves exactly as before.
+    private var kvOwnsData: Bool { !CloudKitSyncManager.isEnabled }
+
+    // Non-history keys the KV store pushes/pulls directly. Roster is a blob
+    // treated like a scalar here (history is merged separately); it drops out
+    // once CloudKit owns it.
+    private var directKeys: [String] {
+        kvOwnsData ? SyncKeys.scalars + [SyncKeys.playerRoster] : SyncKeys.scalars
+    }
 
     func start() {
         NotificationCenter.default.addObserver(
@@ -76,31 +89,35 @@ final class CloudSyncManager: ObservableObject {
     // iCloud's unshrunk copy would silently resurrect what was just deleted.
     func pushToCloud(overwriteHistory: Bool = false) {
         let defaults = UserDefaults.standard
-        for key in SyncKeys.all where key != SyncKeys.matchHistory {
+        for key in directKeys {
             if let value = defaults.object(forKey: key) {
                 kvStore.set(value, forKey: key)
             }
         }
-        if overwriteHistory {
-            let localData = defaults.data(forKey: SyncKeys.matchHistory) ?? Data()
-            kvStore.set(localData, forKey: SyncKeys.matchHistory)
-        } else {
-            syncHistory()
+        if kvOwnsData {
+            if overwriteHistory {
+                let localData = defaults.data(forKey: SyncKeys.matchHistory) ?? Data()
+                kvStore.set(localData, forKey: SyncKeys.matchHistory)
+            } else {
+                syncHistory()
+            }
+            AppStore.shared.reloadFromStorage()
         }
-        AppStore.shared.reloadFromStorage()
         kvStore.synchronize()
     }
 
     // Pull iCloud values into UserDefaults, only overwriting if iCloud has data
     private func pullFromCloud() {
         let defaults = UserDefaults.standard
-        for key in SyncKeys.all where key != SyncKeys.matchHistory {
+        for key in directKeys {
             if let value = kvStore.object(forKey: key) {
                 defaults.set(value, forKey: key)
             }
         }
-        syncHistory()
-        AppStore.shared.reloadFromStorage()
+        if kvOwnsData {
+            syncHistory()
+            AppStore.shared.reloadFromStorage()
+        }
     }
 
     @objc private func externalChange(_ notification: Notification) {
@@ -117,13 +134,14 @@ final class CloudSyncManager: ObservableObject {
         var dataKeysChanged = false
         if let changedKeys = notification.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] {
             let defaults = UserDefaults.standard
-            for key in changedKeys where key != SyncKeys.matchHistory {
+            let applicable = Set(directKeys)
+            for key in changedKeys where applicable.contains(key) {
                 if let value = kvStore.object(forKey: key) {
                     defaults.set(value, forKey: key)
                 }
                 if key == SyncKeys.playerRoster { dataKeysChanged = true }
             }
-            if changedKeys.contains(SyncKeys.matchHistory) {
+            if kvOwnsData && changedKeys.contains(SyncKeys.matchHistory) {
                 syncHistory()
                 dataKeysChanged = true
             }
