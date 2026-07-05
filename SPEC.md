@@ -15,8 +15,9 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 
 ### iOS Companion App (in progress — #41, ROADMAP Phase 6)
 
-- The former stub container target is now a real iOS app (`NavigationStack`-based, iPhone-only, iOS 17+). Roster management, Share (#13), and live scoring land in follow-up PRs (see ROADMAP Phase 6)
+- The former stub container target is now a real iOS app (`NavigationStack`-based, iPhone-only, iOS 17+). Share (#13) and live scoring land in follow-up PRs (see ROADMAP Phase 6)
 - **Match History and Stats are on iPhone.** A home menu links to a full Match History (date-range / match-type / sort / multi-player filters, swipe-to-delete, clear-all) and a Stats screen (per-player record, win rate, streaks, averages, head-to-head) — the same information and derivations as the Watch, restyled for the phone. Deleting a match on iPhone removes it everywhere via iCloud.
+- **Roster management is on iPhone** (with a real keyboard): edit your own name/avatar, add / rename / delete saved players, choose the roster sort order, and pick an avatar color, image, or icon. Renaming a player updates their name in every past match. Changes sync to the Watch via iCloud.
 - **iCloud sync is live:** the iPhone reads (and can edit/delete) the same match history, roster, and settings the Watch records — both share one iCloud key-value bucket via a byte-identical `ubiquity-kvstore-identifier`. No new iCloud account or pairing step; sign both devices into the same Apple ID. The Watch stays the scoring device.
 - Distribution shape changed with the shell: the Watch app is no longer `WKWatchOnly` — it declares the iOS app as its companion (`WKCompanionAppBundleIdentifier`) and keeps running independently (`WKRunsIndependentlyOfCompanionApp`). **An App Store submission from a commit after this change ships the iOS app too; to submit watch-only, archive from an earlier commit**
 

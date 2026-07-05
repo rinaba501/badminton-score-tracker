@@ -32,3 +32,22 @@
 "stats.best_streak" = "सर्वश्रेष्ठ स्ट्रीक";
 "stats.avg_duration" = "औसत अवधि";
 "stats.head_to_head" = "आमने-सामने";
+
+// Roster management (shared keys with the Watch)
+"settings.me" = "मैं";
+"settings.players" = "खिलाड़ी";
+"settings.no_players" = "अभी तक कोई सहेजा खिलाड़ी नहीं";
+"settings.add_player" = "खिलाड़ी जोड़ें";
+"settings.sort_order" = "क्रम चुनें";
+"settings.sort_created" = "जोड़ा गया";
+"settings.sort_name" = "नाम";
+"settings.sort_name_desc" = "नाम (Z-A)";
+"settings.sort_most_played" = "सबसे ज़्यादा खेले गए";
+"settings.sort_recently_used" = "हाल ही में इस्तेमाल किए गए";
+"settings.delete" = "हटाएं";
+"playeredit.name" = "नाम";
+"playeredit.name_taken" = "नाम पहले से मौजूद है";
+"playeredit.color" = "रंग";
+"playeredit.avatar" = "अवतार";
+"playeredit.icons" = "आइकन";
+"playeredit.save" = "सहेजें";

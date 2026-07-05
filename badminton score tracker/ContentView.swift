@@ -25,6 +25,11 @@ struct ContentView: View {
                     } label: {
                         Label("stats.title", systemImage: "chart.bar.xaxis")
                     }
+                    NavigationLink {
+                        RosterView()
+                    } label: {
+                        Label("settings.players", systemImage: "person.2")
+                    }
                 } footer: {
                     Text("ios.watch_scoring_hint")
                 }
