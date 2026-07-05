@@ -2,18 +2,29 @@
 //  ContentView.swift
 //  badminton score tracker (iOS)
 //
-//  Root browse menu. iOS uses NavigationStack-based navigation (per ROADMAP
-//  Phase 6) — the Watch stays the scoring device; the phone browses History
-//  and Stats (Roster / Share arrive in follow-up PRs). All screens read the
-//  shared AppStore, which the app entry keeps in sync via iCloud KV.
+//  Root menu. iOS uses NavigationStack-based navigation (per ROADMAP Phase 6).
+//  A match can be scored on the phone (New Match → modal scoring flow) or on
+//  the Apple Watch; both write to the same iCloud-synced history. History,
+//  Stats, and Roster read the shared AppStore.
 //
 
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showScoring = false
+
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    Button {
+                        showScoring = true
+                    } label: {
+                        Label("ios.new_match", systemImage: "plus.circle.fill")
+                            .font(.headline)
+                    }
+                }
+
                 Section {
                     NavigationLink {
                         HistoryView()
@@ -30,11 +41,13 @@ struct ContentView: View {
                     } label: {
                         Label("settings.players", systemImage: "person.2")
                     }
-                } footer: {
-                    Text("ios.watch_scoring_hint")
                 }
             }
             .navigationTitle(Text("ios.title"))
+            .fullScreenCover(isPresented: $showScoring) {
+                NewMatchFlow(onClose: { showScoring = false })
+                    .environmentObject(AppStore.shared)
+            }
         }
     }
 }

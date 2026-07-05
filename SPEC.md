@@ -15,7 +15,8 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 
 ### iOS Companion App (in progress — #41, ROADMAP Phase 6)
 
-- The former stub container target is now a real iOS app (`NavigationStack`-based, iPhone-only, iOS 17+). Live scoring on iPhone lands in a follow-up PR (see ROADMAP Phase 6)
+- The former stub container target is now a real iOS app (`NavigationStack`-based, iPhone-only, iOS 17+)
+- **Score a match on the phone** (New Match → pick singles/doubles and players → tap-to-score). Same rules, serve tracking, time mode, sounds, and spoken announcements as the Watch; the finished match saves to the shared iCloud history. iPhone omits the Digital Crown and HealthKit workout logging (both watchOS-only) — the Watch stays the richest scoring device, but the phone is now fully capable on its own
 - **Share a match result** (#13): long-press any history row to share a rendered summary card (final score, team names, per-game line, date) as an image, plus a plain-text fallback, through the native iOS share sheet
 - **Match History and Stats are on iPhone.** A home menu links to a full Match History (date-range / match-type / sort / multi-player filters, swipe-to-delete, clear-all) and a Stats screen (per-player record, win rate, streaks, averages, head-to-head) — the same information and derivations as the Watch, restyled for the phone. Deleting a match on iPhone removes it everywhere via iCloud.
 - **Roster management is on iPhone** (with a real keyboard): edit your own name/avatar, add / rename / delete saved players, choose the roster sort order, and pick an avatar color, image, or icon. Renaming a player updates their name in every past match. Changes sync to the Watch via iCloud.
@@ -189,7 +190,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature |
 |---|---------|
-| 41 | iPhone companion app — Roadmap Phase 6 |
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
 
@@ -199,6 +199,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 41 | iPhone companion app — history, stats, roster, share, and live scoring (Roadmap Phase 6) | #133, #135, #136, #137, #138, #139 |
 | 13 | Share match result as an image/summary card (iPhone) | #138 |
 | 5 | Match Timer mode | #42 |
 | 6 | App icon | #38 |

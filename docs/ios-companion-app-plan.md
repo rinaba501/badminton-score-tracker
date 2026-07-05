@@ -47,7 +47,9 @@ Added `RosterView.swift` (Me section + add/rename/delete + sort order), iOS `Pla
 
 `ShareCard.swift`: SwiftUI card rendered to a PNG via `ImageRenderer`; a `SharableMatchCard: Transferable` exposes both the image and a plain-text summary. Long-press a history row → `ShareLink` (context menu). Lowest risk; closes #13.
 
-### PR6 — Live scoring on iPhone (follow-up, after v1)
+### PR6 — Live scoring on iPhone (follow-up, after v1) — implemented
+
+Shipped in #139. iOS `GameView`/`PreMatchView`/`GameViewModel` + `NewMatchFlow` (a `fullScreenCover` routing pre-match → game), plus per-target `HapticsProvider` (UIKit), `CourtTheme`, and `AudioFeedback`. New Match button on the home menu. Tap-only (no crown), no HealthKit. Below is the original design.
 
 iOS `GameView.swift` + `PreMatchView.swift` + `GameViewModel.swift`: per-target adapted copies (`GameViewModel` uses `@AppStorage`/SwiftUI so it can't move into Foundation-only `BadmintonCore`; the pure scoring rules already live in `BadmintonMatch`). Reuses `ScoreCallFormatter`, `AppStorageKeys`, and the guest-token identity convention unchanged. iOS `HapticsProvider` implementation via `UIImpactFeedbackGenerator`/`UINotificationFeedbackGenerator`. Omissions vs. Watch: no HealthKit workout logging (watchOS-only), no crown scoring. Match state stays per-device (KV-excluded), so a phone-scored match and a watch-scored match can't collide. Gate: two-device check that an iPhone-scored match appears in the Watch's history.
 
@@ -68,4 +70,4 @@ Per PR: `swiftlint`, `swift test --package-path BadmintonCore`, `xcodebuild buil
 - [x] PR3 — History + Stats views (code merged; two-device delete-recheck still pending)
 - [x] PR4 — Roster management (code merged; two-device propagation check still pending)
 - [x] PR5 — Share card (#13, closes the issue)
-- [ ] PR6 — live scoring on iPhone (follow-up)
+- [x] PR6 — live scoring on iPhone (follow-up; two-device history check pending)

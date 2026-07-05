@@ -1,6 +1,5 @@
 // iOS companion app
 "ios.title" = "배드민턴 스코어";
-"ios.watch_scoring_hint" = "점수는 Apple Watch에서 기록하세요.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "경기 기록";
@@ -52,3 +51,39 @@
 "playeredit.icons" = "아이콘";
 "playeredit.save" = "저장";
 "ios.share" = "공유";
+
+// Live scoring (shared keys with the Watch)
+"prematch.title" = "새 경기";
+"prematch.back" = "뒤로";
+"game.menu" = "메뉴";
+"game.games" = "게임";
+"game.right_court" = "오른쪽 코트";
+"game.left_court" = "왼쪽 코트";
+"game.game_point" = "게임 포인트!";
+"game.match_point" = "매치 포인트!";
+"game.next_game" = "다음 게임";
+"game.wins_game" = "%@ 게임 승리!";
+"game.wins_match" = "%@ 경기 승리!";
+"game.games_score" = "게임 %@";
+"settings.mode" = "모드";
+"speech.time_up" = "시간 종료";
+"game.rematch" = "재경기";
+"game.discard_title" = "경기를 포기할까요?";
+"game.discard_message" = "현재 점수가 사라집니다.";
+"game.discard_confirm" = "포기";
+"game.discard_cancel" = "계속하기";
+"a11y.score_tile" = "%1$@, %2$d점";
+"a11y.score_tile_serving_suffix" = "%1$@, %2$@에서 서브";
+"a11y.score_hint" = "두 번 탭하여 득점";
+"a11y.undo" = "마지막 득점 취소";
+"a11y.games_won" = "획득 게임, %1$d대 %2$d";
+"a11y.timer_remaining" = "남은 시간, %@";
+"prematch.near_side" = "근거리";
+"prematch.far_side" = "원거리";
+"prematch.near_partner" = "근거리 파트너";
+"prematch.far_partner" = "원거리 파트너";
+"prematch.saved" = "저장됨";
+"prematch.add_new" = "새로 추가";
+"game.sudden_death" = "서든데스!";
+"game.tie" = "무승부!";
+"ios.new_match" = "새 경기";
