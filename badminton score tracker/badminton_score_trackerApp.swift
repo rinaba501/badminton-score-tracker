@@ -3,18 +3,24 @@
 //  badminton score tracker (iOS)
 //
 //  Entry point for the iPhone companion app (ROADMAP Phase 6, #41).
-//  PR1 shell: no sync, no data — the iOS CloudSyncManager/AppStore layer
-//  lands separately (see the phased plan in the PR/ROADMAP). The Watch
-//  remains the scoring device.
+//  Starts iCloud KV sync and injects the shared AppStore, so the phone reads
+//  the same history/roster/settings the Watch writes (shared KV bucket via a
+//  byte-identical ubiquity-kvstore-identifier). The Watch remains the scoring
+//  device; the phone's history/stats/roster UI arrives in the follow-up PRs.
 //
 
 import SwiftUI
 
 @main
 struct BadmintonScoreTrackerApp: App {
+    init() {
+        Task { await CloudSyncManager.shared.start() }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(AppStore.shared)
         }
     }
 }

@@ -1,3 +1,4 @@
 // iOS companion app
 "ios.title" = "羽毛球比分";
 "ios.placeholder_message" = "比赛历史、统计和球员名单即将登陆 iPhone。请在 Apple Watch 上记录比分。";
+"ios.synced_summary %lld %lld" = "已从 iCloud 同步：%lld 场比赛 · %lld 名球员";

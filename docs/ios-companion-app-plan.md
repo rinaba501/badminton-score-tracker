@@ -25,7 +25,9 @@ The watch is the scoring device; browsing history/stats, managing the roster wit
 
 Converted `badminton score tracker` to a real iOS app target in place; added the placeholder shell (`ContentView`, app entry, `Info.plist`, `Assets.xcassets`, 6-locale strings); fixed a `WKWatchOnly`/companion-app conflict (Watch App's Info.plist now declares `WKCompanionAppBundleIdentifier` + `WKRunsIndependentlyOfCompanionApp` instead of `WKWatchOnly` — **any archive taken from a commit after this PR includes the iOS app**; a watch-only submission must archive from an earlier commit); added the shared iOS scheme; added `ios-build` and `ios-localization-sync` CI jobs (5 → 7 total); added the iOS folder to `.swiftlint.yml`.
 
-### PR2 — Sync layer (highest risk — plan mode + `/code-review` + two-device test required)
+### PR2 — Sync layer (highest risk — plan mode + `/code-review` + two-device test required) — implemented; two-device test pending
+
+Ported the Watch's `CloudSyncManager` + `AppStore` to iOS as KV-only copies (no CloudKit branching); both targets now share one KV bucket via a byte-identical `ubiquity-kvstore-identifier` (`$(TeamIdentifierPrefix)ritsuma.badminton-score-tracker.shared`). The iPhone is write-capable and keeps the `isHistoryShrink` delete-overwrite guard. The shell shows a temporary synced-counts line (replaced by real screens in PR3). Merge gate is the two-device manual test below.
 
 - iOS `CloudSyncManager.swift` + `AppStore.swift`: near-verbatim ports of the Watch's, minus all `CloudKitSyncManager` branching (iOS v1 hardcodes the KV path). Same `SyncKeys`, same `pushToCloud(overwriteHistory:)` / `pullFromCloud()` / `externalChange(_:)` / merge-by-id `syncHistory()`.
 - iOS must be write-capable: roster edits push, and history *deletion* from iOS must replicate the `PersistenceStore.isHistoryShrink` overwrite-vs-merge distinction — the same class of bug as the historical "clear history resurrection" bug, now with two real writers.
@@ -62,7 +64,7 @@ Per PR: `swiftlint`, `swift test --package-path BadmintonCore`, `xcodebuild buil
 ## Status checklist
 
 - [x] PR1 — target restructure + shell + CI ([#133](https://github.com/rinaba501/badminton-score-tracker/pull/133))
-- [ ] PR2 — sync layer
+- [x] PR2 — sync layer (code merged; two-device hardware test still pending)
 - [ ] PR3 — History + Stats views
 - [ ] PR4 — Roster management
 - [ ] PR5 — Share card (#13)
