@@ -1,0 +1,328 @@
+//
+//  GameViewModel.swift
+//  badminton score tracker (iOS)
+//
+//  Live-match business logic for the iPhone: scoring, undo, time mode, haptics
+//  coordination, announcements, persistence. Per-target adaptation of the
+//  Watch's GameViewModel (it uses @AppStorage/SwiftUI, so it can't move into
+//  Foundation-only BadmintonCore; the pure scoring rules already live there in
+//  BadmintonMatch). Differences vs the Watch, by platform necessity:
+//    • UIKit haptics (UIKitHapticsProvider) instead of WKInterfaceDevice.
+//    • No HealthKit workout logging (HKWorkoutSession is watchOS-only).
+//    • A top-level GameMode (there is no iOS SettingsView to nest it in).
+//  Match-config keys (matchMyName/… and gameMode) are deliberately KV-excluded,
+//  so a phone-scored match and a watch-scored match never collide; the finished
+//  MatchRecord flows through the same shrink-aware saveHistory the Watch uses.
+//
+
+import SwiftUI
+import BadmintonCore
+
+/// Singles vs doubles. Same raw values as the Watch's `SettingsView.GameMode`
+/// so both targets decode the same (per-device, KV-excluded) AppStorage value.
+enum GameMode: String, Codable, CaseIterable {
+    case singles = "Singles"
+    case doubles = "Doubles"
+}
+
+@MainActor
+final class GameViewModel: ObservableObject {
+
+    // MARK: - Published state
+
+    @Published private(set) var match: BadmintonMatch
+    @Published private(set) var undoStack: [BadmintonMatch] = []
+    @Published private(set) var savedCurrentMatch = false
+    @Published private(set) var matchStartDate = Date()
+    @Published var showDiscardAlert = false
+    @Published private(set) var timeRemaining: TimeInterval = 0
+    @Published private(set) var timeModeWinner: Side?
+    @Published private(set) var suddenDeath = false
+
+    // MARK: - AppStorage (match config — drives newMatch / saveMatch)
+
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.matchMyName) private var matchMyName = ""
+    @AppStorage(AppStorageKeys.matchOpponentName) private var matchOpponentName = ""
+    @AppStorage(AppStorageKeys.matchMyPartnerName) private var matchMyPartnerName = ""
+    @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
+    @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
+    @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
+    @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
+    @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
+    @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
+    @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
+    @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
+
+    // MARK: - Dependencies
+
+    private let hapticsProvider: HapticsProvider
+    private let soundPlayer: SoundPlayer
+    private let announcer: ScoreAnnouncer
+    private let appStore: AppStore
+
+    // MARK: - Init
+
+    init(hapticsProvider: HapticsProvider = UIKitHapticsProvider(), appStore: AppStore = .shared) {
+        self.hapticsProvider = hapticsProvider
+        self.soundPlayer = SoundPlayer()
+        self.announcer = ScoreAnnouncer()
+        self.appStore = appStore
+        self.match = BadmintonMatch()
+    }
+
+    // MARK: - Derived names (read by view)
+
+    var effectiveMyName: String { matchMyName.isEmpty ? myName : matchMyName }
+    // Defensive fallback for the (practically unreachable) case where the game
+    // screen appears with no opponent selected. Falls back to the guest *token*,
+    // not guestFarLabel — this value can be persisted into MatchRecord.opponentName,
+    // and storing a localized label there would make the same guest compare as
+    // a different identity depending on the device's locale at save time.
+    var effectiveOpponentName: String { matchOpponentName.isEmpty ? Player.guestFarToken : matchOpponentName }
+
+    var effectiveMyPartnerName: String? {
+        gameMode == .doubles && !matchMyPartnerName.isEmpty ? matchMyPartnerName : nil
+    }
+    var effectiveOpponentPartnerName: String? {
+        gameMode == .doubles && !matchOpponentPartnerName.isEmpty ? matchOpponentPartnerName : nil
+    }
+
+    var timeExpiredWinner: Bool { timeModeWinner != nil }
+    var isTimeModeEnabled: Bool { timeModeEnabled }
+
+    func name(for side: Side) -> String {
+        side == .me ? effectiveMyName : effectiveOpponentName
+    }
+
+    func partnerName(for side: Side) -> String? {
+        side == .me ? effectiveMyPartnerName : effectiveOpponentPartnerName
+    }
+
+    // MARK: - Scoring actions
+
+    func tap(_ side: Side) {
+        guard match.gameWinner == nil, match.matchWinner == nil, !timeExpiredWinner else { return }
+        undoStack.append(match)
+
+        if timeModeEnabled && suddenDeath {
+            match.score(side)
+            if match.gameWinner == nil {
+                match.recordSuddenDeathGame(winner: side)
+            }
+            suddenDeath = false
+            resolveAfterGame()
+            return
+        }
+
+        let wasGamePoint = match.isGamePoint
+        match.score(side)
+
+        let announcementDelay: Double
+        if match.matchWinner != nil {
+            hapticsProvider.play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                self?.hapticsProvider.play(.success)
+            }
+            if enableSounds { soundPlayer.playMatchWin() }
+            announcementDelay = enableSounds ? 0.7 : 0
+            saveMatch()
+        } else if match.gameWinner != nil {
+            hapticsProvider.play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.hapticsProvider.play(.retry)
+            }
+            if enableSounds { soundPlayer.playGameWin() }
+            announcementDelay = enableSounds ? 0.5 : 0
+        } else if !wasGamePoint && match.isGamePoint {
+            hapticsProvider.play(.notification)
+            if enableSounds { soundPlayer.playGamePoint() }
+            announcementDelay = enableSounds ? 0.25 : 0
+        } else {
+            hapticsProvider.play(.click)
+            if enableSounds { soundPlayer.playScore() }
+            announcementDelay = enableSounds ? 0.25 : 0
+        }
+
+        if announcementDelay > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + announcementDelay) { [weak self] in
+                self?.announceCurrentScore()
+            }
+        } else {
+            announceCurrentScore()
+        }
+    }
+
+    func undo() {
+        guard let previous = undoStack.popLast() else { return }
+        match = previous
+        hapticsProvider.play(.directionUp)
+    }
+
+    func startNextGame() {
+        undoStack.removeAll()
+        suddenDeath = false
+        match.startNextGame()
+        hapticsProvider.play(.start)
+    }
+
+    func newMatch() {
+        match = BadmintonMatch(
+            pointsToWin: pointsToWin,
+            pointCap: pointsToWin + 9,
+            gamesToWin: (gamesInMatch / 2) + 1
+        )
+        undoStack.removeAll()
+        savedCurrentMatch = false
+        timeModeWinner = nil
+        suddenDeath = false
+        timeRemaining = TimeInterval(timeLimitMinutes * 60)
+        matchStartDate = Date()
+    }
+
+    func saveMatch() {
+        let winner = match.matchWinner ?? timeModeWinner
+        guard !savedCurrentMatch, let winner else { return }
+        savedCurrentMatch = true
+        saveToRoster(effectiveOpponentName)
+        saveToRoster(effectiveMyName)
+        if let partner = effectiveMyPartnerName { saveToRoster(partner) }
+        if let partner = effectiveOpponentPartnerName { saveToRoster(partner) }
+        let currentRoster = appStore.roster
+        var games = match.completedGames
+        if timeModeEnabled && match.matchWinner == nil && (match.myScore > 0 || match.opponentScore > 0) {
+            games.append(GameScore(my: match.myScore, opponent: match.opponentScore))
+        }
+        var newHistory = appStore.history
+        newHistory.append(MatchRecord(
+            games: games,
+            myGamesWon: match.myGamesWon,
+            opponentGamesWon: match.opponentGamesWon,
+            winner: name(for: winner),
+            myName: effectiveMyName,
+            opponentName: effectiveOpponentName,
+            date: Date(),
+            duration: Date().timeIntervalSince(matchStartDate),
+            myPlayerId: resolvedPlayerId(for: effectiveMyName, isNearSide: true, roster: currentRoster),
+            opponentPlayerId: resolvedPlayerId(for: effectiveOpponentName, isNearSide: false, roster: currentRoster),
+            myPartnerName: effectiveMyPartnerName,
+            opponentPartnerName: effectiveOpponentPartnerName,
+            myPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveMyPartnerName, roster: currentRoster),
+            opponentPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveOpponentPartnerName, roster: currentRoster)
+        ))
+        appStore.saveHistory(newHistory)
+    }
+
+    // MARK: - Time mode
+
+    func tickTimer() {
+        guard timeModeEnabled, timeModeWinner == nil, !suddenDeath,
+              match.matchWinner == nil else { return }
+        if timeRemaining > 0 {
+            timeRemaining -= 1
+        } else {
+            handleTimeUp()
+        }
+    }
+
+    func handleTimeUp() {
+        guard timeModeWinner == nil else { return }
+        speak(NSLocalizedString("speech.time_up", comment: ""))
+        if match.myGamesWon != match.opponentGamesWon {
+            let w: Side = match.myGamesWon > match.opponentGamesWon ? .me : .opponent
+            timeModeWinner = w
+            hapticsProvider.play(.success)
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveMatch()
+        } else if match.myScore != match.opponentScore {
+            let w: Side = match.myScore > match.opponentScore ? .me : .opponent
+            timeModeWinner = w
+            hapticsProvider.play(.success)
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveMatch()
+        } else {
+            suddenDeath = true
+            hapticsProvider.play(.notification)
+        }
+    }
+
+    // MARK: - Lifecycle
+
+    func onAppear() {
+        guard match.completedGames.isEmpty && match.myScore == 0 && match.opponentScore == 0 else { return }
+        match = BadmintonMatch(
+            pointsToWin: pointsToWin,
+            pointCap: pointsToWin + 9,
+            gamesToWin: (gamesInMatch / 2) + 1
+        )
+        if timeModeEnabled { timeRemaining = TimeInterval(timeLimitMinutes * 60) }
+    }
+
+    // MARK: - Private helpers
+
+    private func resolveAfterGame() {
+        if let winner = match.matchWinner {
+            timeModeWinner = winner
+            hapticsProvider.play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                self?.hapticsProvider.play(.success)
+            }
+            if enableSounds { soundPlayer.playMatchWin() }
+            saveMatch()
+        } else if match.isTied {
+            timeModeWinner = .me  // placeholder — overlay will show "Tie"
+            saveMatch()
+        } else {
+            hapticsProvider.play(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.hapticsProvider.play(.retry)
+            }
+            if enableSounds { soundPlayer.playGameWin() }
+        }
+    }
+
+    private func speak(_ text: String) {
+        guard announceScore else { return }
+        announcer.speak(text)
+    }
+
+    private func announceCurrentScore() {
+        let text = ScoreCallFormatter.format(
+            match: match,
+            myName: teamDisplayName(for: .me),
+            opponentName: teamDisplayName(for: .opponent),
+            locale: .current
+        )
+        speak(text)
+    }
+
+    /// "Alice" for singles, "Alice & Bob" (localized) for doubles.
+    func teamDisplayName(for side: Side) -> String {
+        let primary = Player.displayName(for: name(for: side))
+        guard let partner = partnerName(for: side) else { return primary }
+        return String(format: NSLocalizedString("game.team_names_format", comment: ""), primary, Player.displayName(for: partner))
+    }
+
+    private func resolvedPlayerId(for name: String, isNearSide: Bool, roster: [Player]) -> UUID? {
+        if isNearSide && (matchMyName.isEmpty || matchMyName == myName) {
+            return appStore.localPlayerId
+        }
+        if Player.isGuestName(name) { return nil }
+        return roster.first(where: { $0.name == name })?.id
+    }
+
+    private func resolvedPartnerPlayerId(for name: String?, roster: [Player]) -> UUID? {
+        guard let name, !Player.isGuestName(name) else { return nil }
+        return roster.first(where: { $0.name == name })?.id
+    }
+
+    private func saveToRoster(_ name: String) {
+        guard Player.shouldBeStoredAsSavedPlayer(name, currentUserName: myName) else { return }
+        var roster = appStore.roster
+        if !roster.contains(where: { $0.name == name }) {
+            let colorIndex = roster.count % Player.avatarColors.count
+            roster.insert(Player(name: name, colorIndex: colorIndex), at: 0)
+            appStore.saveRoster(roster)
+        }
+    }
+}

@@ -1,6 +1,5 @@
 // iOS companion app
 "ios.title" = "बैडमिंटन स्कोर";
-"ios.watch_scoring_hint" = "स्कोर अपनी Apple Watch पर रिकॉर्ड करें।";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "मैच इतिहास";
@@ -52,3 +51,39 @@
 "playeredit.icons" = "आइकन";
 "playeredit.save" = "सहेजें";
 "ios.share" = "साझा करें";
+
+// Live scoring (shared keys with the Watch)
+"prematch.title" = "नया मैच";
+"prematch.back" = "वापस";
+"game.menu" = "मेनू";
+"game.games" = "गेम्स";
+"game.right_court" = "दायाँ कोर्ट";
+"game.left_court" = "बायाँ कोर्ट";
+"game.game_point" = "गेम पॉइंट!";
+"game.match_point" = "मैच पॉइंट!";
+"game.next_game" = "अगला गेम";
+"game.wins_game" = "%@ ने गेम जीता!";
+"game.wins_match" = "%@ ने मैच जीता!";
+"game.games_score" = "गेम्स %@";
+"settings.mode" = "मोड";
+"speech.time_up" = "समय समाप्त";
+"game.rematch" = "फिर से खेलें";
+"game.discard_title" = "मैच छोड़ें?";
+"game.discard_message" = "आपका वर्तमान स्कोर खो जाएगा।";
+"game.discard_confirm" = "छोड़ें";
+"game.discard_cancel" = "जारी रखें";
+"a11y.score_tile" = "%1$@, %2$d अंक";
+"a11y.score_tile_serving_suffix" = "%1$@, %2$@ से सर्व";
+"a11y.score_hint" = "अंक जोड़ने के लिए डबल टैप करें";
+"a11y.undo" = "अंतिम अंक पूर्ववत करें";
+"a11y.games_won" = "जीते गए गेम, %1$d बनाम %2$d";
+"a11y.timer_remaining" = "शेष समय, %@";
+"prematch.near_side" = "नज़दीकी ओर";
+"prematch.far_side" = "दूर की ओर";
+"prematch.near_partner" = "नज़दीकी साथी";
+"prematch.far_partner" = "दूर का साथी";
+"prematch.saved" = "सहेजे गए";
+"prematch.add_new" = "नया जोड़ें";
+"game.sudden_death" = "सडन डेथ!";
+"game.tie" = "बराबरी!";
+"ios.new_match" = "नया मैच";

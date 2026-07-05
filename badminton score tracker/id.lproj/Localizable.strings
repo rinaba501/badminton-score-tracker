@@ -1,6 +1,5 @@
 // iOS companion app
 "ios.title" = "Skor Bulu Tangkis";
-"ios.watch_scoring_hint" = "Catat skor di Apple Watch Anda.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "Riwayat Pertandingan";
@@ -52,3 +51,39 @@
 "playeredit.icons" = "Ikon";
 "playeredit.save" = "Simpan";
 "ios.share" = "Bagikan";
+
+// Live scoring (shared keys with the Watch)
+"prematch.title" = "Pertandingan Baru";
+"prematch.back" = "Kembali";
+"game.menu" = "Menu";
+"game.games" = "Game";
+"game.right_court" = "Kotak kanan";
+"game.left_court" = "Kotak kiri";
+"game.game_point" = "Poin Game!";
+"game.match_point" = "Poin Pertandingan!";
+"game.next_game" = "Game Berikutnya";
+"game.wins_game" = "%@ menang game!";
+"game.wins_match" = "%@ menang pertandingan!";
+"game.games_score" = "Game %@";
+"settings.mode" = "Mode";
+"speech.time_up" = "Waktu habis";
+"game.rematch" = "Main Lagi";
+"game.discard_title" = "Batalkan pertandingan?";
+"game.discard_message" = "Skor pertandingan saat ini akan hilang.";
+"game.discard_confirm" = "Batalkan";
+"game.discard_cancel" = "Lanjutkan";
+"a11y.score_tile" = "%1$@, %2$d poin";
+"a11y.score_tile_serving_suffix" = "%1$@, servis dari %2$@";
+"a11y.score_hint" = "Ketuk dua kali untuk menambah poin";
+"a11y.undo" = "Batalkan poin terakhir";
+"a11y.games_won" = "Game dimenangkan, %1$d berbanding %2$d";
+"a11y.timer_remaining" = "Sisa waktu, %@";
+"prematch.near_side" = "Sisi Dekat";
+"prematch.far_side" = "Sisi Jauh";
+"prematch.near_partner" = "Pasangan Sisi Dekat";
+"prematch.far_partner" = "Pasangan Sisi Jauh";
+"prematch.saved" = "Tersimpan";
+"prematch.add_new" = "Tambah Baru";
+"game.sudden_death" = "Sudden Death!";
+"game.tie" = "Seri!";
+"ios.new_match" = "Pertandingan Baru";

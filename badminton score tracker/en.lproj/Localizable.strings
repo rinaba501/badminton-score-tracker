@@ -1,6 +1,5 @@
 // iOS companion app
 "ios.title" = "Badminton Score";
-"ios.watch_scoring_hint" = "Score matches on your Apple Watch.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "Match History";
@@ -52,3 +51,39 @@
 "playeredit.icons" = "Icons";
 "playeredit.save" = "Save";
 "ios.share" = "Share";
+
+// Live scoring (shared keys with the Watch)
+"prematch.title" = "New Match";
+"prematch.back" = "Back";
+"game.menu" = "Menu";
+"game.games" = "Games";
+"game.right_court" = "Right court";
+"game.left_court" = "Left court";
+"game.game_point" = "Game Point!";
+"game.match_point" = "Match Point!";
+"game.next_game" = "Next Game";
+"game.wins_game" = "%@ wins the game!";
+"game.wins_match" = "%@ wins the match!";
+"game.games_score" = "Games %@";
+"settings.mode" = "Mode";
+"speech.time_up" = "Time's up";
+"game.rematch" = "Rematch";
+"game.discard_title" = "Discard match?";
+"game.discard_message" = "Your current match score will be lost.";
+"game.discard_confirm" = "Discard";
+"game.discard_cancel" = "Keep Playing";
+"a11y.score_tile" = "%1$@, %2$d points";
+"a11y.score_tile_serving_suffix" = "%1$@, serving from %2$@";
+"a11y.score_hint" = "Double tap to add a point";
+"a11y.undo" = "Undo last point";
+"a11y.games_won" = "Games won, %1$d to %2$d";
+"a11y.timer_remaining" = "Time remaining, %@";
+"prematch.near_side" = "Near Side";
+"prematch.far_side" = "Far Side";
+"prematch.near_partner" = "Near Partner";
+"prematch.far_partner" = "Far Partner";
+"prematch.saved" = "Saved";
+"prematch.add_new" = "Add New";
+"game.sudden_death" = "Sudden Death!";
+"game.tie" = "It's a Tie!";
+"ios.new_match" = "New Match";

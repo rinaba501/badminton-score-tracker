@@ -1,6 +1,5 @@
 // iOS companion app
 "ios.title" = "羽毛球比分";
-"ios.watch_scoring_hint" = "请在 Apple Watch 上记录比分。";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "比赛记录";
@@ -52,3 +51,39 @@
 "playeredit.icons" = "图标";
 "playeredit.save" = "保存";
 "ios.share" = "分享";
+
+// Live scoring (shared keys with the Watch)
+"prematch.title" = "新比赛";
+"prematch.back" = "返回";
+"game.menu" = "菜单";
+"game.games" = "局数";
+"game.right_court" = "右场";
+"game.left_court" = "左场";
+"game.game_point" = "局点！";
+"game.match_point" = "赛点！";
+"game.next_game" = "下一局";
+"game.wins_game" = "%@赢得本局！";
+"game.wins_match" = "%@赢得比赛！";
+"game.games_score" = "局数 %@";
+"settings.mode" = "模式";
+"speech.time_up" = "时间到";
+"game.rematch" = "再战";
+"game.discard_title" = "放弃比赛？";
+"game.discard_message" = "当前比分将会丢失。";
+"game.discard_confirm" = "放弃";
+"game.discard_cancel" = "继续比赛";
+"a11y.score_tile" = "%1$@，%2$d分";
+"a11y.score_tile_serving_suffix" = "%1$@，从%2$@发球";
+"a11y.score_hint" = "双击加一分";
+"a11y.undo" = "撤销上一分";
+"a11y.games_won" = "已胜局数，%1$d比%2$d";
+"a11y.timer_remaining" = "剩余时间，%@";
+"prematch.near_side" = "近侧";
+"prematch.far_side" = "远侧";
+"prematch.near_partner" = "近侧搭档";
+"prematch.far_partner" = "远侧搭档";
+"prematch.saved" = "已保存";
+"prematch.add_new" = "添加新的";
+"game.sudden_death" = "突然死亡！";
+"game.tie" = "平局！";
+"ios.new_match" = "新比赛";

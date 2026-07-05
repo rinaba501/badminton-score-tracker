@@ -1,6 +1,5 @@
 // iOS companion app
 "ios.title" = "バドミントンスコア";
-"ios.watch_scoring_hint" = "スコアはApple Watchで記録してください。";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "試合履歴";
@@ -52,3 +51,39 @@
 "playeredit.icons" = "アイコン";
 "playeredit.save" = "保存";
 "ios.share" = "共有";
+
+// Live scoring (shared keys with the Watch)
+"prematch.title" = "新しい試合";
+"prematch.back" = "戻る";
+"game.menu" = "メニュー";
+"game.games" = "ゲーム";
+"game.right_court" = "右コート";
+"game.left_court" = "左コート";
+"game.game_point" = "ゲームポイント！";
+"game.match_point" = "マッチポイント！";
+"game.next_game" = "次のゲーム";
+"game.wins_game" = "%@がゲームを取得！";
+"game.wins_match" = "%@が試合に勝利！";
+"game.games_score" = "ゲーム %@";
+"settings.mode" = "モード";
+"speech.time_up" = "タイムアップ";
+"game.rematch" = "再戦";
+"game.discard_title" = "試合を終了しますか？";
+"game.discard_message" = "現在のスコアは失われます。";
+"game.discard_confirm" = "終了する";
+"game.discard_cancel" = "続ける";
+"a11y.score_tile" = "%1$@、%2$d点";
+"a11y.score_tile_serving_suffix" = "%1$@、%2$@からサーブ";
+"a11y.score_hint" = "ダブルタップで得点を追加";
+"a11y.undo" = "最後の得点を取り消す";
+"a11y.games_won" = "取得ゲーム、%1$d対%2$d";
+"a11y.timer_remaining" = "残り時間、%@";
+"prematch.near_side" = "手前側";
+"prematch.far_side" = "奥側";
+"prematch.near_partner" = "手前側パートナー";
+"prematch.far_partner" = "奥側パートナー";
+"prematch.saved" = "保存済み";
+"prematch.add_new" = "新規追加";
+"game.sudden_death" = "サドンデス！";
+"game.tie" = "引き分け！";
+"ios.new_match" = "新しい試合";
