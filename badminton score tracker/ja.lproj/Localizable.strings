@@ -1,0 +1,3 @@
+// iOS companion app
+"ios.title" = "バドミントンスコア";
+"ios.placeholder_message" = "試合履歴・統計・プレイヤー管理は近日iPhoneに対応予定です。スコアはApple Watchで記録してください。";
