@@ -91,7 +91,6 @@
 		B32FF0AA2DCB7D870008256A /* Exceptions for "badminton score tracker Watch App" folder in "badminton score tracker Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"badminton_score_tracker_Watch_App.entitlements",
 				Info.plist,
 			);
 			target = B32FF0582DCB7D850008256A /* badminton score tracker Watch App */;
@@ -650,6 +649,7 @@
 				CODE_SIGN_ENTITLEMENTS = "badminton score tracker Watch App/badminton_score_tracker_Watch_App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MNX5PS5RV3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "badminton score tracker Watch App/Info.plist";
@@ -678,6 +678,7 @@
 				CODE_SIGN_ENTITLEMENTS = "badminton score tracker Watch App/badminton_score_tracker_Watch_App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MNX5PS5RV3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "badminton score tracker Watch App/Info.plist";
