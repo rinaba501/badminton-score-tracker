@@ -1,0 +1,3 @@
+// iOS companion app
+"ios.title" = "Badminton Score";
+"ios.placeholder_message" = "Match history, stats, and roster are coming to iPhone. Score matches on your Apple Watch.";

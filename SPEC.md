@@ -6,12 +6,17 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 
 ## Platform
 
-- **Target:** watchOS (Apple Watch)
+- **Target:** watchOS (Apple Watch) — the scoring device — plus an iPhone companion app (in progress, #41)
 - **Language:** Swift / SwiftUI
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs
 - **Audio:** `AVAudioEngine` + programmatic sine-wave tone generation (no audio files)
 - **Health:** `HealthKit` — logs each match as a `.badminton` `HKWorkoutSession`; activity type indoor
 - **Sync:** `NSUbiquitousKeyValueStore` — syncs player roster, match history, and settings via iCloud; pushes on data change, pulls on launch and on external update
+
+### iOS Companion App (in progress — #41, ROADMAP Phase 6)
+
+- The former stub container target is now a real iOS app (`NavigationStack`-based, iPhone-only, iOS 17+). Currently a placeholder shell; History, Stats, Roster management, Share (#13), and live scoring land in follow-up PRs (see ROADMAP Phase 6)
+- Distribution shape changed with the shell: the Watch app is no longer `WKWatchOnly` — it declares the iOS app as its companion (`WKCompanionAppBundleIdentifier`) and keeps running independently (`WKRunsIndependentlyOfCompanionApp`). **An App Store submission from a commit after this change ships the iOS app too; to submit watch-only, archive from an earlier commit**
 
 ---
 

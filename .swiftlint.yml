@@ -6,6 +6,7 @@
 # below are relaxed rather than fought.
 
 included:
+  - "badminton score tracker"
   - "badminton score tracker Watch App"
   - "badminton score tracker Complication"
   - "badminton score tracker Watch AppTests"

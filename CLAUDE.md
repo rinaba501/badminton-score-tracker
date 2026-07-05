@@ -8,8 +8,8 @@ A **watchOS app** built with SwiftUI for tracking badminton match scores in real
 
 ## Tech Stack
 
-- **Platform:** watchOS · **Language:** Swift · **UI:** SwiftUI
-- **Shared code:** local Swift package `BadmintonCore` — Foundation-only (no SwiftUI/WatchKit) so a future iOS target and `swift test` on macOS consume it unchanged
+- **Platform:** watchOS (scoring device) + iOS companion app in progress (#41, iPhone-only, iOS 17+) · **Language:** Swift · **UI:** SwiftUI
+- **Shared code:** local Swift package `BadmintonCore` — Foundation-only (no SwiftUI/WatchKit) so both app targets and `swift test` on macOS consume it unchanged
 - **Audio:** `AVAudioEngine` sine-wave tones + `AVSpeechSynthesizer` announcements — no audio files
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs
 - **Sync:** `NSUbiquitousKeyValueStore` (iCloud KV store; requires the ubiquity-kvstore entitlement). Phase 4 (#109) adds a CloudKit private-DB path (`CKSyncEngine`) for history+roster behind the `cloudKitSyncEnabled` flag — **default off / ships inert**; KV store still handles everything until the flag is flipped on after a two-device test
@@ -52,6 +52,8 @@ badminton score tracker Watch App/
 
 badminton score tracker Watch AppTests/  — GameViewModel tests (compiled in CI, run locally on a simulator)
 badminton score tracker Complication/    — WidgetKit extension (circular/corner/inline/rectangular)
+
+badminton score tracker/       — iOS companion app (#41, in progress; placeholder shell so far). Same target that used to be the watch-only stub container — now a real iOS app (NavigationStack root, iPhone-only, iOS 17+) that still embeds the Watch App. Has its own Info.plist, Assets.xcassets, and 6 *.lproj tables (keys prefixed ios.*); the Watch App's Info.plist now declares it as companion (WKCompanionAppBundleIdentifier) instead of WKWatchOnly
 ```
 
 Views read shared state via `@EnvironmentObject var store: AppStore`; live-game state lives in `GameViewModel` (created by `GameView` as `@StateObject`).
@@ -76,7 +78,7 @@ All key strings are constants in `BadmintonCore.AppStorageKeys` — **read that 
 
 ### CI & review
 
-Five parallel jobs per PR (SwiftLint, core `swift test`, localization key sync, Watch App build-for-testing, Complication build); green in **~4 min** — details, runtimes, and polling advice in [docs/ci.md](docs/ci.md). Before pushing: run `swiftlint` and `swift test --package-path BadmintonCore`; build locally before pushing SwiftUI changes when possible. **Use plan mode for anything touching `CloudSyncManager`/`CloudKitSyncManager`/`AppStore`** (both real bugs in this codebase lived there — see docs/ci.md; CloudKit sync correctness can't be proven by CI, only a two-device test), and run `/code-review` before merging non-trivial PRs.
+Seven parallel jobs per PR (SwiftLint, core `swift test`, localization key sync ×2 — Watch + iOS tables are checked separately since their key sets legitimately diverge, Watch App build-for-testing, Complication build, iOS App build); green in **~4 min** — details, runtimes, and polling advice in [docs/ci.md](docs/ci.md). Before pushing: run `swiftlint` and `swift test --package-path BadmintonCore`; build locally before pushing SwiftUI changes when possible. **Use plan mode for anything touching `CloudSyncManager`/`CloudKitSyncManager`/`AppStore`** (both real bugs in this codebase lived there — see docs/ci.md; CloudKit sync correctness can't be proven by CI, only a two-device test), and run `/code-review` before merging non-trivial PRs.
 
 ## Keeping the Docs Up-to-Date
 

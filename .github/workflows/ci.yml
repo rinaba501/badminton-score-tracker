@@ -130,3 +130,62 @@ jobs:
             -scheme "$SCHEME" \
             -destination "generic/platform=watchOS Simulator" \
             CODE_SIGNING_ALLOWED=NO
+
+  ios-build:
+    name: iOS App Build
+    runs-on: macos-latest
+    env:
+      PROJECT: "badminton score tracker.xcodeproj"
+      SCHEME: "badminton score tracker"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest installed Xcode
+        run: |
+          latest=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "Using $latest"
+          sudo xcode-select -s "$latest"
+          xcodebuild -version
+
+      - name: Build for iOS Simulator
+        run: |
+          set -o pipefail
+          # Compile-only gate for the iPhone companion app (#41). Building
+          # this scheme also builds + embeds the Watch App, so it doubles as
+          # a check that the container/embedding relationship stays intact.
+          xcodebuild build \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO
+
+  ios-localization-sync:
+    name: iOS Localization Sync
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Localizable.strings key parity
+        run: |
+          set -euo pipefail
+          # Same parity check as localization-sync, scoped to the iOS
+          # target's own strings files. Kept as a separate job because the
+          # two targets' key sets legitimately diverge (watch-only strings
+          # like crown scoring vs iOS-only strings).
+          BASE="badminton score tracker"
+          LOCALES=(en ja ko zh-Hans id hi)
+          TMPDIR=$(mktemp -d)
+          for loc in "${LOCALES[@]}"; do
+            grep -oE '^"[^"]+"' "$BASE/$loc.lproj/Localizable.strings" | sort -u > "$TMPDIR/$loc.keys"
+          done
+          cat "$TMPDIR"/*.keys | sort -u > "$TMPDIR/all.keys"
+          FAIL=0
+          for loc in "${LOCALES[@]}"; do
+            MISSING=$(comm -23 "$TMPDIR/all.keys" "$TMPDIR/$loc.keys")
+            if [ -n "$MISSING" ]; then
+              echo "::error::Locale '$loc' is missing keys:"
+              echo "$MISSING"
+              FAIL=1
+            fi
+          done
+          exit $FAIL

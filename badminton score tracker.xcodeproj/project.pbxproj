@@ -12,6 +12,7 @@
 		4539879E2FF3F4DE0070EA74 /* badminton score tracker ComplicationExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B32FF05A2DCB7D850008256A /* badminton score tracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */ = {isa = PBXBuildFile; productRef = B32FF0A12DCB7D850008256A /* BadmintonCore */; };
+		A1B2C3D40000000000000003 /* BadmintonCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D40000000000000004 /* BadmintonCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,6 +96,13 @@
 			);
 			target = B32FF0582DCB7D850008256A /* badminton score tracker Watch App */;
 		};
+		A1B2C3D40000000000000006 /* Exceptions for "badminton score tracker" folder in "badminton score tracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B32FF0522DCB7D850008256A /* badminton score tracker */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -124,6 +132,14 @@
 			path = "badminton score tracker Watch AppUITests";
 			sourceTree = "<group>";
 		};
+		A1B2C3D40000000000000005 /* badminton score tracker */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1B2C3D40000000000000006 /* Exceptions for "badminton score tracker" folder in "badminton score tracker" target */,
+			);
+			path = "badminton score tracker";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +157,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D40000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D40000000000000003 /* BadmintonCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -173,6 +197,7 @@
 		B32FF04C2DCB7D850008256A = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D40000000000000005 /* badminton score tracker */,
 				B32FF05D2DCB7D850008256A /* badminton score tracker Watch App */,
 				B32FF06B2DCB7D870008256A /* badminton score tracker Watch AppTests */,
 				B32FF0752DCB7D870008256A /* badminton score tracker Watch AppUITests */,
@@ -223,6 +248,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B32FF0802DCB7D870008256A /* Build configuration list for PBXNativeTarget "badminton score tracker" */;
 			buildPhases = (
+				A1B2C3D40000000000000001 /* Sources */,
+				A1B2C3D40000000000000002 /* Frameworks */,
 				B32FF0512DCB7D850008256A /* Resources */,
 				B32FF07F2DCB7D870008256A /* Embed Watch Content */,
 			);
@@ -231,12 +258,16 @@
 			dependencies = (
 				B32FF05C2DCB7D850008256A /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				A1B2C3D40000000000000005 /* badminton score tracker */,
+			);
 			name = "badminton score tracker";
 			packageProductDependencies = (
+				A1B2C3D40000000000000004 /* BadmintonCore */,
 			);
 			productName = "badminton score tracker";
 			productReference = B32FF0532DCB7D850008256A /* badminton score tracker.app */;
-			productType = "com.apple.product-type.application.watchapp2-container";
+			productType = "com.apple.product-type.application";
 		};
 		B32FF0582DCB7D850008256A /* badminton score tracker Watch App */ = {
 			isa = PBXNativeTarget;
@@ -416,6 +447,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B32FF0552DCB7D850008256A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D40000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -702,28 +740,53 @@
 		B32FF0812DCB7D870008256A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_KEY_CFBundleDisplayName = "badminton score tracker";
+				DEVELOPMENT_TEAM = MNX5PS5RV3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "badminton score tracker/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "-Xfrontend -warn-long-expression-type-checking=100";
 				PRODUCT_BUNDLE_IDENTIFIER = "ritsuma.badminton-score-tracker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
 		B32FF0822DCB7D870008256A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_KEY_CFBundleDisplayName = "badminton score tracker";
+				DEVELOPMENT_TEAM = MNX5PS5RV3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "badminton score tracker/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "ritsuma.badminton-score-tracker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -872,6 +935,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		B32FF0A12DCB7D850008256A /* BadmintonCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BadmintonCore;
+		};
+		A1B2C3D40000000000000004 /* BadmintonCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BadmintonCore;
 		};
