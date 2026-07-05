@@ -1,3 +1,4 @@
 // iOS companion app
 "ios.title" = "Badminton Score";
 "ios.placeholder_message" = "Match history, stats, and roster are coming to iPhone. Score matches on your Apple Watch.";
+"ios.synced_summary %lld %lld" = "Synced from iCloud: %lld matches · %lld players";

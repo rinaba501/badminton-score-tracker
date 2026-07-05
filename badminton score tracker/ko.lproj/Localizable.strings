@@ -1,3 +1,4 @@
 // iOS companion app
 "ios.title" = "배드민턴 스코어";
 "ios.placeholder_message" = "경기 기록, 통계, 플레이어 관리가 곧 iPhone에 제공됩니다. 점수는 Apple Watch에서 기록하세요.";
+"ios.synced_summary %lld %lld" = "iCloud에서 동기화됨: 경기 %lld개 · 플레이어 %lld명";

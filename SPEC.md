@@ -15,7 +15,8 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 
 ### iOS Companion App (in progress — #41, ROADMAP Phase 6)
 
-- The former stub container target is now a real iOS app (`NavigationStack`-based, iPhone-only, iOS 17+). Currently a placeholder shell; History, Stats, Roster management, Share (#13), and live scoring land in follow-up PRs (see ROADMAP Phase 6)
+- The former stub container target is now a real iOS app (`NavigationStack`-based, iPhone-only, iOS 17+). History, Stats, Roster management, Share (#13), and live scoring land in follow-up PRs (see ROADMAP Phase 6)
+- **iCloud sync is live:** the iPhone reads (and can edit/delete) the same match history, roster, and settings the Watch records — both share one iCloud key-value bucket via a byte-identical `ubiquity-kvstore-identifier`. No new iCloud account or pairing step; sign both devices into the same Apple ID. The Watch stays the scoring device. (The UI to browse this data arrives in the next PRs; the shell currently shows just a synced-counts line.)
 - Distribution shape changed with the shell: the Watch app is no longer `WKWatchOnly` — it declares the iOS app as its companion (`WKCompanionAppBundleIdentifier`) and keeps running independently (`WKRunsIndependentlyOfCompanionApp`). **An App Store submission from a commit after this change ships the iOS app too; to submit watch-only, archive from an earlier commit**
 
 ---
