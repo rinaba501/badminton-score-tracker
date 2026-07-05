@@ -39,9 +39,9 @@ Ported the Watch's `CloudSyncManager` + `AppStore` to iOS as KV-only copies (no 
 
 Ported the Watch's `HistoryView`/`MatchHistoryRow`/`StatsView` filter + stats logic (all in `StatsCalculator` — zero reimplementation), restyled for iPhone: segmented date/type/sort controls, a toolbar player-filter menu, swipe-to-delete + clear-all (via PR2's shrink-aware `saveHistory`/`clearHistory`), and a per-player Stats screen with head-to-head. `ContentView` is now a home menu linking to both. History/Stats reuse the Watch's own string keys so translations copied verbatim. Gate: CI (green) + a lightweight two-device re-check that a delete stays deleted through the real UI.
 
-### PR4 — Roster management
+### PR4 — Roster management — implemented; two-device propagation check pending
 
-`RosterView.swift` + iOS `PlayerEditView.swift` (real keyboard): port `nameIsValid`/duplicate-name logic from the Watch's `PlayerEditView.swift`; re-read Watch `SettingsView.swift`'s roster section first to confirm the exact `AppStore.saveRoster` call pattern. iOS-side `PlayerAvatar.swift` copied near-verbatim (presentation extensions are per-target per CLAUDE.md); avatar images duplicated into the iOS asset catalog. "Me" is never in the roster; guests never persist. Gate: two-device roster-edit propagation check.
+Added `RosterView.swift` (Me section + add/rename/delete + sort order), iOS `PlayerEditView.swift` (real-keyboard TextField + duplicate detection + color/avatar/icon grids), and `PlayerAvatar.swift` (per-target presentation extension); the 15 avatar images were duplicated into the iOS asset catalog. `savePlayerEdit` ports the Watch's rename→history propagation verbatim (renames update past matches via player id + update myName), writing through PR2's `saveRoster`/`saveHistory`. Gate: CI (green) + a two-device roster-edit propagation check.
 
 ### PR5 — Share card (#13)
 
@@ -66,6 +66,6 @@ Per PR: `swiftlint`, `swift test --package-path BadmintonCore`, `xcodebuild buil
 - [x] PR1 — target restructure + shell + CI ([#133](https://github.com/rinaba501/badminton-score-tracker/pull/133))
 - [x] PR2 — sync layer (code merged; two-device hardware test still pending)
 - [x] PR3 — History + Stats views (code merged; two-device delete-recheck still pending)
-- [ ] PR4 — Roster management
+- [x] PR4 — Roster management (code merged; two-device propagation check still pending)
 - [ ] PR5 — Share card (#13)
 - [ ] PR6 — live scoring on iPhone (follow-up)

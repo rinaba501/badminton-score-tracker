@@ -32,3 +32,22 @@
 "stats.best_streak" = "Rentetan terbaik";
 "stats.avg_duration" = "Durasi rata-rata";
 "stats.head_to_head" = "Rekor Pertemuan";
+
+// Roster management (shared keys with the Watch)
+"settings.me" = "Saya";
+"settings.players" = "Pemain";
+"settings.no_players" = "Belum ada pemain tersimpan";
+"settings.add_player" = "Tambah pemain";
+"settings.sort_order" = "Urutan sortir";
+"settings.sort_created" = "Dibuat";
+"settings.sort_name" = "Nama";
+"settings.sort_name_desc" = "Nama (Z-A)";
+"settings.sort_most_played" = "Paling sering dimainkan";
+"settings.sort_recently_used" = "Baru-baru ini dipakai";
+"settings.delete" = "Hapus";
+"playeredit.name" = "Nama";
+"playeredit.name_taken" = "Nama sudah dipakai";
+"playeredit.color" = "Warna";
+"playeredit.avatar" = "Avatar";
+"playeredit.icons" = "Ikon";
+"playeredit.save" = "Simpan";

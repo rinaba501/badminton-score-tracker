@@ -32,3 +32,22 @@
 "stats.best_streak" = "最多連勝";
 "stats.avg_duration" = "平均時間";
 "stats.head_to_head" = "対戦成績";
+
+// Roster management (shared keys with the Watch)
+"settings.me" = "自分";
+"settings.players" = "プレイヤー";
+"settings.no_players" = "保存されたプレイヤーがいません";
+"settings.add_player" = "プレイヤーを追加";
+"settings.sort_order" = "並び順";
+"settings.sort_created" = "追加順";
+"settings.sort_name" = "名前";
+"settings.sort_name_desc" = "名前（降順）";
+"settings.sort_most_played" = "多くプレイした順";
+"settings.sort_recently_used" = "最近使用した順";
+"settings.delete" = "削除";
+"playeredit.name" = "名前";
+"playeredit.name_taken" = "名前は既に使用されています";
+"playeredit.color" = "色";
+"playeredit.avatar" = "アバター";
+"playeredit.icons" = "アイコン";
+"playeredit.save" = "保存";

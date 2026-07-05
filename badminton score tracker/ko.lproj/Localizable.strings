@@ -32,3 +32,22 @@
 "stats.best_streak" = "최다 연승";
 "stats.avg_duration" = "평균 시간";
 "stats.head_to_head" = "상대 전적";
+
+// Roster management (shared keys with the Watch)
+"settings.me" = "나";
+"settings.players" = "플레이어";
+"settings.no_players" = "저장된 플레이어가 없습니다";
+"settings.add_player" = "플레이어 추가";
+"settings.sort_order" = "정렬 순서";
+"settings.sort_created" = "추가 순";
+"settings.sort_name" = "이름";
+"settings.sort_name_desc" = "이름 (Z-A)";
+"settings.sort_most_played" = "가장 많이 플레이";
+"settings.sort_recently_used" = "최근 사용";
+"settings.delete" = "삭제";
+"playeredit.name" = "이름";
+"playeredit.name_taken" = "이미 사용 중인 이름";
+"playeredit.color" = "색상";
+"playeredit.avatar" = "아바타";
+"playeredit.icons" = "아이콘";
+"playeredit.save" = "저장";

@@ -32,3 +32,22 @@
 "stats.best_streak" = "Best streak";
 "stats.avg_duration" = "Avg duration";
 "stats.head_to_head" = "Head-to-Head";
+
+// Roster management (shared keys with the Watch)
+"settings.me" = "Me";
+"settings.players" = "Players";
+"settings.no_players" = "No saved players yet";
+"settings.add_player" = "Add player";
+"settings.sort_order" = "Sort order";
+"settings.sort_created" = "Created";
+"settings.sort_name" = "Name";
+"settings.sort_name_desc" = "Name (Z-A)";
+"settings.sort_most_played" = "Most played";
+"settings.sort_recently_used" = "Recently used";
+"settings.delete" = "Delete";
+"playeredit.name" = "Name";
+"playeredit.name_taken" = "Name already taken";
+"playeredit.color" = "Color";
+"playeredit.avatar" = "Avatar";
+"playeredit.icons" = "Icons";
+"playeredit.save" = "Save";
