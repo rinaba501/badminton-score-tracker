@@ -35,9 +35,9 @@ Ported the Watch's `CloudSyncManager` + `AppStore` to iOS as KV-only copies (no 
 - **Bucket-migration note:** the new `.shared` bucket starts empty. History re-seeds automatically (`syncHistory()` merges local+cloud and writes the union back), but roster + scalars only reach the new bucket on the next local save on the Watch. The two-device test must start by launching the Watch app once and making one roster/settings touch to seed the bucket.
 - **Merge gate:** two-device (real iPhone + paired Watch, same Apple ID) manual test: roster add on iPhone → appears on Watch; match delete on iPhone → stays deleted on Watch after relaunch; rename on Watch → appears on iPhone.
 
-### PR3 — History + Stats views
+### PR3 — History + Stats views — implemented; two-device delete-recheck pending
 
-Port `HistoryView.swift` / `MatchHistoryRow.swift` / `StatsView.swift`'s state + filter logic verbatim (all filtering/stats already in `StatsCalculator` — zero logic reimplementation), restyled for iOS width. Swipe-to-delete uses PR2's shrink-aware `saveHistory`. Gate: CI + a lightweight two-device re-check of delete-stays-deleted through the real UI.
+Ported the Watch's `HistoryView`/`MatchHistoryRow`/`StatsView` filter + stats logic (all in `StatsCalculator` — zero reimplementation), restyled for iPhone: segmented date/type/sort controls, a toolbar player-filter menu, swipe-to-delete + clear-all (via PR2's shrink-aware `saveHistory`/`clearHistory`), and a per-player Stats screen with head-to-head. `ContentView` is now a home menu linking to both. History/Stats reuse the Watch's own string keys so translations copied verbatim. Gate: CI (green) + a lightweight two-device re-check that a delete stays deleted through the real UI.
 
 ### PR4 — Roster management
 
@@ -65,7 +65,7 @@ Per PR: `swiftlint`, `swift test --package-path BadmintonCore`, `xcodebuild buil
 
 - [x] PR1 — target restructure + shell + CI ([#133](https://github.com/rinaba501/badminton-score-tracker/pull/133))
 - [x] PR2 — sync layer (code merged; two-device hardware test still pending)
-- [ ] PR3 — History + Stats views
+- [x] PR3 — History + Stats views (code merged; two-device delete-recheck still pending)
 - [ ] PR4 — Roster management
 - [ ] PR5 — Share card (#13)
 - [ ] PR6 — live scoring on iPhone (follow-up)

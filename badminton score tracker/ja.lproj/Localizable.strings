@@ -1,4 +1,34 @@
 // iOS companion app
 "ios.title" = "バドミントンスコア";
-"ios.placeholder_message" = "試合履歴・統計・プレイヤー管理は近日iPhoneに対応予定です。スコアはApple Watchで記録してください。";
-"ios.synced_summary %lld %lld" = "iCloudと同期: 試合%lld件・プレイヤー%lld人";
+"ios.watch_scoring_hint" = "スコアはApple Watchで記録してください。";
+
+// Shared with the Watch (same keys, so translations copy verbatim)
+"history.title" = "試合履歴";
+"history.empty" = "試合履歴がありません";
+"history.clear_title" = "履歴を削除";
+"history.clear_confirm" = "すべての試合履歴を削除しますか？この操作は元に戻せません。";
+"history.cancel" = "キャンセル";
+"history.clear" = "削除";
+"history.filter_player" = "プレイヤー";
+"history.filter_all_players" = "全員";
+"history.filter_all" = "全期間";
+"history.filter_week" = "今週";
+"history.filter_month" = "今月";
+"history.filter_all_types" = "すべて";
+"history.sort_newest" = "新しい順";
+"history.sort_oldest" = "古い順";
+"history.opponent_fallback" = "対戦相手";
+"settings.singles" = "シングルス";
+"settings.doubles" = "ダブルス";
+"game.team_names_format" = "%1$@ ＆ %2$@";
+"stats.title" = "統計";
+"stats.player" = "プレイヤー";
+"stats.no_matches" = "まだ試合がありません";
+"stats.matches" = "試合数";
+"stats.wins" = "勝ち";
+"stats.losses" = "負け";
+"stats.win_rate" = "勝率";
+"stats.avg_points" = "平均得点";
+"stats.best_streak" = "最多連勝";
+"stats.avg_duration" = "平均時間";
+"stats.head_to_head" = "対戦成績";

@@ -1,4 +1,34 @@
 // iOS companion app
 "ios.title" = "Badminton Score";
-"ios.placeholder_message" = "Match history, stats, and roster are coming to iPhone. Score matches on your Apple Watch.";
-"ios.synced_summary %lld %lld" = "Synced from iCloud: %lld matches · %lld players";
+"ios.watch_scoring_hint" = "Score matches on your Apple Watch.";
+
+// Shared with the Watch (same keys, so translations copy verbatim)
+"history.title" = "Match History";
+"history.empty" = "No matches played yet";
+"history.clear_title" = "Clear History";
+"history.clear_confirm" = "Are you sure you want to clear all match history? This cannot be undone.";
+"history.cancel" = "Cancel";
+"history.clear" = "Clear";
+"history.filter_player" = "Player";
+"history.filter_all_players" = "All Players";
+"history.filter_all" = "All Time";
+"history.filter_week" = "This Week";
+"history.filter_month" = "This Month";
+"history.filter_all_types" = "All";
+"history.sort_newest" = "Newest";
+"history.sort_oldest" = "Oldest";
+"history.opponent_fallback" = "Opponent";
+"settings.singles" = "Singles";
+"settings.doubles" = "Doubles";
+"game.team_names_format" = "%1$@ & %2$@";
+"stats.title" = "Stats";
+"stats.player" = "Player";
+"stats.no_matches" = "No matches yet";
+"stats.matches" = "Matches";
+"stats.wins" = "Wins";
+"stats.losses" = "Losses";
+"stats.win_rate" = "Win rate";
+"stats.avg_points" = "Avg pts/game";
+"stats.best_streak" = "Best streak";
+"stats.avg_duration" = "Avg duration";
+"stats.head_to_head" = "Head-to-Head";
