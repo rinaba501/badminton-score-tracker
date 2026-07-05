@@ -128,6 +128,82 @@ struct RecordCodecTests {
         #expect(diff.deletedIds == [remove.id])
     }
 
+    @Test func diffHistoryHandlesAddEditRemoveAndUnchangedTogether() {
+        // Mirrors diffRosterDetectsAddEditAndRemove but for MatchRecord, and
+        // adds a fourth, completely untouched record — a mixed diff must not
+        // let one kind of change leak into another's bucket.
+        let unchanged = singlesRecord()
+        let edited = singlesRecord(name: "Old")
+        let removed = singlesRecord()
+        let renamed = edited.renamed(to: "New")
+        let added = singlesRecord()
+
+        let diff = PersistenceStore.diffHistory(from: [unchanged, edited, removed], to: [unchanged, renamed, added])
+        #expect(Set(diff.upsertedIds) == [edited.id, added.id])
+        #expect(diff.deletedIds == [removed.id])
+    }
+
+    @Test func diffHistoryPreservesUpsertOrderFromNewAndDeleteOrderFromOld() {
+        // upsertedIds must follow `new`'s order and deletedIds must follow
+        // `old`'s order (documented contract), independent of each other and
+        // independent of insertion order into the diff's internal dictionary.
+        let keepFirst = singlesRecord()
+        let deleteFirst = singlesRecord()
+        let deleteSecond = singlesRecord()
+        let addFirst = singlesRecord()
+        let addSecond = singlesRecord()
+
+        let old = [deleteFirst, keepFirst, deleteSecond]
+        let new = [addFirst, keepFirst, addSecond]
+        let diff = PersistenceStore.diffHistory(from: old, to: new)
+
+        #expect(diff.upsertedIds == [addFirst.id, addSecond.id])
+        #expect(diff.deletedIds == [deleteFirst.id, deleteSecond.id])
+    }
+
+    @Test func diffHistoryBothEmptyIsEmpty() {
+        let diff = PersistenceStore.diffHistory(from: [], to: [])
+        #expect(diff.upsertedIds.isEmpty)
+        #expect(diff.deletedIds.isEmpty)
+    }
+
+    @Test func diffHistoryFromEmptyUpsertsEveryNewRecord() {
+        let a = singlesRecord()
+        let b = singlesRecord()
+        let diff = PersistenceStore.diffHistory(from: [], to: [a, b])
+        #expect(diff.upsertedIds == [a.id, b.id])
+        #expect(diff.deletedIds.isEmpty)
+    }
+
+    @Test func diffHistoryToleratesDuplicateIdsInOldWithoutCrashing() {
+        // Defensive: two elements sharing an id shouldn't be possible in
+        // practice, but the diff must not crash if corrupt data produces it —
+        // it should just resolve deterministically rather than trap.
+        let id = UUID()
+        let first = singlesRecord(id: id, name: "First")
+        let duplicate = singlesRecord(id: id, name: "Duplicate")
+        let untouched = singlesRecord()
+
+        let diff = PersistenceStore.diffHistory(from: [first, duplicate, untouched], to: [untouched])
+        #expect(diff.upsertedIds.isEmpty)
+        #expect(diff.deletedIds == [id])
+    }
+
+    // MARK: - Cross-type decode safety
+
+    @Test func decodeRecordReturnsNilForAPlayerShapedPayload() throws {
+        // A Player payload doesn't have MatchRecord's required fields (games,
+        // winner, ...) — decoding it as a MatchRecord must fail closed (nil),
+        // not crash or silently produce a garbage record.
+        let playerData = try #require(PersistenceStore.encodePlayer(Player(name: "Not A Match")))
+        #expect(PersistenceStore.decodeRecord(playerData) == nil)
+    }
+
+    @Test func decodePlayerReturnsNilForAMatchRecordShapedPayload() throws {
+        let recordData = try #require(PersistenceStore.encodeRecord(singlesRecord()))
+        #expect(PersistenceStore.decodePlayer(recordData) == nil)
+    }
+
     // MARK: - Conflict resolution
 
     @Test func resolveConflictKeepsLocalDeletionButOtherwiseTakesServer() {

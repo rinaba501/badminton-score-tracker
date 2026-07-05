@@ -210,7 +210,13 @@ public enum PersistenceStore {
         let oldById = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let newIds = Set(new.map(\.id))
         let upserted = new.filter { oldById[$0.id] != $0 }.map(\.id)
-        let deleted = old.filter { !newIds.contains($0.id) }.map(\.id)
+        // Dedupe defensively: a well-formed collection never repeats an id,
+        // but corrupt data shouldn't be able to enqueue the same delete twice.
+        var seenDeleted = Set<UUID>()
+        let deleted = old.compactMap { record -> UUID? in
+            guard !newIds.contains(record.id), seenDeleted.insert(record.id).inserted else { return nil }
+            return record.id
+        }
         return RecordDiff(upsertedIds: upserted, deletedIds: deleted)
     }
 
