@@ -2,10 +2,10 @@
 //  StatsView.swift
 //  badminton score tracker (iOS)
 //
-//  Per-player aggregate stats (record, win rate, streaks, averages) and
-//  head-to-head breakdowns. All math lives in BadmintonCore.StatsCalculator
-//  (shared with the Watch); this screen binds it to the selected player and
-//  is pushed via NavigationStack (no currentView binding).
+//  Per-player aggregate stats and head-to-head breakdowns, dashboard-style:
+//  a win-rate ring with the W–L record, a grid of stat cards, and avatar'd
+//  head-to-head rows. All math lives in BadmintonCore.StatsCalculator (shared
+//  with the Watch); this screen binds it to the selected player.
 //
 
 import SwiftUI
@@ -44,6 +44,10 @@ struct StatsView: View {
     private var avgMatchDuration: TimeInterval { StatsCalculator.avgMatchDuration(playerHistory: playerHistory) }
     private var longestStreak: Int { StatsCalculator.longestStreak(player: activePlayer, playerHistory: playerHistory) }
 
+    private func rosterPlayer(_ name: String) -> Player? {
+        roster.first(where: { $0.name == name })
+    }
+
     var body: some View {
         Group {
             if history.isEmpty {
@@ -54,42 +58,7 @@ struct StatsView: View {
                 }
                 .frame(maxWidth: .infinity)
             } else {
-                List {
-                    if allPlayers.count > 1 {
-                        Section {
-                            Picker("stats.player", selection: $selectedPlayer) {
-                                ForEach(allPlayers, id: \.self) { name in
-                                    if name == myName {
-                                        Label(Player.displayName(for: name), systemImage: "person.fill").tag(name)
-                                    } else {
-                                        Text(Player.displayName(for: name)).tag(name)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Section(header: Text(Player.displayName(for: activePlayer))) {
-                        StatRow(labelKey: "stats.matches", value: "\(totalMatches)")
-                        StatRow(labelKey: "stats.wins", value: "\(wins)")
-                        StatRow(labelKey: "stats.losses", value: "\(losses)")
-                        StatRow(labelKey: "stats.win_rate", value: String(format: "%.0f%%", winRate))
-                        StatRow(labelKey: "stats.avg_points", value: String(format: "%.1f", avgPointsScored))
-                        StatRow(labelKey: "stats.best_streak", value: "\(longestStreak)")
-                        if avgMatchDuration > 0 {
-                            StatRow(labelKey: "stats.avg_duration", value: StatsCalculator.durationString(avgMatchDuration))
-                        }
-                    }
-
-                    if !opponents.isEmpty {
-                        Section(header: Text("stats.head_to_head")) {
-                            ForEach(opponents, id: \.self) { opp in
-                                let record = StatsCalculator.headToHead(player: activePlayer, opponent: opp, history: history, roster: roster)
-                                StatRow(label: Player.displayName(for: opp), value: "\(record.wins)W – \(record.losses)L")
-                            }
-                        }
-                    }
-                }
+                statsList
             }
         }
         .navigationTitle("stats.title")
@@ -98,34 +67,134 @@ struct StatsView: View {
             if selectedPlayer.isEmpty { selectedPlayer = myName }
         }
     }
-}
 
-struct StatRow: View {
-    let label: String?
-    let labelKey: LocalizedStringKey?
-    let value: String
+    private var statsList: some View {
+        List {
+            if allPlayers.count > 1 {
+                Section {
+                    Picker("stats.player", selection: $selectedPlayer) {
+                        ForEach(allPlayers, id: \.self) { name in
+                            if name == myName {
+                                Label(Player.displayName(for: name), systemImage: "person.fill").tag(name)
+                            } else {
+                                Text(Player.displayName(for: name)).tag(name)
+                            }
+                        }
+                    }
+                }
+            }
 
-    init(label: String, value: String) {
-        self.label = label
-        self.labelKey = nil
-        self.value = value
+            Section {
+                header
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            }
+
+            Section {
+                statGrid
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+            }
+
+            if !opponents.isEmpty {
+                Section(header: Text("stats.head_to_head")) {
+                    ForEach(opponents, id: \.self) { opp in
+                        headToHeadRow(opp)
+                    }
+                }
+            }
+        }
     }
 
-    init(labelKey: LocalizedStringKey, value: String) {
-        self.label = nil
-        self.labelKey = labelKey
-        self.value = value
-    }
+    // MARK: - Header (ring + record)
 
-    var body: some View {
-        HStack {
-            if let labelKey {
-                Text(labelKey).foregroundStyle(.secondary)
-            } else if let label {
-                Text(label).foregroundStyle(.secondary)
+    private var header: some View {
+        HStack(spacing: 20) {
+            winRateRing
+            VStack(alignment: .leading, spacing: 6) {
+                Text(verbatim: "\(wins)W – \(losses)L")
+                    .font(.system(.title2, design: .rounded).weight(.bold))
+                    .monospacedDigit()
+                HStack(spacing: 4) {
+                    Text("stats.matches")
+                    Text(verbatim: "\(totalMatches)").monospacedDigit()
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
             Spacer()
-            Text(value).fontWeight(.semibold)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var winRateRing: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.accentColor.opacity(0.15), lineWidth: 10)
+            Circle()
+                .trim(from: 0, to: max(0.001, winRate / 100))
+                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 0) {
+                Text(verbatim: String(format: "%.0f%%", winRate))
+                    .font(.system(.title3, design: .rounded).weight(.bold))
+                    .monospacedDigit()
+                Text("stats.win_rate")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: 92, height: 92)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("stats.win_rate"))
+        .accessibilityValue(Text(verbatim: String(format: "%.0f%%", winRate)))
+    }
+
+    // MARK: - Stat cards
+
+    private var statGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+            statCard(value: "\(wins)", labelKey: "stats.wins")
+            statCard(value: "\(losses)", labelKey: "stats.losses")
+            statCard(value: String(format: "%.1f", avgPointsScored), labelKey: "stats.avg_points")
+            statCard(value: "\(longestStreak)", labelKey: "stats.best_streak")
+            if avgMatchDuration > 0 {
+                statCard(value: StatsCalculator.durationString(avgMatchDuration), labelKey: "stats.avg_duration")
+            }
+        }
+    }
+
+    private func statCard(value: String, labelKey: LocalizedStringKey) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(.title3, design: .rounded).weight(.bold))
+                .monospacedDigit()
+            Text(labelKey)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    // MARK: - Head-to-head
+
+    private func headToHeadRow(_ opponent: String) -> some View {
+        let record = StatsCalculator.headToHead(player: activePlayer, opponent: opponent, history: history, roster: roster)
+        let player = rosterPlayer(opponent)
+        return HStack(spacing: 10) {
+            AvatarView(name: Player.displayName(for: opponent),
+                       color: player?.avatarColor ?? .gray,
+                       size: 28,
+                       iconName: player?.iconName)
+            Text(Player.displayName(for: opponent))
+            Spacer()
+            Text(verbatim: "\(record.wins)W – \(record.losses)L")
+                .fontWeight(.semibold)
+                .monospacedDigit()
+                .foregroundStyle(record.wins >= record.losses ? Color.accentColor : Color.secondary)
         }
     }
 }
