@@ -215,6 +215,8 @@ struct HistoryView: View {
 struct MatchHistoryRow: View {
     let record: MatchRecord
 
+    @EnvironmentObject private var store: AppStore
+
     private var iWon: Bool { record.winner == record.myName }
 
     private var gameLine: String {
@@ -239,37 +241,56 @@ struct MatchHistoryRow: View {
         return teamLabel(name: name, partnerName: record.opponentPartnerName)
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .center, spacing: 8) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(myLabel)
-                        .fontWeight(iWon ? .bold : .regular)
-                        .lineLimit(1)
-                    Text(opponentLabel)
-                        .fontWeight(iWon ? .regular : .bold)
-                        .lineLimit(1)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(record.myGamesWon)")
-                        .fontWeight(iWon ? .bold : .regular)
-                        .foregroundStyle(iWon ? Color.green : Color.primary)
-                    Text("\(record.opponentGamesWon)")
-                        .fontWeight(iWon ? .regular : .bold)
-                        .foregroundStyle(iWon ? Color.primary : Color.orange)
-                }
-                .font(.system(.body, design: .rounded))
+    // Roster lookups by raw (stored) name — guests/unknowns fall back to gray
+    // initials, matching the rest of the app's avatar behavior.
+    private func rosterPlayer(_ rawName: String) -> Player? {
+        store.roster.first(where: { $0.name == rawName })
+    }
+
+    private func teamAvatars(rawName: String, fallbackLabel: String, rawPartner: String?) -> some View {
+        let player = rosterPlayer(rawName)
+        return HStack(spacing: rawPartner == nil ? 0 : -8) {
+            AvatarView(name: Player.displayName(for: rawName.isEmpty ? fallbackLabel : rawName),
+                       color: player?.avatarColor ?? .gray,
+                       size: 26,
+                       iconName: player?.iconName)
+            if let rawPartner {
+                let partner = rosterPlayer(rawPartner)
+                AvatarView(name: Player.displayName(for: rawPartner),
+                           color: partner?.avatarColor ?? .gray,
+                           size: 26,
+                           iconName: partner?.iconName)
+            }
+        }
+    }
+
+    private func teamRow(rawName: String, rawPartner: String?,
+                         label: String, games: Int, won: Bool) -> some View {
+        HStack(spacing: 10) {
+            teamAvatars(rawName: rawName, fallbackLabel: label, rawPartner: rawPartner)
+            Text(label)
+                .fontWeight(won ? .semibold : .regular)
+                .lineLimit(1)
+            Spacer()
+            Text("\(games)")
+                .font(.system(.title3, design: .rounded).weight(won ? .bold : .regular))
+                .foregroundStyle(won ? Color.accentColor : Color.secondary)
                 .monospacedDigit()
-            }
+        }
+    }
 
-            if !gameLine.isEmpty {
-                Text(gameLine)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            teamRow(rawName: record.myName, rawPartner: record.myPartnerName,
+                    label: myLabel, games: record.myGamesWon, won: iWon)
+            teamRow(rawName: record.opponentName, rawPartner: record.opponentPartnerName,
+                    label: opponentLabel, games: record.opponentGamesWon, won: !iWon)
 
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
+                if !gameLine.isEmpty {
+                    Text(gameLine).monospacedDigit()
+                    Text(verbatim: "·")
+                }
                 Text(record.date, format: .dateTime.month().day().hour().minute())
                 if record.duration > 0 {
                     Text(verbatim: "·")
@@ -278,7 +299,8 @@ struct MatchHistoryRow: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+            .padding(.leading, 36)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 5)
     }
 }
