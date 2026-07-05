@@ -1,4 +1,34 @@
 // iOS companion app
 "ios.title" = "बैडमिंटन स्कोर";
-"ios.placeholder_message" = "मैच इतिहास, आँकड़े और खिलाड़ी सूची जल्द ही iPhone पर आ रहे हैं। स्कोर अपनी Apple Watch पर रिकॉर्ड करें।";
-"ios.synced_summary %lld %lld" = "iCloud से सिंक किया गया: %lld मैच · %lld खिलाड़ी";
+"ios.watch_scoring_hint" = "स्कोर अपनी Apple Watch पर रिकॉर्ड करें।";
+
+// Shared with the Watch (same keys, so translations copy verbatim)
+"history.title" = "मैच इतिहास";
+"history.empty" = "अभी तक कोई मैच नहीं खेला";
+"history.clear_title" = "इतिहास साफ़ करें";
+"history.clear_confirm" = "क्या आप सभी मैच इतिहास साफ़ करना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।";
+"history.cancel" = "रद्द करें";
+"history.clear" = "साफ़ करें";
+"history.filter_player" = "खिलाड़ी";
+"history.filter_all_players" = "सभी खिलाड़ी";
+"history.filter_all" = "सभी समय";
+"history.filter_week" = "इस सप्ताह";
+"history.filter_month" = "इस महीने";
+"history.filter_all_types" = "सभी";
+"history.sort_newest" = "नवीनतम";
+"history.sort_oldest" = "सबसे पुराना";
+"history.opponent_fallback" = "प्रतिद्वंद्वी";
+"settings.singles" = "सिंगल्स";
+"settings.doubles" = "डबल्स";
+"game.team_names_format" = "%1$@ और %2$@";
+"stats.title" = "आँकड़े";
+"stats.player" = "खिलाड़ी";
+"stats.no_matches" = "अभी तक कोई मैच नहीं";
+"stats.matches" = "मैच";
+"stats.wins" = "जीत";
+"stats.losses" = "हार";
+"stats.win_rate" = "जीत दर";
+"stats.avg_points" = "औसत अंक/गेम";
+"stats.best_streak" = "सर्वश्रेष्ठ स्ट्रीक";
+"stats.avg_duration" = "औसत अवधि";
+"stats.head_to_head" = "आमने-सामने";

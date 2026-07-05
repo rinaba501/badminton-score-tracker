@@ -1,4 +1,34 @@
 // iOS companion app
 "ios.title" = "배드민턴 스코어";
-"ios.placeholder_message" = "경기 기록, 통계, 플레이어 관리가 곧 iPhone에 제공됩니다. 점수는 Apple Watch에서 기록하세요.";
-"ios.synced_summary %lld %lld" = "iCloud에서 동기화됨: 경기 %lld개 · 플레이어 %lld명";
+"ios.watch_scoring_hint" = "점수는 Apple Watch에서 기록하세요.";
+
+// Shared with the Watch (same keys, so translations copy verbatim)
+"history.title" = "경기 기록";
+"history.empty" = "경기 기록이 없습니다";
+"history.clear_title" = "기록 삭제";
+"history.clear_confirm" = "모든 경기 기록을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.";
+"history.cancel" = "취소";
+"history.clear" = "삭제";
+"history.filter_player" = "플레이어";
+"history.filter_all_players" = "전체";
+"history.filter_all" = "전체 기간";
+"history.filter_week" = "이번 주";
+"history.filter_month" = "이번 달";
+"history.filter_all_types" = "전체";
+"history.sort_newest" = "최신순";
+"history.sort_oldest" = "오래된순";
+"history.opponent_fallback" = "상대";
+"settings.singles" = "단식";
+"settings.doubles" = "복식";
+"game.team_names_format" = "%1$@ & %2$@";
+"stats.title" = "통계";
+"stats.player" = "플레이어";
+"stats.no_matches" = "아직 경기가 없습니다";
+"stats.matches" = "경기";
+"stats.wins" = "승";
+"stats.losses" = "패";
+"stats.win_rate" = "승률";
+"stats.avg_points" = "게임당 평균 점수";
+"stats.best_streak" = "최다 연승";
+"stats.avg_duration" = "평균 시간";
+"stats.head_to_head" = "상대 전적";

@@ -1,4 +1,34 @@
 // iOS companion app
 "ios.title" = "Skor Bulu Tangkis";
-"ios.placeholder_message" = "Riwayat pertandingan, statistik, dan daftar pemain segera hadir di iPhone. Catat skor di Apple Watch Anda.";
-"ios.synced_summary %lld %lld" = "Disinkronkan dari iCloud: %lld pertandingan · %lld pemain";
+"ios.watch_scoring_hint" = "Catat skor di Apple Watch Anda.";
+
+// Shared with the Watch (same keys, so translations copy verbatim)
+"history.title" = "Riwayat Pertandingan";
+"history.empty" = "Belum ada pertandingan";
+"history.clear_title" = "Hapus Riwayat";
+"history.clear_confirm" = "Yakin ingin menghapus semua riwayat pertandingan? Tindakan ini tidak dapat dibatalkan.";
+"history.cancel" = "Batal";
+"history.clear" = "Hapus";
+"history.filter_player" = "Pemain";
+"history.filter_all_players" = "Semua Pemain";
+"history.filter_all" = "Semua Waktu";
+"history.filter_week" = "Minggu Ini";
+"history.filter_month" = "Bulan Ini";
+"history.filter_all_types" = "Semua";
+"history.sort_newest" = "Terbaru";
+"history.sort_oldest" = "Terlama";
+"history.opponent_fallback" = "Lawan";
+"settings.singles" = "Tunggal";
+"settings.doubles" = "Ganda";
+"game.team_names_format" = "%1$@ & %2$@";
+"stats.title" = "Statistik";
+"stats.player" = "Pemain";
+"stats.no_matches" = "Belum ada pertandingan";
+"stats.matches" = "Pertandingan";
+"stats.wins" = "Menang";
+"stats.losses" = "Kalah";
+"stats.win_rate" = "Rasio menang";
+"stats.avg_points" = "Rata-rata poin/game";
+"stats.best_streak" = "Rentetan terbaik";
+"stats.avg_duration" = "Durasi rata-rata";
+"stats.head_to_head" = "Rekor Pertemuan";
