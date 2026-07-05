@@ -99,6 +99,7 @@ struct HistoryView: View {
                                             Label("history.clear", systemImage: "trash")
                                         }
                                     }
+                                    .contextMenu { shareButton(for: record) }
                             }
                         }
                     }
@@ -182,6 +183,15 @@ struct HistoryView: View {
                 Image(systemName: selectedPlayers.isEmpty ? "person" : "person.fill")
             }
             .accessibilityLabel(Text("history.filter_player"))
+        }
+    }
+
+    @ViewBuilder private func shareButton(for record: MatchRecord) -> some View {
+        if let share = MatchCardShare.make(for: record) {
+            ShareLink(item: share.item,
+                      preview: SharePreview(record.shareSummaryText, image: share.preview)) {
+                Label("ios.share", systemImage: "square.and.arrow.up")
+            }
         }
     }
 

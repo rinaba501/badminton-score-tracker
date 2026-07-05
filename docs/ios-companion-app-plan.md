@@ -43,9 +43,9 @@ Ported the Watch's `HistoryView`/`MatchHistoryRow`/`StatsView` filter + stats lo
 
 Added `RosterView.swift` (Me section + add/rename/delete + sort order), iOS `PlayerEditView.swift` (real-keyboard TextField + duplicate detection + color/avatar/icon grids), and `PlayerAvatar.swift` (per-target presentation extension); the 15 avatar images were duplicated into the iOS asset catalog. `savePlayerEdit` ports the Watch's rename→history propagation verbatim (renames update past matches via player id + update myName), writing through PR2's `saveRoster`/`saveHistory`. Gate: CI (green) + a two-device roster-edit propagation check.
 
-### PR5 — Share card (#13)
+### PR5 — Share card (#13) — implemented; closes #13
 
-`ShareCard.swift`: SwiftUI view rendered via `ImageRenderer` → `ShareLink` (image + plain-text fallback). Share button on each history row. Lowest risk; closes #13.
+`ShareCard.swift`: SwiftUI card rendered to a PNG via `ImageRenderer`; a `SharableMatchCard: Transferable` exposes both the image and a plain-text summary. Long-press a history row → `ShareLink` (context menu). Lowest risk; closes #13.
 
 ### PR6 — Live scoring on iPhone (follow-up, after v1)
 
@@ -67,5 +67,5 @@ Per PR: `swiftlint`, `swift test --package-path BadmintonCore`, `xcodebuild buil
 - [x] PR2 — sync layer (code merged; two-device hardware test still pending)
 - [x] PR3 — History + Stats views (code merged; two-device delete-recheck still pending)
 - [x] PR4 — Roster management (code merged; two-device propagation check still pending)
-- [ ] PR5 — Share card (#13)
+- [x] PR5 — Share card (#13, closes the issue)
 - [ ] PR6 — live scoring on iPhone (follow-up)
