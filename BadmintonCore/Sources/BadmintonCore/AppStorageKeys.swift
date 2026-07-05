@@ -40,4 +40,7 @@ public enum AppStorageKeys {
     public static let ckSyncEngineState = "ckSyncEngineState"
     public static let didMigrateToCloudKit = "didMigrateToCloudKit"
     public static let cloudKitSyncEnabled = "cloudKitSyncEnabled"
+    // Per-record CKRecord system fields (change tags), keyed by recordName, so
+    // in-place updates carry the right tag instead of conflicting every time.
+    public static let ckRecordMetadata = "ckRecordMetadata"
 }

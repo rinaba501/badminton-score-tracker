@@ -12,7 +12,7 @@ A **watchOS app** built with SwiftUI for tracking badminton match scores in real
 - **Shared code:** local Swift package `BadmintonCore` — Foundation-only (no SwiftUI/WatchKit) so a future iOS target and `swift test` on macOS consume it unchanged
 - **Audio:** `AVAudioEngine` sine-wave tones + `AVSpeechSynthesizer` announcements — no audio files
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs
-- **Sync:** `NSUbiquitousKeyValueStore` (iCloud KV store; requires the ubiquity-kvstore entitlement)
+- **Sync:** `NSUbiquitousKeyValueStore` (iCloud KV store; requires the ubiquity-kvstore entitlement). Phase 4 (#109) adds a CloudKit private-DB path (`CKSyncEngine`) for history+roster behind the `cloudKitSyncEnabled` flag — **default off / ships inert**; KV store still handles everything until the flag is flipped on after a two-device test
 - **Health:** `HKWorkoutSession` + `HKLiveWorkoutBuilder` (HealthKit capability + usage descriptions in Info.plist)
 
 ## Project Structure
@@ -21,7 +21,7 @@ A **watchOS app** built with SwiftUI for tracking badminton match scores in real
 BadmintonCore/                 — local Swift package; platform-free core (no SwiftUI/WatchKit imports, ever)
   Sources/BadmintonCore/
     MatchModel.swift          — BadmintonMatch (pure scoring engine — no UI/timers/player identity), GameScore, MatchRecord, Side
-    PersistenceStore.swift    — all JSON encode/decode for [Player]/[MatchRecord]; versioned envelope, per-record-tolerant decoding, migration hooks, iCloud merge/shrink/quota helpers
+    PersistenceStore.swift    — all JSON encode/decode for [Player]/[MatchRecord]; versioned envelope, per-record-tolerant decoding, migration hooks, iCloud merge/shrink/quota helpers, plus single-record codecs + diff/conflict helpers for CloudKit (#109)
     Player.swift              — Player model, SortOrder, sentinel identity (guest tokens vs. localized labels — see doc comments)
     StatsCalculator.swift     — pure stats/history derivations; intentionally duplicated function pairs — see file header before unifying anything
     AppStorageKeys.swift      — single source of truth for EVERY UserDefaults/@AppStorage key string
@@ -44,7 +44,8 @@ badminton score tracker Watch App/
   CourtTheme.swift           — CourtTheme enum
   AppStore.swift             — @MainActor singleton; caches decoded roster/history, runs migrations on init, all writes go through it (it pushes to iCloud); owns localPlayerId ("Me" is never in the roster)
   WorkoutManager.swift       — HKWorkoutSession lifecycle (start on match begin, end on save/discard)
-  CloudSyncManager.swift     — iCloud KV sync; history merges by record id, deletions overwrite (see file comments), other keys last-write-wins; publishes quota warnings
+  CloudSyncManager.swift     — iCloud KV sync; history merges by record id, deletions overwrite (see file comments), other keys last-write-wins; publishes quota warnings. When `cloudKitSyncEnabled` is on it carries scalar settings only (CloudKit owns history+roster)
+  CloudKitSyncManager.swift  — CloudKit private-DB sync via CKSyncEngine (one CKRecord per match/player, opaque JSON payload; real per-record deletion). Ships inert behind `cloudKitSyncEnabled` (default off); no CloudKit entitlement needed until flipped on. Correctness is NOT CI-provable — gated on a two-device test
   badminton_score_trackerApp.swift — entry point; starts sync, handles badminton://newmatch deep link
   Assets.xcassets/           — app icon, racket animation, 15 avatar images
   *.lproj/Localizable.strings — en, ja, zh-Hans, ko, id, hi
@@ -75,7 +76,7 @@ All key strings are constants in `BadmintonCore.AppStorageKeys` — **read that 
 
 ### CI & review
 
-Five parallel jobs per PR (SwiftLint, core `swift test`, localization key sync, Watch App build-for-testing, Complication build); green in **~4 min** — details, runtimes, and polling advice in [docs/ci.md](docs/ci.md). Before pushing: run `swiftlint` and `swift test --package-path BadmintonCore`; build locally before pushing SwiftUI changes when possible. **Use plan mode for anything touching `CloudSyncManager`/`AppStore`** (both real bugs in this codebase lived there — see docs/ci.md), and run `/code-review` before merging non-trivial PRs.
+Five parallel jobs per PR (SwiftLint, core `swift test`, localization key sync, Watch App build-for-testing, Complication build); green in **~4 min** — details, runtimes, and polling advice in [docs/ci.md](docs/ci.md). Before pushing: run `swiftlint` and `swift test --package-path BadmintonCore`; build locally before pushing SwiftUI changes when possible. **Use plan mode for anything touching `CloudSyncManager`/`CloudKitSyncManager`/`AppStore`** (both real bugs in this codebase lived there — see docs/ci.md; CloudKit sync correctness can't be proven by CI, only a two-device test), and run `/code-review` before merging non-trivial PRs.
 
 ## Keeping the Docs Up-to-Date
 

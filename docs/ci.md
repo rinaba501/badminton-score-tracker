@@ -24,3 +24,4 @@ CI (lint + unit tests) proves the code compiles and the logic it covers is corre
 
 - Use plan mode before implementing, especially anything touching `CloudSyncManager`/`AppStore` — that's where both real bugs in this codebase have lived. A wrong plan costs one sentence to fix; a wrong diff already cost the rewrite.
 - Run a `/code-review` pass before merging non-trivial PRs. CI-green is evidence the mechanics work, not that the change is correct.
+- **CloudKit sync (`CloudKitSyncManager`, #109) is not CI-provable.** CI only confirms the CloudKit code compiles/links; actual sync, deletion propagation, migration, offline queue, and conflict handling need a real two-device iCloud test (a provisioned CloudKit container + two watches on one Apple ID). The code ships inert behind `cloudKitSyncEnabled` (default off) precisely so it can't affect anyone until that test passes and the flag is flipped on.

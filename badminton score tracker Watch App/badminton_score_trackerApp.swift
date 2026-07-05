@@ -10,7 +10,16 @@ import SwiftUI
 @main
 struct badminton_score_tracker_Watch_AppApp: App {
     init() {
-        Task { await CloudSyncManager.shared.start() }
+        Task {
+            // CloudSyncManager always runs (scalar settings sync via the KV
+            // store). When the CloudKit flag is on it also drives history +
+            // roster through CloudKitSyncManager; while off (default), the KV
+            // store keeps handling those too — behavior is unchanged.
+            await CloudSyncManager.shared.start()
+            if CloudKitSyncManager.isEnabled {
+                await CloudKitSyncManager.shared.start()
+            }
+        }
     }
 
     var body: some Scene {
