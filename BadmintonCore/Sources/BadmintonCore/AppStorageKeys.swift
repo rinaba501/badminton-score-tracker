@@ -32,4 +32,12 @@ public enum AppStorageKeys {
     public static let timeLimitMinutes = "timeLimitMinutes"
     public static let gameMode = "gameMode"
     public static let localPlayerId = "localPlayerId"
+
+    // CloudKit sync (Phase 4, #109). Not KV-synced — these are local device
+    // state for the CloudKit transport: the serialized CKSyncEngine state, a
+    // one-time "already uploaded local data" flag, and a runtime kill-switch
+    // (default true) that falls back to the KV-store history path.
+    public static let ckSyncEngineState = "ckSyncEngineState"
+    public static let didMigrateToCloudKit = "didMigrateToCloudKit"
+    public static let cloudKitSyncEnabled = "cloudKitSyncEnabled"
 }

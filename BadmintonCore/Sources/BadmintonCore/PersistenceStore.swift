@@ -102,6 +102,37 @@ public enum PersistenceStore {
         encodeEnvelope(records)
     }
 
+    // MARK: - Single-record codecs (CloudKit)
+
+    // Each CloudKit CKRecord stores one model as a JSON `payload` field. These
+    // wrap a single record in the same versioned, byte-deterministic envelope
+    // the array codecs use, so schema versioning and per-record tolerant
+    // decoding carry over unchanged — CloudKit stays agnostic about the model
+    // shape. `decode*` returns nil (never throws/crashes) on empty or corrupt
+    // payload, so one bad CKRecord can't take down a whole zone fetch.
+
+    /// Encode a single match record as a CloudKit payload, or `nil` on failure.
+    public static func encodeRecord(_ record: MatchRecord) -> Data? {
+        encodeEnvelope([record])
+    }
+
+    /// Decode a single match record from a CloudKit payload, or `nil` if the
+    /// payload is empty or unreadable.
+    public static func decodeRecord(_ data: Data) -> MatchRecord? {
+        decodeTolerant(MatchRecord.self, from: data).first
+    }
+
+    /// Encode a single roster player as a CloudKit payload, or `nil` on failure.
+    public static func encodePlayer(_ player: Player) -> Data? {
+        encodeEnvelope([player])
+    }
+
+    /// Decode a single roster player from a CloudKit payload, or `nil` if the
+    /// payload is empty or unreadable.
+    public static func decodePlayer(_ data: Data) -> Player? {
+        decodeTolerant(Player.self, from: data).first
+    }
+
     // MARK: - Migration
 
     /// Returns upgraded roster `Data` if `data` isn't already the current
@@ -152,6 +183,65 @@ public enum PersistenceStore {
         let oldIds = Set(oldRecords.map(\.id))
         let newIds = Set(newRecords.map(\.id))
         return newIds != oldIds && newIds.isSubset(of: oldIds)
+    }
+
+    // MARK: - Record diffing (CloudKit)
+
+    /// The per-record changes between two snapshots of a collection, keyed by
+    /// `id`. Drives CloudKit's `.saveRecord` / `.deleteRecord` pending changes:
+    /// exact upserts and real deletions replace the whole-blob merge, so a
+    /// deletion is an explicit server tombstone that can't be resurrected by a
+    /// union (the bug class that hit `mergeHistory` + clear-history).
+    public struct RecordDiff: Equatable {
+        public let upsertedIds: [UUID]
+        public let deletedIds: [UUID]
+        public init(upsertedIds: [UUID], deletedIds: [UUID]) {
+            self.upsertedIds = upsertedIds
+            self.deletedIds = deletedIds
+        }
+    }
+
+    /// Diff two `Identifiable & Equatable` snapshots into upserts and deletes.
+    /// `upsertedIds` = ids new to `new`, plus ids whose element changed in
+    /// place (an in-place rename mutates fields but keeps the id — `Equatable`
+    /// catches it). `deletedIds` = ids present in `old` but absent from `new`.
+    /// Order of `upsertedIds` follows `new`; `deletedIds` follows `old`.
+    private static func diff<T: Identifiable & Equatable>(from old: [T], to new: [T]) -> RecordDiff where T.ID == UUID {
+        let oldById = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let newIds = Set(new.map(\.id))
+        let upserted = new.filter { oldById[$0.id] != $0 }.map(\.id)
+        let deleted = old.filter { !newIds.contains($0.id) }.map(\.id)
+        return RecordDiff(upsertedIds: upserted, deletedIds: deleted)
+    }
+
+    /// Upserts/deletes to sync when match history changes from `old` to `new`.
+    public static func diffHistory(from old: [MatchRecord], to new: [MatchRecord]) -> RecordDiff {
+        diff(from: old, to: new)
+    }
+
+    /// Upserts/deletes to sync when the roster changes from `old` to `new`.
+    public static func diffRoster(from old: [Player], to new: [Player]) -> RecordDiff {
+        diff(from: old, to: new)
+    }
+
+    // MARK: - Conflict resolution (CloudKit)
+
+    /// How to resolve a CloudKit `.serverRecordChanged` conflict on one record.
+    public enum Resolution: Equatable {
+        /// Accept the server's record into the local cache (last-writer-wins).
+        case takeServer
+        /// Re-apply our pending deletion against the fresh server record.
+        case keepDeletion
+    }
+
+    /// Per-record last-writer-wins, with one deliberate asymmetry: a local
+    /// *deletion* always wins over a concurrent server edit, so a user who
+    /// cleared history is never overruled by someone else's in-place change.
+    /// Everything else takes the server copy (the last write to reach the
+    /// server). Note this must NOT tie-break on `MatchRecord.date` — that is
+    /// match-completion time and does not change on an in-place rename.
+    public static func resolveConflict(localIntendedDelete: Bool) -> Resolution {
+        localIntendedDelete ? .keepDeletion : .takeServer
     }
 
     // MARK: - iCloud KV-store quota
