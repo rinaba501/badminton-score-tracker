@@ -30,22 +30,22 @@ Per `CLAUDE.md`'s "Reviewing risky changes": use plan mode before writing code f
 
 Follow `.github/PULL_REQUEST_TEMPLATE.md`'s shape (Summary/Changes/Verification/Docs checklist) even if the tool you're using doesn't auto-populate it. Update `SPEC.md`/`CLAUDE.md`/`README.md` per the rules in `CLAUDE.md`'s "Keeping the Docs Up-to-Date" section — in the same commit, not a follow-up.
 
+After opening the PR, enable auto-merge immediately: `gh pr merge <number> --auto --merge --delete-branch`. `main`'s branch protection marks all 7 CI jobs as required status checks, so GitHub won't merge until they're all green — auto-merge doesn't skip the gate, it just removes the need to poll for it. (The repo's `required_approving_review_count: 1` doesn't block this either: you're the sole collaborator and `enforce_admins` is off, so your own PRs bypass the approval requirement.)
+
 ## 5. Watch CI, don't guess
+
+Auto-merge handles the "wait and merge" mechanics, but still watch for failures rather than assuming success:
 
 - Check `get_check_runs` for the PR's head SHA.
 - On failure, pull the **full** job log (not just the tail) and find the actual `file:line` diagnostic before forming a hypothesis — guessing which expression/file is at fault costs multiple blind CI round-trips (this has happened before in this repo; see `GameView.swift`'s type-check saga in the git history).
-- `main` can move while you're working (other sessions/PRs merge concurrently) — before merging, confirm `mergeable_state` is `clean` and the PR's base SHA matches current `main`. If not, rebase and resolve conflicts by understanding both sides' intent, not by picking one blindly.
+- `main` can move while you're working (other sessions/PRs merge concurrently). Auto-merge requires GitHub's own mergeability check to pass; if it reports a conflict, rebase and resolve by understanding both sides' intent, not by picking one blindly. Auto-merge stays armed across a rebase/re-push.
+- If a required check fails, auto-merge just sits there — fix the issue, push, and it resumes waiting. No need to re-enable it.
 
-## 6. Merge and clean up
+## 6. After merge, clean up locally
 
-Once CI is green and mergeable:
+Once auto-merge completes the merge (merge commit, not squash/rebase, per CLAUDE.md — `--delete-branch` already removed the remote branch):
 ```
-merge (merge commit, not squash/rebase, per CLAUDE.md)
 git checkout main && git pull origin main
 git branch -D <branch-name>
 ```
-Don't leave stale local or remote branches.
-
-## 7. If subscribed to PR activity
-
-Webhooks deliver failures but not success/new-pushes/merge-conflict transitions. Arm a recurring check-in that checks CI + mergeable state and merges automatically once green, then deletes itself. Don't poll manually — but also don't default to a long cadence: this repo's CI is fast (SwiftLint ~10-20s, Unit Tests ~2.5-4 min, run in parallel — a PR is checkable within ~4 minutes of pushing). Use a ~5 minute cadence for the first check-in or two; only fall back to something longer (~20 min) if the run is still in progress after that, since it's likely stuck.
+Don't leave stale local branches.
