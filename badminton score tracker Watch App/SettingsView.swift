@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
+    @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
     @EnvironmentObject private var appStore: AppStore
     @ObservedObject private var cloudSync = CloudSyncManager.shared
     @State private var editingPlayer: Player? = nil
@@ -89,6 +90,10 @@ struct SettingsView: View {
                         .foregroundColor(.orange)
                         .font(.caption)
                 }
+            }
+
+            Section(header: Text("settings.sync"), footer: Text("settings.sync_caption")) {
+                Toggle("settings.sync_cloudkit", isOn: $cloudKitSyncEnabled)
             }
 
             Section(header: Text("settings.game_mode")) {

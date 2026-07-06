@@ -56,6 +56,11 @@ struct ContentView: View {
                     } label: {
                         menuRow("settings.players", systemImage: "person.2.fill", color: .purple)
                     }
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        menuRow("settings.title", systemImage: "gearshape.fill", color: .gray)
+                    }
                 }
             }
             .navigationTitle(Text("ios.title"))

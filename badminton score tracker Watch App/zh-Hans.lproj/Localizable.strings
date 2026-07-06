@@ -35,6 +35,9 @@
 // Settings
 "settings.title" = "设置";
 "settings.back" = "返回";
+"settings.sync" = "同步";
+"settings.sync_cloudkit" = "iCloud（CloudKit）同步";
+"settings.sync_caption" = "实验性功能。通过 iCloud（CloudKit）而非旧方式同步比赛记录和球员信息。更改后请重新启动应用。";
 "settings.icloud_quota_warning" = "iCloud 同步存储空间即将用完，部分比赛记录可能很快无法同步。";
 "settings.icloud_quota_exceeded" = "iCloud 同步存储空间已满，此设备上的新比赛将无法同步，直到释放空间。";
 "settings.game_mode" = "比赛模式";

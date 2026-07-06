@@ -1,5 +1,9 @@
 // iOS companion app
 "ios.title" = "羽毛球比分";
+"settings.title" = "设置";
+"settings.sync" = "同步";
+"settings.sync_cloudkit" = "iCloud（CloudKit）同步";
+"settings.sync_caption" = "实验性功能。通过 iCloud（CloudKit）而非旧方式同步比赛记录和球员信息。更改后请重新启动应用。";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "比赛记录";

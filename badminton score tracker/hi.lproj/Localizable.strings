@@ -1,5 +1,9 @@
 // iOS companion app
 "ios.title" = "बैडमिंटन स्कोर";
+"settings.title" = "सेटिंग्स";
+"settings.sync" = "सिंक";
+"settings.sync_cloudkit" = "iCloud (CloudKit) सिंक";
+"settings.sync_caption" = "प्रायोगिक। मैच इतिहास और खिलाड़ियों को पुराने तरीके के बजाय iCloud (CloudKit) के ज़रिए सिंक करता है। बदलाव के बाद ऐप को पुनः आरंभ करें।";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "मैच इतिहास";

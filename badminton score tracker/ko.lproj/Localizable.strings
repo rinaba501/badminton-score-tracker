@@ -1,5 +1,9 @@
 // iOS companion app
 "ios.title" = "배드민턴 스코어";
+"settings.title" = "설정";
+"settings.sync" = "동기화";
+"settings.sync_cloudkit" = "iCloud(CloudKit) 동기화";
+"settings.sync_caption" = "실험적 기능입니다. 경기 기록과 선수 정보를 기존 방식 대신 iCloud(CloudKit)를 통해 동기화합니다. 변경 후 앱을 다시 시작하세요.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "경기 기록";
