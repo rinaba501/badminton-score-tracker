@@ -20,6 +20,10 @@ final class AppStore: ObservableObject {
 
     @Published private(set) var roster: [Player]
     @Published private(set) var history: [MatchRecord]
+    /// Roadmap Phase 5b: local-only club list — no CloudKit sync yet, so
+    /// unlike roster/history this never pushes through CloudSyncManager (see
+    /// saveClubs).
+    @Published private(set) var clubs: [Club]
 
     @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
 
@@ -39,8 +43,10 @@ final class AppStore: ObservableObject {
         Self.runMigrations()
         let r = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster) ?? Data()
         let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
+        let c = UserDefaults.standard.data(forKey: AppStorageKeys.clubs) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
+        clubs = PersistenceStore.decodeClubs(c)
     }
 
     // Upgrades on-disk data to the current schema before the first decode.
@@ -98,6 +104,16 @@ final class AppStore: ObservableObject {
             CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: [], deletedIds: diff.deletedIds)
         }
         CloudSyncManager.shared.pushToCloud(overwriteHistory: true)
+    }
+
+    // Local-only (Roadmap Phase 5b): a Club only becomes a real shared group
+    // once Phase 5c wires it to a CloudKit CKShare zone, which replaces this
+    // transport entirely — so, unlike saveRoster/saveHistory, this deliberately
+    // does NOT call CloudSyncManager.pushToCloud().
+    func saveClubs(_ clubs: [Club]) {
+        guard let encoded = PersistenceStore.encodeClubs(clubs) else { return }
+        UserDefaults.standard.set(encoded, forKey: AppStorageKeys.clubs)
+        self.clubs = clubs
     }
 
     // Called by CloudSyncManager after external iCloud data lands in UserDefaults

@@ -229,6 +229,9 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
     public var opponentPartnerName: String?
     public var myPartnerPlayerId: UUID?
     public var opponentPartnerPlayerId: UUID?
+    /// Roadmap Phase 5b: which `Club` this match belongs to. `nil` means
+    /// personal (today's behavior, unchanged) — see Club.swift.
+    public var clubId: UUID?
 
     /// True when either partner field is populated — the single home of the
     /// "is this record a Doubles match" check (see the comment above).
@@ -248,7 +251,8 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
                 myPartnerName: String? = nil,
                 opponentPartnerName: String? = nil,
                 myPartnerPlayerId: UUID? = nil,
-                opponentPartnerPlayerId: UUID? = nil) {
+                opponentPartnerPlayerId: UUID? = nil,
+                clubId: UUID? = nil) {
         self.id = id
         self.games = games
         self.myGamesWon = myGamesWon
@@ -264,11 +268,13 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         self.opponentPartnerName = opponentPartnerName
         self.myPartnerPlayerId = myPartnerPlayerId
         self.opponentPartnerPlayerId = opponentPartnerPlayerId
+        self.clubId = clubId
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, games, myGamesWon, opponentGamesWon, winner, myName, opponentName, date, duration,
-             myPlayerId, opponentPlayerId, myPartnerName, opponentPartnerName, myPartnerPlayerId, opponentPartnerPlayerId
+             myPlayerId, opponentPlayerId, myPartnerName, opponentPartnerName, myPartnerPlayerId, opponentPartnerPlayerId,
+             clubId
     }
 
     /// Self-migrating: reads the current `RecordSide` shape, or — for records
@@ -293,6 +299,7 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         opponentPartnerName = try container.decodeIfPresent(String.self, forKey: .opponentPartnerName)
         myPartnerPlayerId = try container.decodeIfPresent(UUID.self, forKey: .myPartnerPlayerId)
         opponentPartnerPlayerId = try container.decodeIfPresent(UUID.self, forKey: .opponentPartnerPlayerId)
+        clubId = try container.decodeIfPresent(UUID.self, forKey: .clubId)
 
         if let side = try? container.decode(RecordSide.self, forKey: .winner) {
             winner = side
@@ -319,5 +326,6 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         try container.encodeIfPresent(opponentPartnerName, forKey: .opponentPartnerName)
         try container.encodeIfPresent(myPartnerPlayerId, forKey: .myPartnerPlayerId)
         try container.encodeIfPresent(opponentPartnerPlayerId, forKey: .opponentPartnerPlayerId)
+        try container.encodeIfPresent(clubId, forKey: .clubId)
     }
 }

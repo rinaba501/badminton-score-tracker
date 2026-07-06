@@ -86,6 +86,20 @@ public enum PersistenceStore {
         encodeEnvelope(players)
     }
 
+    // MARK: - Clubs ([Club]) — Roadmap Phase 5b, local only (no CloudKit yet)
+
+    /// Decode the club list, returning an empty array if the data is missing
+    /// or corrupt. Same envelope/tolerance contract as `decodeRoster`.
+    public static func decodeClubs(_ data: Data) -> [Club] {
+        decodeTolerant(Club.self, from: data)
+    }
+
+    /// Encode the club list for storage (as the current versioned envelope),
+    /// or `nil` if encoding fails.
+    public static func encodeClubs(_ clubs: [Club]) -> Data? {
+        encodeEnvelope(clubs)
+    }
+
     // MARK: - History ([MatchRecord])
 
     /// Decode the match history, returning an empty array if the data is
