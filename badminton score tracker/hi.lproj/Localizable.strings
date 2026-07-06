@@ -70,6 +70,12 @@
 "game.wins_match" = "%@ ने मैच जीता!";
 "game.games_score" = "गेम्स %@";
 "settings.mode" = "मोड";
+"speech.wins_match" = "%@ ने मैच जीता!";
+"speech.wins_game" = "%@ ने गेम जीता!";
+"speech.match_point" = "मैच पॉइंट। %@ - %@";
+"speech.game_point" = "गेम पॉइंट। %@ - %@";
+"speech.score" = "%@ - %@";
+"speech.tied" = "%@ all";
 "speech.time_up" = "समय समाप्त";
 "game.rematch" = "फिर से खेलें";
 "game.discard_title" = "मैच छोड़ें?";

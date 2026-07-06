@@ -70,6 +70,12 @@
 "game.wins_match" = "%@ menang pertandingan!";
 "game.games_score" = "Game %@";
 "settings.mode" = "Mode";
+"speech.wins_match" = "%@ menang pertandingan!";
+"speech.wins_game" = "%@ menang game!";
+"speech.match_point" = "Poin pertandingan. %@ - %@";
+"speech.game_point" = "Poin game. %@ - %@";
+"speech.score" = "%@ - %@";
+"speech.tied" = "%@ all";
 "speech.time_up" = "Waktu habis";
 "game.rematch" = "Main Lagi";
 "game.discard_title" = "Batalkan pertandingan?";
