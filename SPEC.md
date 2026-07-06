@@ -222,4 +222,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 110 | CI guardrails: localization key-sync, coverage, Complication build, deployment-target alignment (Roadmap guardrails track) | #116 |
 | 87 | iCloud KV sync quota guard: surface/log quota-exceeded, warn before the ~1 MB ceiling (merge-by-id landed earlier) | #117 |
 | 8 | Doubles support (2v2) | #118, #120, #121, #122, #123 |
-| 148 | Club management UI: create/rename/leave, member list, per-club roster (Roadmap Phase 5d) | TBD |
+| 148 | Club management UI: create/rename/leave, member list, per-club roster (Roadmap Phase 5d) | #149 |
