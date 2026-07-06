@@ -91,3 +91,21 @@
 "game.sudden_death" = "서든데스!";
 "game.tie" = "무승부!";
 "ios.new_match" = "새 경기";
+
+// Roadmap Phase 5d: club management UI
+"settings.clubs" = "클럽";
+"settings.manage_clubs" = "클럽 관리";
+"clubs.empty" = "아직 클럽이 없습니다";
+"clubs.new_club_placeholder" = "클럽 이름";
+"clubs.add" = "클럽 추가";
+"clubs.name" = "이름";
+"clubs.members" = "멤버";
+"clubs.you" = "나";
+"clubs.roster" = "명단";
+"clubs.add_player" = "선수 추가";
+"clubs.delete_club" = "클럽 삭제";
+"clubs.leave_club" = "클럽 나가기";
+"clubs.delete_confirm" = "이 클럽을 삭제하시겠습니까? 선수와 경기 기록은 유지되지만 더 이상 이 클럽에 연결되지 않습니다.";
+"clubs.leave_confirm" = "이 클럽을 나가시겠습니까? 선수와 경기 기록은 유지되지만 더 이상 이 클럽에 연결되지 않습니다.";
+"playeredit.club" = "클럽";
+"playeredit.club_personal" = "개인";

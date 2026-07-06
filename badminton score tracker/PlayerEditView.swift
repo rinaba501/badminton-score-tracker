@@ -14,15 +14,20 @@ import BadmintonCore
 struct PlayerEditView: View {
     let initialPlayer: Player
     let existingNames: [String]
+    /// Roadmap Phase 5d: clubs offered in the "belongs to" picker below. Empty
+    /// by default so call sites that don't manage club membership (e.g. the
+    /// pre-match add-player flow) don't need to thread `AppStore.clubs` through.
+    let clubs: [Club]
     let onSave: (Player) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var localPlayer: Player
     @State private var isDuplicate = false
 
-    init(initialPlayer: Player, existingNames: [String] = [], onSave: @escaping (Player) -> Void) {
+    init(initialPlayer: Player, existingNames: [String] = [], clubs: [Club] = [], onSave: @escaping (Player) -> Void) {
         self.initialPlayer = initialPlayer
         self.existingNames = existingNames
+        self.clubs = clubs
         self.onSave = onSave
         _localPlayer = State(initialValue: initialPlayer)
     }
@@ -60,6 +65,19 @@ struct PlayerEditView: View {
                     }
                 } header: {
                     Text("playeredit.name")
+                }
+
+                if !clubs.isEmpty {
+                    Section {
+                        Picker("playeredit.club", selection: $localPlayer.clubId) {
+                            Text("playeredit.club_personal").tag(UUID?.none)
+                            ForEach(clubs) { club in
+                                Text(club.name).tag(UUID?.some(club.id))
+                            }
+                        }
+                    } header: {
+                        Text("playeredit.club")
+                    }
                 }
 
                 Section {

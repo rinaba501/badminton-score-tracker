@@ -164,3 +164,21 @@
 "prematch.guest_near" = "ゲスト（手前）";
 "prematch.guest_far" = "ゲスト（奥）";
 "history.opponent_fallback" = "対戦相手";
+
+// Roadmap Phase 5d: club management UI
+"settings.clubs" = "クラブ";
+"settings.manage_clubs" = "クラブを管理";
+"clubs.empty" = "クラブがまだありません";
+"clubs.new_club_placeholder" = "クラブ名";
+"clubs.add" = "クラブを追加";
+"clubs.name" = "名前";
+"clubs.members" = "メンバー";
+"clubs.you" = "自分";
+"clubs.roster" = "メンバー一覧";
+"clubs.add_player" = "プレイヤーを追加";
+"clubs.delete_club" = "クラブを削除";
+"clubs.leave_club" = "クラブを退会";
+"clubs.delete_confirm" = "このクラブを削除しますか？プレイヤーと試合記録は残りますが、このクラブとの紐付けは解除されます。";
+"clubs.leave_confirm" = "このクラブを退会しますか？プレイヤーと試合記録は残りますが、このクラブとの紐付けは解除されます。";
+"playeredit.club" = "クラブ";
+"playeredit.club_personal" = "個人";

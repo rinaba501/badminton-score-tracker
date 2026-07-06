@@ -91,3 +91,21 @@
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "Seri!";
 "ios.new_match" = "Pertandingan Baru";
+
+// Roadmap Phase 5d: club management UI
+"settings.clubs" = "Klub";
+"settings.manage_clubs" = "Kelola Klub";
+"clubs.empty" = "Belum ada klub";
+"clubs.new_club_placeholder" = "Nama klub";
+"clubs.add" = "Tambah Klub";
+"clubs.name" = "Nama";
+"clubs.members" = "Anggota";
+"clubs.you" = "Anda";
+"clubs.roster" = "Daftar Pemain";
+"clubs.add_player" = "Tambah Pemain";
+"clubs.delete_club" = "Hapus Klub";
+"clubs.leave_club" = "Keluar Klub";
+"clubs.delete_confirm" = "Hapus klub ini? Pemain dan pertandingan akan tetap ada, tetapi tidak lagi terhubung ke klub ini.";
+"clubs.leave_confirm" = "Keluar dari klub ini? Pemain dan pertandingan akan tetap ada, tetapi tidak lagi terhubung ke klub ini.";
+"playeredit.club" = "Klub";
+"playeredit.club_personal" = "Pribadi";

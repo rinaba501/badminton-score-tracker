@@ -91,3 +91,21 @@
 "game.sudden_death" = "突然死亡！";
 "game.tie" = "平局！";
 "ios.new_match" = "新比赛";
+
+// Roadmap Phase 5d: club management UI
+"settings.clubs" = "俱乐部";
+"settings.manage_clubs" = "管理俱乐部";
+"clubs.empty" = "暂无俱乐部";
+"clubs.new_club_placeholder" = "俱乐部名称";
+"clubs.add" = "添加俱乐部";
+"clubs.name" = "名称";
+"clubs.members" = "成员";
+"clubs.you" = "你";
+"clubs.roster" = "名单";
+"clubs.add_player" = "添加选手";
+"clubs.delete_club" = "删除俱乐部";
+"clubs.leave_club" = "退出俱乐部";
+"clubs.delete_confirm" = "删除这个俱乐部？选手和比赛记录会保留，但不再关联到该俱乐部。";
+"clubs.leave_confirm" = "退出这个俱乐部？选手和比赛记录会保留，但不再关联到该俱乐部。";
+"playeredit.club" = "俱乐部";
+"playeredit.club_personal" = "个人";
