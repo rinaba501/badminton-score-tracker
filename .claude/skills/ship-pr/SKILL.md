@@ -30,22 +30,28 @@ Per `CLAUDE.md`'s "Reviewing risky changes": use plan mode before writing code f
 
 Follow `.github/PULL_REQUEST_TEMPLATE.md`'s shape (Summary/Changes/Verification/Docs checklist) even if the tool you're using doesn't auto-populate it. Update `SPEC.md`/`CLAUDE.md`/`README.md` per the rules in `CLAUDE.md`'s "Keeping the Docs Up-to-Date" section — in the same commit, not a follow-up.
 
-After opening the PR, enable auto-merge immediately: `gh pr merge <number> --auto --merge --delete-branch`. `main`'s branch protection marks all 7 CI jobs as required status checks, so GitHub won't merge until they're all green — auto-merge doesn't skip the gate, it just removes the need to poll for it. (The repo's `required_approving_review_count: 1` doesn't block this either: you're the sole collaborator and `enforce_admins` is off, so your own PRs bypass the approval requirement.)
+Do **not** use GitHub's repo-wide auto-merge feature (`gh pr merge --auto`) — it's disabled at the repo level on purpose. This repo is public, so anyone can fork it and open a PR against `main`; auto-merge can't distinguish "a PR I wrote" from "a PR a stranger opened," and would merge either one the instant CI goes green. Every merge needs an explicit human/agent decision that checks *who opened the PR*, not just whether CI passed.
 
 ## 5. Watch CI, don't guess
 
-Auto-merge handles the "wait and merge" mechanics, but still watch for failures rather than assuming success:
-
 - Check `get_check_runs` for the PR's head SHA.
 - On failure, pull the **full** job log (not just the tail) and find the actual `file:line` diagnostic before forming a hypothesis — guessing which expression/file is at fault costs multiple blind CI round-trips (this has happened before in this repo; see `GameView.swift`'s type-check saga in the git history).
-- `main` can move while you're working (other sessions/PRs merge concurrently). Auto-merge requires GitHub's own mergeability check to pass; if it reports a conflict, rebase and resolve by understanding both sides' intent, not by picking one blindly. Auto-merge stays armed across a rebase/re-push.
-- If a required check fails, auto-merge just sits there — fix the issue, push, and it resumes waiting. No need to re-enable it.
+- `main` can move while you're working (other sessions/PRs merge concurrently) — before merging, confirm `mergeable_state` is `clean` and the PR's base SHA matches current `main`. If not, rebase and resolve conflicts by understanding both sides' intent, not by picking one blindly.
 
-## 6. After merge, clean up locally
+## 6. Before merging, confirm authorship
 
-Once auto-merge completes the merge (merge commit, not squash/rebase, per CLAUDE.md — `--delete-branch` already removed the remote branch):
+Check the PR author (`gh pr view <number> --json author`). Only merge without further scrutiny if it's your own PR (opened by you or by an agent session acting on your behalf). If the author is anyone else — an outside contributor, a bot, anything you didn't ask for — stop and flag it to the user instead of merging; it needs an actual code review first, not just green CI.
+
+## 7. Merge and clean up
+
+Once CI is green, mergeable, and authorship is confirmed:
 ```
+merge (merge commit, not squash/rebase, per CLAUDE.md)
 git checkout main && git pull origin main
 git branch -D <branch-name>
 ```
-Don't leave stale local branches.
+Don't leave stale local or remote branches.
+
+## 8. If subscribed to PR activity
+
+Webhooks deliver failures but not success/new-pushes/merge-conflict transitions. Arm a recurring check-in that checks CI + mergeable state and merges automatically once green (still gated on the authorship check in step 6), then deletes itself. Don't poll manually — but also don't default to a long cadence: this repo's CI is fast (SwiftLint ~10-20s, Unit Tests ~2.5-4 min, run in parallel — a PR is checkable within ~4 minutes of pushing). Use a ~5 minute cadence for the first check-in or two; only fall back to something longer (~20 min) if the run is still in progress after that, since it's likely stuck.
