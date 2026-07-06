@@ -15,12 +15,16 @@ public struct Player: Identifiable, Codable, Equatable {
     public var name: String
     public var colorIndex: Int
     public var iconName: String?
+    /// Roadmap Phase 5b: which `Club` this player belongs to. `nil` means
+    /// personal (today's behavior, unchanged) — see Club.swift.
+    public var clubId: UUID?
 
-    public init(id: UUID = UUID(), name: String, colorIndex: Int = 0, iconName: String? = nil) {
+    public init(id: UUID = UUID(), name: String, colorIndex: Int = 0, iconName: String? = nil, clubId: UUID? = nil) {
         self.id = id
         self.name = name
         self.colorIndex = colorIndex
         self.iconName = iconName
+        self.clubId = clubId
     }
 
     public var initials: String {

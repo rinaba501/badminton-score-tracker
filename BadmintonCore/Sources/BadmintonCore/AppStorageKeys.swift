@@ -21,6 +21,9 @@ public enum AppStorageKeys {
     public static let matchOpponentPartnerName = "matchOpponentPartnerName"
     public static let playerRoster = "playerRoster"
     public static let matchHistory = "matchHistory"
+    // Roadmap Phase 5b: local-only club list (no CloudKit sync yet — see
+    // Club.swift and AppStore.saveClubs).
+    public static let clubs = "clubs"
     public static let playerSortOrder = "playerSortOrder"
     public static let pointsToWin = "pointsToWin"
     public static let gamesInMatch = "gamesInMatch"
