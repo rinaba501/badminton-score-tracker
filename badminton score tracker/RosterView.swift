@@ -115,6 +115,7 @@ struct RosterView: View {
         .sheet(item: $editingPlayer) { player in
             PlayerEditView(initialPlayer: player,
                            existingNames: roster.filter { $0.id != player.id }.map(\.name),
+                           clubs: store.clubs,
                            onSave: savePlayerEdit)
         }
     }

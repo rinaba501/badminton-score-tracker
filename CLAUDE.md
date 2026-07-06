@@ -36,10 +36,12 @@ badminton score tracker Watch App/
   GameView.swift             — live scoring screen, layout only; all logic delegates to GameViewModel. ScoreView renders one or two stacked names per team depending on whether a partner is present
   GameViewModel.swift        — @MainActor ObservableObject; owns all live-game logic: scoring, undo, time mode, haptics, persistence, announcements, doubles partner names/rotation display
   HapticsProvider.swift      — HapticsProvider protocol + Watch/NoOp implementations (tests use NoOp)
-  SettingsView.swift         — match format, audio, theme, timer, roster management
+  SettingsView.swift         — match format, audio, theme, timer, roster management, club management entry point (Phase 5d)
   HistoryView.swift          — saved match list + filters
   StatsView.swift            — per-player stats + head-to-head (math lives in StatsCalculator)
-  PlayerEditView.swift       — single-player editor sheet
+  PlayerEditView.swift       — single-player editor sheet; Phase 5d adds an optional club Picker (bound to Player.clubId) shown only when the caller passes a non-empty `clubs` list
+  ClubsView.swift            — Phase 5d: club list + create, entered via a SettingsView section; pure UI over AppStore.saveClubs
+  ClubDetailView.swift       — Phase 5d: rename, member list (read live from CloudKitSyncManager.fetchOrCreateShare's CKShare.participants when cloudKitSyncEnabled, else just "You" — never requires CloudKit), and per-club roster (players filtered by clubId) for one Club; delete/leave clears clubId back to nil on that club's players/matches (never deletes them) then removes the club via the existing saveClubs diffing
   PlayerAvatar.swift         — app-side presentation extension of Player (colors/images/icons + AvatarView)
   AudioFeedback.swift        — ScoreAnnouncer (speech) + SoundPlayer (tones)
   CourtTheme.swift           — CourtTheme enum
@@ -60,7 +62,9 @@ badminton score tracker/       — iOS companion app (#41, in progress). Same ta
   HistoryView.swift          — iOS match list + MatchHistoryRow; date/type/sort/player filters and swipe-delete/clear-all. All filtering delegates to StatsCalculator; pushed via NavigationStack (no currentView binding). iOS-native restyle of the Watch's HistoryView
   StatsView.swift            — iOS per-player stats: win-rate ring + stat-card grid + avatar'd head-to-head; math all in StatsCalculator. iOS-native restyle of the Watch's StatsView
   RosterView.swift           — iOS roster management (edit Me, add/rename/delete players, sort order). Ported from the Watch SettingsView roster section, incl. the rename→history propagation (renames update past matches via player id + update myName). Writes via AppStore.saveRoster/saveHistory
-  PlayerEditView.swift       — iOS single-player editor sheet (real keyboard TextField + duplicate detection, color/avatar/icon grids). Restyle of the Watch's; validation logic verbatim
+  PlayerEditView.swift       — iOS single-player editor sheet (real keyboard TextField + duplicate detection, color/avatar/icon grids). Restyle of the Watch's; validation logic verbatim. Phase 5d adds the same optional club Picker as the Watch's
+  ClubsView.swift            — iOS restyle of the Watch's Phase 5d club list + create; entered from ContentView's menu (not SettingsView, matching where RosterView is entered)
+  ClubDetailView.swift       — iOS restyle of the Watch's Phase 5d club detail (rename, member list, per-club roster, delete/leave)
   PlayerAvatar.swift         — iOS presentation extension of Player (avatarColors/avatarImageNames/sportIcons/AvatarView). Per-target copy of the Watch's; the 15 avatar images are duplicated into this target's Assets.xcassets
   ShareCard.swift            — iOS-only (#13): match-result card rendered to PNG via ImageRenderer + a SharableMatchCard Transferable (image + plain-text). Long-press a history row → ShareLink. No Watch counterpart
   NewMatchFlow.swift         — modal container (fullScreenCover from ContentView) routing preMatch → game; PreMatchView writes match-config @AppStorage, GameView's VM reads it on appear (same handoff as the Watch's .preMatch/.game routes)

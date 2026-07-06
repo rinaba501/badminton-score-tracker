@@ -126,6 +126,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - Duplicate names are rejected when renaming (alert shown)
 - Renaming a player propagates to all match history records that reference their `UUID`
 - Players can be sorted by created order, name, most played, recently used, or pinned priority from Settings and the pre-match picker
+- **Clubs (Roadmap Phase 5d)** — an opt-in local grouping of players/history, entered from Settings (Watch) or the main menu (iOS): create/rename a club, view its member list (shows "You" always; other members appear once CloudKit sync is on and the club has been shared), and view/manage its roster by tagging a player with the club from the player editor's "Club" picker (default "Personal"). Deleting a club you own, or leaving one shared to you, never deletes players or match history — it only clears their club tag back to Personal. Invite-sending UI and multi-club stats switching are future slices (5e/5f)
 
 ---
 
@@ -221,3 +222,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 110 | CI guardrails: localization key-sync, coverage, Complication build, deployment-target alignment (Roadmap guardrails track) | #116 |
 | 87 | iCloud KV sync quota guard: surface/log quota-exceeded, warn before the ~1 MB ceiling (merge-by-id landed earlier) | #117 |
 | 8 | Doubles support (2v2) | #118, #120, #121, #122, #123 |
+| 148 | Club management UI: create/rename/leave, member list, per-club roster (Roadmap Phase 5d) | #149 |

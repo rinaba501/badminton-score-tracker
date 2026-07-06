@@ -91,3 +91,21 @@
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "It's a Tie!";
 "ios.new_match" = "New Match";
+
+// Roadmap Phase 5d: club management UI
+"settings.clubs" = "Clubs";
+"settings.manage_clubs" = "Manage Clubs";
+"clubs.empty" = "No clubs yet";
+"clubs.new_club_placeholder" = "Club name";
+"clubs.add" = "Add Club";
+"clubs.name" = "Name";
+"clubs.members" = "Members";
+"clubs.you" = "You";
+"clubs.roster" = "Roster";
+"clubs.add_player" = "Add Player";
+"clubs.delete_club" = "Delete Club";
+"clubs.leave_club" = "Leave Club";
+"clubs.delete_confirm" = "Delete this club? Players and matches stay, but will no longer be tagged to it.";
+"clubs.leave_confirm" = "Leave this club? Players and matches stay, but will no longer be tagged to it.";
+"playeredit.club" = "Club";
+"playeredit.club_personal" = "Personal";

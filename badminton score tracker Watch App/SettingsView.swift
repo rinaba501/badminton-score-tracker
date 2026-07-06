@@ -160,6 +160,12 @@ struct SettingsView: View {
                 }
             }
 
+            Section(header: Text("settings.clubs")) {
+                NavigationLink(destination: ClubsView()) {
+                    Label(LocalizedStringKey("settings.manage_clubs"), systemImage: "person.3")
+                }
+            }
+
             Section(header: Text("settings.crown")) {
                 Toggle("settings.crown_scoring", isOn: $enableCrownScoring)
             }
@@ -235,7 +241,7 @@ struct SettingsView: View {
         }
         .sheet(item: $editingPlayer) { player in
             let others = roster.filter { $0.id != player.id }.map { $0.name }
-            PlayerEditView(initialPlayer: player, existingNames: others, onSave: savePlayerEdit)
+            PlayerEditView(initialPlayer: player, existingNames: others, clubs: appStore.clubs, onSave: savePlayerEdit)
         }
     }
 }

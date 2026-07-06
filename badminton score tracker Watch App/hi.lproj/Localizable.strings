@@ -163,3 +163,21 @@
 "prematch.guest_near" = "अतिथि (नज़दीक)";
 "prematch.guest_far" = "अतिथि (दूर)";
 "history.opponent_fallback" = "प्रतिद्वंद्वी";
+
+// Roadmap Phase 5d: club management UI
+"settings.clubs" = "क्लब";
+"settings.manage_clubs" = "क्लब प्रबंधित करें";
+"clubs.empty" = "अभी तक कोई क्लब नहीं";
+"clubs.new_club_placeholder" = "क्लब का नाम";
+"clubs.add" = "क्लब जोड़ें";
+"clubs.name" = "नाम";
+"clubs.members" = "सदस्य";
+"clubs.you" = "आप";
+"clubs.roster" = "रोस्टर";
+"clubs.add_player" = "खिलाड़ी जोड़ें";
+"clubs.delete_club" = "क्लब हटाएं";
+"clubs.leave_club" = "क्लब छोड़ें";
+"clubs.delete_confirm" = "इस क्लब को हटाएं? खिलाड़ी और मैच बने रहेंगे, लेकिन अब इस क्लब से जुड़े नहीं रहेंगे।";
+"clubs.leave_confirm" = "इस क्लब को छोड़ें? खिलाड़ी और मैच बने रहेंगे, लेकिन अब इस क्लब से जुड़े नहीं रहेंगे।";
+"playeredit.club" = "क्लब";
+"playeredit.club_personal" = "व्यक्तिगत";
