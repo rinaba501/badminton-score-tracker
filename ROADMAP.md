@@ -94,6 +94,10 @@ Decided shape (2026-07-06): private "clubs" — a group of N people (not just a 
 
 A new iOS target consuming `BadmintonCore`: history/stats/roster with `NavigationStack`, share-sheet export (#13), and — as a follow-up after the browse screens — live scoring on the phone (tap-only; no Digital Crown or HealthKit). **Shipped** across PRs #133–#139 (see the issue map and [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md)). Still open for a later pass: an iOS widget and the account/sharing management UI from Phase 5. Two-device sync verification remains deferred on hardware.
 
+### Future initiative — public/global leaderboard (not yet scoped)
+
+Explicitly out of Phase 5's scope (confirmed with the user 2026-07-06), but wanted eventually: a public, discoverable leaderboard beyond private clubs. Would use CloudKit's *public* database — a separate mechanism, schema, and access model from the `CKShare` private-sharing path Phase 5 builds — so it doesn't block or get blocked by Phase 5. Real added cost vs. private sharing: Apple's App Store Guideline 1.2 requires report/block/moderation tooling for any public user-generated content before Apple will approve it (not optional polish), plus anti-cheat/score-validation work since a public leaderboard invites manipulation in a way a trusted private club doesn't. CloudKit's own cost stays low (pricing scales with app users and is free at this app's likely volume) — the cost is almost entirely the moderation + integrity engineering. File a concrete issue and design discussion when ready to scope it; no code exists for this yet.
+
 ### Guardrails track (#110) — do anytime
 
 Cheap, independent CI hardening: a localization key-sync check across the 6 locales, code-coverage reporting on the test job, a build job for the Complication target, deployment-target alignment (Complication 26.5 vs app 11.4), and eventually a lightweight release process (semver tags + changelog).
