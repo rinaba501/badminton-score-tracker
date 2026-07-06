@@ -10,9 +10,9 @@
 		4539878F2FF3F4DD0070EA74 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4539878E2FF3F4DD0070EA74 /* WidgetKit.framework */; };
 		453987912FF3F4DD0070EA74 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 453987902FF3F4DD0070EA74 /* SwiftUI.framework */; };
 		4539879E2FF3F4DE0070EA74 /* badminton score tracker ComplicationExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A1B2C3D40000000000000003 /* BadmintonCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D40000000000000004 /* BadmintonCore */; };
 		B32FF05A2DCB7D850008256A /* badminton score tracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */ = {isa = PBXBuildFile; productRef = B32FF0A12DCB7D850008256A /* BadmintonCore */; };
-		A1B2C3D40000000000000003 /* BadmintonCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D40000000000000004 /* BadmintonCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -89,19 +89,19 @@
 			);
 			target = 4539878B2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension */;
 		};
-		B32FF0AA2DCB7D870008256A /* Exceptions for "badminton score tracker Watch App" folder in "badminton score tracker Watch App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = B32FF0582DCB7D850008256A /* badminton score tracker Watch App */;
-		};
 		A1B2C3D40000000000000006 /* Exceptions for "badminton score tracker" folder in "badminton score tracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = B32FF0522DCB7D850008256A /* badminton score tracker */;
+		};
+		B32FF0AA2DCB7D870008256A /* Exceptions for "badminton score tracker Watch App" folder in "badminton score tracker Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B32FF0582DCB7D850008256A /* badminton score tracker Watch App */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -112,6 +112,14 @@
 				4539879F2FF3F4DE0070EA74 /* Exceptions for "badminton score tracker Complication" folder in "badminton score tracker ComplicationExtension" target */,
 			);
 			path = "badminton score tracker Complication";
+			sourceTree = "<group>";
+		};
+		A1B2C3D40000000000000005 /* badminton score tracker */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1B2C3D40000000000000006 /* Exceptions for "badminton score tracker" folder in "badminton score tracker" target */,
+			);
+			path = "badminton score tracker";
 			sourceTree = "<group>";
 		};
 		B32FF05D2DCB7D850008256A /* badminton score tracker Watch App */ = {
@@ -132,14 +140,6 @@
 			path = "badminton score tracker Watch AppUITests";
 			sourceTree = "<group>";
 		};
-		A1B2C3D40000000000000005 /* badminton score tracker */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A1B2C3D40000000000000006 /* Exceptions for "badminton score tracker" folder in "badminton score tracker" target */,
-			);
-			path = "badminton score tracker";
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -152,19 +152,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B32FF0562DCB7D850008256A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		A1B2C3D40000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				A1B2C3D40000000000000003 /* BadmintonCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B32FF0562DCB7D850008256A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -446,14 +446,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B32FF0552DCB7D850008256A /* Sources */ = {
+		A1B2C3D40000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A1B2C3D40000000000000001 /* Sources */ = {
+		B32FF0552DCB7D850008256A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -936,11 +936,11 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		B32FF0A12DCB7D850008256A /* BadmintonCore */ = {
+		A1B2C3D40000000000000004 /* BadmintonCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BadmintonCore;
 		};
-		A1B2C3D40000000000000004 /* BadmintonCore */ = {
+		B32FF0A12DCB7D850008256A /* BadmintonCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BadmintonCore;
 		};

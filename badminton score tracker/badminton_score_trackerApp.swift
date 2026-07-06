@@ -13,6 +13,8 @@ import SwiftUI
 
 @main
 struct BadmintonScoreTrackerApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     init() {
         Task {
             // CloudSyncManager always runs (scalar settings sync via the KV

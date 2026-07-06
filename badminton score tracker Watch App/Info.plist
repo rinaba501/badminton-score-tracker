@@ -51,5 +51,7 @@
 	<string>ritsuma.badminton-score-tracker</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>
 	<true/>
+	<key>CKSharingSupported</key>
+	<true/>
 </dict>
 </plist>

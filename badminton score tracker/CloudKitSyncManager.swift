@@ -2,25 +2,10 @@
 //  CloudKitSyncManager.swift
 //  badminton score tracker (iOS)
 //
-//  Phase 4 (#109): syncs match history + roster through the CloudKit private
-//  database via CKSyncEngine — one CKRecord per MatchRecord / Player, keyed by
-//  the model's UUID, with a single opaque JSON `payload` field (see
-//  PersistenceStore.encodeRecord). Real per-record deletion replaces the
-//  KV-store single-blob merge + isHistoryShrink heuristic, so a cleared match
-//  can't be resurrected by a union. Per-target copy of the Watch's (same
-//  convention as AppStore/CloudSyncManager) — shares the same CloudKit
-//  container as the Watch so the two targets sync with each other.
-//
-//  SHIPS INERT: nothing here runs unless `cloudKitSyncEnabled` is true (default
-//  false). While disabled, CloudKitSyncManager.shared is never instantiated,
-//  no CKContainer is touched, and CloudSyncManager keeps syncing everything via
-//  the KV store exactly as before — so the app needs no CloudKit entitlement
-//  interaction until the flag is deliberately flipped on (after the two-device
-//  test).
-//
-//  Correctness here cannot be proven by CI or the simulator; the two-device
-//  iCloud test in the PR is the real gate. Per CLAUDE.md this file, like
-//  CloudSyncManager/AppStore, is a high-risk area — change it in plan mode.
+//  Phase 5c: syncs match history + roster + clubs through the CloudKit private
+//  and shared databases via CKSyncEngine. Manages two sync engine instances
+//  to synchronize personal data (private DB) and shared club data (shared DB).
+//  Supports creating zone-wide CKShare for clubs and accepting share invitations.
 //
 
 import Foundation
@@ -32,8 +17,7 @@ import BadmintonCore
 final class CloudKitSyncManager {
     static let shared = CloudKitSyncManager()
 
-    /// Whether CloudKit owns history/roster sync. Default false: the code ships
-    /// inert and the KV store keeps handling everything until this is flipped.
+    /// Whether CloudKit owns history/roster/clubs sync.
     static var isEnabled: Bool {
         UserDefaults.standard.object(forKey: AppStorageKeys.cloudKitSyncEnabled) as? Bool ?? false
     }
@@ -44,22 +28,24 @@ final class CloudKitSyncManager {
     private static let zoneName = "BadmintonZone"
     private static let matchType = "MatchRecord"
     private static let playerType = "Player"
+    private static let clubType = "Club"
     private static let payloadField = "payload"
 
     private lazy var container = CKContainer(identifier: Self.containerID)
-    private lazy var database = container.privateCloudDatabase
-    private let zone = CKRecordZone(zoneName: zoneName)
+    private lazy var privateDatabase = container.privateCloudDatabase
+    private lazy var sharedDatabase = container.sharedCloudDatabase
 
-    private var syncEngine: CKSyncEngine?
+    private let privateZone = CKRecordZone(zoneName: zoneName)
+
+    private var privateSyncEngine: CKSyncEngine?
+    private var sharedSyncEngine: CKSyncEngine?
 
     /// recordName -> encoded CKRecord system fields (change tag). Persisted so a
     /// save of an existing record carries the server's change tag and reads as
-    /// an update, not a conflict. Loaded on start, written on every change.
+    /// an update, not a conflict.
     private var recordMetadata: [String: Data] = [:]
 
-    /// Set while a first-launch migration upload is pending, so the durable
-    /// `didMigrateToCloudKit` flag is only set once the engine state (with the
-    /// migration's pending changes) has actually been persisted.
+    /// Set while a first-launch migration upload is pending.
     private var migrationPending = false
 
     private init() {}
@@ -68,56 +54,143 @@ final class CloudKitSyncManager {
 
     func start() {
         loadMetadata()
-        let stateSerialization = loadState()
-        let configuration = CKSyncEngine.Configuration(
-            database: database,
-            stateSerialization: stateSerialization,
+
+        // 1. Initialize Private Database Sync Engine
+        let privateStateSerialization = loadPrivateState()
+        let privateConfig = CKSyncEngine.Configuration(
+            database: privateDatabase,
+            stateSerialization: privateStateSerialization,
             delegate: self
         )
-        let engine = CKSyncEngine(configuration)
-        syncEngine = engine
+        privateSyncEngine = CKSyncEngine(privateConfig)
+
+        // 2. Initialize Shared Database Sync Engine
+        let sharedStateSerialization = loadSharedState()
+        let sharedConfig = CKSyncEngine.Configuration(
+            database: sharedDatabase,
+            stateSerialization: sharedStateSerialization,
+            delegate: self
+        )
+        sharedSyncEngine = CKSyncEngine(sharedConfig)
 
         if !UserDefaults.standard.bool(forKey: AppStorageKeys.didMigrateToCloudKit) {
-            migrateLocalDataToCloud(using: engine)
+            if let engine = privateSyncEngine {
+                migrateLocalDataToCloud(using: engine)
+            }
         }
     }
 
-    // Enqueue every existing local record for upload on first launch. Idempotent
-    // (record name == UUID), so a re-run just re-saves the same records.
     private func migrateLocalDataToCloud(using engine: CKSyncEngine) {
-        engine.state.add(pendingDatabaseChanges: [.saveZone(zone)])
+        engine.state.add(pendingDatabaseChanges: [.saveZone(privateZone)])
         migrationPending = true
-        enqueueHistoryChanges(upsertedIds: AppStore.shared.history.map(\.id), deletedIds: [])
-        enqueueRosterChanges(upsertedIds: AppStore.shared.roster.map(\.id), deletedIds: [])
+
+        let personalHistory = AppStore.shared.history.filter { $0.clubId == nil }.map(\.id)
+        let personalRoster = AppStore.shared.roster.filter { $0.clubId == nil }.map(\.id)
+
+        enqueueHistoryChanges(upsertedIds: personalHistory, deletedIds: [:])
+        enqueueRosterChanges(upsertedIds: personalRoster, deletedIds: [:])
+
+        // Enqueue any local clubs as well (we own these since they are locally created)
+        enqueueClubChanges(upsertedIds: AppStore.shared.clubs.map(\.id), deletedIds: [:])
     }
 
-    // MARK: - Write path (called by AppStore)
+    // MARK: - Write paths (called by AppStore)
 
-    func enqueueHistoryChanges(upsertedIds: [UUID], deletedIds: [UUID]) {
+    func enqueueClubChanges(upsertedIds: [UUID], deletedIds: [UUID: String?]) {
+        guard let privateSyncEngine, let sharedSyncEngine else { return }
+
+        for id in upsertedIds {
+            let zoneID = zoneID(for: id)
+            let recordID = CKRecord.ID(recordName: id.uuidString, zoneID: zoneID)
+
+            if zoneID.ownerName == CKCurrentUserDefaultName {
+                let zone = CKRecordZone(zoneID: zoneID)
+                privateSyncEngine.state.add(pendingDatabaseChanges: [.saveZone(zone)])
+                privateSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
+            } else {
+                sharedSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
+            }
+        }
+
+        for (id, owner) in deletedIds {
+            let ownerName = owner ?? CKCurrentUserDefaultName
+            let zoneID = CKRecordZone.ID(zoneName: "Club-\(id.uuidString)", ownerName: ownerName)
+            let recordID = CKRecord.ID(recordName: id.uuidString, zoneID: zoneID)
+
+            if zoneID.ownerName == CKCurrentUserDefaultName {
+                privateSyncEngine.state.add(pendingDatabaseChanges: [.deleteZone(zoneID)])
+            } else {
+                sharedSyncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
+            }
+        }
+    }
+
+    func enqueueHistoryChanges(upsertedIds: [UUID], deletedIds: [UUID: UUID?]) {
         enqueue(upsertedIds: upsertedIds, deletedIds: deletedIds)
     }
 
-    func enqueueRosterChanges(upsertedIds: [UUID], deletedIds: [UUID]) {
+    func enqueueRosterChanges(upsertedIds: [UUID], deletedIds: [UUID: UUID?]) {
         enqueue(upsertedIds: upsertedIds, deletedIds: deletedIds)
     }
 
-    private func enqueue(upsertedIds: [UUID], deletedIds: [UUID]) {
-        guard let syncEngine else { return }
-        let changes = upsertedIds.map { CKSyncEngine.PendingRecordZoneChange.saveRecord(recordID(for: $0)) }
-            + deletedIds.map { CKSyncEngine.PendingRecordZoneChange.deleteRecord(recordID(for: $0)) }
-        guard !changes.isEmpty else { return }
-        syncEngine.state.add(pendingRecordZoneChanges: changes)
+    private func enqueue(upsertedIds: [UUID], deletedIds: [UUID: UUID?]) {
+        guard let privateSyncEngine, let sharedSyncEngine else { return }
+
+        for id in upsertedIds {
+            let clubId = clubId(for: id)
+            let zoneID = zoneID(for: clubId)
+            let recordID = CKRecord.ID(recordName: id.uuidString, zoneID: zoneID)
+
+            if zoneID.ownerName == CKCurrentUserDefaultName {
+                privateSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
+            } else {
+                sharedSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
+            }
+        }
+
+        for (id, clubId) in deletedIds {
+            let zoneID = zoneID(for: clubId)
+            let recordID = CKRecord.ID(recordName: id.uuidString, zoneID: zoneID)
+
+            if zoneID.ownerName == CKCurrentUserDefaultName {
+                privateSyncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
+            } else {
+                sharedSyncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
+            }
+        }
     }
 
-    // MARK: - Record identity / materialization
+    // MARK: - Zone / Club Resolution Helpers
 
-    private func recordID(for id: UUID) -> CKRecord.ID {
-        CKRecord.ID(recordName: id.uuidString, zoneID: zone.zoneID)
+    private func zoneID(for clubId: UUID?) -> CKRecordZone.ID {
+        guard let clubId else {
+            return CKRecordZone.ID(zoneName: Self.zoneName, ownerName: CKCurrentUserDefaultName)
+        }
+        if let club = AppStore.shared.clubs.first(where: { $0.id == clubId }),
+           let owner = club.ownerRecordName {
+            return CKRecordZone.ID(zoneName: "Club-\(clubId.uuidString)", ownerName: owner)
+        }
+        return CKRecordZone.ID(zoneName: "Club-\(clubId.uuidString)", ownerName: CKCurrentUserDefaultName)
     }
 
-    // Build the CKRecord to upload for a pending save. Starts from stored system
-    // fields (so an update carries the right change tag); returns nil if the
-    // model was deleted between enqueue and send (the engine then drops it).
+    private func clubId(for recordId: UUID) -> UUID? {
+        if let match = AppStore.shared.history.first(where: { $0.id == recordId }) {
+            return match.clubId
+        }
+        if let player = AppStore.shared.roster.first(where: { $0.id == recordId }) {
+            return player.clubId
+        }
+        return nil
+    }
+
+    private func clubId(from zoneID: CKRecordZone.ID) -> UUID? {
+        let prefix = "Club-"
+        guard zoneID.zoneName.hasPrefix(prefix) else { return nil }
+        let uuidString = String(zoneID.zoneName.dropFirst(prefix.count))
+        return UUID(uuidString: uuidString)
+    }
+
+    // Build the CKRecord to upload for a pending save.
     private func materializeRecord(for recordID: CKRecord.ID) -> CKRecord? {
         guard let uuid = UUID(uuidString: recordID.recordName) else { return nil }
 
@@ -129,6 +202,10 @@ final class CloudKitSyncManager {
             guard let payload = PersistenceStore.encodePlayer(player) else { return nil }
             return record(for: recordID, type: Self.playerType, payload: payload)
         }
+        if let club = AppStore.shared.clubs.first(where: { $0.id == uuid }) {
+            guard let payload = PersistenceStore.encodeClub(club) else { return nil }
+            return record(for: recordID, type: Self.clubType, payload: payload)
+        }
         return nil
     }
 
@@ -138,7 +215,7 @@ final class CloudKitSyncManager {
         return record
     }
 
-    // MARK: - System-fields metadata store
+    // MARK: - Metadata Persistence
 
     private func loadMetadata() {
         if let data = UserDefaults.standard.data(forKey: AppStorageKeys.ckRecordMetadata),
@@ -174,23 +251,82 @@ final class CloudKitSyncManager {
         return record
     }
 
-    // MARK: - Engine state persistence
+    // MARK: - SyncEngine State Persistence
 
-    private func loadState() -> CKSyncEngine.State.Serialization? {
+    private func loadPrivateState() -> CKSyncEngine.State.Serialization? {
         guard let data = UserDefaults.standard.data(forKey: AppStorageKeys.ckSyncEngineState) else { return nil }
         return try? JSONDecoder().decode(CKSyncEngine.State.Serialization.self, from: data)
     }
 
-    private func persistState(_ serialization: CKSyncEngine.State.Serialization) {
+    private func persistPrivateState(_ serialization: CKSyncEngine.State.Serialization) {
         if let data = try? JSONEncoder().encode(serialization) {
             UserDefaults.standard.set(data, forKey: AppStorageKeys.ckSyncEngineState)
         }
-        // The migration's pending changes are now durable — safe to record that
-        // the one-time upload has been scheduled so it won't run again.
         if migrationPending {
             migrationPending = false
             UserDefaults.standard.set(true, forKey: AppStorageKeys.didMigrateToCloudKit)
         }
+    }
+
+    private func loadSharedState() -> CKSyncEngine.State.Serialization? {
+        guard let data = UserDefaults.standard.data(forKey: AppStorageKeys.ckSharedSyncEngineState) else { return nil }
+        return try? JSONDecoder().decode(CKSyncEngine.State.Serialization.self, from: data)
+    }
+
+    private func persistSharedState(_ serialization: CKSyncEngine.State.Serialization) {
+        if let data = try? JSONEncoder().encode(serialization) {
+            UserDefaults.standard.set(data, forKey: AppStorageKeys.ckSharedSyncEngineState)
+        }
+    }
+
+    // MARK: - Share Management
+
+    /// Fetches or creates the CKShare for a Club zone. Must be run on the owner's device.
+    func fetchOrCreateShare(for club: Club) async throws -> CKShare {
+        let zoneID = zoneID(for: club.id)
+        let shareID = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
+
+        do {
+            let record = try await privateDatabase.record(for: shareID)
+            if let share = record as? CKShare {
+                return share
+            }
+        } catch {
+            // If share not found, create a new one.
+            let ckError = error as? CKError
+            if ckError?.code == .unknownItem {
+                let share = CKShare(recordZoneID: zoneID)
+                share.publicPermission = .readWrite
+                let saved = try await privateDatabase.save(share)
+                if let savedShare = saved as? CKShare {
+                    return savedShare
+                }
+            }
+        }
+        throw CKError(.invalidArguments)
+    }
+
+    /// Accept a CKShare invitation metadata.
+    func acceptShare(metadata: CKShare.Metadata) {
+        let operation = CKAcceptSharesOperation(shareMetadatas: [metadata])
+        operation.acceptSharesResultBlock = { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success:
+                self.logger.info("Successfully accepted CKShare.")
+                Task {
+                    do {
+                        try await self.sharedSyncEngine?.fetchChanges()
+                    } catch {
+                        self.logger.error("Error fetching changes after accepting share: \(error.localizedDescription)")
+                    }
+                }
+            case .failure(let error):
+                self.logger.error("Failed to accept CKShare: \(error.localizedDescription)")
+            }
+        }
+        operation.qualityOfService = .userInteractive
+        container.add(operation)
     }
 }
 
@@ -201,7 +337,11 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
     func handleEvent(_ event: CKSyncEngine.Event, syncEngine: CKSyncEngine) async {
         switch event {
         case .stateUpdate(let update):
-            persistState(update.stateSerialization)
+            if syncEngine === privateSyncEngine {
+                persistPrivateState(update.stateSerialization)
+            } else if syncEngine === sharedSyncEngine {
+                persistSharedState(update.stateSerialization)
+            }
 
         case .accountChange(let change):
             handleAccountChange(change)
@@ -238,15 +378,14 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
     private func handleAccountChange(_ change: CKSyncEngine.Event.AccountChange) {
         switch change.changeType {
         case .signIn:
-            // New account: re-seed its private zone with our local data.
-            guard let engine = syncEngine else { return }
-            migrateLocalDataToCloud(using: engine)
+            if let engine = privateSyncEngine {
+                migrateLocalDataToCloud(using: engine)
+            }
         case .signOut, .switchAccounts:
-            // Drop CloudKit-derived bookkeeping; local UserDefaults cache stays
-            // as the offline source of truth for reads.
             recordMetadata = [:]
             persistMetadata()
             UserDefaults.standard.removeObject(forKey: AppStorageKeys.ckSyncEngineState)
+            UserDefaults.standard.removeObject(forKey: AppStorageKeys.ckSharedSyncEngineState)
             UserDefaults.standard.set(false, forKey: AppStorageKeys.didMigrateToCloudKit)
         @unknown default:
             break
@@ -256,15 +395,49 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
     private func applyFetched(_ changes: CKSyncEngine.Event.FetchedRecordZoneChanges) {
         var upsertedMatches: [MatchRecord] = []
         var upsertedPlayers: [Player] = []
+        var upsertedClubs: [Club] = []
+
         for modification in changes.modifications {
             let record = modification.record
             remember(record)
             guard let payload = record[Self.payloadField] as? Data else { continue }
+            let recordClubId = clubId(from: record.recordID.zoneID)
+
             switch record.recordType {
             case Self.matchType:
-                if let match = PersistenceStore.decodeRecord(payload) { upsertedMatches.append(match) }
+                if var match = PersistenceStore.decodeRecord(payload) {
+                    // Backfill clubId from zone if missing.
+                    if match.clubId == nil {
+                        match = MatchRecord(
+                            id: match.id, games: match.games,
+                            myGamesWon: match.myGamesWon, opponentGamesWon: match.opponentGamesWon,
+                            winner: match.winner, myName: match.myName, opponentName: match.opponentName,
+                            date: match.date, duration: match.duration,
+                            myPlayerId: match.myPlayerId, opponentPlayerId: match.opponentPlayerId,
+                            myPartnerName: match.myPartnerName, opponentPartnerName: match.opponentPartnerName,
+                            myPartnerPlayerId: match.myPartnerPlayerId, opponentPartnerPlayerId: match.opponentPartnerPlayerId,
+                            clubId: recordClubId
+                        )
+                    }
+                    upsertedMatches.append(match)
+                }
             case Self.playerType:
-                if let player = PersistenceStore.decodePlayer(payload) { upsertedPlayers.append(player) }
+                if var player = PersistenceStore.decodePlayer(payload) {
+                    // Backfill clubId from zone if missing.
+                    if player.clubId == nil {
+                        player = Player(
+                            id: player.id, name: player.name, colorIndex: player.colorIndex,
+                            iconName: player.iconName, clubId: recordClubId
+                        )
+                    }
+                    upsertedPlayers.append(player)
+                }
+            case Self.clubType:
+                if var club = PersistenceStore.decodeClub(payload) {
+                    let owner = record.recordID.zoneID.ownerName
+                    club.ownerRecordName = (owner == CKCurrentUserDefaultName) ? nil : owner
+                    upsertedClubs.append(club)
+                }
             default:
                 break
             }
@@ -272,21 +445,24 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
 
         var deletedMatchIds: [UUID] = []
         var deletedPlayerIds: [UUID] = []
+        var deletedClubIds: [UUID] = []
+
         for deletion in changes.deletions {
             forget(deletion.recordID.recordName)
             guard let uuid = UUID(uuidString: deletion.recordID.recordName) else { continue }
             switch deletion.recordType {
             case Self.matchType: deletedMatchIds.append(uuid)
             case Self.playerType: deletedPlayerIds.append(uuid)
+            case Self.clubType: deletedClubIds.append(uuid)
             default: break
             }
         }
 
-        if !upsertedMatches.isEmpty || !upsertedPlayers.isEmpty {
-            AppStore.shared.applyRemoteUpsert(records: upsertedMatches, players: upsertedPlayers)
+        if !upsertedMatches.isEmpty || !upsertedPlayers.isEmpty || !upsertedClubs.isEmpty {
+            AppStore.shared.applyRemoteUpsert(records: upsertedMatches, players: upsertedPlayers, clubs: upsertedClubs)
         }
-        if !deletedMatchIds.isEmpty || !deletedPlayerIds.isEmpty {
-            AppStore.shared.applyRemoteDeletions(recordIds: deletedMatchIds, playerIds: deletedPlayerIds)
+        if !deletedMatchIds.isEmpty || !deletedPlayerIds.isEmpty || !deletedClubIds.isEmpty {
+            AppStore.shared.applyRemoteDeletions(recordIds: deletedMatchIds, playerIds: deletedPlayerIds, clubIds: deletedClubIds)
         }
     }
 
@@ -306,20 +482,24 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
         case .serverRecordChanged:
             guard let serverRecord = error.serverRecord else { return }
             remember(serverRecord)
-            // Our resolveConflict is per-record LWW with delete-wins; on a plain
-            // edit conflict we yield to the server copy (it reached the server
-            // last). Deletions aren't routed here — they go through deleteRecord.
             if PersistenceStore.resolveConflict(localIntendedDelete: false) == .takeServer,
                let payload = serverRecord[Self.payloadField] as? Data {
                 applyServerRecord(serverRecord, payload: payload)
             }
         case .zoneNotFound, .userDeletedZone:
-            // Zone vanished (e.g. user wiped iCloud data): recreate it and
-            // re-upload everything from the local cache.
-            guard let engine = syncEngine else { return }
-            engine.state.add(pendingDatabaseChanges: [.saveZone(zone)])
-            enqueueHistoryChanges(upsertedIds: AppStore.shared.history.map(\.id), deletedIds: [])
-            enqueueRosterChanges(upsertedIds: AppStore.shared.roster.map(\.id), deletedIds: [])
+            guard let privateSyncEngine else { return }
+            let zoneID = recordID.zoneID
+            if zoneID.ownerName == CKCurrentUserDefaultName {
+                privateSyncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: zoneID))])
+                if zoneID.zoneName == Self.zoneName {
+                    enqueueHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == nil }.map(\.id), deletedIds: [:])
+                    enqueueRosterChanges(upsertedIds: AppStore.shared.roster.filter { $0.clubId == nil }.map(\.id), deletedIds: [:])
+                } else if let clubId = clubId(from: zoneID) {
+                    enqueueClubChanges(upsertedIds: [clubId], deletedIds: [:])
+                    enqueueHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == clubId }.map(\.id), deletedIds: [:])
+                    enqueueRosterChanges(upsertedIds: AppStore.shared.roster.filter { $0.clubId == clubId }.map(\.id), deletedIds: [:])
+                }
+            }
         case .unknownItem:
             forget(recordID.recordName)
         case .networkFailure, .networkUnavailable, .serviceUnavailable, .requestRateLimited, .zoneBusy:
@@ -330,14 +510,39 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
     }
 
     private func applyServerRecord(_ record: CKRecord, payload: Data) {
+        let recordClubId = clubId(from: record.recordID.zoneID)
         switch record.recordType {
         case Self.matchType:
-            if let match = PersistenceStore.decodeRecord(payload) {
-                AppStore.shared.applyRemoteUpsert(records: [match], players: [])
+            if var match = PersistenceStore.decodeRecord(payload) {
+                if match.clubId == nil {
+                    match = MatchRecord(
+                        id: match.id, games: match.games,
+                        myGamesWon: match.myGamesWon, opponentGamesWon: match.opponentGamesWon,
+                        winner: match.winner, myName: match.myName, opponentName: match.opponentName,
+                        date: match.date, duration: match.duration,
+                        myPlayerId: match.myPlayerId, opponentPlayerId: match.opponentPlayerId,
+                        myPartnerName: match.myPartnerName, opponentPartnerName: match.opponentPartnerName,
+                        myPartnerPlayerId: match.myPartnerPlayerId, opponentPartnerPlayerId: match.opponentPartnerPlayerId,
+                        clubId: recordClubId
+                    )
+                }
+                AppStore.shared.applyRemoteUpsert(records: [match], players: [], clubs: [])
             }
         case Self.playerType:
-            if let player = PersistenceStore.decodePlayer(payload) {
-                AppStore.shared.applyRemoteUpsert(records: [], players: [player])
+            if var player = PersistenceStore.decodePlayer(payload) {
+                if player.clubId == nil {
+                    player = Player(
+                        id: player.id, name: player.name, colorIndex: player.colorIndex,
+                        iconName: player.iconName, clubId: recordClubId
+                    )
+                }
+                AppStore.shared.applyRemoteUpsert(records: [], players: [player], clubs: [])
+            }
+        case Self.clubType:
+            if var club = PersistenceStore.decodeClub(payload) {
+                let owner = record.recordID.zoneID.ownerName
+                club.ownerRecordName = (owner == CKCurrentUserDefaultName) ? nil : owner
+                AppStore.shared.applyRemoteUpsert(records: [], players: [], clubs: [club])
             }
         default:
             break

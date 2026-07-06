@@ -69,4 +69,22 @@ struct ClubTests {
         let encodedHistory = try #require(PersistenceStore.encodeHistory([record]))
         #expect(PersistenceStore.decodeHistory(encodedHistory).first?.clubId == clubId)
     }
+
+    @Test func singleClubEncodeDecodeRoundTrip() throws {
+        let club = Club(id: UUID(), name: "League Club", createdDate: Date(timeIntervalSince1970: 5_000), ownerRecordName: "some-owner")
+        let encoded = try #require(PersistenceStore.encodeClub(club))
+        let decoded = try #require(PersistenceStore.decodeClub(encoded))
+        #expect(decoded == club)
+        #expect(decoded.ownerRecordName == "some-owner")
+    }
+
+    @Test func clubWithoutOwnerRecordNameDecodesWithNil() throws {
+        // Shaped like a pre-5c club entry — no ownerRecordName key present.
+        let json = """
+        [{"id":"\(UUID().uuidString)","name":"Alice's Club","createdDate":0}]
+        """
+        let clubs = PersistenceStore.decodeClubs(Data(json.utf8))
+        #expect(clubs.count == 1)
+        #expect(clubs.first?.ownerRecordName == nil)
+    }
 }
