@@ -88,6 +88,8 @@
 "prematch.far_partner" = "Far Partner";
 "prematch.saved" = "Saved";
 "prematch.add_new" = "Add New";
+"prematch.guest_near" = "Guest (Near)";
+"prematch.guest_far" = "Guest (Far)";
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "It's a Tie!";
 "ios.new_match" = "New Match";
