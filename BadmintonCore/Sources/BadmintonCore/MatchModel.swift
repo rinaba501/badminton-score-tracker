@@ -192,13 +192,28 @@ public struct BadmintonMatch: Codable, Equatable {
     }
 }
 
+/// Which stored slot (`myName`/`myPlayerId` vs `opponentName`/`opponentPlayerId`)
+/// won a `MatchRecord` — distinct from the live-match `Side` (`.me`/`.opponent`,
+/// which is the *local device's* perspective during play). `RecordSide` is a
+/// persisted, viewer-neutral tag: "near" is whichever team occupies the
+/// my*/opponent* slots for this record, not necessarily the reader's own team.
+/// Any viewer (including a future shared-club participant who isn't the
+/// recorder) resolves their own win/loss by checking which slot their player
+/// id or name falls into (see `StatsCalculator`'s `nearTeamNames`/`farTeamNames`),
+/// then comparing against this tag — the same way it already worked when
+/// `winner` was a display-name string, just without duplicating the name.
+public enum RecordSide: String, Codable, Equatable {
+    case near
+    case far
+}
+
 /// A finished match, persisted to history.
 public struct MatchRecord: Identifiable, Codable, Equatable {
     public let id: UUID
     public let games: [GameScore]
     public let myGamesWon: Int
     public let opponentGamesWon: Int
-    public var winner: String
+    public var winner: RecordSide
     public var myName: String
     public var opponentName: String
     public let date: Date
@@ -223,7 +238,7 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
                 games: [GameScore],
                 myGamesWon: Int,
                 opponentGamesWon: Int,
-                winner: String,
+                winner: RecordSide,
                 myName: String = "",
                 opponentName: String = "",
                 date: Date,
@@ -249,5 +264,60 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         self.opponentPartnerName = opponentPartnerName
         self.myPartnerPlayerId = myPartnerPlayerId
         self.opponentPartnerPlayerId = opponentPartnerPlayerId
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, games, myGamesWon, opponentGamesWon, winner, myName, opponentName, date, duration,
+             myPlayerId, opponentPlayerId, myPartnerName, opponentPartnerName, myPartnerPlayerId, opponentPartnerPlayerId
+    }
+
+    /// Self-migrating: reads the current `RecordSide` shape, or — for records
+    /// persisted before this change — the legacy `winner: String` (a copy of
+    /// either `myName` or `opponentName`) and converts it. This keeps the
+    /// migration local to the type itself, so `PersistenceStore`'s generic
+    /// envelope/tolerant-decode machinery needs no changes and no schema
+    /// version bump (see PersistenceStoreTests/SchemaVersioningTests).
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        games = try container.decode([GameScore].self, forKey: .games)
+        myGamesWon = try container.decode(Int.self, forKey: .myGamesWon)
+        opponentGamesWon = try container.decode(Int.self, forKey: .opponentGamesWon)
+        myName = try container.decodeIfPresent(String.self, forKey: .myName) ?? ""
+        opponentName = try container.decodeIfPresent(String.self, forKey: .opponentName) ?? ""
+        date = try container.decode(Date.self, forKey: .date)
+        duration = try container.decodeIfPresent(TimeInterval.self, forKey: .duration) ?? 0
+        myPlayerId = try container.decodeIfPresent(UUID.self, forKey: .myPlayerId)
+        opponentPlayerId = try container.decodeIfPresent(UUID.self, forKey: .opponentPlayerId)
+        myPartnerName = try container.decodeIfPresent(String.self, forKey: .myPartnerName)
+        opponentPartnerName = try container.decodeIfPresent(String.self, forKey: .opponentPartnerName)
+        myPartnerPlayerId = try container.decodeIfPresent(UUID.self, forKey: .myPartnerPlayerId)
+        opponentPartnerPlayerId = try container.decodeIfPresent(UUID.self, forKey: .opponentPartnerPlayerId)
+
+        if let side = try? container.decode(RecordSide.self, forKey: .winner) {
+            winner = side
+        } else {
+            let legacyWinnerName = try container.decode(String.self, forKey: .winner)
+            winner = legacyWinnerName == myName ? .near : .far
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(games, forKey: .games)
+        try container.encode(myGamesWon, forKey: .myGamesWon)
+        try container.encode(opponentGamesWon, forKey: .opponentGamesWon)
+        try container.encode(winner, forKey: .winner)
+        try container.encode(myName, forKey: .myName)
+        try container.encode(opponentName, forKey: .opponentName)
+        try container.encode(date, forKey: .date)
+        try container.encode(duration, forKey: .duration)
+        try container.encodeIfPresent(myPlayerId, forKey: .myPlayerId)
+        try container.encodeIfPresent(opponentPlayerId, forKey: .opponentPlayerId)
+        try container.encodeIfPresent(myPartnerName, forKey: .myPartnerName)
+        try container.encodeIfPresent(opponentPartnerName, forKey: .opponentPartnerName)
+        try container.encodeIfPresent(myPartnerPlayerId, forKey: .myPartnerPlayerId)
+        try container.encodeIfPresent(opponentPartnerPlayerId, forKey: .opponentPartnerPlayerId)
     }
 }

@@ -38,7 +38,7 @@ extension MatchRecord {
         games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")
     }
 
-    var iWonShare: Bool { winner == myName }
+    var iWonShare: Bool { winner == .near }
 
     /// Plain-text fallback shared alongside the image.
     var shareSummaryText: String {

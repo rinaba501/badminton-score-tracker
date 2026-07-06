@@ -20,7 +20,7 @@ A **watchOS app** built with SwiftUI for tracking badminton match scores in real
 ```
 BadmintonCore/                 — local Swift package; platform-free core (no SwiftUI/WatchKit imports, ever)
   Sources/BadmintonCore/
-    MatchModel.swift          — BadmintonMatch (pure scoring engine — no UI/timers/player identity), GameScore, MatchRecord, Side
+    MatchModel.swift          — BadmintonMatch (pure scoring engine — no UI/timers/player identity), GameScore, MatchRecord, Side (live-match perspective, `.me`/`.opponent`). MatchRecord.winner is `RecordSide` (`.near`/`.far` — distinct from `Side`, a persisted viewer-neutral tag, not a display-name copy); MatchRecord has a custom Codable init that self-migrates legacy `winner: String` records without a PersistenceStore schema-version bump (Roadmap Phase 5a, #93)
     PersistenceStore.swift    — all JSON encode/decode for [Player]/[MatchRecord]; versioned envelope, per-record-tolerant decoding, migration hooks, iCloud merge/shrink/quota helpers, plus single-record codecs + diff/conflict helpers for CloudKit (#109)
     Player.swift              — Player model, SortOrder, sentinel identity (guest tokens vs. localized labels — see doc comments)
     StatsCalculator.swift     — pure stats/history derivations; intentionally duplicated function pairs — see file header before unifying anything

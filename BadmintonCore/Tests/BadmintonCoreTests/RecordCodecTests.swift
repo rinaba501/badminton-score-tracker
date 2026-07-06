@@ -20,7 +20,7 @@ struct RecordCodecTests {
             id: id,
             games: [GameScore(my: 21, opponent: 18), GameScore(my: 19, opponent: 21), GameScore(my: 21, opponent: 15)],
             myGamesWon: 2, opponentGamesWon: 1,
-            winner: "Alice", myName: "Alice", opponentName: "Cara",
+            winner: .near, myName: "Alice", opponentName: "Cara",
             date: Date(timeIntervalSince1970: 1_000), duration: 900,
             myPlayerId: UUID(), opponentPlayerId: UUID(),
             myPartnerName: "Bob", opponentPartnerName: "Dan",
@@ -30,7 +30,7 @@ struct RecordCodecTests {
 
     private func singlesRecord(id: UUID = UUID(), name: String = "Me", opp: String = "Bob") -> MatchRecord {
         MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
-                    winner: name, myName: name, opponentName: opp, date: Date(timeIntervalSince1970: 2_000),
+                    winner: .near, myName: name, opponentName: opp, date: Date(timeIntervalSince1970: 2_000),
                     myPlayerId: nil, opponentPlayerId: nil)
             .withId(id)
     }
@@ -225,7 +225,7 @@ private extension MatchRecord {
 
     func renamed(to newName: String) -> MatchRecord {
         MatchRecord(id: id, games: games, myGamesWon: myGamesWon, opponentGamesWon: opponentGamesWon,
-                    winner: newName, myName: newName, opponentName: opponentName, date: date, duration: duration,
+                    winner: winner, myName: newName, opponentName: opponentName, date: date, duration: duration,
                     myPlayerId: myPlayerId, opponentPlayerId: opponentPlayerId,
                     myPartnerName: myPartnerName, opponentPartnerName: opponentPartnerName,
                     myPartnerPlayerId: myPartnerPlayerId, opponentPartnerPlayerId: opponentPartnerPlayerId)

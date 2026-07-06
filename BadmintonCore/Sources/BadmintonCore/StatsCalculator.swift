@@ -38,13 +38,13 @@ public enum StatsCalculator {
         return ids.contains(id)
     }
 
-    /// True when `player`'s team won `record`. `winner` is always equal to
-    /// either `record.myName` or `record.opponentName` (the team's
-    /// representative name — see `MatchModel.swift`), so this works without
-    /// needing `winner` to know about doubles partners directly.
+    /// True when `player`'s team won `record`. `winner` is a viewer-neutral
+    /// `RecordSide` tag (near/far — see `MatchModel.swift`), so this works
+    /// without needing `winner` to know about doubles partners directly, and
+    /// without depending on which team `player` actually is.
     private static func teamWon(_ record: MatchRecord, player: String) -> Bool {
-        if nearTeamNames(record).contains(player) { return record.winner == record.myName }
-        if farTeamNames(record).contains(player) { return record.winner == record.opponentName }
+        if nearTeamNames(record).contains(player) { return record.winner == .near }
+        if farTeamNames(record).contains(player) { return record.winner == .far }
         return false
     }
 
@@ -151,7 +151,7 @@ public enum StatsCalculator {
         guard !relevant.isEmpty else { return nil }
         let wins = relevant.filter { record in
             let onNearTeam = nearTeamNames(record).contains(me) || idMatches(nearTeamIds(record), mePlayer?.id)
-            return onNearTeam && record.winner == record.myName
+            return onNearTeam && record.winner == .near
         }.count
         return (wins: wins, losses: relevant.count - wins)
     }

@@ -79,7 +79,16 @@ Replace the single-blob KV-store sync with the CloudKit private database: one `C
 
 ### Phase 5 — Cross-person sharing (via #93; enables #13)
 
-With matches as CloudKit records and identity locale-independent, sharing becomes incremental: a `CKShare` on a match (or a shared "club" zone/roster), Apple ID–backed participants, and a data-model change making `MatchRecord` orientation-neutral (playerA/playerB with a per-viewer perspective mapping, replacing the "me"-centric record). File the concrete implementation issue once Phase 4 lands and the record schema is real; #93 holds the design discussion until then.
+Decided shape (2026-07-06): private "clubs" — a group of N people (not just a pair) share a roster + match history via CloudKit `CKShare` zone-sharing; a person can belong to several clubs at once, plus keep their existing private history untouched. Explicitly out of scope: a public/global leaderboard (that needs CloudKit's *public* database — a different mechanism and privacy model — and is its own future initiative). Sequenced as its own sub-roadmap, mirroring Phase 6's PR-per-slice pattern:
+
+- **5a — Orientation-neutral `MatchRecord`** ✅ done: `winner` changed from a display-name-copy `String` to a viewer-neutral `RecordSide` (`.near`/`.far`), self-migrating via a custom `Codable` init (no schema-version bump). `StatsCalculator`'s existing `nearTeamNames`/`farTeamNames` helpers were already name/id-agnostic, so this was a smaller, more surgical change than initially scoped — no `teamA`/`teamB` struct rename was needed.
+- **5b** — `Club`/`clubId` data model + `AppStore` club-awareness (local grouping only, no CloudKit yet).
+- **5c** — `CKShare` zone-sharing mechanics: club creation (owner), a second `CKSyncEngine` for shared-database sync, accept-share handling.
+- **5d** — Club management UI: create/rename/leave, member list, per-club roster (both targets).
+- **5e** — Invite UI (`UICloudSharingController` wrapper) + accept flow on both targets.
+- **5f** — Multi-club polish: club switcher in History/Stats.
+
+5b–5f get concrete GitHub issues once the prior slice lands, same convention as #133–#139. Every slice touching CloudKit sharing carries its own honestly-stated manual test gate — `CKShare` acceptance needs two different Apple ID accounts, strictly more test burden than Phase 4's still-pending two-device (same-account) test.
 
 ### Phase 6 — iOS companion app (#41)
 
@@ -99,7 +108,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 2 — De-view business logic | [#96](https://github.com/rinaba501/badminton-score-tracker/issues/96) | Closed by PR [#113](https://github.com/rinaba501/badminton-score-tracker/pull/113) |
 | 3 — Schema versioning / identity | [#107](https://github.com/rinaba501/badminton-score-tracker/issues/107) closed by PR [#114](https://github.com/rinaba501/badminton-score-tracker/pull/114); [#108](https://github.com/rinaba501/badminton-score-tracker/issues/108) closed by PR [#115](https://github.com/rinaba501/badminton-score-tracker/pull/115) (`MatchRecord.winner` type change deferred — see PR notes); KV quota stopgap: [#87](https://github.com/rinaba501/badminton-score-tracker/issues/87) closed by PR [#117](https://github.com/rinaba501/badminton-score-tracker/pull/117) | Done |
 | 4 — CloudKit sync | [#109](https://github.com/rinaba501/badminton-score-tracker/issues/109) | Code-complete on both targets — pure core helpers (PR [#129](https://github.com/rinaba501/badminton-score-tracker/pull/129)), inert `CKSyncEngine` path on the Watch, and the iOS port + Settings toggle on both targets (this PR). Default stays off pending a real two-device iCloud test — not CI-provable |
-| 5 — Cross-person sharing | design in [#93](https://github.com/rinaba501/badminton-score-tracker/issues/93); enables [#13](https://github.com/rinaba501/badminton-score-tracker/issues/13) | Deferred until Phase 4 |
+| 5 — Cross-person sharing | design in [#93](https://github.com/rinaba501/badminton-score-tracker/issues/93); enables [#13](https://github.com/rinaba501/badminton-score-tracker/issues/13) | In progress — 5a (orientation-neutral MatchRecord) done; 5b–5f (club data model, CKShare mechanics, management UI, invite/accept, multi-club polish) not yet started |
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 

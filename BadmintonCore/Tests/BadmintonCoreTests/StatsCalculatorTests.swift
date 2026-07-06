@@ -23,7 +23,7 @@ struct StatsCalculatorTests {
             games: games.map { GameScore(my: $0.0, opponent: $0.1) },
             myGamesWon: winner == my ? 1 : 0,
             opponentGamesWon: winner == opp ? 1 : 0,
-            winner: winner,
+            winner: winner == my ? .near : .far,
             myName: my,
             opponentName: opp,
             date: date,
@@ -196,7 +196,7 @@ struct StatsCalculatorDoublesTests {
             games: games.map { GameScore(my: $0.0, opponent: $0.1) },
             myGamesWon: winner == my ? 1 : 0,
             opponentGamesWon: winner == opp ? 1 : 0,
-            winner: winner,
+            winner: winner == my ? .near : .far,
             myName: my,
             opponentName: opp,
             date: date,
@@ -252,7 +252,7 @@ struct StatsCalculatorDoublesTests {
         // plain singles record, pinning no-regression for the rework.
         let history = [
             MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
-                       winner: "Alice", myName: "Alice", opponentName: "Bob", date: Date())
+                       winner: .near, myName: "Alice", opponentName: "Bob", date: Date())
         ]
         #expect(StatsCalculator.participants(history: history) == ["Alice", "Bob"])
         #expect(StatsCalculator.playerHistory(history, player: "Alice").count == 1)
@@ -263,7 +263,7 @@ struct StatsCalculatorDoublesTests {
     @Test func isDoublesIsTrueOnlyWhenAPartnerFieldIsSet() {
         let doubles = doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")
         let singles = MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
-                                  winner: "Alice", myName: "Alice", opponentName: "Bob", date: Date())
+                                  winner: .near, myName: "Alice", opponentName: "Bob", date: Date())
         #expect(doubles.isDoubles)
         #expect(!singles.isDoubles)
     }
@@ -271,7 +271,7 @@ struct StatsCalculatorDoublesTests {
     @Test func filteredHistoryAppliesMatchTypeFilter() {
         let doubles = doublesRecord(my: "Alice", myPartner: "Bob", opp: "Cara", oppPartner: "Dan", winner: "Alice")
         let singles = MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
-                                  winner: "Alice", myName: "Alice", opponentName: "Bob", date: Date())
+                                  winner: .near, myName: "Alice", opponentName: "Bob", date: Date())
         let history = [singles, doubles]
 
         let doublesOnly = StatsCalculator.filteredHistory(history, selectedPlayers: [], cutoff: nil, matchType: .doubles)

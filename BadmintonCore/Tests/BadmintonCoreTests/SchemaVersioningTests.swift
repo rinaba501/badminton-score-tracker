@@ -98,7 +98,7 @@ struct SchemaVersioningTests {
         let record = MatchRecord(
             games: [GameScore(my: 21, opponent: 15)],
             myGamesWon: 1, opponentGamesWon: 0,
-            winner: "Alice", myName: "Alice", opponentName: "Bob",
+            winner: .near, myName: "Alice", opponentName: "Bob",
             date: Date(timeIntervalSinceReferenceDate: 0)
         )
         // Build legacy bare-array Data by encoding a plain [MatchRecord] directly
@@ -119,5 +119,53 @@ struct SchemaVersioningTests {
     @Test func migratedDataReturnsNilWhenAlreadyCurrent() {
         let encoded = PersistenceStore.encodeRoster([alice])!
         #expect(PersistenceStore.migratedRosterData(from: encoded) == nil)
+    }
+
+    // MARK: - MatchRecord.winner: String -> RecordSide (self-migrating Codable)
+
+    /// Records persisted before `RecordSide` existed stored `winner` as a copy
+    /// of the winning team's display name. `MatchRecord.init(from:)` must
+    /// still decode that shape and convert it, without any PersistenceStore
+    /// schema-version bump.
+    @Test func legacyStringWinnerDecodesToNearWhenItMatchesMyName() {
+        let json = """
+        [{"id":"11111111-1111-1111-1111-111111111111","games":[],"myGamesWon":1,"opponentGamesWon":0,
+         "winner":"Alice","myName":"Alice","opponentName":"Bob","date":0,"duration":0}]
+        """
+        let history = PersistenceStore.decodeHistory(Data(json.utf8))
+        #expect(history.count == 1)
+        #expect(history.first?.winner == .near)
+    }
+
+    @Test func legacyStringWinnerDecodesToFarWhenItMatchesOpponentName() {
+        let json = """
+        [{"id":"11111111-1111-1111-1111-111111111111","games":[],"myGamesWon":0,"opponentGamesWon":1,
+         "winner":"Bob","myName":"Alice","opponentName":"Bob","date":0,"duration":0}]
+        """
+        let history = PersistenceStore.decodeHistory(Data(json.utf8))
+        #expect(history.count == 1)
+        #expect(history.first?.winner == .far)
+    }
+
+    @Test func legacyStringWinnerDecodesInADoublesRecord() {
+        // Doubles: the legacy winner string was still just the representative
+        // (non-partner) name of whichever team won.
+        let json = """
+        [{"id":"11111111-1111-1111-1111-111111111111","games":[],"myGamesWon":0,"opponentGamesWon":1,
+         "winner":"Cara","myName":"Alice","opponentName":"Cara",
+         "myPartnerName":"Bob","opponentPartnerName":"Dan","date":0,"duration":0}]
+        """
+        let history = PersistenceStore.decodeHistory(Data(json.utf8))
+        #expect(history.count == 1)
+        #expect(history.first?.winner == .far)
+        #expect(history.first?.isDoubles == true)
+    }
+
+    @Test func currentRecordSideWinnerRoundTripsThroughEncodeDecode() {
+        let record = MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
+                                  winner: .near, myName: "Alice", opponentName: "Bob",
+                                  date: Date(timeIntervalSinceReferenceDate: 0))
+        let encoded = PersistenceStore.encodeHistory([record])!
+        #expect(PersistenceStore.decodeHistory(encoded) == [record])
     }
 }
