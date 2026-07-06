@@ -88,6 +88,8 @@
 "prematch.far_partner" = "원거리 파트너";
 "prematch.saved" = "저장됨";
 "prematch.add_new" = "새로 추가";
+"prematch.guest_near" = "게스트(근거리)";
+"prematch.guest_far" = "게스트(원거리)";
 "game.sudden_death" = "서든데스!";
 "game.tie" = "무승부!";
 "ios.new_match" = "새 경기";

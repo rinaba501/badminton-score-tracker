@@ -88,6 +88,8 @@
 "prematch.far_partner" = "奥側パートナー";
 "prematch.saved" = "保存済み";
 "prematch.add_new" = "新規追加";
+"prematch.guest_near" = "ゲスト（手前）";
+"prematch.guest_far" = "ゲスト（奥）";
 "game.sudden_death" = "サドンデス！";
 "game.tie" = "引き分け！";
 "ios.new_match" = "新しい試合";
