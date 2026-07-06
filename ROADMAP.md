@@ -90,6 +90,18 @@ Decided shape (2026-07-06): private "clubs" — a group of N people (not just a 
 
 5b–5f get concrete GitHub issues once the prior slice lands, same convention as #133–#139. Every slice touching CloudKit sharing carries its own honestly-stated manual test gate — `CKShare` acceptance needs two different Apple ID accounts, strictly more test burden than Phase 4's still-pending two-device (same-account) test.
 
+**Governing invariant for Phase 5 and all social features (user directive, 2026-07-06): local-first, account-optional.** The app must always stay fully usable by one person scoring everyone with zero accounts — the solo-scorekeeper flow (roster of local players + ad-hoc guests, no sign-in, no network) is the default and never regresses or hides behind account/club flows. Everything below is an *additive opt-in* that must degrade to invisible for a solo user (no sign-in prompts, no "invite friends" empty states). This rests on the **player vs. participant** distinction: a `Player` is a local roster entry (name/avatar/UUID, no Apple ID — already true today); a "participant" is a real Apple ID in a shared club. A roster player MAY optionally be linked to a participant, but never has to be — unlinked names still appear in every stat/standing. Personal history (`clubId == nil`) always coexists with any club data. The New Match flow must never require an account or club.
+
+**Social-features backlog (all wanted; each an opt-in per the invariant above; scope/sequence once clubs exist):**
+- *Match confirmation* — opponent taps to confirm a shared-club result; doubles as the trust/anti-cheat primitive reused by a future public leaderboard. Invisible for solo matches (nothing to confirm). Best built into the club model from the start.
+- *Club standings / leaderboard, head-to-head, rivalries* — `StatsCalculator` math over the club's shared history instead of personal history; near-free once clubs exist.
+- *Activity feed* — chronological view of recent club results with a per-club unread marker.
+- *Challenges* — "want to play?" ping between members (small new pending/accepted CKRecord type in the shared zone).
+- *Seasons* — time-boxed standings resets (date-filter over history + a stored boundary).
+- *Reactions / comments on a match* — 👍/🔥 or a one-line note (CKRecord children of a match).
+- *Notifications* — for async interactions (confirmation, challenges); needs `aps-environment` (deliberately left off in Phase 4) — add only once there's async interaction worth announcing.
+- *Ambitious / own initiatives (like the public leaderboard):* live spectating, tournament brackets.
+
 ### Phase 6 — iOS companion app (#41)
 
 A new iOS target consuming `BadmintonCore`: history/stats/roster with `NavigationStack`, share-sheet export (#13), and — as a follow-up after the browse screens — live scoring on the phone (tap-only; no Digital Crown or HealthKit). **Shipped** across PRs #133–#139 (see the issue map and [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md)). Still open for a later pass: an iOS widget and the account/sharing management UI from Phase 5. Two-device sync verification remains deferred on hardware.
