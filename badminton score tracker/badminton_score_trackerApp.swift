@@ -6,7 +6,7 @@
 //  Starts iCloud KV sync and injects the shared AppStore, so the phone reads
 //  the same history/roster/settings the Watch writes (shared KV bucket via a
 //  byte-identical ubiquity-kvstore-identifier). The Watch remains the scoring
-//  device; the phone's history/stats/roster UI arrives in the follow-up PRs.
+//  device; the phone also has its own live-scoring flow (PR6).
 //
 
 import SwiftUI
@@ -14,7 +14,16 @@ import SwiftUI
 @main
 struct BadmintonScoreTrackerApp: App {
     init() {
-        Task { await CloudSyncManager.shared.start() }
+        Task {
+            // CloudSyncManager always runs (scalar settings sync via the KV
+            // store). When the CloudKit flag is on it also drives history +
+            // roster through CloudKitSyncManager; while off (default), the KV
+            // store keeps handling those too — behavior is unchanged.
+            await CloudSyncManager.shared.start()
+            if CloudKitSyncManager.isEnabled {
+                await CloudKitSyncManager.shared.start()
+            }
+        }
     }
 
     var body: some Scene {

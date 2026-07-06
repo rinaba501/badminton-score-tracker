@@ -1,5 +1,9 @@
 // iOS companion app
 "ios.title" = "バドミントンスコア";
+"settings.title" = "設定";
+"settings.sync" = "同期";
+"settings.sync_cloudkit" = "iCloud（CloudKit）同期";
+"settings.sync_caption" = "実験的機能です。試合履歴とプレイヤーを、これまでの方法ではなくiCloud（CloudKit）経由で同期します。変更後はアプリを再起動してください。";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "試合履歴";

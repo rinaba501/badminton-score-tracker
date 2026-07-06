@@ -11,7 +11,7 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs
 - **Audio:** `AVAudioEngine` + programmatic sine-wave tone generation (no audio files)
 - **Health:** `HealthKit` — logs each match as a `.badminton` `HKWorkoutSession`; activity type indoor
-- **Sync:** `NSUbiquitousKeyValueStore` — syncs player roster, match history, and settings via iCloud; pushes on data change, pulls on launch and on external update
+- **Sync:** `NSUbiquitousKeyValueStore` — syncs player roster, match history, and settings via iCloud; pushes on data change, pulls on launch and on external update. Phase 4 (#109) CloudKit private-DB sync (`CKSyncEngine`, one record per match/player, real per-record deletion) now has code on **both** targets (Watch + iOS), behind a Settings toggle (`cloudKitSyncEnabled`, default off on both). Still default-off pending a real two-device test — the KV store keeps handling all sync until that's done and the default is flipped
 
 ### iOS Companion App (in progress — #41, ROADMAP Phase 6)
 

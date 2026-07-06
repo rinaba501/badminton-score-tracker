@@ -35,6 +35,9 @@
 // Settings
 "settings.title" = "सेटिंग्स";
 "settings.back" = "वापस";
+"settings.sync" = "सिंक";
+"settings.sync_cloudkit" = "iCloud (CloudKit) सिंक";
+"settings.sync_caption" = "प्रायोगिक। मैच इतिहास और खिलाड़ियों को पुराने तरीके के बजाय iCloud (CloudKit) के ज़रिए सिंक करता है। बदलाव के बाद ऐप को पुनः आरंभ करें।";
 "settings.icloud_quota_warning" = "iCloud सिंक स्टोरेज लगभग भर चुका है — कुछ मैच जल्द ही सिंक होना बंद हो सकते हैं।";
 "settings.icloud_quota_exceeded" = "iCloud सिंक स्टोरेज भर गया है — जगह खाली होने तक इस डिवाइस के नए मैच सिंक नहीं होंगे।";
 "settings.game_mode" = "गेम मोड";

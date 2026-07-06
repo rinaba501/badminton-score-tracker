@@ -1,5 +1,9 @@
 // iOS companion app
 "ios.title" = "Skor Bulu Tangkis";
+"settings.title" = "Pengaturan";
+"settings.sync" = "Sinkronisasi";
+"settings.sync_cloudkit" = "Sinkronisasi iCloud (CloudKit)";
+"settings.sync_caption" = "Eksperimental. Menyinkronkan riwayat pertandingan dan pemain melalui iCloud (CloudKit), bukan metode lama. Mulai ulang aplikasi setelah mengubah ini.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "Riwayat Pertandingan";

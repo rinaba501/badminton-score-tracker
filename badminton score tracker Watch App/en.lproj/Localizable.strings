@@ -35,6 +35,9 @@
 // Settings
 "settings.title" = "Settings";
 "settings.back" = "Back";
+"settings.sync" = "Sync";
+"settings.sync_cloudkit" = "iCloud (CloudKit) Sync";
+"settings.sync_caption" = "Experimental. Syncs match history and players through iCloud (CloudKit) instead of the older method. Restart the app after changing this.";
 "settings.icloud_quota_warning" = "iCloud sync storage is nearly full — some matches may stop syncing soon.";
 "settings.icloud_quota_exceeded" = "iCloud sync storage is full — new matches on this device won't sync until space is freed.";
 "settings.game_mode" = "Game Mode";

@@ -1,5 +1,9 @@
 // iOS companion app
 "ios.title" = "Badminton Score";
+"settings.title" = "Settings";
+"settings.sync" = "Sync";
+"settings.sync_cloudkit" = "iCloud (CloudKit) Sync";
+"settings.sync_caption" = "Experimental. Syncs match history and players through iCloud (CloudKit) instead of the older method. Restart the app after changing this.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "Match History";
