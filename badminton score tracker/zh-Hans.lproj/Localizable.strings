@@ -70,6 +70,12 @@
 "game.wins_match" = "%@赢得比赛！";
 "game.games_score" = "局数 %@";
 "settings.mode" = "模式";
+"speech.wins_match" = "%@赢得比赛！";
+"speech.wins_game" = "%@赢得本局！";
+"speech.match_point" = "赛点。%d比%d";
+"speech.game_point" = "局点。%d比%d";
+"speech.score" = "%d比%d";
+"speech.tied" = "%d平";
 "speech.time_up" = "时间到";
 "game.rematch" = "再战";
 "game.discard_title" = "放弃比赛？";

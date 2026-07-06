@@ -70,6 +70,12 @@
 "game.wins_match" = "%@ wins the match!";
 "game.games_score" = "Games %@";
 "settings.mode" = "Mode";
+"speech.wins_match" = "%@ wins the match!";
+"speech.wins_game" = "%@ wins the game!";
+"speech.match_point" = "Match point. %@ - %@";
+"speech.game_point" = "Game point. %@ - %@";
+"speech.score" = "%@ - %@";
+"speech.tied" = "%@ all";
 "speech.time_up" = "Time's up";
 "game.rematch" = "Rematch";
 "game.discard_title" = "Discard match?";

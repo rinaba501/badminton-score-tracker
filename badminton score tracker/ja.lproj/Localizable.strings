@@ -70,6 +70,12 @@
 "game.wins_match" = "%@が試合に勝利！";
 "game.games_score" = "ゲーム %@";
 "settings.mode" = "モード";
+"speech.wins_match" = "%@が試合に勝利！";
+"speech.wins_game" = "%@がゲームを取得！";
+"speech.match_point" = "マッチポイント。%@ %@";
+"speech.game_point" = "ゲームポイント。%@ %@";
+"speech.score" = "%@ %@";
+"speech.tied" = "%@ オール";
 "speech.time_up" = "タイムアップ";
 "game.rematch" = "再戦";
 "game.discard_title" = "試合を終了しますか？";
