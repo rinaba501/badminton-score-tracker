@@ -214,7 +214,7 @@ struct MatchRecordDoublesFieldsTests {
     @Test func doublesFieldsRoundTripThroughEncoding() throws {
         let record = MatchRecord(
             games: [GameScore(my: 21, opponent: 15)],
-            myGamesWon: 1, opponentGamesWon: 0, winner: "Alice",
+            myGamesWon: 1, opponentGamesWon: 0, winner: .near,
             myName: "Alice", opponentName: "Carol", date: Date(),
             myPartnerName: "Bob", opponentPartnerName: "Dana",
             myPartnerPlayerId: UUID(), opponentPartnerPlayerId: UUID()
@@ -246,7 +246,7 @@ struct MatchRecordDoublesFieldsTests {
 struct PersistenceStoreTests {
 
     private func record(_ winner: String, at date: Date, id: UUID = UUID()) -> MatchRecord {
-        MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: winner, date: date)
+        MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, date: date)
     }
 
     @Test func mergeHistoryUnionsAndSortsByDate() {
@@ -346,9 +346,9 @@ struct PlayerSortingTests {
         let mina = Player(id: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!, name: "Mina", colorIndex: 0)
         let players = [alex, zoe, mina]
         let history = [
-            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Alex", myName: "Alex", opponentName: "Zoe", date: Date(), myPlayerId: alex.id, opponentPlayerId: zoe.id),
-            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Zoe", myName: "Alex", opponentName: "Zoe", date: Date().addingTimeInterval(-60), myPlayerId: alex.id, opponentPlayerId: zoe.id),
-            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Mina", myName: "Mina", opponentName: "Alex", date: Date().addingTimeInterval(-120), myPlayerId: mina.id, opponentPlayerId: alex.id)
+            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, myName: "Alex", opponentName: "Zoe", date: Date(), myPlayerId: alex.id, opponentPlayerId: zoe.id),
+            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .far, myName: "Alex", opponentName: "Zoe", date: Date().addingTimeInterval(-60), myPlayerId: alex.id, opponentPlayerId: zoe.id),
+            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, myName: "Mina", opponentName: "Alex", date: Date().addingTimeInterval(-120), myPlayerId: mina.id, opponentPlayerId: alex.id)
         ]
 
         let mostPlayed = Player.sortedPlayers(players, order: .mostPlayed, history: history)
@@ -362,7 +362,7 @@ struct PlayerSortingTests {
 struct HistoryShrinkTests {
 
     private func record(_ id: UUID = UUID()) -> MatchRecord {
-        MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "A", date: Date())
+        MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, date: Date())
     }
 
     @Test func removingARecordIsAShrink() {
@@ -387,8 +387,8 @@ struct HistoryShrinkTests {
         // rename) — must still be treated as safe to merge, not a deletion,
         // so any record concurrently added on another device isn't dropped.
         let id = UUID()
-        let before = MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "Old", date: Date())
-        let after = MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: "New", date: Date())
+        let before = MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, date: Date())
+        let after = MatchRecord(id: id, games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, myName: "New", date: Date())
         #expect(!PersistenceStore.isHistoryShrink(from: [before], to: [after]))
     }
 

@@ -265,7 +265,7 @@ struct HistoryView: View {
 struct MatchHistoryRow: View {
     let record: MatchRecord
 
-    private var iWon: Bool { record.winner == record.myName }
+    private var iWon: Bool { record.winner == .near }
 
     private var gameLine: String {
         record.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")

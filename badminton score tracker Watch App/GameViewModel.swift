@@ -189,7 +189,7 @@ final class GameViewModel: ObservableObject {
             games: games,
             myGamesWon: match.myGamesWon,
             opponentGamesWon: match.opponentGamesWon,
-            winner: name(for: winner),
+            winner: winner == .me ? .near : .far,
             myName: effectiveMyName,
             opponentName: effectiveOpponentName,
             date: Date(),

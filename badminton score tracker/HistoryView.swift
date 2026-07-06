@@ -217,7 +217,7 @@ struct MatchHistoryRow: View {
 
     @EnvironmentObject private var store: AppStore
 
-    private var iWon: Bool { record.winner == record.myName }
+    private var iWon: Bool { record.winner == .near }
 
     private var gameLine: String {
         record.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")

@@ -46,16 +46,16 @@ struct RosterView: View {
         }
         store.saveRoster(r)
 
-        // Propagate name change to match history via player ID.
+        // Propagate name change to match history via player ID. `winner` is a
+        // viewer-neutral RecordSide tag (see MatchModel.swift) — it never
+        // duplicated a display name, so no rename patching is needed for it.
         if let old, old.name != updated.name {
             var history = store.history
             for i in history.indices {
                 if history[i].myPlayerId == updated.id {
-                    if history[i].winner == history[i].myName { history[i].winner = updated.name }
                     history[i].myName = updated.name
                 }
                 if history[i].opponentPlayerId == updated.id {
-                    if history[i].winner == history[i].opponentName { history[i].winner = updated.name }
                     history[i].opponentName = updated.name
                 }
             }
