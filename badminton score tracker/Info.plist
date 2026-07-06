@@ -29,5 +29,7 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>CKSharingSupported</key>
+	<true/>
 </dict>
 </plist>

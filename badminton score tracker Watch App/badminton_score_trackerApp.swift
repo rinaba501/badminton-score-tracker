@@ -9,6 +9,8 @@ import SwiftUI
 
 @main
 struct badminton_score_tracker_Watch_AppApp: App {
+    @WKApplicationDelegateAdaptor(WatchAppDelegate.self) var appDelegate
+
     init() {
         Task {
             // CloudSyncManager always runs (scalar settings sync via the KV

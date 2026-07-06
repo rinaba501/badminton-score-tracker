@@ -41,6 +41,7 @@ public enum AppStorageKeys {
     // one-time "already uploaded local data" flag, and a runtime kill-switch
     // (default true) that falls back to the KV-store history path.
     public static let ckSyncEngineState = "ckSyncEngineState"
+    public static let ckSharedSyncEngineState = "ckSharedSyncEngineState"
     public static let didMigrateToCloudKit = "didMigrateToCloudKit"
     public static let cloudKitSyncEnabled = "cloudKitSyncEnabled"
     // Per-record CKRecord system fields (change tags), keyed by recordName, so

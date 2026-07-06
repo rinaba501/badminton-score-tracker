@@ -147,6 +147,17 @@ public enum PersistenceStore {
         decodeTolerant(Player.self, from: data).first
     }
 
+    /// Encode a single club as a CloudKit payload, or `nil` on failure.
+    public static func encodeClub(_ club: Club) -> Data? {
+        encodeEnvelope([club])
+    }
+
+    /// Decode a single club from a CloudKit payload, or `nil` if the
+    /// payload is empty or unreadable.
+    public static func decodeClub(_ data: Data) -> Club? {
+        decodeTolerant(Club.self, from: data).first
+    }
+
     // MARK: - Migration
 
     /// Returns upgraded roster `Data` if `data` isn't already the current
@@ -241,6 +252,11 @@ public enum PersistenceStore {
 
     /// Upserts/deletes to sync when the roster changes from `old` to `new`.
     public static func diffRoster(from old: [Player], to new: [Player]) -> RecordDiff {
+        diff(from: old, to: new)
+    }
+
+    /// Upserts/deletes to sync when the clubs list changes from `old` to `new`.
+    public static func diffClubs(from old: [Club], to new: [Club]) -> RecordDiff {
         diff(from: old, to: new)
     }
 

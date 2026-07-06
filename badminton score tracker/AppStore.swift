@@ -71,10 +71,15 @@ final class AppStore: ObservableObject {
     func saveRoster(_ players: [Player]) {
         guard let encoded = PersistenceStore.encodeRoster(players) else { return }
         let diff = PersistenceStore.diffRoster(from: roster, to: players)
+        let deletedClubIds = Dictionary(
+            roster.filter { oldPlayer in diff.deletedIds.contains(oldPlayer.id) }
+                .map { ($0.id, $0.clubId) },
+            uniquingKeysWith: { first, _ in first }
+        )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.playerRoster)
         roster = players
         if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueRosterChanges(upsertedIds: diff.upsertedIds, deletedIds: diff.deletedIds)
+            CloudKitSyncManager.shared.enqueueRosterChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
         }
         CloudSyncManager.shared.pushToCloud()
     }
@@ -83,6 +88,11 @@ final class AppStore: ObservableObject {
         guard let encoded = PersistenceStore.encodeHistory(records) else { return }
         // Compute both against the OLD `history` before reassigning it.
         let diff = PersistenceStore.diffHistory(from: history, to: records)
+        let deletedClubIds = Dictionary(
+            history.filter { oldRecord in diff.deletedIds.contains(oldRecord.id) }
+                .map { ($0.id, $0.clubId) },
+            uniquingKeysWith: { first, _ in first }
+        )
         // KV fallback only: a deletion must push as an authoritative overwrite,
         // not merge — merging would silently resurrect the removed record(s)
         // from iCloud's still-unshrunk copy. The CloudKit path deletes per
@@ -91,29 +101,41 @@ final class AppStore: ObservableObject {
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.matchHistory)
         history = records
         if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: diff.upsertedIds, deletedIds: diff.deletedIds)
+            CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
         }
         CloudSyncManager.shared.pushToCloud(overwriteHistory: isShrink)
     }
 
     func clearHistory() {
-        let diff = PersistenceStore.diffHistory(from: history, to: [])
+        let deletedClubIds = Dictionary(
+            history.map { ($0.id, $0.clubId) },
+            uniquingKeysWith: { first, _ in first }
+        )
         UserDefaults.standard.set(Data(), forKey: AppStorageKeys.matchHistory)
         history = []
         if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: [], deletedIds: diff.deletedIds)
+            CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: [], deletedIds: deletedClubIds)
         }
         CloudSyncManager.shared.pushToCloud(overwriteHistory: true)
     }
 
-    // Local-only (Roadmap Phase 5b): a Club only becomes a real shared group
-    // once Phase 5c wires it to a CloudKit CKShare zone, which replaces this
-    // transport entirely — so, unlike saveRoster/saveHistory, this deliberately
-    // does NOT call CloudSyncManager.pushToCloud().
+    // Roadmap Phase 5b/c: a Club only becomes a real shared group
+    // once Phase 5c wires it to a CloudKit CKShare zone. If CloudKit is enabled,
+    // we enqueue club changes.
     func saveClubs(_ clubs: [Club]) {
         guard let encoded = PersistenceStore.encodeClubs(clubs) else { return }
+        let diff = PersistenceStore.diffClubs(from: self.clubs, to: clubs)
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.clubs)
+        let oldClubs = self.clubs
         self.clubs = clubs
+        if CloudKitSyncManager.isEnabled {
+            let deletedClubs = Dictionary(
+                oldClubs.filter { oldClub in diff.deletedIds.contains(oldClub.id) }
+                    .map { ($0.id, $0.ownerRecordName) },
+                uniquingKeysWith: { first, _ in first }
+            )
+            CloudKitSyncManager.shared.enqueueClubChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubs)
+        }
     }
 
     // Called by CloudSyncManager after external iCloud data lands in UserDefaults
@@ -132,7 +154,7 @@ final class AppStore: ObservableObject {
     /// fetch landing mid-edit doesn't clobber an unrelated local change. History
     /// stays date-sorted; roster keeps its stored order (updates in place,
     /// appends new).
-    func applyRemoteUpsert(records: [MatchRecord], players: [Player]) {
+    func applyRemoteUpsert(records: [MatchRecord], players: [Player], clubs newClubs: [Club]) {
         if !records.isEmpty {
             var byId = Dictionary(history.map { ($0.id, $0) }, uniquingKeysWith: { _, new in new })
             for record in records { byId[record.id] = record }
@@ -153,10 +175,24 @@ final class AppStore: ObservableObject {
             roster = updated
             persist(roster: roster)
         }
+        if !newClubs.isEmpty {
+            var updated = clubs
+            var indexById = Dictionary(clubs.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+            for club in newClubs {
+                if let idx = indexById[club.id] {
+                    updated[idx] = club
+                } else {
+                    indexById[club.id] = updated.count
+                    updated.append(club)
+                }
+            }
+            clubs = updated
+            persist(clubs: clubs)
+        }
     }
 
     /// Remove remotely-deleted records by id from the caches and persist.
-    func applyRemoteDeletions(recordIds: [UUID], playerIds: [UUID]) {
+    func applyRemoteDeletions(recordIds: [UUID], playerIds: [UUID], clubIds: [UUID]) {
         if !recordIds.isEmpty {
             let removed = Set(recordIds)
             history = history.filter { !removed.contains($0.id) }
@@ -166,6 +202,11 @@ final class AppStore: ObservableObject {
             let removed = Set(playerIds)
             roster = roster.filter { !removed.contains($0.id) }
             persist(roster: roster)
+        }
+        if !clubIds.isEmpty {
+            let removed = Set(clubIds)
+            clubs = clubs.filter { !removed.contains($0.id) }
+            persist(clubs: clubs)
         }
     }
 
@@ -178,6 +219,12 @@ final class AppStore: ObservableObject {
     private func persist(roster players: [Player]) {
         if let encoded = PersistenceStore.encodeRoster(players) {
             UserDefaults.standard.set(encoded, forKey: AppStorageKeys.playerRoster)
+        }
+    }
+
+    private func persist(clubs: [Club]) {
+        if let encoded = PersistenceStore.encodeClubs(clubs) {
+            UserDefaults.standard.set(encoded, forKey: AppStorageKeys.clubs)
         }
     }
 }

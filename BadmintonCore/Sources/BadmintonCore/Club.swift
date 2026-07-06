@@ -17,10 +17,12 @@ public struct Club: Identifiable, Codable, Equatable {
     public let id: UUID
     public var name: String
     public let createdDate: Date
+    public var ownerRecordName: String?
 
-    public init(id: UUID = UUID(), name: String, createdDate: Date = Date()) {
+    public init(id: UUID = UUID(), name: String, createdDate: Date = Date(), ownerRecordName: String? = nil) {
         self.id = id
         self.name = name
         self.createdDate = createdDate
+        self.ownerRecordName = ownerRecordName
     }
 }
