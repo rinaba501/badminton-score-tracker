@@ -237,6 +237,42 @@ public enum StatsCalculator {
         }
     }
 
+    // MARK: - Activity feed
+
+    /// One recorded result, shaped for a chronological club activity feed.
+    public struct ActivityFeedEntry: Identifiable, Equatable {
+        public let id: UUID
+        public let myName: String
+        public let opponentName: String
+        public let myGamesWon: Int
+        public let opponentGamesWon: Int
+        public let winner: RecordSide
+        public let date: Date
+
+        public init(id: UUID, myName: String, opponentName: String, myGamesWon: Int,
+                    opponentGamesWon: Int, winner: RecordSide, date: Date) {
+            self.id = id
+            self.myName = myName
+            self.opponentName = opponentName
+            self.myGamesWon = myGamesWon
+            self.opponentGamesWon = opponentGamesWon
+            self.winner = winner
+            self.date = date
+        }
+    }
+
+    /// Newest-first activity feed over `history` — pass an already
+    /// club-scoped, confirmation-filtered slice (same convention as
+    /// `standings(history:)`). Stored order is oldest-first, matching
+    /// `filteredHistory`'s `newestFirst` reversal convention.
+    public static func activityFeed(history: [MatchRecord]) -> [ActivityFeedEntry] {
+        history.reversed().map { record in
+            ActivityFeedEntry(id: record.id, myName: record.myName, opponentName: record.opponentName,
+                              myGamesWon: record.myGamesWon, opponentGamesWon: record.opponentGamesWon,
+                              winner: record.winner, date: record.date)
+        }
+    }
+
     // MARK: - History filtering & formatting
 
     /// HistoryView semantics for filtering by Singles vs. Doubles.
