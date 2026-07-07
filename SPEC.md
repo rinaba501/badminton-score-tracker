@@ -233,3 +233,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 148 | Club management UI: create/rename/leave, member list, per-club roster (Roadmap Phase 5d) | #149 |
 | 157 | Club switcher in History/Stats (Roadmap Phase 5f) | #158 |
 | 155 | Club invite UI: CKShare invite via UICloudSharingController, iOS-only (Roadmap Phase 5e) | #156 |
+| 159 | Club standings / leaderboard (Roadmap Phase 5 backlog) | #167 |
