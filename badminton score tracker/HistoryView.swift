@@ -21,6 +21,7 @@ struct HistoryView: View {
     @State private var dateRange: DateRange = .all
     @State private var newestFirst = true
     @State private var matchType: StatsCalculator.MatchTypeFilter = .all
+    @State private var selectedClubId: UUID?
 
     enum DateRange: String, CaseIterable {
         case week, month, all
@@ -33,7 +34,12 @@ struct HistoryView: View {
         }
     }
 
-    private var history: [MatchRecord] { store.history }
+    private var history: [MatchRecord] { store.history.filter { $0.clubId == selectedClubId } }
+
+    private var clubLabel: String {
+        guard let selectedClubId else { return NSLocalizedString("clubs.filter_personal", comment: "") }
+        return store.clubs.first { $0.id == selectedClubId }?.name ?? NSLocalizedString("clubs.filter_personal", comment: "")
+    }
 
     private var allPlayers: [String] {
         StatsCalculator.participants(history: history)
@@ -109,6 +115,9 @@ struct HistoryView: View {
         .navigationTitle("history.title")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if !store.clubs.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) { clubFilterMenu }
+            }
             if !history.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) { playerFilterMenu }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -153,6 +162,35 @@ struct HistoryView: View {
             }
             .pickerStyle(.segmented)
         }
+    }
+
+    @ViewBuilder private var clubFilterMenu: some View {
+        Menu {
+            Button {
+                selectedClubId = nil
+            } label: {
+                if selectedClubId == nil {
+                    Label("clubs.filter_personal", systemImage: "checkmark")
+                } else {
+                    Text("clubs.filter_personal")
+                }
+            }
+            Divider()
+            ForEach(store.clubs) { club in
+                Button {
+                    selectedClubId = club.id
+                } label: {
+                    if selectedClubId == club.id {
+                        Label(club.name, systemImage: "checkmark")
+                    } else {
+                        Text(club.name)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: selectedClubId == nil ? "person.3" : "person.3.fill")
+        }
+        .accessibilityLabel(Text("clubs.filter_label"))
     }
 
     @ViewBuilder private var playerFilterMenu: some View {

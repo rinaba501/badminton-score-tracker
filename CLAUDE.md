@@ -37,8 +37,8 @@ badminton score tracker Watch App/
   GameViewModel.swift        — @MainActor ObservableObject; owns all live-game logic: scoring, undo, time mode, haptics, persistence, announcements, doubles partner names/rotation display
   HapticsProvider.swift      — HapticsProvider protocol + Watch/NoOp implementations (tests use NoOp)
   SettingsView.swift         — match format, audio, theme, timer, roster management, club management entry point (Phase 5d)
-  HistoryView.swift          — saved match list + filters
-  StatsView.swift            — per-player stats + head-to-head (math lives in StatsCalculator)
+  HistoryView.swift          — saved match list + filters, incl. a club scope filter (Personal + joined clubs, Roadmap Phase 5f; sheet-based since `Menu` is unavailable on watchOS) that pre-filters by `clubId` before any StatsCalculator call
+  StatsView.swift            — per-player stats + head-to-head (math lives in StatsCalculator); same club scope filter as HistoryView (Phase 5f), via an inline `Picker`
   PlayerEditView.swift       — single-player editor sheet; Phase 5d adds an optional club Picker (bound to Player.clubId) shown only when the caller passes a non-empty `clubs` list
   ClubsView.swift            — Phase 5d: club list + create, entered via a SettingsView section; pure UI over AppStore.saveClubs
   ClubDetailView.swift       — Phase 5d: rename, member list (read live from CloudKitSyncManager.fetchOrCreateShare's CKShare.participants when cloudKitSyncEnabled, else just "You" — never requires CloudKit), and per-club roster (players filtered by clubId) for one Club; delete/leave clears clubId back to nil on that club's players/matches (never deletes them) then removes the club via the existing saveClubs diffing
@@ -59,8 +59,8 @@ badminton score tracker Complication/    — WidgetKit extension (circular/corne
 
 badminton score tracker/       — iOS companion app (#41, in progress). Same target that used to be the watch-only stub container — now a real iOS app (NavigationStack root, iPhone-only, iOS 17+) that still embeds the Watch App. Has its own Info.plist, Assets.xcassets, .entitlements, and 6 *.lproj tables (iOS-only chrome under ios.*; History/Stats screens reuse the Watch's own string keys verbatim so translations copy across); the Watch App's Info.plist now declares it as companion (WKCompanionAppBundleIdentifier) instead of WKWatchOnly
   ContentView.swift          — iOS root: NavigationStack + List menu linking to History and Stats (Watch stays the scoring device)
-  HistoryView.swift          — iOS match list + MatchHistoryRow; date/type/sort/player filters and swipe-delete/clear-all. All filtering delegates to StatsCalculator; pushed via NavigationStack (no currentView binding). iOS-native restyle of the Watch's HistoryView
-  StatsView.swift            — iOS per-player stats: win-rate ring + stat-card grid + avatar'd head-to-head; math all in StatsCalculator. iOS-native restyle of the Watch's StatsView
+  HistoryView.swift          — iOS match list + MatchHistoryRow; date/type/sort/player filters, a toolbar club-scope `Menu` (Personal + joined clubs, Roadmap Phase 5f), and swipe-delete/clear-all. All filtering delegates to StatsCalculator; pushed via NavigationStack (no currentView binding). iOS-native restyle of the Watch's HistoryView
+  StatsView.swift            — iOS per-player stats: win-rate ring + stat-card grid + avatar'd head-to-head; math all in StatsCalculator; same toolbar club-scope `Menu` as HistoryView (Phase 5f). iOS-native restyle of the Watch's StatsView
   RosterView.swift           — iOS roster management (edit Me, add/rename/delete players, sort order). Ported from the Watch SettingsView roster section, incl. the rename→history propagation (renames update past matches via player id + update myName). Writes via AppStore.saveRoster/saveHistory
   PlayerEditView.swift       — iOS single-player editor sheet (real keyboard TextField + duplicate detection, color/avatar/icon grids). Restyle of the Watch's; validation logic verbatim. Phase 5d adds the same optional club Picker as the Watch's
   ClubsView.swift            — iOS restyle of the Watch's Phase 5d club list + create; entered from ContentView's menu (not SettingsView, matching where RosterView is entered)

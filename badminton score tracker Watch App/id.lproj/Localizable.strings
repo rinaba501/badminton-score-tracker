@@ -179,5 +179,7 @@
 "clubs.leave_club" = "Keluar Klub";
 "clubs.delete_confirm" = "Hapus klub ini? Pemain dan pertandingan akan tetap ada, tetapi tidak lagi terhubung ke klub ini.";
 "clubs.leave_confirm" = "Keluar dari klub ini? Pemain dan pertandingan akan tetap ada, tetapi tidak lagi terhubung ke klub ini.";
+"clubs.filter_personal" = "Pribadi";
+"clubs.filter_label" = "Filter berdasarkan Klub";
 "playeredit.club" = "Klub";
 "playeredit.club_personal" = "Pribadi";

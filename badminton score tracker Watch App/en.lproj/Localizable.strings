@@ -179,5 +179,7 @@
 "clubs.leave_club" = "Leave Club";
 "clubs.delete_confirm" = "Delete this club? Players and matches stay, but will no longer be tagged to it.";
 "clubs.leave_confirm" = "Leave this club? Players and matches stay, but will no longer be tagged to it.";
+"clubs.filter_personal" = "Personal";
+"clubs.filter_label" = "Filter by Club";
 "playeredit.club" = "Club";
 "playeredit.club_personal" = "Personal";

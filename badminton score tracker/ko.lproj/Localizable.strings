@@ -115,6 +115,8 @@
 "clubs.leave_club" = "클럽 나가기";
 "clubs.delete_confirm" = "이 클럽을 삭제하시겠습니까? 선수와 경기 기록은 유지되지만 더 이상 이 클럽에 연결되지 않습니다.";
 "clubs.leave_confirm" = "이 클럽을 나가시겠습니까? 선수와 경기 기록은 유지되지만 더 이상 이 클럽에 연결되지 않습니다.";
+"clubs.filter_personal" = "개인";
+"clubs.filter_label" = "클럽으로 필터";
 "clubs.invite" = "초대…";
 "clubs.invite_failed" = "초대를 만들 수 없습니다";
 "playeredit.club" = "클럽";

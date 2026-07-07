@@ -16,9 +16,10 @@ struct StatsView: View {
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @State private var selectedPlayer: String = ""
+    @State private var selectedClubId: UUID?
 
-    private var history: [MatchRecord] { store.history }
-    private var roster: [Player] { store.roster }
+    private var history: [MatchRecord] { store.history.filter { $0.clubId == selectedClubId } }
+    private var roster: [Player] { store.roster.filter { $0.clubId == selectedClubId } }
 
     private var allPlayers: [String] {
         StatsCalculator.allPlayers(history: history, hoisting: myName)
@@ -66,6 +67,40 @@ struct StatsView: View {
         .onAppear {
             if selectedPlayer.isEmpty { selectedPlayer = myName }
         }
+        .toolbar {
+            if !store.clubs.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) { clubFilterMenu }
+            }
+        }
+    }
+
+    @ViewBuilder private var clubFilterMenu: some View {
+        Menu {
+            Button {
+                selectedClubId = nil
+            } label: {
+                if selectedClubId == nil {
+                    Label("clubs.filter_personal", systemImage: "checkmark")
+                } else {
+                    Text("clubs.filter_personal")
+                }
+            }
+            Divider()
+            ForEach(store.clubs) { club in
+                Button {
+                    selectedClubId = club.id
+                } label: {
+                    if selectedClubId == club.id {
+                        Label(club.name, systemImage: "checkmark")
+                    } else {
+                        Text(club.name)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: selectedClubId == nil ? "person.3" : "person.3.fill")
+        }
+        .accessibilityLabel(Text("clubs.filter_label"))
     }
 
     private var statsList: some View {
