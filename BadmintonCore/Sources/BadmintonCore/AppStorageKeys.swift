@@ -28,6 +28,9 @@ public enum AppStorageKeys {
     // Roadmap Phase 5b: local-only club list (no CloudKit sync yet — see
     // Club.swift and AppStore.saveClubs).
     public static let clubs = "clubs"
+    // Roadmap Phase 5 backlog (#162): CloudKit-only, no KV fallback — see
+    // ChallengeRecord.swift and AppStore.saveChallenges.
+    public static let challenges = "challenges"
     public static let playerSortOrder = "playerSortOrder"
     public static let pointsToWin = "pointsToWin"
     public static let gamesInMatch = "gamesInMatch"

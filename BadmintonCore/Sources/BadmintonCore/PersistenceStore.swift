@@ -100,6 +100,20 @@ public enum PersistenceStore {
         encodeEnvelope(clubs)
     }
 
+    // MARK: - Challenges ([ChallengeRecord]) — Roadmap Phase 5 backlog (#162)
+
+    /// Decode the challenge list, returning an empty array if the data is
+    /// missing or corrupt. Same envelope/tolerance contract as `decodeRoster`.
+    public static func decodeChallenges(_ data: Data) -> [ChallengeRecord] {
+        decodeTolerant(ChallengeRecord.self, from: data)
+    }
+
+    /// Encode the challenge list for storage (as the current versioned
+    /// envelope), or `nil` if encoding fails.
+    public static func encodeChallenges(_ challenges: [ChallengeRecord]) -> Data? {
+        encodeEnvelope(challenges)
+    }
+
     // MARK: - History ([MatchRecord])
 
     /// Decode the match history, returning an empty array if the data is
@@ -156,6 +170,17 @@ public enum PersistenceStore {
     /// payload is empty or unreadable.
     public static func decodeClub(_ data: Data) -> Club? {
         decodeTolerant(Club.self, from: data).first
+    }
+
+    /// Encode a single challenge as a CloudKit payload, or `nil` on failure.
+    public static func encodeChallenge(_ challenge: ChallengeRecord) -> Data? {
+        encodeEnvelope([challenge])
+    }
+
+    /// Decode a single challenge from a CloudKit payload, or `nil` if the
+    /// payload is empty or unreadable.
+    public static func decodeChallenge(_ data: Data) -> ChallengeRecord? {
+        decodeTolerant(ChallengeRecord.self, from: data).first
     }
 
     // MARK: - Migration
@@ -257,6 +282,11 @@ public enum PersistenceStore {
 
     /// Upserts/deletes to sync when the clubs list changes from `old` to `new`.
     public static func diffClubs(from old: [Club], to new: [Club]) -> RecordDiff {
+        diff(from: old, to: new)
+    }
+
+    /// Upserts/deletes to sync when the challenges list changes from `old` to `new`.
+    public static func diffChallenges(from old: [ChallengeRecord], to new: [ChallengeRecord]) -> RecordDiff {
         diff(from: old, to: new)
     }
 

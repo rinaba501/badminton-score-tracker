@@ -180,6 +180,13 @@
 "clubs.activity" = "アクティビティ";
 "clubs.confirm_match" = "承認";
 "clubs.decline_match" = "却下";
+"clubs.challenges" = "対戦申請";
+"clubs.challenge" = "挑戦する";
+"clubs.accept_challenge" = "承諾";
+"clubs.decline_challenge" = "却下";
+"clubs.cancel_challenge" = "キャンセル";
+"clubs.challenge_pending" = "保留中";
+"clubs.challenge_accepted" = "承諾済み";
 "clubs.roster" = "メンバー一覧";
 "clubs.add_player" = "プレイヤーを追加";
 "clubs.delete_club" = "クラブを削除";

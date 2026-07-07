@@ -179,6 +179,13 @@
 "clubs.activity" = "활동";
 "clubs.confirm_match" = "확인";
 "clubs.decline_match" = "거절";
+"clubs.challenges" = "도전";
+"clubs.challenge" = "도전하기";
+"clubs.accept_challenge" = "수락";
+"clubs.decline_challenge" = "거절";
+"clubs.cancel_challenge" = "취소";
+"clubs.challenge_pending" = "대기 중";
+"clubs.challenge_accepted" = "수락됨";
 "clubs.roster" = "명단";
 "clubs.add_player" = "선수 추가";
 "clubs.delete_club" = "클럽 삭제";
