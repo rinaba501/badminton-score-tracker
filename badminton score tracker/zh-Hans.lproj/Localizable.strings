@@ -109,6 +109,7 @@
 "clubs.name" = "名称";
 "clubs.members" = "成员";
 "clubs.you" = "你";
+"clubs.standings" = "排名";
 "clubs.roster" = "名单";
 "clubs.add_player" = "添加选手";
 "clubs.delete_club" = "删除俱乐部";

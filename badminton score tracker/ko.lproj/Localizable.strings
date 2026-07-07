@@ -109,6 +109,7 @@
 "clubs.name" = "이름";
 "clubs.members" = "멤버";
 "clubs.you" = "나";
+"clubs.standings" = "순위표";
 "clubs.roster" = "명단";
 "clubs.add_player" = "선수 추가";
 "clubs.delete_club" = "클럽 삭제";

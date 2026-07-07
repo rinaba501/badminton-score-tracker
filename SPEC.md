@@ -195,7 +195,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 |---|---------|
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
-| 159 | Club standings / leaderboard, head-to-head, rivalries — Roadmap Phase 5 backlog |
 | 160 | Match confirmation: per-club admin toggle before a match counts toward standings — Roadmap Phase 5 backlog |
 | 161 | Club activity feed: chronological recent results with per-club unread marker — Roadmap Phase 5 backlog |
 | 162 | Club challenges: "want to play?" ping between members — Roadmap Phase 5 backlog |
