@@ -115,5 +115,8 @@
 "clubs.leave_club" = "クラブを退会";
 "clubs.delete_confirm" = "このクラブを削除しますか？プレイヤーと試合記録は残りますが、このクラブとの紐付けは解除されます。";
 "clubs.leave_confirm" = "このクラブを退会しますか？プレイヤーと試合記録は残りますが、このクラブとの紐付けは解除されます。";
+"clubs.invite" = "招待…";
+"clubs.invite_failed" = "招待を作成できませんでした";
 "playeredit.club" = "クラブ";
 "playeredit.club_personal" = "個人";
+"common.ok" = "OK";

@@ -115,5 +115,8 @@
 "clubs.leave_club" = "退出俱乐部";
 "clubs.delete_confirm" = "删除这个俱乐部？选手和比赛记录会保留，但不再关联到该俱乐部。";
 "clubs.leave_confirm" = "退出这个俱乐部？选手和比赛记录会保留，但不再关联到该俱乐部。";
+"clubs.invite" = "邀请…";
+"clubs.invite_failed" = "无法创建邀请";
 "playeredit.club" = "俱乐部";
 "playeredit.club_personal" = "个人";
+"common.ok" = "好";

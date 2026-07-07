@@ -281,6 +281,9 @@ final class CloudKitSyncManager {
 
     // MARK: - Share Management
 
+    /// Exposed for `CloudSharingView` (Phase 5e), which needs the container alongside a CKShare.
+    var ckContainer: CKContainer { container }
+
     /// Fetches or creates the CKShare for a Club zone. Must be run on the owner's device.
     func fetchOrCreateShare(for club: Club) async throws -> CKShare {
         let zoneID = zoneID(for: club.id)
@@ -292,15 +295,18 @@ final class CloudKitSyncManager {
                 return share
             }
         } catch {
-            // If share not found, create a new one.
+            // If share not found, create a new one. Any other error (offline,
+            // not signed into iCloud, permission failure, etc.) is rethrown
+            // as-is — Phase 5e's invite UI surfaces this message to the user,
+            // so swallowing it here would show a misleading generic error.
             let ckError = error as? CKError
-            if ckError?.code == .unknownItem {
-                let share = CKShare(recordZoneID: zoneID)
-                share.publicPermission = .readWrite
-                let saved = try await privateDatabase.save(share)
-                if let savedShare = saved as? CKShare {
-                    return savedShare
-                }
+            guard ckError?.code == .unknownItem else { throw error }
+
+            let share = CKShare(recordZoneID: zoneID)
+            share.publicPermission = .readWrite
+            let saved = try await privateDatabase.save(share)
+            if let savedShare = saved as? CKShare {
+                return savedShare
             }
         }
         throw CKError(.invalidArguments)
