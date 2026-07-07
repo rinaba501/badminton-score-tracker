@@ -176,6 +176,7 @@
 "clubs.standings" = "Standings";
 "clubs.require_confirmation" = "Require Match Confirmation";
 "clubs.pending_confirmation" = "Pending Confirmation";
+"clubs.activity" = "Activity";
 "clubs.confirm_match" = "Confirm";
 "clubs.decline_match" = "Decline";
 "clubs.roster" = "Roster";

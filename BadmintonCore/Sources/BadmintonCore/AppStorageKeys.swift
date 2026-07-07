@@ -39,6 +39,11 @@ public enum AppStorageKeys {
     public static let timeLimitMinutes = "timeLimitMinutes"
     public static let gameMode = "gameMode"
     public static let localPlayerId = "localPlayerId"
+    // #161 activity feed: per-device "last viewed" timestamp per club (JSON
+    // dictionary, club id string -> Date), so an unread marker can compare
+    // against it. Deliberately local-only (read state, not data) — never
+    // added to either target's CloudSyncManager.SyncKeys.
+    public static let clubLastViewedActivity = "clubLastViewedActivity"
 
     // CloudKit sync (Phase 4, #109). Not KV-synced — these are local device
     // state for the CloudKit transport: the serialized CKSyncEngine state, a
@@ -51,4 +56,18 @@ public enum AppStorageKeys {
     // Per-record CKRecord system fields (change tags), keyed by recordName, so
     // in-place updates carry the right tag instead of conflicting every time.
     public static let ckRecordMetadata = "ckRecordMetadata"
+}
+
+/// Codec for `AppStorageKeys.clubLastViewedActivity`'s `Data`-backed
+/// `[String: Date]` (club id string -> last-viewed date); `@AppStorage`
+/// has no native `[String: Date]` support, so views decode/encode through
+/// this instead of hand-rolling `JSONEncoder`/`JSONDecoder` per call site.
+public enum ClubActivityCodec {
+    public static func decode(_ data: Data) -> [String: Date] {
+        (try? JSONDecoder().decode([String: Date].self, from: data)) ?? [:]
+    }
+
+    public static func encode(_ lastViewed: [String: Date]) -> Data {
+        (try? JSONEncoder().encode(lastViewed)) ?? Data()
+    }
 }

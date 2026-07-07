@@ -176,6 +176,7 @@
 "clubs.standings" = "순위표";
 "clubs.require_confirmation" = "경기 확인 필요";
 "clubs.pending_confirmation" = "확인 대기 중";
+"clubs.activity" = "활동";
 "clubs.confirm_match" = "확인";
 "clubs.decline_match" = "거절";
 "clubs.roster" = "명단";

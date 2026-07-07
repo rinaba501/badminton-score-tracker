@@ -14,6 +14,7 @@ import BadmintonCore
 
 struct ClubsView: View {
     @EnvironmentObject private var store: AppStore
+    @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
     @State private var newClubName = ""
 
     var body: some View {
@@ -28,7 +29,12 @@ struct ClubsView: View {
                         NavigationLink {
                             ClubDetailView(clubId: club.id)
                         } label: {
-                            Text(club.name)
+                            HStack(spacing: 6) {
+                                Text(club.name)
+                                if hasUnreadActivity(club) {
+                                    Circle().fill(.blue).frame(width: 8, height: 8)
+                                }
+                            }
                         }
                     }
                 }
@@ -46,6 +52,15 @@ struct ClubsView: View {
         }
         .navigationTitle("settings.clubs")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func hasUnreadActivity(_ club: Club) -> Bool {
+        let matches = store.history.filter {
+            $0.clubId == club.id && ($0.isConfirmed || !(club.requireMatchConfirmation ?? false))
+        }
+        guard let latest = matches.map(\.date).max() else { return false }
+        let lastViewed = ClubActivityCodec.decode(lastViewedData)[club.id.uuidString]
+        return lastViewed == nil || latest > lastViewed!
     }
 
     private func addClub() {

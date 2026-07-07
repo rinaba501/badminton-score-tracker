@@ -112,6 +112,7 @@
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
 "clubs.pending_confirmation" = "待确认";
+"clubs.activity" = "动态";
 "clubs.confirm_match" = "确认";
 "clubs.decline_match" = "拒绝";
 "clubs.roster" = "名单";

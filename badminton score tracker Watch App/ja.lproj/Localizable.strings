@@ -177,6 +177,7 @@
 "clubs.standings" = "順位表";
 "clubs.require_confirmation" = "試合の承認を必須にする";
 "clubs.pending_confirmation" = "承認待ち";
+"clubs.activity" = "アクティビティ";
 "clubs.confirm_match" = "承認";
 "clubs.decline_match" = "却下";
 "clubs.roster" = "メンバー一覧";

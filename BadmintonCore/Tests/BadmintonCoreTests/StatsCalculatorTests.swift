@@ -202,6 +202,29 @@ struct StatsCalculatorTests {
     @Test func standingsIsEmptyForEmptyHistory() {
         #expect(StatsCalculator.standings(history: []).isEmpty)
     }
+
+    // MARK: - Activity feed
+
+    @Test func activityFeedIsNewestFirst() {
+        // Stored order is oldest-first (append order); activityFeed reverses
+        // it, same convention as filteredHistory's newestFirst reversal.
+        let history = [
+            record(my: "Alice", opp: "Bob", winner: "Alice", date: Date(timeIntervalSince1970: 1_000)),
+            record(my: "Bob", opp: "Cara", winner: "Bob", date: Date(timeIntervalSince1970: 2_000)),
+            record(my: "Alice", opp: "Cara", winner: "Cara", date: Date(timeIntervalSince1970: 3_000))
+        ]
+        let feed = StatsCalculator.activityFeed(history: history)
+        #expect(feed.map(\.opponentName) == ["Cara", "Cara", "Bob"])
+        #expect(feed.map(\.date) == [
+            Date(timeIntervalSince1970: 3_000),
+            Date(timeIntervalSince1970: 2_000),
+            Date(timeIntervalSince1970: 1_000)
+        ])
+    }
+
+    @Test func activityFeedIsEmptyForEmptyHistory() {
+        #expect(StatsCalculator.activityFeed(history: []).isEmpty)
+    }
 }
 
 /// Doubles records mixed with singles-shaped ones (partner fields nil) —

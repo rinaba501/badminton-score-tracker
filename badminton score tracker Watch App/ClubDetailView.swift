@@ -25,6 +25,7 @@ struct ClubDetailView: View {
     @EnvironmentObject private var appStore: AppStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
+    @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
 
     @State private var name = ""
     @State private var participants: [String] = []
@@ -51,6 +52,10 @@ struct ClubDetailView: View {
 
     private var standings: [StatsCalculator.StandingsEntry] {
         StatsCalculator.standings(history: clubMatches.filter { $0.isConfirmed || !requireMatchConfirmation })
+    }
+
+    private var activityFeed: [StatsCalculator.ActivityFeedEntry] {
+        StatsCalculator.activityFeed(history: clubMatches.filter { $0.isConfirmed || !requireMatchConfirmation })
     }
 
     var body: some View {
@@ -83,6 +88,24 @@ struct ClubDetailView: View {
                                     Button("clubs.decline_match", role: .destructive) { declineMatch(record) }
                                         .font(.caption2)
                                 }
+                            }
+                        }
+                    }
+                }
+
+                Section(header: Text("clubs.activity")) {
+                    if activityFeed.isEmpty {
+                        Text("stats.no_matches")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    } else {
+                        ForEach(activityFeed) { entry in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(entry.myName) vs \(entry.opponentName)")
+                                    .font(.caption)
+                                Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }
@@ -152,6 +175,7 @@ struct ClubDetailView: View {
         .onAppear {
             if let club { name = club.name }
             loadParticipants()
+            markActivityViewed()
         }
         .confirmationDialog(
             isOwned ? "clubs.delete_confirm" : "clubs.leave_confirm",
@@ -222,6 +246,12 @@ struct ClubDetailView: View {
         })
         appStore.saveClubs(appStore.clubs.filter { $0.id != clubId })
         dismiss()
+    }
+
+    private func markActivityViewed() {
+        var lastViewed = ClubActivityCodec.decode(lastViewedData)
+        lastViewed[clubId.uuidString] = Date()
+        lastViewedData = ClubActivityCodec.encode(lastViewed)
     }
 
     private func loadParticipants() {
