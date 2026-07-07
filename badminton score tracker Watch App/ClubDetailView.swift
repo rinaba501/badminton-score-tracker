@@ -19,6 +19,15 @@ import SwiftUI
 import CloudKit
 import BadmintonCore
 
+/// A club member resolved from a live CKShare fetch, with a stable identity
+/// (Roadmap Phase 5 backlog #162) — unlike the display-name-only list this
+/// replaced, `id` survives across fetches so a challenge can target a
+/// specific participant rather than just a name string.
+private struct ClubParticipant: Identifiable, Equatable {
+    let id: String
+    let name: String
+}
+
 struct ClubDetailView: View {
     let clubId: UUID
 
@@ -28,7 +37,9 @@ struct ClubDetailView: View {
     @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
 
     @State private var name = ""
-    @State private var participants: [String] = []
+    @State private var participants: [ClubParticipant] = []
+    @State private var myParticipantId: String?
+    @State private var myDisplayName: String?
     @State private var loadingParticipants = true
     @State private var showRemoveConfirm = false
     @State private var editingPlayer: Player?
@@ -56,6 +67,32 @@ struct ClubDetailView: View {
 
     private var activityFeed: [StatsCalculator.ActivityFeedEntry] {
         StatsCalculator.activityFeed(history: clubMatches.filter { $0.isConfirmed || !requireMatchConfirmation })
+    }
+
+    private var clubChallenges: [ChallengeRecord] {
+        appStore.challenges.filter { $0.clubId == clubId }
+    }
+
+    /// Pending + accepted challenges involving me, newest first. Declined
+    /// ones are dropped from view entirely — there's no notifications
+    /// feature yet (#165), so a quiet drop is fine for this small a feature.
+    private var myChallenges: [ChallengeRecord] {
+        guard let myParticipantId else { return [] }
+        return clubChallenges
+            .filter { $0.status != .declined && ($0.fromParticipantId == myParticipantId || $0.toParticipantId == myParticipantId) }
+            .sorted { $0.createdDate > $1.createdDate }
+    }
+
+    /// Hides the "Challenge" button for a member once a pending challenge
+    /// already exists between us (avoids duplicate pings), and while my own
+    /// identity is still resolving (can't attribute a challenge to "me" yet).
+    private func hasPendingChallenge(with participantId: String) -> Bool {
+        guard let myParticipantId else { return true }
+        return clubChallenges.contains {
+            $0.status == .pending &&
+            (($0.fromParticipantId == myParticipantId && $0.toParticipantId == participantId) ||
+             ($0.fromParticipantId == participantId && $0.toParticipantId == myParticipantId))
+        }
     }
 
     var body: some View {
@@ -93,6 +130,14 @@ struct ClubDetailView: View {
                     }
                 }
 
+                if !myChallenges.isEmpty {
+                    Section(header: Text("clubs.challenges")) {
+                        ForEach(myChallenges) { challenge in
+                            challengeRow(challenge)
+                        }
+                    }
+                }
+
                 Section(header: Text("clubs.activity")) {
                     if activityFeed.isEmpty {
                         Text("stats.no_matches")
@@ -117,8 +162,15 @@ struct ClubDetailView: View {
                     if loadingParticipants {
                         ProgressView()
                     } else {
-                        ForEach(participants, id: \.self) { participant in
-                            Text(participant).font(.caption)
+                        ForEach(participants) { participant in
+                            HStack {
+                                Text(participant.name).font(.caption)
+                                Spacer()
+                                if !hasPendingChallenge(with: participant.id) {
+                                    Button("clubs.challenge") { sendChallenge(to: participant) }
+                                        .font(.caption2)
+                                }
+                            }
                         }
                     }
                 }
@@ -192,6 +244,38 @@ struct ClubDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func challengeRow(_ challenge: ChallengeRecord) -> some View {
+        let incoming = challenge.toParticipantId == myParticipantId
+        VStack(alignment: .leading, spacing: 4) {
+            Text(incoming ? challenge.fromDisplayName : challenge.toDisplayName)
+                .font(.caption)
+            switch challenge.status {
+            case .pending where incoming:
+                HStack {
+                    Button("clubs.accept_challenge") { respond(to: challenge, accept: true) }
+                        .font(.caption2)
+                    Button("clubs.decline_challenge", role: .destructive) { respond(to: challenge, accept: false) }
+                        .font(.caption2)
+                }
+            case .pending:
+                HStack {
+                    Text("clubs.challenge_pending")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Button("clubs.cancel_challenge", role: .destructive) { respond(to: challenge, accept: false) }
+                        .font(.caption2)
+                }
+            case .accepted:
+                Text("clubs.challenge_accepted")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            case .declined:
+                EmptyView()
+            }
+        }
+    }
+
     private func rename(to newName: String, currentName: String) {
         let trimmed = newName.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty, trimmed != currentName else { return }
@@ -254,6 +338,23 @@ struct ClubDetailView: View {
         lastViewedData = ClubActivityCodec.encode(lastViewed)
     }
 
+    private func sendChallenge(to participant: ClubParticipant) {
+        guard let myParticipantId, let myDisplayName else { return }
+        let challenge = ChallengeRecord(
+            clubId: clubId,
+            fromParticipantId: myParticipantId, fromDisplayName: myDisplayName,
+            toParticipantId: participant.id, toDisplayName: participant.name
+        )
+        appStore.saveChallenges(appStore.challenges + [challenge])
+    }
+
+    private func respond(to challenge: ChallengeRecord, accept: Bool) {
+        var updated = appStore.challenges
+        guard let idx = updated.firstIndex(where: { $0.id == challenge.id }) else { return }
+        updated[idx].status = accept ? .accepted : .declined
+        appStore.saveChallenges(updated)
+    }
+
     private func loadParticipants() {
         guard cloudKitSyncEnabled, let club else {
             loadingParticipants = false
@@ -263,21 +364,35 @@ struct ClubDetailView: View {
         Task {
             do {
                 let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
-                let names = share.participants
+                let me = share.currentUserParticipant
+                let myId = me?.userIdentity.userRecordID?.recordName
+                // Exclude the owner (shown separately as the hardcoded "You" row when I
+                // am the owner) and, when I'm a non-owner member, exclude myself too —
+                // otherwise I'd see my own name (and a "Challenge" button) in the list.
+                let others = share.participants
                     .filter { $0.role != .owner }
-                    .compactMap { participant -> String? in
-                        if let components = participant.userIdentity.nameComponents {
-                            return PersonNameComponentsFormatter().string(from: components)
-                        }
-                        return participant.userIdentity.lookupInfo?.emailAddress
+                    .compactMap { participant -> ClubParticipant? in
+                        guard let id = participant.userIdentity.userRecordID?.recordName, id != myId else { return nil }
+                        return ClubParticipant(id: id, name: displayName(for: participant))
                     }
                 await MainActor.run {
-                    participants = names
+                    participants = others
+                    myParticipantId = me?.userIdentity.userRecordID?.recordName
+                    myDisplayName = me.map { displayName(for: $0) }
                     loadingParticipants = false
                 }
             } catch {
                 await MainActor.run { loadingParticipants = false }
             }
         }
+    }
+
+    /// Same nameComponents/email resolution for any participant, self included
+    /// (`CKShare.currentUserParticipant` is just another `CKShare.Participant`).
+    private func displayName(for participant: CKShare.Participant) -> String {
+        if let components = participant.userIdentity.nameComponents {
+            return PersonNameComponentsFormatter().string(from: components)
+        }
+        return participant.userIdentity.lookupInfo?.emailAddress ?? NSLocalizedString("clubs.you", comment: "")
     }
 }

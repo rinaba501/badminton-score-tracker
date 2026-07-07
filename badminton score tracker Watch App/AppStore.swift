@@ -20,6 +20,10 @@ final class AppStore: ObservableObject {
     /// unlike roster/history this never pushes through CloudSyncManager (see
     /// saveClubs).
     @Published private(set) var clubs: [Club]
+    /// Roadmap Phase 5 backlog (#162): CloudKit-only — there's no meaningful
+    /// "personal" challenge, so unlike roster/history there's no KV fallback
+    /// at all (see saveChallenges).
+    @Published private(set) var challenges: [ChallengeRecord]
 
     @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
 
@@ -39,9 +43,11 @@ final class AppStore: ObservableObject {
         let r = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster) ?? Data()
         let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
         let c = UserDefaults.standard.data(forKey: AppStorageKeys.clubs) ?? Data()
+        let ch = UserDefaults.standard.data(forKey: AppStorageKeys.challenges) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
         clubs = PersistenceStore.decodeClubs(c)
+        challenges = PersistenceStore.decodeChallenges(ch)
     }
 
     // Upgrades on-disk data to the current schema before the first decode.
@@ -133,6 +139,25 @@ final class AppStore: ObservableObject {
         }
     }
 
+    // Roadmap Phase 5 backlog (#162): challenges only exist as a CloudKit
+    // concept (a ping between two real CKShare participants), so — unlike
+    // saveRoster/saveHistory — there's no KV-store fallback path at all;
+    // when CloudKit sync is off, the feature is simply invisible (see the
+    // ClubDetailView challenge UI, which is gated behind cloudKitSyncEnabled).
+    func saveChallenges(_ challenges: [ChallengeRecord]) {
+        guard let encoded = PersistenceStore.encodeChallenges(challenges) else { return }
+        let diff = PersistenceStore.diffChallenges(from: self.challenges, to: challenges)
+        let deletedChallengeClubIds = Dictionary(
+            self.challenges.filter { diff.deletedIds.contains($0.id) }.map { ($0.id, $0.clubId) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        UserDefaults.standard.set(encoded, forKey: AppStorageKeys.challenges)
+        self.challenges = challenges
+        if CloudKitSyncManager.isEnabled {
+            CloudKitSyncManager.shared.enqueueChallengeChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedChallengeClubIds)
+        }
+    }
+
     // Called by CloudSyncManager after external iCloud data lands in UserDefaults
     // (KV path). The CloudKit path uses the targeted apply* methods below instead.
     func reloadFromStorage() {
@@ -149,7 +174,10 @@ final class AppStore: ObservableObject {
     /// fetch landing mid-edit doesn't clobber an unrelated local change. History
     /// stays date-sorted; roster keeps its stored order (updates in place,
     /// appends new).
-    func applyRemoteUpsert(records: [MatchRecord], players: [Player], clubs newClubs: [Club]) {
+    func applyRemoteUpsert(
+        records: [MatchRecord], players: [Player], clubs newClubs: [Club],
+        challenges newChallenges: [ChallengeRecord] = []
+    ) {
         if !records.isEmpty {
             var byId = Dictionary(history.map { ($0.id, $0) }, uniquingKeysWith: { _, new in new })
             for record in records { byId[record.id] = record }
@@ -184,10 +212,24 @@ final class AppStore: ObservableObject {
             clubs = updated
             persist(clubs: clubs)
         }
+        if !newChallenges.isEmpty {
+            var updated = challenges
+            var indexById = Dictionary(challenges.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+            for challenge in newChallenges {
+                if let idx = indexById[challenge.id] {
+                    updated[idx] = challenge
+                } else {
+                    indexById[challenge.id] = updated.count
+                    updated.append(challenge)
+                }
+            }
+            challenges = updated
+            persist(challenges: challenges)
+        }
     }
 
     /// Remove remotely-deleted records by id from the caches and persist.
-    func applyRemoteDeletions(recordIds: [UUID], playerIds: [UUID], clubIds: [UUID]) {
+    func applyRemoteDeletions(recordIds: [UUID], playerIds: [UUID], clubIds: [UUID], challengeIds: [UUID] = []) {
         if !recordIds.isEmpty {
             let removed = Set(recordIds)
             history = history.filter { !removed.contains($0.id) }
@@ -202,6 +244,11 @@ final class AppStore: ObservableObject {
             let removed = Set(clubIds)
             clubs = clubs.filter { !removed.contains($0.id) }
             persist(clubs: clubs)
+        }
+        if !challengeIds.isEmpty {
+            let removed = Set(challengeIds)
+            challenges = challenges.filter { !removed.contains($0.id) }
+            persist(challenges: challenges)
         }
     }
 
@@ -220,6 +267,12 @@ final class AppStore: ObservableObject {
     private func persist(clubs: [Club]) {
         if let encoded = PersistenceStore.encodeClubs(clubs) {
             UserDefaults.standard.set(encoded, forKey: AppStorageKeys.clubs)
+        }
+    }
+
+    private func persist(challenges: [ChallengeRecord]) {
+        if let encoded = PersistenceStore.encodeChallenges(challenges) {
+            UserDefaults.standard.set(encoded, forKey: AppStorageKeys.challenges)
         }
     }
 }

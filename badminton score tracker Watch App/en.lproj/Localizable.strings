@@ -179,6 +179,13 @@
 "clubs.activity" = "Activity";
 "clubs.confirm_match" = "Confirm";
 "clubs.decline_match" = "Decline";
+"clubs.challenges" = "Challenges";
+"clubs.challenge" = "Challenge";
+"clubs.accept_challenge" = "Accept";
+"clubs.decline_challenge" = "Decline";
+"clubs.cancel_challenge" = "Cancel";
+"clubs.challenge_pending" = "Pending";
+"clubs.challenge_accepted" = "Accepted";
 "clubs.roster" = "Roster";
 "clubs.add_player" = "Add Player";
 "clubs.delete_club" = "Delete Club";

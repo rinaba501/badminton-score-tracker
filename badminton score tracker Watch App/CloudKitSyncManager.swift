@@ -29,6 +29,7 @@ final class CloudKitSyncManager {
     private static let matchType = "MatchRecord"
     private static let playerType = "Player"
     private static let clubType = "Club"
+    private static let challengeType = "Challenge"
     private static let payloadField = "payload"
 
     private lazy var container = CKContainer(identifier: Self.containerID)
@@ -133,6 +134,13 @@ final class CloudKitSyncManager {
         enqueue(upsertedIds: upsertedIds, deletedIds: deletedIds)
     }
 
+    /// A challenge always belongs to a club's zone (never the personal zone),
+    /// so it follows the same generic per-record `enqueue` path as history/
+    /// roster rather than Club's own-zone path.
+    func enqueueChallengeChanges(upsertedIds: [UUID], deletedIds: [UUID: UUID]) {
+        enqueue(upsertedIds: upsertedIds, deletedIds: deletedIds.mapValues { $0 as UUID? })
+    }
+
     private func enqueue(upsertedIds: [UUID], deletedIds: [UUID: UUID?]) {
         guard let privateSyncEngine, let sharedSyncEngine else { return }
 
@@ -180,6 +188,9 @@ final class CloudKitSyncManager {
         if let player = AppStore.shared.roster.first(where: { $0.id == recordId }) {
             return player.clubId
         }
+        if let challenge = AppStore.shared.challenges.first(where: { $0.id == recordId }) {
+            return challenge.clubId
+        }
         return nil
     }
 
@@ -205,6 +216,10 @@ final class CloudKitSyncManager {
         if let club = AppStore.shared.clubs.first(where: { $0.id == uuid }) {
             guard let payload = PersistenceStore.encodeClub(club) else { return nil }
             return record(for: recordID, type: Self.clubType, payload: payload)
+        }
+        if let challenge = AppStore.shared.challenges.first(where: { $0.id == uuid }) {
+            guard let payload = PersistenceStore.encodeChallenge(challenge) else { return nil }
+            return record(for: recordID, type: Self.challengeType, payload: payload)
         }
         return nil
     }
@@ -396,6 +411,7 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
         var upsertedMatches: [MatchRecord] = []
         var upsertedPlayers: [Player] = []
         var upsertedClubs: [Club] = []
+        var upsertedChallenges: [ChallengeRecord] = []
 
         for modification in changes.modifications {
             let record = modification.record
@@ -438,6 +454,10 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                     club.ownerRecordName = (owner == CKCurrentUserDefaultName) ? nil : owner
                     upsertedClubs.append(club)
                 }
+            case Self.challengeType:
+                if let challenge = PersistenceStore.decodeChallenge(payload) {
+                    upsertedChallenges.append(challenge)
+                }
             default:
                 break
             }
@@ -446,6 +466,7 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
         var deletedMatchIds: [UUID] = []
         var deletedPlayerIds: [UUID] = []
         var deletedClubIds: [UUID] = []
+        var deletedChallengeIds: [UUID] = []
 
         for deletion in changes.deletions {
             forget(deletion.recordID.recordName)
@@ -454,15 +475,20 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
             case Self.matchType: deletedMatchIds.append(uuid)
             case Self.playerType: deletedPlayerIds.append(uuid)
             case Self.clubType: deletedClubIds.append(uuid)
+            case Self.challengeType: deletedChallengeIds.append(uuid)
             default: break
             }
         }
 
-        if !upsertedMatches.isEmpty || !upsertedPlayers.isEmpty || !upsertedClubs.isEmpty {
-            AppStore.shared.applyRemoteUpsert(records: upsertedMatches, players: upsertedPlayers, clubs: upsertedClubs)
+        if !upsertedMatches.isEmpty || !upsertedPlayers.isEmpty || !upsertedClubs.isEmpty || !upsertedChallenges.isEmpty {
+            AppStore.shared.applyRemoteUpsert(
+                records: upsertedMatches, players: upsertedPlayers, clubs: upsertedClubs, challenges: upsertedChallenges
+            )
         }
-        if !deletedMatchIds.isEmpty || !deletedPlayerIds.isEmpty || !deletedClubIds.isEmpty {
-            AppStore.shared.applyRemoteDeletions(recordIds: deletedMatchIds, playerIds: deletedPlayerIds, clubIds: deletedClubIds)
+        if !deletedMatchIds.isEmpty || !deletedPlayerIds.isEmpty || !deletedClubIds.isEmpty || !deletedChallengeIds.isEmpty {
+            AppStore.shared.applyRemoteDeletions(
+                recordIds: deletedMatchIds, playerIds: deletedPlayerIds, clubIds: deletedClubIds, challengeIds: deletedChallengeIds
+            )
         }
     }
 
@@ -543,6 +569,10 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                 let owner = record.recordID.zoneID.ownerName
                 club.ownerRecordName = (owner == CKCurrentUserDefaultName) ? nil : owner
                 AppStore.shared.applyRemoteUpsert(records: [], players: [], clubs: [club])
+            }
+        case Self.challengeType:
+            if let challenge = PersistenceStore.decodeChallenge(payload) {
+                AppStore.shared.applyRemoteUpsert(records: [], players: [], clubs: [], challenges: [challenge])
             }
         default:
             break

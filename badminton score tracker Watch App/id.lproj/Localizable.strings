@@ -179,6 +179,13 @@
 "clubs.activity" = "Aktivitas";
 "clubs.confirm_match" = "Konfirmasi";
 "clubs.decline_match" = "Tolak";
+"clubs.challenges" = "Tantangan";
+"clubs.challenge" = "Tantang";
+"clubs.accept_challenge" = "Terima";
+"clubs.decline_challenge" = "Tolak";
+"clubs.cancel_challenge" = "Batal";
+"clubs.challenge_pending" = "Menunggu";
+"clubs.challenge_accepted" = "Diterima";
 "clubs.roster" = "Daftar Pemain";
 "clubs.add_player" = "Tambah Pemain";
 "clubs.delete_club" = "Hapus Klub";

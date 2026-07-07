@@ -115,6 +115,13 @@
 "clubs.activity" = "गतिविधि";
 "clubs.confirm_match" = "पुष्टि करें";
 "clubs.decline_match" = "अस्वीकार करें";
+"clubs.challenges" = "चुनौतियाँ";
+"clubs.challenge" = "चुनौती दें";
+"clubs.accept_challenge" = "स्वीकार करें";
+"clubs.decline_challenge" = "अस्वीकार करें";
+"clubs.cancel_challenge" = "रद्द करें";
+"clubs.challenge_pending" = "लंबित";
+"clubs.challenge_accepted" = "स्वीकृत";
 "clubs.roster" = "रोस्टर";
 "clubs.add_player" = "खिलाड़ी जोड़ें";
 "clubs.delete_club" = "क्लब हटाएं";

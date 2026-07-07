@@ -115,6 +115,13 @@
 "clubs.activity" = "动态";
 "clubs.confirm_match" = "确认";
 "clubs.decline_match" = "拒绝";
+"clubs.challenges" = "挑战";
+"clubs.challenge" = "发起挑战";
+"clubs.accept_challenge" = "接受";
+"clubs.decline_challenge" = "拒绝";
+"clubs.cancel_challenge" = "取消";
+"clubs.challenge_pending" = "待处理";
+"clubs.challenge_accepted" = "已接受";
 "clubs.roster" = "名单";
 "clubs.add_player" = "添加选手";
 "clubs.delete_club" = "删除俱乐部";
