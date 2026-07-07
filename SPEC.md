@@ -237,4 +237,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 159 | Club standings / leaderboard (Roadmap Phase 5 backlog) | #167 |
 | 160 | Match confirmation: per-club admin toggle before a match counts toward standings (Roadmap Phase 5 backlog) | #168 |
 | 169 | Club picker in PreMatchView so matches actually get tagged with clubId (Roadmap Phase 5 backlog) | #170 |
-| 161 | Club activity feed: chronological recent results with per-club unread marker (Roadmap Phase 5 backlog) | #TBD |
+| 161 | Club activity feed: chronological recent results with per-club unread marker (Roadmap Phase 5 backlog) | #172 |
