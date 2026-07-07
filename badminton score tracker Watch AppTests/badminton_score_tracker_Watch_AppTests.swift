@@ -155,4 +155,32 @@ struct GameViewModelTests {
 
         #expect(AppStore.shared.history.last?.opponentName == Player.guestFarToken)
     }
+
+    // MARK: - Club tagging (#169)
+
+    @Test func saveMatchStampsClubIdFromMatchConfig() {
+        let defaults = UserDefaults.standard
+        let clubId = UUID()
+        defaults.set(clubId.uuidString, forKey: AppStorageKeys.matchClubId)
+        defer { defaults.removeObject(forKey: AppStorageKeys.matchClubId) }
+
+        let vm = GameViewModel(hapticsProvider: NoOpHapticsProvider())
+        for _ in 0..<21 { vm.tap(.me) }
+        vm.startNextGame()
+        for _ in 0..<21 { vm.tap(.me) }
+
+        #expect(AppStore.shared.history.last?.clubId == clubId)
+    }
+
+    @Test func saveMatchLeavesClubIdNilWhenMatchClubIdUnset() {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: AppStorageKeys.matchClubId)
+
+        let vm = GameViewModel(hapticsProvider: NoOpHapticsProvider())
+        for _ in 0..<21 { vm.tap(.me) }
+        vm.startNextGame()
+        for _ in 0..<21 { vm.tap(.me) }
+
+        #expect(AppStore.shared.history.last?.clubId == nil)
+    }
 }

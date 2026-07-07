@@ -19,6 +19,10 @@ public enum AppStorageKeys {
     public static let matchOpponentName = "matchOpponentName"
     public static let matchMyPartnerName = "matchMyPartnerName"
     public static let matchOpponentPartnerName = "matchOpponentPartnerName"
+    // PreMatchView's club picker (#169); UUID string, "" = Personal. Same
+    // per-device match-config exclusion as matchMyName et al. — never added
+    // to either target's CloudSyncManager.SyncKeys.
+    public static let matchClubId = "matchClubId"
     public static let playerRoster = "playerRoster"
     public static let matchHistory = "matchHistory"
     // Roadmap Phase 5b: local-only club list (no CloudKit sync yet — see
