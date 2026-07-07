@@ -364,13 +364,17 @@ struct ClubDetailView: View {
         Task {
             do {
                 let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
+                let me = share.currentUserParticipant
+                let myId = me?.userIdentity.userRecordID?.recordName
+                // Exclude the owner (shown separately as the hardcoded "You" row when I
+                // am the owner) and, when I'm a non-owner member, exclude myself too —
+                // otherwise I'd see my own name (and a "Challenge" button) in the list.
                 let others = share.participants
                     .filter { $0.role != .owner }
                     .compactMap { participant -> ClubParticipant? in
-                        guard let id = participant.userIdentity.userRecordID?.recordName else { return nil }
+                        guard let id = participant.userIdentity.userRecordID?.recordName, id != myId else { return nil }
                         return ClubParticipant(id: id, name: displayName(for: participant))
                     }
-                let me = share.currentUserParticipant
                 await MainActor.run {
                     participants = others
                     myParticipantId = me?.userIdentity.userRecordID?.recordName
