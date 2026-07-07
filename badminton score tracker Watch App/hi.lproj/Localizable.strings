@@ -174,6 +174,10 @@
 "clubs.members" = "सदस्य";
 "clubs.you" = "आप";
 "clubs.standings" = "स्टैंडिंग्स";
+"clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
+"clubs.pending_confirmation" = "पुष्टि लंबित";
+"clubs.confirm_match" = "पुष्टि करें";
+"clubs.decline_match" = "अस्वीकार करें";
 "clubs.roster" = "रोस्टर";
 "clubs.add_player" = "खिलाड़ी जोड़ें";
 "clubs.delete_club" = "क्लब हटाएं";

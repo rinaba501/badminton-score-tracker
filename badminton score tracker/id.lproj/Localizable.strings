@@ -110,6 +110,10 @@
 "clubs.members" = "Anggota";
 "clubs.you" = "Anda";
 "clubs.standings" = "Klasemen";
+"clubs.require_confirmation" = "Wajib Konfirmasi Pertandingan";
+"clubs.pending_confirmation" = "Menunggu Konfirmasi";
+"clubs.confirm_match" = "Konfirmasi";
+"clubs.decline_match" = "Tolak";
 "clubs.roster" = "Daftar Pemain";
 "clubs.add_player" = "Tambah Pemain";
 "clubs.delete_club" = "Hapus Klub";

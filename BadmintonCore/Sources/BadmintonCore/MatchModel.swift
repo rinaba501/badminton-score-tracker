@@ -232,6 +232,14 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
     /// Roadmap Phase 5b: which `Club` this match belongs to. `nil` means
     /// personal (today's behavior, unchanged) — see Club.swift.
     public var clubId: UUID?
+    /// Roadmap Phase 5 backlog (#160): false only while the match sits in a
+    /// club with `Club.requireMatchConfirmation` on and no one has confirmed
+    /// it yet. Defaults true so personal matches and clubs with the toggle
+    /// off are always countable — see StatsCalculator call sites, which
+    /// filter this out before computing standings (this type stays agnostic
+    /// about the club's toggle, same as `clubId` stays agnostic about
+    /// club-scoping logic).
+    public var isConfirmed: Bool = true
 
     /// True when either partner field is populated — the single home of the
     /// "is this record a Doubles match" check (see the comment above).
@@ -252,7 +260,8 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
                 opponentPartnerName: String? = nil,
                 myPartnerPlayerId: UUID? = nil,
                 opponentPartnerPlayerId: UUID? = nil,
-                clubId: UUID? = nil) {
+                clubId: UUID? = nil,
+                isConfirmed: Bool = true) {
         self.id = id
         self.games = games
         self.myGamesWon = myGamesWon
@@ -269,12 +278,13 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         self.myPartnerPlayerId = myPartnerPlayerId
         self.opponentPartnerPlayerId = opponentPartnerPlayerId
         self.clubId = clubId
+        self.isConfirmed = isConfirmed
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, games, myGamesWon, opponentGamesWon, winner, myName, opponentName, date, duration,
              myPlayerId, opponentPlayerId, myPartnerName, opponentPartnerName, myPartnerPlayerId, opponentPartnerPlayerId,
-             clubId
+             clubId, isConfirmed
     }
 
     /// Self-migrating: reads the current `RecordSide` shape, or — for records
@@ -300,6 +310,7 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         myPartnerPlayerId = try container.decodeIfPresent(UUID.self, forKey: .myPartnerPlayerId)
         opponentPartnerPlayerId = try container.decodeIfPresent(UUID.self, forKey: .opponentPartnerPlayerId)
         clubId = try container.decodeIfPresent(UUID.self, forKey: .clubId)
+        isConfirmed = try container.decodeIfPresent(Bool.self, forKey: .isConfirmed) ?? true
 
         if let side = try? container.decode(RecordSide.self, forKey: .winner) {
             winner = side
@@ -327,5 +338,6 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         try container.encodeIfPresent(myPartnerPlayerId, forKey: .myPartnerPlayerId)
         try container.encodeIfPresent(opponentPartnerPlayerId, forKey: .opponentPartnerPlayerId)
         try container.encodeIfPresent(clubId, forKey: .clubId)
+        try container.encode(isConfirmed, forKey: .isConfirmed)
     }
 }

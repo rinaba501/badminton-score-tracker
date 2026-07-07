@@ -87,4 +87,23 @@ struct ClubTests {
         #expect(clubs.count == 1)
         #expect(clubs.first?.ownerRecordName == nil)
     }
+
+    // MARK: - requireMatchConfirmation (issue #160)
+
+    @Test func clubWithoutRequireMatchConfirmationKeyDecodesWithNil() throws {
+        // Shaped like a pre-#160 club entry — no requireMatchConfirmation key present.
+        let json = """
+        [{"id":"\(UUID().uuidString)","name":"Alice's Club","createdDate":0}]
+        """
+        let clubs = PersistenceStore.decodeClubs(Data(json.utf8))
+        #expect(clubs.count == 1)
+        #expect(clubs.first?.requireMatchConfirmation == nil)
+    }
+
+    @Test func clubRoundTripsRequireMatchConfirmationTrue() throws {
+        let club = Club(id: UUID(), name: "League Club", requireMatchConfirmation: true)
+        let encoded = try #require(PersistenceStore.encodeClub(club))
+        let decoded = try #require(PersistenceStore.decodeClub(encoded))
+        #expect(decoded.requireMatchConfirmation == true)
+    }
 }
