@@ -17,8 +17,16 @@ struct PreMatchView: View {
     @AppStorage(AppStorageKeys.matchOpponentName) private var matchOpponentName = ""
     @AppStorage(AppStorageKeys.matchMyPartnerName) private var matchMyPartnerName = ""
     @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
+    @AppStorage(AppStorageKeys.matchClubId) private var matchClubId = ""
     @AppStorage(AppStorageKeys.gameMode) private var gameMode: SettingsView.GameMode = .singles
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
+
+    private var clubSelection: Binding<UUID?> {
+        Binding(
+            get: { UUID(uuidString: matchClubId) },
+            set: { matchClubId = $0?.uuidString ?? "" }
+        )
+    }
 
     private var history: [MatchRecord] { appStore.history }
 
@@ -52,7 +60,7 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
-    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: [String] = [], h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: [String] = [], showClubPicker: Bool = false, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let filteredRoster = Player.sortedPlayers(
             roster.filter { player in
                 player.name != myName && !excluding.contains(player.name)
@@ -62,6 +70,16 @@ struct PreMatchView: View {
         )
         let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 4)
         return List {
+            if showClubPicker && !appStore.clubs.isEmpty {
+                Section {
+                    Picker("playeredit.club", selection: clubSelection) {
+                        Text("playeredit.club_personal").tag(UUID?.none)
+                        ForEach(appStore.clubs) { club in
+                            Text(club.name).tag(UUID?.some(club.id))
+                        }
+                    }
+                }
+            }
             Section(header: Text(title)) {
                 if !defaultLabel.isEmpty {
                     Button(action: { onSelect(defaultLabel) }) {
@@ -215,6 +233,9 @@ struct PreMatchView: View {
                 matchMyPartnerName = ""
                 matchOpponentPartnerName = ""
             }
+            if let id = UUID(uuidString: matchClubId), !appStore.clubs.contains(where: { $0.id == id }) {
+                matchClubId = ""
+            }
         }
     }
 
@@ -222,7 +243,7 @@ struct PreMatchView: View {
     private var content: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken) { name in
+            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken, showClubPicker: true) { name in
                 matchMyName = name
                 step = isDoubles ? .pickMyPartner : .pickOpponent
             }

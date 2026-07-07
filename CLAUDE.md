@@ -32,7 +32,7 @@ BadmintonCore/                 — local Swift package; platform-free core (no S
 badminton score tracker Watch App/
   ContentView.swift          — root view; owns only the AppView routing enum (.menu/.preMatch/.game/.settings/.history/.stats — state-driven, no top-level NavigationLink)
   MenuView.swift             — main menu
-  PreMatchView.swift         — player selection: 2 steps (Singles) or 4 steps (Doubles, reading SettingsView.GameMode)
+  PreMatchView.swift         — player selection: 2 steps (Singles) or 4 steps (Doubles, reading SettingsView.GameMode); near-side step also offers a Club picker (default Personal, hidden if the user has no clubs — Phase 5 backlog, #169) whose selection is written to matchClubId and read by GameViewModel.saveMatch()
   GameView.swift             — live scoring screen, layout only; all logic delegates to GameViewModel. ScoreView renders one or two stacked names per team depending on whether a partner is present
   GameViewModel.swift        — @MainActor ObservableObject; owns all live-game logic: scoring, undo, time mode, haptics, persistence, announcements, doubles partner names/rotation display
   HapticsProvider.swift      — HapticsProvider protocol + Watch/NoOp implementations (tests use NoOp)
@@ -69,7 +69,7 @@ badminton score tracker/       — iOS companion app (#41, in progress). Same ta
   PlayerAvatar.swift         — iOS presentation extension of Player (avatarColors/avatarImageNames/sportIcons/AvatarView). Per-target copy of the Watch's; the 15 avatar images are duplicated into this target's Assets.xcassets
   ShareCard.swift            — iOS-only (#13): match-result card rendered to PNG via ImageRenderer + a SharableMatchCard Transferable (image + plain-text). Long-press a history row → ShareLink. No Watch counterpart
   NewMatchFlow.swift         — modal container (fullScreenCover from ContentView) routing preMatch → game; PreMatchView writes match-config @AppStorage, GameView's VM reads it on appear (same handoff as the Watch's .preMatch/.game routes)
-  PreMatchView.swift         — iOS player selection (singles/doubles picker + near/partner/far/partner steps, h2h records); reuses PlayerEditView to add players. Closure-driven (onReady/onCancel), no currentView binding
+  PreMatchView.swift         — iOS player selection (singles/doubles picker + near/partner/far/partner steps, h2h records); reuses PlayerEditView to add players. Closure-driven (onReady/onCancel), no currentView binding. Near-side step also offers a Club picker (default Personal, hidden if the user has no clubs — Phase 5 backlog, #169) whose selection is written to matchClubId and read by GameViewModel.saveMatch()
   GameView.swift             — iOS live scoring: two big tap tiles (ScoreView), games header, timer, banners, match-over overlay. Tap-only — NO Digital Crown, NO HealthKit workout. Restyle of the Watch's
   GameViewModel.swift        — iOS @MainActor VM; per-target adaptation of the Watch's (UIKit haptics, no WorkoutManager, top-level GameMode). Match-config keys (matchMyName/…/gameMode) are KV-excluded so phone- and watch-scored matches can't collide; finished MatchRecord flows through the shared shrink-aware saveHistory
   HapticsProvider.swift      — iOS HapticsProvider protocol + GameHapticType (platform-neutral) + UIKitHapticsProvider (impact/notification generators). Mirrors the Watch's WKHapticType abstraction

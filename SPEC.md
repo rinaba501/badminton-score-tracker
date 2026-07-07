@@ -131,6 +131,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - **Club switcher in History/Stats (Roadmap Phase 5f)** — both screens gain a club scope filter (Personal + each joined club, hidden entirely if no clubs exist) that filters history/roster by `clubId` before any stats math runs; selection is per-session (not persisted). Watch uses a filter button + sheet (History) / inline `Picker` (Stats) since `Menu` is unavailable on watchOS; iOS uses a toolbar `Menu`
 - **Club standings (Roadmap Phase 5 backlog, #159)** — `ClubDetailView` (both targets) shows a per-club leaderboard (name, wins-losses) sorted by win rate then wins
 - **Match confirmation (Roadmap Phase 5 backlog, #160)** — a club owner can require matches to be confirmed before they count toward standings (default off, invisible for personal matches). Pending matches show in a Pending Confirmation section on `ClubDetailView` with Confirm/Decline actions; declining returns the match to Personal rather than deleting it
+- **Tag a new match with a club (Roadmap Phase 5 backlog, #169)** — `PreMatchView` (both targets) offers the same "Club" picker (default "Personal") on its near-side player step, hidden entirely for a solo user with no clubs; the selection is threaded into the saved `MatchRecord.clubId`, making club standings (#159) and match confirmation (#160) reachable through normal play
 
 ---
 
@@ -236,3 +237,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 155 | Club invite UI: CKShare invite via UICloudSharingController, iOS-only (Roadmap Phase 5e) | #156 |
 | 159 | Club standings / leaderboard (Roadmap Phase 5 backlog) | #167 |
 | 160 | Match confirmation: per-club admin toggle before a match counts toward standings (Roadmap Phase 5 backlog) | #168 |
+| 169 | Club picker in PreMatchView so matches actually get tagged with clubId (Roadmap Phase 5 backlog) | (pending) |
