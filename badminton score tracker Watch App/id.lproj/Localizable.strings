@@ -173,6 +173,7 @@
 "clubs.name" = "Nama";
 "clubs.members" = "Anggota";
 "clubs.you" = "Anda";
+"clubs.standings" = "Klasemen";
 "clubs.roster" = "Daftar Pemain";
 "clubs.add_player" = "Tambah Pemain";
 "clubs.delete_club" = "Hapus Klub";

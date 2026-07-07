@@ -182,6 +182,26 @@ struct StatsCalculatorTests {
         #expect(StatsCalculator.durationString(59) == "59s")
         #expect(StatsCalculator.durationString(222) == "3m 42s")
     }
+
+    // MARK: - Standings
+
+    @Test func standingsSortsByWinRateThenWinsAndOmitsNonParticipants() {
+        let history = [
+            record(my: "Alice", opp: "Bob", winner: "Alice"),
+            record(my: "Alice", opp: "Bob", winner: "Alice"),
+            record(my: "Alice", opp: "Cara", winner: "Cara"),
+            record(my: "Bob", opp: "Cara", winner: "Bob")
+        ]
+        let standings = StatsCalculator.standings(history: history)
+        // Alice: 2-1 (66.7%); Cara: 1-1 (50%); Bob: 1-2 (33.3%) — ranked by win rate.
+        #expect(standings.map(\.name) == ["Alice", "Cara", "Bob"])
+        #expect(standings.map(\.wins) == [2, 1, 1])
+        #expect(standings.map(\.losses) == [1, 1, 2])
+    }
+
+    @Test func standingsIsEmptyForEmptyHistory() {
+        #expect(StatsCalculator.standings(history: []).isEmpty)
+    }
 }
 
 /// Doubles records mixed with singles-shaped ones (partner fields nil) —

@@ -201,6 +201,42 @@ public enum StatsCalculator {
         return best
     }
 
+    // MARK: - Standings
+
+    /// One player's aggregate record within a given (already scoped) slice
+    /// of history — e.g. a club's shared matches. Sorted output puts the
+    /// best win rate first, ties broken by more wins.
+    public struct StandingsEntry: Identifiable, Equatable {
+        public var id: String { name }
+        public let name: String
+        public let wins: Int
+        public let losses: Int
+        public let winRate: Double
+
+        public init(name: String, wins: Int, losses: Int, winRate: Double) {
+            self.name = name
+            self.wins = wins
+            self.losses = losses
+            self.winRate = winRate
+        }
+    }
+
+    /// Standings over `history` — pass a club-scoped slice (`clubId`-filtered,
+    /// same convention as HistoryView/StatsView's club switcher) to get club
+    /// standings, or the full personal history for a solo leaderboard-of-one.
+    /// Reuses `participants`/`playerHistory`/`wins`/`winRate` as-is, so this
+    /// is purely an aggregation-and-sort layer, not new stats math.
+    public static func standings(history: [MatchRecord]) -> [StandingsEntry] {
+        participants(history: history).map { name in
+            let ph = playerHistory(history, player: name)
+            let w = wins(player: name, playerHistory: ph)
+            return StandingsEntry(name: name, wins: w, losses: ph.count - w,
+                                  winRate: winRate(player: name, playerHistory: ph))
+        }.sorted { lhs, rhs in
+            lhs.winRate != rhs.winRate ? lhs.winRate > rhs.winRate : lhs.wins > rhs.wins
+        }
+    }
+
     // MARK: - History filtering & formatting
 
     /// HistoryView semantics for filtering by Singles vs. Doubles.

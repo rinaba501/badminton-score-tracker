@@ -44,6 +44,10 @@ struct ClubDetailView: View {
         store.roster.filter { $0.clubId == clubId }
     }
 
+    private var standings: [StatsCalculator.StandingsEntry] {
+        StatsCalculator.standings(history: store.history.filter { $0.clubId == clubId })
+    }
+
     var body: some View {
         List {
             if let club {
@@ -77,6 +81,25 @@ struct ClubDetailView: View {
                     }
                 } header: {
                     Text("clubs.members")
+                }
+
+                Section {
+                    if standings.isEmpty {
+                        Text("stats.no_matches")
+                            .foregroundStyle(.secondary)
+                            .font(.callout)
+                    } else {
+                        ForEach(standings) { entry in
+                            HStack {
+                                Text(entry.name)
+                                Spacer()
+                                Text("\(entry.wins)-\(entry.losses)")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("clubs.standings")
                 }
 
                 Section {

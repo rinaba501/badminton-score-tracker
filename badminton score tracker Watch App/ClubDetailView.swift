@@ -39,6 +39,10 @@ struct ClubDetailView: View {
         appStore.roster.filter { $0.clubId == clubId }
     }
 
+    private var standings: [StatsCalculator.StandingsEntry] {
+        StatsCalculator.standings(history: appStore.history.filter { $0.clubId == clubId })
+    }
+
     var body: some View {
         List {
             if let club {
@@ -55,6 +59,24 @@ struct ClubDetailView: View {
                     } else {
                         ForEach(participants, id: \.self) { participant in
                             Text(participant).font(.caption)
+                        }
+                    }
+                }
+
+                Section(header: Text("clubs.standings")) {
+                    if standings.isEmpty {
+                        Text("stats.no_matches")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    } else {
+                        ForEach(standings) { entry in
+                            HStack {
+                                Text(entry.name).font(.caption)
+                                Spacer()
+                                Text("\(entry.wins)-\(entry.losses)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }

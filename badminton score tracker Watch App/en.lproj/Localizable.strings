@@ -173,6 +173,7 @@
 "clubs.name" = "Name";
 "clubs.members" = "Members";
 "clubs.you" = "You";
+"clubs.standings" = "Standings";
 "clubs.roster" = "Roster";
 "clubs.add_player" = "Add Player";
 "clubs.delete_club" = "Delete Club";

@@ -109,6 +109,7 @@
 "clubs.name" = "नाम";
 "clubs.members" = "सदस्य";
 "clubs.you" = "आप";
+"clubs.standings" = "स्टैंडिंग्स";
 "clubs.roster" = "रोस्टर";
 "clubs.add_player" = "खिलाड़ी जोड़ें";
 "clubs.delete_club" = "क्लब हटाएं";
