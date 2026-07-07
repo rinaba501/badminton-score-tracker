@@ -225,5 +225,5 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 87 | iCloud KV sync quota guard: surface/log quota-exceeded, warn before the ~1 MB ceiling (merge-by-id landed earlier) | #117 |
 | 8 | Doubles support (2v2) | #118, #120, #121, #122, #123 |
 | 148 | Club management UI: create/rename/leave, member list, per-club roster (Roadmap Phase 5d) | #149 |
-| 157 | Club switcher in History/Stats (Roadmap Phase 5f) | TBD |
+| 157 | Club switcher in History/Stats (Roadmap Phase 5f) | #158 |
 | 155 | Club invite UI: CKShare invite via UICloudSharingController, iOS-only (Roadmap Phase 5e) | #156 |
