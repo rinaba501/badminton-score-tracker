@@ -14,12 +14,14 @@ struct HistoryView: View {
     @EnvironmentObject private var appStore: AppStore
     @State private var showingClearConfirmation = false
     @State private var showingFilters = false
+    @State private var showingClubFilter = false
     /// Every name here must have participated (on either team) for a record
     /// to pass the filter — see StatsCalculator.filteredHistory.
     @State private var selectedPlayers: Set<String> = []
     @State private var dateRange: DateRange = .all
     @State private var newestFirst = true
     @State private var matchType: StatsCalculator.MatchTypeFilter = .all
+    @State private var selectedClubId: UUID?
 
     enum DateRange: String, CaseIterable {
         case week, month, all
@@ -32,7 +34,12 @@ struct HistoryView: View {
         }
     }
 
-    private var history: [MatchRecord] { appStore.history }
+    private var history: [MatchRecord] { appStore.history.filter { $0.clubId == selectedClubId } }
+
+    private var clubLabel: String {
+        guard let selectedClubId else { return NSLocalizedString("clubs.filter_personal", comment: "") }
+        return appStore.clubs.first { $0.id == selectedClubId }?.name ?? NSLocalizedString("clubs.filter_personal", comment: "")
+    }
 
     private var allPlayers: [String] {
         StatsCalculator.participants(history: history)
@@ -94,8 +101,41 @@ struct HistoryView: View {
         save(records)
     }
 
+    private var clubMenu: some View {
+        Button(action: { showingClubFilter = true }) {
+            HStack(spacing: 4) {
+                Image(systemName: "person.3")
+                    .font(.system(size: 11))
+                    .foregroundColor(selectedClubId != nil ? .yellow : .secondary)
+                Text(clubLabel)
+                    .font(.system(size: 11))
+                    .foregroundColor(selectedClubId != nil ? .yellow : .secondary)
+                    .lineLimit(1)
+                Spacer()
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .background(Color.secondary.opacity(0.15))
+            .cornerRadius(6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("clubs.filter_label"))
+    }
+
     var body: some View {
         List {
+            if !appStore.clubs.isEmpty {
+                Section {
+                    clubMenu
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                .listSectionSpacing(0)
+            }
+
             if history.isEmpty {
                 Section {
                     Text("history.empty")
@@ -245,6 +285,32 @@ struct HistoryView: View {
                                 Text(Player.displayName(for: name))
                                 Spacer()
                                 if selectedPlayers.contains(name) {
+                                    Image(systemName: "checkmark").foregroundColor(.yellow)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingClubFilter) {
+            List {
+                Section(header: Text("clubs.filter_label")) {
+                    Button(action: { selectedClubId = nil; showingClubFilter = false }) {
+                        HStack {
+                            Text("clubs.filter_personal")
+                            Spacer()
+                            if selectedClubId == nil {
+                                Image(systemName: "checkmark").foregroundColor(.yellow)
+                            }
+                        }
+                    }
+                    ForEach(appStore.clubs) { club in
+                        Button(action: { selectedClubId = club.id; showingClubFilter = false }) {
+                            HStack {
+                                Text(club.name)
+                                Spacer()
+                                if selectedClubId == club.id {
                                     Image(systemName: "checkmark").foregroundColor(.yellow)
                                 }
                             }

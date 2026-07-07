@@ -15,9 +15,10 @@ struct StatsView: View {
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @State private var selectedPlayer: String = ""
+    @State private var selectedClubId: UUID?
 
-    private var history: [MatchRecord] { appStore.history }
-    private var roster: [Player] { appStore.roster }
+    private var history: [MatchRecord] { appStore.history.filter { $0.clubId == selectedClubId } }
+    private var roster: [Player] { appStore.roster.filter { $0.clubId == selectedClubId } }
 
     // The stats engine lives in BadmintonCore.StatsCalculator; these
     // properties just bind it to this screen's selection state.
@@ -58,8 +59,23 @@ struct StatsView: View {
         StatsCalculator.longestStreak(player: activePlayer, playerHistory: playerHistory)
     }
 
+    private var clubPicker: some View {
+        Picker("clubs.filter_label", selection: $selectedClubId) {
+            Text("clubs.filter_personal").tag(UUID?.none)
+            ForEach(appStore.clubs) { club in
+                Text(club.name).tag(UUID?.some(club.id))
+            }
+        }
+    }
+
     var body: some View {
         List {
+            if !appStore.clubs.isEmpty {
+                Section {
+                    clubPicker
+                }
+            }
+
             if history.isEmpty {
                 Section {
                     Text("stats.no_matches")

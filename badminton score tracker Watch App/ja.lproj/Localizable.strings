@@ -180,5 +180,7 @@
 "clubs.leave_club" = "クラブを退会";
 "clubs.delete_confirm" = "このクラブを削除しますか？プレイヤーと試合記録は残りますが、このクラブとの紐付けは解除されます。";
 "clubs.leave_confirm" = "このクラブを退会しますか？プレイヤーと試合記録は残りますが、このクラブとの紐付けは解除されます。";
+"clubs.filter_personal" = "個人";
+"clubs.filter_label" = "クラブで絞り込む";
 "playeredit.club" = "クラブ";
 "playeredit.club_personal" = "個人";

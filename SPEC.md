@@ -127,7 +127,8 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - Renaming a player propagates to all match history records that reference their `UUID`
 - Players can be sorted by created order, name, most played, recently used, or pinned priority from Settings and the pre-match picker
 - **Clubs (Roadmap Phase 5d)** — an opt-in local grouping of players/history, entered from Settings (Watch) or the main menu (iOS): create/rename a club, view its member list (shows "You" always; other members appear once CloudKit sync is on and the club has been shared), and view/manage its roster by tagging a player with the club from the player editor's "Club" picker (default "Personal"). Deleting a club you own, or leaving one shared to you, never deletes players or match history — it only clears their club tag back to Personal
-- **Club invites (Roadmap Phase 5e, iOS-only)** — a club's owner can tap "Invite…" in its member list (shown only when CloudKit sync is on) to send a `CKShare` invitation via the system share sheet (`UICloudSharingController`); no watchOS equivalent exists. Multi-club stats switching is a future slice (5f)
+- **Club invites (Roadmap Phase 5e, iOS-only)** — a club's owner can tap "Invite…" in its member list (shown only when CloudKit sync is on) to send a `CKShare` invitation via the system share sheet (`UICloudSharingController`); no watchOS equivalent exists
+- **Club switcher in History/Stats (Roadmap Phase 5f)** — both screens gain a club scope filter (Personal + each joined club, hidden entirely if no clubs exist) that filters history/roster by `clubId` before any stats math runs; selection is per-session (not persisted). Watch uses a filter button + sheet (History) / inline `Picker` (Stats) since `Menu` is unavailable on watchOS; iOS uses a toolbar `Menu`
 
 ---
 
@@ -224,4 +225,5 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 87 | iCloud KV sync quota guard: surface/log quota-exceeded, warn before the ~1 MB ceiling (merge-by-id landed earlier) | #117 |
 | 8 | Doubles support (2v2) | #118, #120, #121, #122, #123 |
 | 148 | Club management UI: create/rename/leave, member list, per-club roster (Roadmap Phase 5d) | #149 |
+| 157 | Club switcher in History/Stats (Roadmap Phase 5f) | TBD |
 | 155 | Club invite UI: CKShare invite via UICloudSharingController, iOS-only (Roadmap Phase 5e) | #156 |
