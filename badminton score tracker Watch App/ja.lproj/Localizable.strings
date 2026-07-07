@@ -175,6 +175,10 @@
 "clubs.members" = "メンバー";
 "clubs.you" = "自分";
 "clubs.standings" = "順位表";
+"clubs.require_confirmation" = "試合の承認を必須にする";
+"clubs.pending_confirmation" = "承認待ち";
+"clubs.confirm_match" = "承認";
+"clubs.decline_match" = "却下";
 "clubs.roster" = "メンバー一覧";
 "clubs.add_player" = "プレイヤーを追加";
 "clubs.delete_club" = "クラブを削除";

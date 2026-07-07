@@ -168,4 +168,27 @@ struct SchemaVersioningTests {
         let encoded = PersistenceStore.encodeHistory([record])!
         #expect(PersistenceStore.decodeHistory(encoded) == [record])
     }
+
+    // MARK: - MatchRecord.isConfirmed (issue #160, match confirmation)
+
+    @Test func legacyRecordWithoutIsConfirmedKeyDecodesAsConfirmed() {
+        let json = """
+        [{"id":"11111111-1111-1111-1111-111111111111","games":[],"myGamesWon":1,"opponentGamesWon":0,
+         "winner":"near","myName":"Alice","opponentName":"Bob","date":0,"duration":0}]
+        """
+        let history = PersistenceStore.decodeHistory(Data(json.utf8))
+        #expect(history.count == 1)
+        #expect(history.first?.isConfirmed == true)
+    }
+
+    @Test func isConfirmedRoundTripsThroughEncodeDecodeWhenFalse() {
+        let record = MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
+                                  winner: .near, myName: "Alice", opponentName: "Bob",
+                                  date: Date(timeIntervalSinceReferenceDate: 0),
+                                  clubId: UUID(), isConfirmed: false)
+        let encoded = PersistenceStore.encodeHistory([record])!
+        let decoded = PersistenceStore.decodeHistory(encoded)
+        #expect(decoded == [record])
+        #expect(decoded.first?.isConfirmed == false)
+    }
 }

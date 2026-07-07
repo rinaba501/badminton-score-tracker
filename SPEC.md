@@ -129,6 +129,8 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - **Clubs (Roadmap Phase 5d)** — an opt-in local grouping of players/history, entered from Settings (Watch) or the main menu (iOS): create/rename a club, view its member list (shows "You" always; other members appear once CloudKit sync is on and the club has been shared), and view/manage its roster by tagging a player with the club from the player editor's "Club" picker (default "Personal"). Deleting a club you own, or leaving one shared to you, never deletes players or match history — it only clears their club tag back to Personal
 - **Club invites (Roadmap Phase 5e, iOS-only)** — a club's owner can tap "Invite…" in its member list (shown only when CloudKit sync is on) to send a `CKShare` invitation via the system share sheet (`UICloudSharingController`); no watchOS equivalent exists
 - **Club switcher in History/Stats (Roadmap Phase 5f)** — both screens gain a club scope filter (Personal + each joined club, hidden entirely if no clubs exist) that filters history/roster by `clubId` before any stats math runs; selection is per-session (not persisted). Watch uses a filter button + sheet (History) / inline `Picker` (Stats) since `Menu` is unavailable on watchOS; iOS uses a toolbar `Menu`
+- **Club standings (Roadmap Phase 5 backlog, #159)** — `ClubDetailView` (both targets) shows a per-club leaderboard (name, wins-losses) sorted by win rate then wins
+- **Match confirmation (Roadmap Phase 5 backlog, #160)** — a club owner can require matches to be confirmed before they count toward standings (default off, invisible for personal matches). Pending matches show in a Pending Confirmation section on `ClubDetailView` with Confirm/Decline actions; declining returns the match to Personal rather than deleting it
 
 ---
 
@@ -195,7 +197,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 |---|---------|
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
-| 160 | Match confirmation: per-club admin toggle before a match counts toward standings — Roadmap Phase 5 backlog |
 | 161 | Club activity feed: chronological recent results with per-club unread marker — Roadmap Phase 5 backlog |
 | 162 | Club challenges: "want to play?" ping between members — Roadmap Phase 5 backlog |
 | 163 | Club seasons: time-boxed standings resets — Roadmap Phase 5 backlog |
@@ -234,3 +235,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 157 | Club switcher in History/Stats (Roadmap Phase 5f) | #158 |
 | 155 | Club invite UI: CKShare invite via UICloudSharingController, iOS-only (Roadmap Phase 5e) | #156 |
 | 159 | Club standings / leaderboard (Roadmap Phase 5 backlog) | #167 |
+| 160 | Match confirmation: per-club admin toggle before a match counts toward standings (Roadmap Phase 5 backlog) | TBD |

@@ -416,7 +416,7 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                             myPlayerId: match.myPlayerId, opponentPlayerId: match.opponentPlayerId,
                             myPartnerName: match.myPartnerName, opponentPartnerName: match.opponentPartnerName,
                             myPartnerPlayerId: match.myPartnerPlayerId, opponentPartnerPlayerId: match.opponentPartnerPlayerId,
-                            clubId: recordClubId
+                            clubId: recordClubId, isConfirmed: match.isConfirmed
                         )
                     }
                     upsertedMatches.append(match)
@@ -523,7 +523,7 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                         myPlayerId: match.myPlayerId, opponentPlayerId: match.opponentPlayerId,
                         myPartnerName: match.myPartnerName, opponentPartnerName: match.opponentPartnerName,
                         myPartnerPlayerId: match.myPartnerPlayerId, opponentPartnerPlayerId: match.opponentPartnerPlayerId,
-                        clubId: recordClubId
+                        clubId: recordClubId, isConfirmed: match.isConfirmed
                     )
                 }
                 AppStore.shared.applyRemoteUpsert(records: [match], players: [], clubs: [])

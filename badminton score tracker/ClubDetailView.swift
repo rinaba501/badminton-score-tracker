@@ -44,8 +44,18 @@ struct ClubDetailView: View {
         store.roster.filter { $0.clubId == clubId }
     }
 
+    private var requireMatchConfirmation: Bool { club?.requireMatchConfirmation ?? false }
+
+    private var clubMatches: [MatchRecord] {
+        store.history.filter { $0.clubId == clubId }
+    }
+
+    private var pendingMatches: [MatchRecord] {
+        requireMatchConfirmation ? clubMatches.filter { !$0.isConfirmed } : []
+    }
+
     private var standings: [StatsCalculator.StandingsEntry] {
-        StatsCalculator.standings(history: store.history.filter { $0.clubId == clubId })
+        StatsCalculator.standings(history: clubMatches.filter { $0.isConfirmed || !requireMatchConfirmation })
     }
 
     var body: some View {
@@ -54,8 +64,33 @@ struct ClubDetailView: View {
                 Section {
                     TextField("clubs.name", text: $name)
                         .onSubmit { rename(to: name, currentName: club.name) }
+                    if isOwned {
+                        Toggle("clubs.require_confirmation", isOn: Binding(
+                            get: { requireMatchConfirmation },
+                            set: { setRequireMatchConfirmation($0) }
+                        ))
+                    }
                 } header: {
                     Text("clubs.name")
+                }
+
+                if !pendingMatches.isEmpty {
+                    Section {
+                        ForEach(pendingMatches) { record in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(record.myName) vs \(record.opponentName)")
+                                Text("\(record.myGamesWon)-\(record.opponentGamesWon)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                HStack {
+                                    Button("clubs.confirm_match") { confirmMatch(record) }
+                                    Button("clubs.decline_match", role: .destructive) { declineMatch(record) }
+                                }
+                            }
+                        }
+                    } header: {
+                        Text("clubs.pending_confirmation")
+                    }
                 }
 
                 Section {
@@ -181,6 +216,27 @@ struct ClubDetailView: View {
         guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
         updated[idx].name = trimmed
         store.saveClubs(updated)
+    }
+
+    private func setRequireMatchConfirmation(_ newValue: Bool) {
+        var updated = store.clubs
+        guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
+        updated[idx].requireMatchConfirmation = newValue
+        store.saveClubs(updated)
+    }
+
+    private func confirmMatch(_ record: MatchRecord) {
+        var history = store.history
+        guard let idx = history.firstIndex(where: { $0.id == record.id }) else { return }
+        history[idx].isConfirmed = true
+        store.saveHistory(history)
+    }
+
+    private func declineMatch(_ record: MatchRecord) {
+        var history = store.history
+        guard let idx = history.firstIndex(where: { $0.id == record.id }) else { return }
+        history[idx].clubId = nil
+        store.saveHistory(history)
     }
 
     private func savePlayer(_ updated: Player) {
