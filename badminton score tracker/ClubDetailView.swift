@@ -6,9 +6,10 @@
 //  Club. Member list is read live from the CKShare (Phase 5c's
 //  fetchOrCreateShare) when CloudKit sync is on, and always shows "You" as a
 //  fallback first row so viewing a club never depends on CloudKit — see the
-//  local-first invariant in ROADMAP.md. Since invite-sending UI (5e) doesn't
-//  exist yet, a club's only real participant today is its owner, so the
-//  fetched list filters out the `.owner` role to avoid double-listing "You".
+//  local-first invariant in ROADMAP.md. The fetched list filters out the
+//  `.owner` role to avoid double-listing "You".
+//  Phase 5e adds the owner-only "Invite" button (CloudSharingView, a
+//  UICloudSharingController wrapper — iOS-only, no watchOS equivalent).
 //  Deleting/leaving a club never deletes match/player data — it only clears
 //  clubId back to personal (nil) on every roster player and match record
 //  tagged with it, then removes the club via the same AppStore.saveClubs
@@ -32,6 +33,9 @@ struct ClubDetailView: View {
     @State private var loadingParticipants = true
     @State private var showRemoveConfirm = false
     @State private var editingPlayer: Player?
+    @State private var shareBox: ShareBox?
+    @State private var isPreparingShare = false
+    @State private var shareErrorMessage: String?
 
     private var club: Club? { store.clubs.first { $0.id == clubId } }
     private var isOwned: Bool { club?.ownerRecordName == nil }
@@ -58,6 +62,18 @@ struct ClubDetailView: View {
                         ForEach(participants, id: \.self) { participant in
                             Text(participant)
                         }
+                    }
+                    if isOwned && cloudKitSyncEnabled {
+                        Button {
+                            Task { await prepareShare(for: club) }
+                        } label: {
+                            if isPreparingShare {
+                                ProgressView()
+                            } else {
+                                Label("clubs.invite", systemImage: "person.badge.plus")
+                            }
+                        }
+                        .disabled(isPreparingShare)
                     }
                 } header: {
                     Text("clubs.members")
@@ -121,6 +137,18 @@ struct ClubDetailView: View {
                 onSave: savePlayer
             )
         }
+        .sheet(item: $shareBox) { box in
+            CloudSharingView(share: box.share, container: CloudKitSyncManager.shared.ckContainer, itemTitle: club?.name ?? "")
+                .onDisappear { loadParticipants() }
+        }
+        .alert("clubs.invite_failed", isPresented: Binding(
+            get: { shareErrorMessage != nil },
+            set: { if !$0 { shareErrorMessage = nil } }
+        )) {
+            Button("common.ok") { shareErrorMessage = nil }
+        } message: {
+            Text(shareErrorMessage ?? "")
+        }
     }
 
     private func rename(to newName: String, currentName: String) {
@@ -158,6 +186,18 @@ struct ClubDetailView: View {
         dismiss()
     }
 
+    private func prepareShare(for club: Club?) async {
+        guard let club else { return }
+        isPreparingShare = true
+        defer { isPreparingShare = false }
+        do {
+            let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
+            shareBox = ShareBox(share: share)
+        } catch {
+            shareErrorMessage = error.localizedDescription
+        }
+    }
+
     private func loadParticipants() {
         guard cloudKitSyncEnabled, let club else {
             loadingParticipants = false
@@ -184,4 +224,10 @@ struct ClubDetailView: View {
             }
         }
     }
+}
+
+/// CKShare isn't Identifiable, so this wraps it for `.sheet(item:)`.
+private struct ShareBox: Identifiable {
+    let id = UUID()
+    let share: CKShare
 }

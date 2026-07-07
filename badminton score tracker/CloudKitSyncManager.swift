@@ -281,6 +281,9 @@ final class CloudKitSyncManager {
 
     // MARK: - Share Management
 
+    /// Exposed for `CloudSharingView` (Phase 5e), which needs the container alongside a CKShare.
+    var ckContainer: CKContainer { container }
+
     /// Fetches or creates the CKShare for a Club zone. Must be run on the owner's device.
     func fetchOrCreateShare(for club: Club) async throws -> CKShare {
         let zoneID = zoneID(for: club.id)
