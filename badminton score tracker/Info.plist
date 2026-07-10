@@ -35,5 +35,19 @@
 	</array>
 	<key>CKSharingSupported</key>
 	<true/>
+	<!-- AdMob (banner ads for non-Pro users, iOS only). This is Google's
+	     public TEST application ID — replace with the real AdMob app ID
+	     (and the ad-unit ID in AdBannerView.swift) before release. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This identifier will be used to show you more relevant ads. Denying keeps ads non-personalized.</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 </dict>
 </plist>

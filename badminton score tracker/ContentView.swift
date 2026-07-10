@@ -13,6 +13,7 @@ import BadmintonCore
 
 struct ContentView: View {
     @EnvironmentObject private var store: AppStore
+    @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @State private var showScoring = false
 
@@ -72,6 +73,12 @@ struct ContentView: View {
             .fullScreenCover(isPresented: $showScoring) {
                 NewMatchFlow(onClose: { showScoring = false })
                     .environmentObject(AppStore.shared)
+                    .environmentObject(StoreManager.shared)
+            }
+            .safeAreaInset(edge: .bottom) {
+                if storeManager.entitlements.showsAds {
+                    AdBannerView()
+                }
             }
         }
     }

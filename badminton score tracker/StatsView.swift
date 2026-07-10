@@ -66,6 +66,11 @@ struct StatsView: View {
         }
         .navigationTitle("stats.title")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            if storeManager.entitlements.showsAds {
+                AdBannerView()
+            }
+        }
         .onAppear {
             if selectedPlayer.isEmpty { selectedPlayer = myName }
         }
