@@ -14,6 +14,7 @@ import BadmintonCore
 
 struct HistoryView: View {
     @EnvironmentObject private var store: AppStore
+    @EnvironmentObject private var storeManager: StoreManager
     @State private var showingClearConfirmation = false
     /// Every name here must have participated (on either team) for a record
     /// to pass the filter — see StatsCalculator.filteredHistory.
@@ -114,6 +115,11 @@ struct HistoryView: View {
         }
         .navigationTitle("history.title")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            if storeManager.entitlements.showsAds {
+                AdBannerView()
+            }
+        }
         .toolbar {
             if !store.clubs.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) { clubFilterMenu }

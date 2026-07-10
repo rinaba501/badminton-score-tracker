@@ -51,6 +51,13 @@ public enum AppStorageKeys {
     // added to either target's CloudSyncManager.SyncKeys.
     public static let clubLastViewedActivity = "clubLastViewedActivity"
 
+    // Monetization: local cache of owned StoreKit product IDs (JSON-encoded
+    // Set<String>, via OwnedProductsCodec) so entitlement-gated UI has an
+    // instant launch state before Transaction.currentEntitlements resolves.
+    // StoreKit is the cross-device source of truth (per Apple ID) — this key
+    // is device-local and must NEVER be added to CloudSyncManager.SyncKeys.
+    public static let ownedProductIds = "ownedProductIds"
+
     // CloudKit sync (Phase 4, #109). Not KV-synced — these are local device
     // state for the CloudKit transport: the serialized CKSyncEngine state, a
     // one-time "already uploaded local data" flag, and a runtime kill-switch

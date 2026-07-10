@@ -35,6 +35,28 @@ extension Player {
         "pawprint.fill", "leaf.fill", "figure.run", "sportscourt.fill"
     ]
 
+    /// Monetization: the free subset of `avatarImageNames`/`sportIcons`;
+    /// everything else needs Pro or the avatar pack (Entitlements.hasAllAvatars).
+    /// Gated only in the editor's picker grids — AvatarView renders whatever a
+    /// player already has, so existing rosters never visually regress (e.g.
+    /// after a refund).
+    static let freeAvatarImageNames: [String] = [
+        "avatar_shuttlecock_happy", "avatar_shuttlecock_cute",
+        "avatar_racket_happy", "avatar_blue_cap", "avatar_red_cap"
+    ]
+
+    static let freeSportIcons: [String] = [
+        "star.fill", "bolt.fill", "flame.fill", "heart.fill"
+    ]
+
+    /// True for a catalog image/icon outside the free subsets (nil — the
+    /// initials avatar — is always free).
+    static func isPremiumAvatar(_ iconName: String?) -> Bool {
+        guard let iconName else { return false }
+        return !freeAvatarImageNames.contains(iconName) && !freeSportIcons.contains(iconName)
+            && (avatarImageNames.contains(iconName) || sportIcons.contains(iconName))
+    }
+
     var avatarColor: Color { Self.avatarColors[colorIndex % Self.avatarColors.count] }
 }
 

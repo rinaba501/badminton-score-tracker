@@ -22,12 +22,16 @@ struct badminton_score_tracker_Watch_AppApp: App {
                 await CloudKitSyncManager.shared.start()
             }
         }
+        Task { @MainActor in
+            StoreManager.shared.start()
+        }
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(AppStore.shared)
+                .environmentObject(StoreManager.shared)
                 .onOpenURL { url in
                     guard url.scheme == "badminton", url.host == "newmatch" else { return }
                     NotificationCenter.default.post(name: .startNewMatch, object: nil)

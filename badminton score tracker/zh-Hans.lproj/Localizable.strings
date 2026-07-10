@@ -143,3 +143,16 @@
 "playeredit.club_personal" = "个人";
 "common.ok" = "好";
 "common.done" = "完成";
+
+// Monetization (paywall & lock badges)
+"paywall.title" = "Badminton Pro";
+"paywall.pro_features" = "Pro 版可移除 iPhone 上的广告,解锁高级统计以及全部球场主题、头像和图标——一次购买,所有设备通用。";
+"paywall.restore" = "恢复购买";
+"paywall.owned" = "已购买";
+"paywall.unavailable" = "目前无法连接 App Store,请稍后再试。";
+"paywall.locked" = "已锁定";
+"stats.unlock_pro" = "使用 Badminton Pro 解锁";
+"paywall.feature_no_ads" = "无横幅广告";
+"paywall.feature_stats" = "高级统计:对战记录与连胜";
+"paywall.feature_cosmetics" = "全部球场主题、头像和图标";
+"ads.banner" = "广告";

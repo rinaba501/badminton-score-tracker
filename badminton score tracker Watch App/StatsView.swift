@@ -12,10 +12,12 @@ import BadmintonCore
 struct StatsView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
+    @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @State private var selectedPlayer: String = ""
     @State private var selectedClubId: UUID?
+    @State private var showPaywall = false
 
     private var history: [MatchRecord] { appStore.history.filter { $0.clubId == selectedClubId } }
     private var roster: [Player] { appStore.roster.filter { $0.clubId == selectedClubId } }
@@ -57,6 +59,22 @@ struct StatsView: View {
 
     private var longestStreak: Int {
         StatsCalculator.longestStreak(player: activePlayer, playerHistory: playerHistory)
+    }
+
+    /// Stand-in for a Pro-gated stat (best streak, head-to-head): tapping
+    /// opens the paywall.
+    private var lockedProRow: some View {
+        Button(action: { showPaywall = true }) {
+            HStack {
+                Image(systemName: "lock.fill")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .accessibilityHidden(true)
+                Text("stats.unlock_pro")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
     }
 
     private var clubPicker: some View {
@@ -105,7 +123,11 @@ struct StatsView: View {
                     StatRow(label: NSLocalizedString("stats.losses", comment: ""), value: "\(losses)")
                     StatRow(label: NSLocalizedString("stats.win_rate", comment: ""), value: String(format: "%.0f%%", winRate))
                     StatRow(label: NSLocalizedString("stats.avg_points", comment: ""), value: String(format: "%.1f", avgPointsScored))
-                    StatRow(label: NSLocalizedString("stats.best_streak", comment: ""), value: "\(longestStreak)")
+                    if storeManager.entitlements.hasAdvancedStats {
+                        StatRow(label: NSLocalizedString("stats.best_streak", comment: ""), value: "\(longestStreak)")
+                    } else {
+                        lockedProRow
+                    }
                     if avgMatchDuration > 0 {
                         StatRow(label: NSLocalizedString("stats.avg_duration", comment: ""), value: StatsCalculator.durationString(avgMatchDuration))
                     }
@@ -113,15 +135,22 @@ struct StatsView: View {
 
                 if !opponents.isEmpty {
                     Section(header: Text("stats.head_to_head")) {
-                        ForEach(opponents, id: \.self) { opp in
-                            let record = StatsCalculator.headToHead(player: activePlayer, opponent: opp, history: history, roster: roster)
-                            StatRow(label: Player.displayName(for: opp), value: "\(record.wins)W – \(record.losses)L")
+                        if storeManager.entitlements.hasAdvancedStats {
+                            ForEach(opponents, id: \.self) { opp in
+                                let record = StatsCalculator.headToHead(player: activePlayer, opponent: opp, history: history, roster: roster)
+                                StatRow(label: Player.displayName(for: opp), value: "\(record.wins)W – \(record.losses)L")
+                            }
+                        } else {
+                            lockedProRow
                         }
                     }
                 }
             }
         }
         .navigationTitle("stats.title")
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
         .onAppear {
             if selectedPlayer.isEmpty { selectedPlayer = myName }
         }

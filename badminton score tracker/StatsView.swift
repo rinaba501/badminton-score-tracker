@@ -13,10 +13,12 @@ import BadmintonCore
 
 struct StatsView: View {
     @EnvironmentObject private var store: AppStore
+    @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @State private var selectedPlayer: String = ""
     @State private var selectedClubId: UUID?
+    @State private var showPaywall = false
 
     private var history: [MatchRecord] { store.history.filter { $0.clubId == selectedClubId } }
     private var roster: [Player] { store.roster.filter { $0.clubId == selectedClubId } }
@@ -64,6 +66,11 @@ struct StatsView: View {
         }
         .navigationTitle("stats.title")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            if storeManager.entitlements.showsAds {
+                AdBannerView()
+            }
+        }
         .onAppear {
             if selectedPlayer.isEmpty { selectedPlayer = myName }
         }
@@ -71,6 +78,9 @@ struct StatsView: View {
             if !store.clubs.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) { clubFilterMenu }
             }
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
     }
 
@@ -133,12 +143,42 @@ struct StatsView: View {
 
             if !opponents.isEmpty {
                 Section(header: Text("stats.head_to_head")) {
-                    ForEach(opponents, id: \.self) { opp in
-                        headToHeadRow(opp)
+                    if storeManager.entitlements.hasAdvancedStats {
+                        ForEach(opponents, id: \.self) { opp in
+                            headToHeadRow(opp)
+                        }
+                    } else {
+                        lockedProRow
                     }
                 }
             }
         }
+    }
+
+    /// Stand-ins for Pro-gated stats: tapping opens the paywall.
+    private var lockedProRow: some View {
+        Button(action: { showPaywall = true }) {
+            Label("stats.unlock_pro", systemImage: "lock.fill")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func lockedStatCard(labelKey: LocalizedStringKey) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: "lock.fill")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .accessibilityLabel(Text("paywall.locked"))
+            Text(labelKey)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .onTapGesture { showPaywall = true }
     }
 
     // MARK: - Header (ring + record)
@@ -192,7 +232,11 @@ struct StatsView: View {
             statCard(value: "\(wins)", labelKey: "stats.wins")
             statCard(value: "\(losses)", labelKey: "stats.losses")
             statCard(value: String(format: "%.1f", avgPointsScored), labelKey: "stats.avg_points")
-            statCard(value: "\(longestStreak)", labelKey: "stats.best_streak")
+            if storeManager.entitlements.hasAdvancedStats {
+                statCard(value: "\(longestStreak)", labelKey: "stats.best_streak")
+            } else {
+                lockedStatCard(labelKey: "stats.best_streak")
+            }
             if avgMatchDuration > 0 {
                 statCard(value: StatsCalculator.durationString(avgMatchDuration), labelKey: "stats.avg_duration")
             }

@@ -200,3 +200,12 @@
 "clubs.filter_label" = "Filter by Club";
 "playeredit.club" = "Club";
 "playeredit.club_personal" = "Personal";
+
+// Monetization (paywall & lock badges)
+"paywall.title" = "Badminton Pro";
+"paywall.pro_features" = "Pro removes ads on iPhone and unlocks advanced stats plus every court theme, avatar, and icon — one purchase, all your devices.";
+"paywall.restore" = "Restore Purchases";
+"paywall.owned" = "Purchased";
+"paywall.unavailable" = "The App Store is unavailable right now. Try again later.";
+"paywall.locked" = "Locked";
+"stats.unlock_pro" = "Unlock with Badminton Pro";
