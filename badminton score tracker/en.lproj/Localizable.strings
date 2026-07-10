@@ -87,6 +87,8 @@
 "a11y.score_hint" = "Double tap to add a point";
 "a11y.undo" = "Undo last point";
 "a11y.games_won" = "Games won, %1$d to %2$d";
+"a11y.reaction_button" = "%1$@ reactions: %2$d";
+"a11y.my_reaction" = "You reacted";
 "a11y.timer_remaining" = "Time remaining, %@";
 "prematch.near_side" = "Near Side";
 "prematch.far_side" = "Far Side";
@@ -113,6 +115,11 @@
 "clubs.require_confirmation" = "Require Match Confirmation";
 "clubs.pending_confirmation" = "Pending Confirmation";
 "clubs.activity" = "Activity";
+"clubs.reactions" = "Reactions";
+"clubs.comments" = "Comments";
+"clubs.no_comments" = "No comments yet";
+"clubs.comment_placeholder" = "Add a comment";
+"clubs.comment_send" = "Send";
 "clubs.confirm_match" = "Confirm";
 "clubs.decline_match" = "Decline";
 "clubs.challenges" = "Challenges";
@@ -135,3 +142,4 @@
 "playeredit.club" = "Club";
 "playeredit.club_personal" = "Personal";
 "common.ok" = "OK";
+"common.done" = "Done";

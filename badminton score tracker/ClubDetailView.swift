@@ -45,6 +45,7 @@ struct ClubDetailView: View {
     @State private var loadingParticipants = true
     @State private var showRemoveConfirm = false
     @State private var editingPlayer: Player?
+    @State private var reactionEntry: StatsCalculator.ActivityFeedEntry?
     @State private var shareBox: ShareBox?
     @State private var isPreparingShare = false
     @State private var shareErrorMessage: String?
@@ -152,12 +153,7 @@ struct ClubDetailView: View {
                             .font(.callout)
                     } else {
                         ForEach(activityFeed) { entry in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("\(entry.myName) vs \(entry.opponentName)")
-                                Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                            activityRow(entry)
                         }
                     }
                 } header: {
@@ -274,6 +270,12 @@ struct ClubDetailView: View {
                 onSave: savePlayer
             )
         }
+        .sheet(item: $reactionEntry) { entry in
+            MatchReactionsView(
+                clubId: clubId, entry: entry,
+                myParticipantId: myParticipantId, myDisplayName: myDisplayName
+            )
+        }
         .sheet(item: $shareBox) { box in
             CloudSharingView(share: box.share, container: CloudKitSyncManager.shared.ckContainer, itemTitle: club?.name ?? "")
                 .onDisappear { loadParticipants() }
@@ -285,6 +287,67 @@ struct ClubDetailView: View {
             Button("common.ok") { shareErrorMessage = nil }
         } message: {
             Text(shareErrorMessage ?? "")
+        }
+    }
+
+    /// One activity-feed row: result + inline emoji reaction chips + a
+    /// comment-count button that opens the MatchReactionsView sheet (#164).
+    /// The chips are `.borderless` (inside ReactionEmojiButton) so they don't
+    /// hijack the List row's tap area.
+    @ViewBuilder
+    private func activityRow(_ entry: StatsCalculator.ActivityFeedEntry) -> some View {
+        let matchReactions = store.reactions.filter { $0.clubId == clubId && $0.matchId == entry.id }
+        let commentCount = matchReactions.filter { $0.kind == .comment }.count
+        VStack(alignment: .leading, spacing: 4) {
+            Text("\(entry.myName) vs \(entry.opponentName)")
+            Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                ForEach(MatchReactionsView.emojiOptions, id: \.self) { emoji in
+                    ReactionEmojiButton(
+                        emoji: emoji,
+                        count: matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count,
+                        isMine: matchReactions.contains {
+                            $0.kind == .emoji && $0.content == emoji && $0.authorParticipantId == myParticipantId
+                        },
+                        isEnabled: myParticipantId != nil,
+                        action: { toggleReaction(emoji, entry: entry) }
+                    )
+                }
+                Button {
+                    reactionEntry = entry
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "text.bubble")
+                        if commentCount > 0 {
+                            Text("\(commentCount)")
+                                .font(.caption)
+                        }
+                    }
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("clubs.comments")
+            }
+            .padding(.top, 2)
+        }
+    }
+
+    private func toggleReaction(_ emoji: String, entry: StatsCalculator.ActivityFeedEntry) {
+        guard let myParticipantId, let myDisplayName else { return }
+        let existing = store.reactions.first {
+            $0.clubId == clubId && $0.matchId == entry.id &&
+            $0.kind == .emoji && $0.content == emoji && $0.authorParticipantId == myParticipantId
+        }
+        if let existing {
+            store.saveReactions(store.reactions.filter { $0.id != existing.id })
+        } else {
+            let reaction = ReactionRecord(
+                clubId: clubId, matchId: entry.id,
+                authorParticipantId: myParticipantId, authorDisplayName: myDisplayName,
+                kind: .emoji, content: emoji
+            )
+            store.saveReactions(store.reactions + [reaction])
         }
     }
 

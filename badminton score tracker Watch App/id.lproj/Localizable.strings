@@ -109,6 +109,8 @@
 "a11y.score_hint" = "Ketuk dua kali untuk menambah poin";
 "a11y.undo" = "Batalkan poin terakhir";
 "a11y.games_won" = "Game dimenangkan, %1$d berbanding %2$d";
+"a11y.reaction_button" = "Reaksi %1$@: %2$d";
+"a11y.my_reaction" = "Anda bereaksi";
 "a11y.timer_remaining" = "Sisa waktu, %@";
 "a11y.history_sort_toggle" = "Urutan: %@";
 "a11y.history_sort_hint" = "Ketuk dua kali untuk mengubah urutan";
@@ -177,6 +179,8 @@
 "clubs.require_confirmation" = "Wajib Konfirmasi Pertandingan";
 "clubs.pending_confirmation" = "Menunggu Konfirmasi";
 "clubs.activity" = "Aktivitas";
+"clubs.reactions" = "Reaksi";
+"clubs.comments" = "Komentar";
 "clubs.confirm_match" = "Konfirmasi";
 "clubs.decline_match" = "Tolak";
 "clubs.challenges" = "Tantangan";

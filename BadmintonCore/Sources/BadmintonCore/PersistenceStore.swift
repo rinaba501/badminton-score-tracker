@@ -114,6 +114,20 @@ public enum PersistenceStore {
         encodeEnvelope(challenges)
     }
 
+    // MARK: - Reactions ([ReactionRecord]) — Roadmap Phase 5 backlog (#164)
+
+    /// Decode the reaction list, returning an empty array if the data is
+    /// missing or corrupt. Same envelope/tolerance contract as `decodeRoster`.
+    public static func decodeReactions(_ data: Data) -> [ReactionRecord] {
+        decodeTolerant(ReactionRecord.self, from: data)
+    }
+
+    /// Encode the reaction list for storage (as the current versioned
+    /// envelope), or `nil` if encoding fails.
+    public static func encodeReactions(_ reactions: [ReactionRecord]) -> Data? {
+        encodeEnvelope(reactions)
+    }
+
     // MARK: - History ([MatchRecord])
 
     /// Decode the match history, returning an empty array if the data is
@@ -181,6 +195,17 @@ public enum PersistenceStore {
     /// payload is empty or unreadable.
     public static func decodeChallenge(_ data: Data) -> ChallengeRecord? {
         decodeTolerant(ChallengeRecord.self, from: data).first
+    }
+
+    /// Encode a single reaction as a CloudKit payload, or `nil` on failure.
+    public static func encodeReaction(_ reaction: ReactionRecord) -> Data? {
+        encodeEnvelope([reaction])
+    }
+
+    /// Decode a single reaction from a CloudKit payload, or `nil` if the
+    /// payload is empty or unreadable.
+    public static func decodeReaction(_ data: Data) -> ReactionRecord? {
+        decodeTolerant(ReactionRecord.self, from: data).first
     }
 
     // MARK: - Migration
@@ -287,6 +312,11 @@ public enum PersistenceStore {
 
     /// Upserts/deletes to sync when the challenges list changes from `old` to `new`.
     public static func diffChallenges(from old: [ChallengeRecord], to new: [ChallengeRecord]) -> RecordDiff {
+        diff(from: old, to: new)
+    }
+
+    /// Upserts/deletes to sync when the reactions list changes from `old` to `new`.
+    public static func diffReactions(from old: [ReactionRecord], to new: [ReactionRecord]) -> RecordDiff {
         diff(from: old, to: new)
     }
 

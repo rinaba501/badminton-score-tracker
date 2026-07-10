@@ -145,13 +145,7 @@ struct ClubDetailView: View {
                             .font(.caption)
                     } else {
                         ForEach(activityFeed) { entry in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("\(entry.myName) vs \(entry.opponentName)")
-                                    .font(.caption)
-                                Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
+                            activityRow(entry)
                         }
                     }
                 }
@@ -241,6 +235,44 @@ struct ClubDetailView: View {
         .sheet(item: $editingPlayer) { player in
             let others = appStore.roster.filter { $0.id != player.id }.map(\.name)
             PlayerEditView(initialPlayer: player, existingNames: others, clubs: appStore.clubs, onSave: savePlayer)
+        }
+    }
+
+    /// Reaction/comment counts for one feed entry, shown as a caption so the
+    /// row itself stays glanceable; the interactive UI lives in the pushed
+    /// MatchReactionsView (#164).
+    private func reactionSummary(for entry: StatsCalculator.ActivityFeedEntry) -> String {
+        let matchReactions = appStore.reactions.filter { $0.clubId == clubId && $0.matchId == entry.id }
+        var parts = MatchReactionsView.emojiOptions.compactMap { emoji -> String? in
+            let count = matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count
+            return count > 0 ? "\(emoji) \(count)" : nil
+        }
+        let commentCount = matchReactions.filter { $0.kind == .comment }.count
+        if commentCount > 0 {
+            parts.append("💬 \(commentCount)")
+        }
+        return parts.joined(separator: "  ")
+    }
+
+    @ViewBuilder
+    private func activityRow(_ entry: StatsCalculator.ActivityFeedEntry) -> some View {
+        let summary = reactionSummary(for: entry)
+        NavigationLink(destination: MatchReactionsView(
+            clubId: clubId, entry: entry,
+            myParticipantId: myParticipantId, myDisplayName: myDisplayName
+        )) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(entry.myName) vs \(entry.opponentName)")
+                    .font(.caption)
+                Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                if !summary.isEmpty {
+                    Text(summary)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
         }
     }
 
