@@ -12,8 +12,8 @@
 //  AdBannerView (ads are iOS-only; the Watch never shows them).
 //
 
+import Combine
 import StoreKit
-import SwiftUI
 import BadmintonCore
 
 @MainActor
@@ -41,7 +41,7 @@ final class StoreManager: ObservableObject {
     func start() {
         guard updatesTask == nil else { return }
         updatesTask = Task { [weak self] in
-            for await update in Transaction.updates {
+            for await update in StoreKit.Transaction.updates {
                 if case .verified(let transaction) = update {
                     await transaction.finish()
                 }
@@ -84,7 +84,7 @@ final class StoreManager: ObservableObject {
 
     private func refreshEntitlements() async {
         var owned = Set<String>()
-        for await entitlement in Transaction.currentEntitlements {
+        for await entitlement in StoreKit.Transaction.currentEntitlements {
             if case .verified(let transaction) = entitlement,
                transaction.revocationDate == nil {
                 owned.insert(transaction.productID)

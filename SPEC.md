@@ -91,6 +91,31 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 
 ---
 
+## Monetization
+
+Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purchases. Core scoring, history, roster, and clubs stay free forever (the local-first invariant); everything gated is additive polish.
+
+**Products** (all non-consumable; a purchase on either device unlocks both — entitlements come from `Transaction.currentEntitlements`, never synced through iCloud):
+
+| Product | ID | Grants |
+|---|---|---|
+| Badminton Pro | `ritsuma.badminton.pro` | Removes ads + everything below |
+| Court Theme Pack | `ritsuma.badminton.pack.themes` | Premium court themes |
+| Avatar Pack | `ritsuma.badminton.pack.avatars` | Premium avatar images/icons |
+
+**What's gated:**
+
+- **Advanced stats (Pro):** best-streak and the Head-to-Head section on both Stats screens show a lock row that opens the paywall. Matches/wins/losses/win rate/avg points/duration stay free
+- **Premium themes (Pro or Theme Pack):** Red/Purple/Black court themes. The Watch's theme picker shows lock badges and snaps back to the last free theme (opening the paywall); Game screens fall back to Green at render time if the entitlement lapses — the stored setting is never overwritten
+- **Premium avatars (Pro or Avatar Pack):** all but 5 avatar images and 4 sport icons. Editor grids show lock badges → paywall; the Watch's pre-match quick-add simply offers the free subset. Already-assigned premium avatars keep rendering regardless
+- **Banner ads (iOS only, removed by Pro):** a 320×50 AdMob banner at the bottom of the iPhone menu, Match History, and Stats screens — never during live scoring, never on the Watch. First display runs the Google UMP consent flow, then the App Tracking Transparency prompt (denial = non-personalized ads). Shipping TODO: Info.plist `GADApplicationIdentifier` and the ad-unit ID in `AdBannerView.swift` are Google's public test ids until real AdMob ids exist
+
+**Paywall:** reachable from Settings on both platforms (row hidden once Pro is owned) and from every lock badge. Lists the three products with live App Store prices and a Restore Purchases button. `Badminton.storekit` at the repo root enables local purchase testing in Xcode (select it under Scheme → Run → Options → StoreKit Configuration).
+
+**App Store Connect TODO before release:** Paid Apps agreement, create the three IAPs with the exact product IDs above, localized product names/descriptions, price tiers; AdMob account + real app/ad-unit ids; privacy nutrition labels updated for ads/tracking.
+
+---
+
 ## Scoring Rules
 
 - Win a game at `pointsToWin` (default 21) with a 2-point lead

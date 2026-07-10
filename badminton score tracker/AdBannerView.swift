@@ -71,7 +71,7 @@ private final class AdCoordinator: ObservableObject {
         // ATT after UMP: denial just means non-personalized ads.
         ATTrackingManager.requestTrackingAuthorization { [weak self] _ in
             Task { @MainActor in
-                MobileAds.shared.start()
+                MobileAds.shared.start(completionHandler: nil)
                 self?.canRequestAds = true
             }
         }
