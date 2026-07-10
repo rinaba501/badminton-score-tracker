@@ -110,6 +110,8 @@
 "a11y.score_hint" = "ダブルタップで得点を追加";
 "a11y.undo" = "最後の得点を取り消す";
 "a11y.games_won" = "取得ゲーム、%1$d対%2$d";
+"a11y.reaction_button" = "%1$@ のリアクション: %2$d";
+"a11y.my_reaction" = "リアクション済み";
 "a11y.timer_remaining" = "残り時間、%@";
 "a11y.history_sort_toggle" = "並び替え: %@";
 "a11y.history_sort_hint" = "ダブルタップで並び順を変更";
@@ -178,6 +180,8 @@
 "clubs.require_confirmation" = "試合の承認を必須にする";
 "clubs.pending_confirmation" = "承認待ち";
 "clubs.activity" = "アクティビティ";
+"clubs.reactions" = "リアクション";
+"clubs.comments" = "コメント";
 "clubs.confirm_match" = "承認";
 "clubs.decline_match" = "却下";
 "clubs.challenges" = "対戦申請";

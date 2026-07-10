@@ -31,6 +31,9 @@ public enum AppStorageKeys {
     // Roadmap Phase 5 backlog (#162): CloudKit-only, no KV fallback — see
     // ChallengeRecord.swift and AppStore.saveChallenges.
     public static let challenges = "challenges"
+    // Roadmap Phase 5 backlog (#164): CloudKit-only, no KV fallback — see
+    // ReactionRecord.swift and AppStore.saveReactions.
+    public static let reactions = "reactions"
     public static let playerSortOrder = "playerSortOrder"
     public static let pointsToWin = "pointsToWin"
     public static let gamesInMatch = "gamesInMatch"

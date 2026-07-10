@@ -132,6 +132,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - **Club standings (Roadmap Phase 5 backlog, #159)** — `ClubDetailView` (both targets) shows a per-club leaderboard (name, wins-losses) sorted by win rate then wins
 - **Match confirmation (Roadmap Phase 5 backlog, #160)** — a club owner can require matches to be confirmed before they count toward standings (default off, invisible for personal matches). Pending matches show in a Pending Confirmation section on `ClubDetailView` with Confirm/Decline actions; declining returns the match to Personal rather than deleting it
 - **Tag a new match with a club (Roadmap Phase 5 backlog, #169)** — `PreMatchView` (both targets) offers the same "Club" picker (default "Personal") on its near-side player step, hidden entirely for a solo user with no clubs; the selection is threaded into the saved `MatchRecord.clubId`, making club standings (#159) and match confirmation (#160) reachable through normal play
+- **Reactions & comments on a club match (Roadmap Phase 5 backlog, #164)** — each club activity-feed entry supports emoji reactions (👍 🔥 🏸 😮; tap to toggle, one per member per emoji) and one-line comments (≤200 chars). Watch: the feed row shows a count summary and pushes a detail screen with emoji toggling and a read-only comment list; iOS: emoji chips sit inline on the row, and a comment sheet lets comments be composed (real keyboard — the Watch never authors comments, only reads them). Stored as `ReactionRecord`s in the club's CloudKit zone, CloudKit-only like challenges: authoring needs CloudKit sync on plus a resolved CKShare identity, otherwise the controls are disabled. Reactions on a deleted match/club become invisible orphans (reads join on `clubId`+`matchId`) and are never purged or resurrected. A new reaction from a clubmate also lights the club's unread-activity dot
 
 ---
 
@@ -199,7 +200,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
 | 163 | Club seasons: time-boxed standings resets — Roadmap Phase 5 backlog |
-| 164 | Reactions / comments on a match — Roadmap Phase 5 backlog |
 | 165 | Push notifications for async club interactions — Roadmap Phase 5 backlog |
 
 ---
@@ -238,3 +238,4 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 169 | Club picker in PreMatchView so matches actually get tagged with clubId (Roadmap Phase 5 backlog) | #170 |
 | 161 | Club activity feed: chronological recent results with per-club unread marker (Roadmap Phase 5 backlog) | #172 |
 | 162 | Club challenges: "want to play?" ping between members (Roadmap Phase 5 backlog) | #173 |
+| 164 | Reactions / comments on a club match (Roadmap Phase 5 backlog) | #174 |

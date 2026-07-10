@@ -109,6 +109,8 @@
 "a11y.score_hint" = "अंक जोड़ने के लिए डबल टैप करें";
 "a11y.undo" = "अंतिम अंक पूर्ववत करें";
 "a11y.games_won" = "जीते गए गेम, %1$d बनाम %2$d";
+"a11y.reaction_button" = "%1$@ रिएक्शन: %2$d";
+"a11y.my_reaction" = "आपने रिएक्शन किया";
 "a11y.timer_remaining" = "शेष समय, %@";
 "a11y.history_sort_toggle" = "क्रम: %@";
 "a11y.history_sort_hint" = "क्रम बदलने के लिए डबल टैप करें";
@@ -177,6 +179,8 @@
 "clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
 "clubs.pending_confirmation" = "पुष्टि लंबित";
 "clubs.activity" = "गतिविधि";
+"clubs.reactions" = "रिएक्शन";
+"clubs.comments" = "टिप्पणियाँ";
 "clubs.confirm_match" = "पुष्टि करें";
 "clubs.decline_match" = "अस्वीकार करें";
 "clubs.challenges" = "चुनौतियाँ";

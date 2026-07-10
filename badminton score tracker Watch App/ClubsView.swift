@@ -53,7 +53,10 @@ struct ClubsView: View {
         let matches = appStore.history.filter {
             $0.clubId == club.id && ($0.isConfirmed || !(club.requireMatchConfirmation ?? false))
         }
-        guard let latest = matches.map(\.date).max() else { return false }
+        // Reactions/comments (#164) count as activity too, so a teammate's
+        // 👍 on an old match still lights the dot.
+        let reactionDates = appStore.reactions.filter { $0.clubId == club.id }.map(\.createdDate)
+        guard let latest = (matches.map(\.date) + reactionDates).max() else { return false }
         let lastViewed = ClubActivityCodec.decode(lastViewedData)[club.id.uuidString]
         return lastViewed == nil || latest > lastViewed!
     }

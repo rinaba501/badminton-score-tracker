@@ -109,6 +109,8 @@
 "a11y.score_hint" = "双击加一分";
 "a11y.undo" = "撤销上一分";
 "a11y.games_won" = "已胜局数，%1$d比%2$d";
+"a11y.reaction_button" = "%1$@ 回应:%2$d";
+"a11y.my_reaction" = "你已回应";
 "a11y.timer_remaining" = "剩余时间，%@";
 "a11y.history_sort_toggle" = "排序方式：%@";
 "a11y.history_sort_hint" = "双击以更改排序方式";
@@ -177,6 +179,8 @@
 "clubs.require_confirmation" = "需要比赛确认";
 "clubs.pending_confirmation" = "待确认";
 "clubs.activity" = "动态";
+"clubs.reactions" = "表情回应";
+"clubs.comments" = "评论";
 "clubs.confirm_match" = "确认";
 "clubs.decline_match" = "拒绝";
 "clubs.challenges" = "挑战";

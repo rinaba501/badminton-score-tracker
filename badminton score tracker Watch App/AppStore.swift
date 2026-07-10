@@ -24,6 +24,9 @@ final class AppStore: ObservableObject {
     /// "personal" challenge, so unlike roster/history there's no KV fallback
     /// at all (see saveChallenges).
     @Published private(set) var challenges: [ChallengeRecord]
+    /// Roadmap Phase 5 backlog (#164): CloudKit-only, same contract as
+    /// `challenges` — no KV fallback (see saveReactions).
+    @Published private(set) var reactions: [ReactionRecord]
 
     @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
 
@@ -44,10 +47,12 @@ final class AppStore: ObservableObject {
         let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
         let c = UserDefaults.standard.data(forKey: AppStorageKeys.clubs) ?? Data()
         let ch = UserDefaults.standard.data(forKey: AppStorageKeys.challenges) ?? Data()
+        let re = UserDefaults.standard.data(forKey: AppStorageKeys.reactions) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
         clubs = PersistenceStore.decodeClubs(c)
         challenges = PersistenceStore.decodeChallenges(ch)
+        reactions = PersistenceStore.decodeReactions(re)
     }
 
     // Upgrades on-disk data to the current schema before the first decode.
@@ -158,6 +163,23 @@ final class AppStore: ObservableObject {
         }
     }
 
+    // Roadmap Phase 5 backlog (#164): reactions follow saveChallenges'
+    // CloudKit-only contract exactly — no KV-store fallback; with CloudKit
+    // sync off the reaction UI is read-only over whatever was already synced.
+    func saveReactions(_ reactions: [ReactionRecord]) {
+        guard let encoded = PersistenceStore.encodeReactions(reactions) else { return }
+        let diff = PersistenceStore.diffReactions(from: self.reactions, to: reactions)
+        let deletedReactionClubIds = Dictionary(
+            self.reactions.filter { diff.deletedIds.contains($0.id) }.map { ($0.id, $0.clubId) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        UserDefaults.standard.set(encoded, forKey: AppStorageKeys.reactions)
+        self.reactions = reactions
+        if CloudKitSyncManager.isEnabled {
+            CloudKitSyncManager.shared.enqueueReactionChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedReactionClubIds)
+        }
+    }
+
     // Called by CloudSyncManager after external iCloud data lands in UserDefaults
     // (KV path). The CloudKit path uses the targeted apply* methods below instead.
     func reloadFromStorage() {
@@ -176,7 +198,8 @@ final class AppStore: ObservableObject {
     /// appends new).
     func applyRemoteUpsert(
         records: [MatchRecord], players: [Player], clubs newClubs: [Club],
-        challenges newChallenges: [ChallengeRecord] = []
+        challenges newChallenges: [ChallengeRecord] = [],
+        reactions newReactions: [ReactionRecord] = []
     ) {
         if !records.isEmpty {
             var byId = Dictionary(history.map { ($0.id, $0) }, uniquingKeysWith: { _, new in new })
@@ -226,10 +249,27 @@ final class AppStore: ObservableObject {
             challenges = updated
             persist(challenges: challenges)
         }
+        if !newReactions.isEmpty {
+            var updated = reactions
+            var indexById = Dictionary(reactions.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+            for reaction in newReactions {
+                if let idx = indexById[reaction.id] {
+                    updated[idx] = reaction
+                } else {
+                    indexById[reaction.id] = updated.count
+                    updated.append(reaction)
+                }
+            }
+            reactions = updated
+            persist(reactions: reactions)
+        }
     }
 
     /// Remove remotely-deleted records by id from the caches and persist.
-    func applyRemoteDeletions(recordIds: [UUID], playerIds: [UUID], clubIds: [UUID], challengeIds: [UUID] = []) {
+    func applyRemoteDeletions(
+        recordIds: [UUID], playerIds: [UUID], clubIds: [UUID],
+        challengeIds: [UUID] = [], reactionIds: [UUID] = []
+    ) {
         if !recordIds.isEmpty {
             let removed = Set(recordIds)
             history = history.filter { !removed.contains($0.id) }
@@ -249,6 +289,11 @@ final class AppStore: ObservableObject {
             let removed = Set(challengeIds)
             challenges = challenges.filter { !removed.contains($0.id) }
             persist(challenges: challenges)
+        }
+        if !reactionIds.isEmpty {
+            let removed = Set(reactionIds)
+            reactions = reactions.filter { !removed.contains($0.id) }
+            persist(reactions: reactions)
         }
     }
 
@@ -273,6 +318,12 @@ final class AppStore: ObservableObject {
     private func persist(challenges: [ChallengeRecord]) {
         if let encoded = PersistenceStore.encodeChallenges(challenges) {
             UserDefaults.standard.set(encoded, forKey: AppStorageKeys.challenges)
+        }
+    }
+
+    private func persist(reactions: [ReactionRecord]) {
+        if let encoded = PersistenceStore.encodeReactions(reactions) {
+            UserDefaults.standard.set(encoded, forKey: AppStorageKeys.reactions)
         }
     }
 }
