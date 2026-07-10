@@ -32,9 +32,21 @@ struct PreMatchView: View {
 
     @State private var step: Step = .pickMyPlayer
     @State private var showAddPlayer = false
+    @EnvironmentObject private var storeManager: StoreManager
     @State private var newPlayerName = ""
     @State private var newPlayerColorIndex = 0
     @State private var newPlayerIconName: String? = nil
+
+    /// The quick-add sheet stays friction-free: unentitled users just see the
+    /// free avatar subset (no locks/paywall here — the full PlayerEditView
+    /// carries those).
+    private var quickAddAvatarImages: [String] {
+        storeManager.entitlements.hasAllAvatars ? Player.avatarImageNames : Player.freeAvatarImageNames
+    }
+
+    private var quickAddSportIcons: [String] {
+        storeManager.entitlements.hasAllAvatars ? Player.sportIcons : Player.freeSportIcons
+    }
 
     enum Step { case pickMyPlayer, pickMyPartner, pickOpponent, pickOpponentPartner }
 
@@ -173,7 +185,7 @@ struct PreMatchView: View {
                         .frame(height: 36)
                         .onTapGesture { newPlayerIconName = nil }
 
-                        ForEach(Player.avatarImageNames, id: \.self) { imageName in
+                        ForEach(quickAddAvatarImages, id: \.self) { imageName in
                             ZStack {
                                 RoundedRectangle(cornerRadius: 6)
                                     .fill(newPlayerIconName == imageName ? Color.blue.opacity(0.5) : Color.secondary.opacity(0.25))
@@ -191,7 +203,7 @@ struct PreMatchView: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     LazyVGrid(columns: columns, spacing: 8) {
-                        ForEach(Player.sportIcons, id: \.self) { icon in
+                        ForEach(quickAddSportIcons, id: \.self) { icon in
                             ZStack {
                                 RoundedRectangle(cornerRadius: 6)
                                     .fill(newPlayerIconName == icon ? Color.blue.opacity(0.5) : Color.secondary.opacity(0.25))

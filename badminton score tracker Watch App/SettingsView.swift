@@ -25,9 +25,15 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
     @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
     @EnvironmentObject private var appStore: AppStore
+    @EnvironmentObject private var storeManager: StoreManager
     @ObservedObject private var cloudSync = CloudSyncManager.shared
     @State private var editingPlayer: Player? = nil
     @State private var showAddPlayer = false
+    @State private var showPaywall = false
+    /// Where the theme picker snaps back to when a premium theme is tapped
+    /// without the entitlement (tracks the last free selection; the paywall
+    /// opens instead).
+    @State private var lastFreeTheme: CourtTheme = .green
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -94,6 +100,15 @@ struct SettingsView: View {
 
             Section(header: Text("settings.sync"), footer: Text("settings.sync_caption")) {
                 Toggle("settings.sync_cloudkit", isOn: $cloudKitSyncEnabled)
+            }
+
+            if !storeManager.entitlements.isPro {
+                Section {
+                    Button(action: { showPaywall = true }) {
+                        Label(LocalizedStringKey("paywall.title"), systemImage: "crown.fill")
+                            .foregroundColor(.yellow)
+                    }
+                }
             }
 
             Section(header: Text("settings.game_mode")) {
@@ -183,8 +198,25 @@ struct SettingsView: View {
                                 .fill(theme.color)
                                 .frame(width: 12, height: 12)
                             Text(LocalizedStringKey("theme.\(theme.rawValue.lowercased())"))
+                            if theme.isPremium && !storeManager.entitlements.hasAllThemes {
+                                Spacer()
+                                Image(systemName: "lock.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .accessibilityLabel(Text("paywall.locked"))
+                            }
                         }
                         .tag(theme)
+                    }
+                }
+                // Picking a locked theme opens the paywall instead of
+                // sticking: snap back to the last free selection.
+                .onChange(of: courtTheme) { newTheme in
+                    if newTheme.isPremium && !storeManager.entitlements.hasAllThemes {
+                        courtTheme = lastFreeTheme
+                        showPaywall = true
+                    } else if !newTheme.isPremium {
+                        lastFreeTheme = newTheme
                     }
                 }
             }
@@ -242,6 +274,12 @@ struct SettingsView: View {
         .sheet(item: $editingPlayer) { player in
             let others = roster.filter { $0.id != player.id }.map { $0.name }
             PlayerEditView(initialPlayer: player, existingNames: others, clubs: appStore.clubs, onSave: savePlayerEdit)
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+        .onAppear {
+            if !courtTheme.isPremium { lastFreeTheme = courtTheme }
         }
     }
 }

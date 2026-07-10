@@ -143,3 +143,15 @@
 "playeredit.club_personal" = "व्यक्तिगत";
 "common.ok" = "ठीक है";
 "common.done" = "पूर्ण";
+
+// Monetization (paywall & lock badges)
+"paywall.title" = "Badminton Pro";
+"paywall.pro_features" = "Pro iPhone पर विज्ञापन हटाता है और उन्नत आँकड़े तथा सभी कोर्ट थीम, अवतार और आइकन अनलॉक करता है — एक खरीद, सभी डिवाइस।";
+"paywall.restore" = "खरीदारी पुनर्स्थापित करें";
+"paywall.owned" = "खरीदा गया";
+"paywall.unavailable" = "App Store अभी उपलब्ध नहीं है। बाद में फिर से प्रयास करें।";
+"paywall.locked" = "लॉक है";
+"stats.unlock_pro" = "Badminton Pro से अनलॉक करें";
+"paywall.feature_no_ads" = "कोई बैनर विज्ञापन नहीं";
+"paywall.feature_stats" = "उन्नत आँकड़े: आमने-सामने रिकॉर्ड और जीत की लय";
+"paywall.feature_cosmetics" = "सभी कोर्ट थीम, अवतार और आइकन";

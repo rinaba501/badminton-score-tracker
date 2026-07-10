@@ -56,6 +56,18 @@ public struct Entitlements: Equatable {
     /// Banner ads (iOS only) show until Pro is owned. The packs deliberately
     /// do NOT remove ads — ad removal is Pro's headline feature.
     public var showsAds: Bool { !isPro }
+
+    /// Whether a storefront product is effectively owned — used by the
+    /// paywalls to disable buy buttons. A pack counts as owned when Pro is,
+    /// so Pro owners can't redundantly buy a pack Pro already includes.
+    public func owns(_ productID: String) -> Bool {
+        switch productID {
+        case ProductID.pro: return isPro
+        case ProductID.themePack: return hasAllThemes
+        case ProductID.avatarPack: return hasAllAvatars
+        default: return false
+        }
+    }
 }
 
 /// Codec for `AppStorageKeys.ownedProductIds`'s `Data`-backed `Set<String>`

@@ -200,3 +200,12 @@
 "clubs.filter_label" = "क्लब के अनुसार फ़िल्टर करें";
 "playeredit.club" = "क्लब";
 "playeredit.club_personal" = "व्यक्तिगत";
+
+// Monetization (paywall & lock badges)
+"paywall.title" = "Badminton Pro";
+"paywall.pro_features" = "Pro iPhone पर विज्ञापन हटाता है और उन्नत आँकड़े तथा सभी कोर्ट थीम, अवतार और आइकन अनलॉक करता है — एक खरीद, सभी डिवाइस।";
+"paywall.restore" = "खरीदारी पुनर्स्थापित करें";
+"paywall.owned" = "खरीदा गया";
+"paywall.unavailable" = "App Store अभी उपलब्ध नहीं है। बाद में फिर से प्रयास करें।";
+"paywall.locked" = "लॉक है";
+"stats.unlock_pro" = "Badminton Pro से अनलॉक करें";

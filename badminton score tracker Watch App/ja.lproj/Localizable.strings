@@ -201,3 +201,12 @@
 "clubs.filter_label" = "クラブで絞り込む";
 "playeredit.club" = "クラブ";
 "playeredit.club_personal" = "個人";
+
+// Monetization (paywall & lock badges)
+"paywall.title" = "Badminton Pro";
+"paywall.pro_features" = "ProはiPhoneの広告を削除し、詳細統計とすべてのコートテーマ・アバター・アイコンを解除します。一度の購入で全デバイスに適用されます。";
+"paywall.restore" = "購入を復元";
+"paywall.owned" = "購入済み";
+"paywall.unavailable" = "現在App Storeを利用できません。後でもう一度お試しください。";
+"paywall.locked" = "ロック中";
+"stats.unlock_pro" = "Badminton Proで解除";

@@ -14,6 +14,17 @@ enum CourtTheme: String, Codable, CaseIterable {
     case purple = "Purple"
     case black  = "Black"
 
+    /// Monetization: green/blue are free; the rest need Pro or the theme pack
+    /// (Entitlements.hasAllThemes). Gated at the picker (SettingsView) and at
+    /// the read site (GameView falls back to .green when unentitled — e.g.
+    /// after a refund — without ever writing the setting back).
+    var isPremium: Bool {
+        switch self {
+        case .green, .blue: return false
+        case .red, .purple, .black: return true
+        }
+    }
+
     var color: Color {
         switch self {
         case .green:  return Color(red: 0.2, green: 0.6, blue: 0.2)

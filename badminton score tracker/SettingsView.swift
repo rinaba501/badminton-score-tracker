@@ -11,14 +11,28 @@ import BadmintonCore
 
 struct SettingsView: View {
     @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
+    @EnvironmentObject private var storeManager: StoreManager
+    @State private var showPaywall = false
 
     var body: some View {
         List {
+            if !storeManager.entitlements.isPro {
+                Section {
+                    Button(action: { showPaywall = true }) {
+                        Label("paywall.title", systemImage: "crown.fill")
+                            .foregroundStyle(.yellow)
+                    }
+                }
+            }
+
             Section(header: Text("settings.sync"), footer: Text("settings.sync_caption")) {
                 Toggle("settings.sync_cloudkit", isOn: $cloudKitSyncEnabled)
             }
         }
         .navigationTitle("settings.title")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
     }
 }

@@ -21,8 +21,10 @@ struct PlayerEditView: View {
     let onSave: (Player) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var storeManager: StoreManager
     @State private var localPlayer: Player
     @State private var isDuplicate = false
+    @State private var showPaywall = false
 
     init(initialPlayer: Player, existingNames: [String] = [], clubs: [Club] = [], onSave: @escaping (Player) -> Void) {
         self.initialPlayer = initialPlayer
@@ -109,6 +111,9 @@ struct PlayerEditView: View {
                         .disabled(!nameIsValid)
                 }
             }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
         }
     }
 
@@ -137,7 +142,7 @@ struct PlayerEditView: View {
             }
 
             ForEach(Player.avatarImageNames, id: \.self) { imageName in
-                avatarCell(isSelected: localPlayer.iconName == imageName) {
+                avatarCell(isSelected: localPlayer.iconName == imageName, iconName: imageName) {
                     localPlayer.iconName = imageName
                 } content: {
                     Image(imageName).resizable().scaledToFit().padding(4)
@@ -150,7 +155,7 @@ struct PlayerEditView: View {
     private var iconGrid: some View {
         LazyVGrid(columns: columns, spacing: 10) {
             ForEach(Player.sportIcons, id: \.self) { icon in
-                avatarCell(isSelected: localPlayer.iconName == icon) {
+                avatarCell(isSelected: localPlayer.iconName == icon, iconName: icon) {
                     localPlayer.iconName = icon
                 } content: {
                     Image(systemName: icon).font(.title3).foregroundStyle(.white)
@@ -160,17 +165,35 @@ struct PlayerEditView: View {
         .padding(.vertical, 4)
     }
 
+    /// One selectable avatar/icon cell. Premium catalog entries (`iconName`
+    /// outside the free subsets) show a lock while unentitled and open the
+    /// paywall instead of selecting.
     private func avatarCell<Content: View>(isSelected: Bool,
+                                           iconName: String? = nil,
                                            action: @escaping () -> Void,
                                            @ViewBuilder content: () -> Content) -> some View {
-        ZStack {
+        let locked = Player.isPremiumAvatar(iconName) && !storeManager.entitlements.hasAllAvatars
+        return ZStack {
             RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? Color.accentColor : Color.secondary.opacity(0.2))
             content()
+                .opacity(locked ? 0.4 : 1)
+            if locked {
+                Image(systemName: "lock.fill")
+                    .font(.caption)
+                    .foregroundStyle(.white)
+                    .accessibilityLabel(Text("paywall.locked"))
+            }
         }
         .frame(width: 44, height: 44)
         .contentShape(RoundedRectangle(cornerRadius: 8))
-        .onTapGesture(perform: action)
+        .onTapGesture {
+            if locked {
+                showPaywall = true
+            } else {
+                action()
+            }
+        }
         .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
     }
 }

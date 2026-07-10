@@ -18,8 +18,10 @@ struct PlayerEditView: View {
     /// pre-match add-player flow) don't need to thread `AppStore.clubs` through.
     let clubs: [Club]
 
+    @EnvironmentObject private var storeManager: StoreManager
     @State private var localPlayer: Player
     @State private var isDuplicate = false
+    @State private var showPaywall = false
 
     init(initialPlayer: Player, existingNames: [String] = [], clubs: [Club] = [], onSave: @escaping (Player) -> Void) {
         self.initialPlayer = initialPlayer
@@ -118,18 +120,12 @@ struct PlayerEditView: View {
                     .onTapGesture { localPlayer.iconName = nil }
 
                     ForEach(Player.avatarImageNames, id: \.self) { imageName in
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(localPlayer.iconName == imageName
-                                      ? Color.blue.opacity(0.5)
-                                      : Color.secondary.opacity(0.25))
+                        avatarCell(isSelected: localPlayer.iconName == imageName, iconName: imageName) {
                             Image(imageName)
                                 .resizable()
                                 .scaledToFit()
                                 .padding(3)
                         }
-                        .frame(height: 36)
-                        .onTapGesture { localPlayer.iconName = imageName }
                     }
                 }
 
@@ -139,17 +135,11 @@ struct PlayerEditView: View {
 
                 LazyVGrid(columns: columns, spacing: 8) {
                     ForEach(Player.sportIcons, id: \.self) { icon in
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(localPlayer.iconName == icon
-                                      ? Color.blue.opacity(0.5)
-                                      : Color.secondary.opacity(0.25))
+                        avatarCell(isSelected: localPlayer.iconName == icon, iconName: icon) {
                             Image(systemName: icon)
                                 .font(.system(size: 14))
                                 .foregroundColor(.white)
                         }
-                        .frame(height: 36)
-                        .onTapGesture { localPlayer.iconName = icon }
                     }
                 }
 
@@ -165,5 +155,36 @@ struct PlayerEditView: View {
         }
         .navigationTitle(localPlayer.name)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+    }
+
+    /// One selectable avatar/icon cell. Premium catalog entries show a lock
+    /// while unentitled and open the paywall instead of selecting.
+    private func avatarCell<Content: View>(isSelected: Bool,
+                                           iconName: String,
+                                           @ViewBuilder content: () -> Content) -> some View {
+        let locked = Player.isPremiumAvatar(iconName) && !storeManager.entitlements.hasAllAvatars
+        return ZStack {
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? Color.blue.opacity(0.5) : Color.secondary.opacity(0.25))
+            content()
+                .opacity(locked ? 0.4 : 1)
+            if locked {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(.white)
+                    .accessibilityLabel(Text("paywall.locked"))
+            }
+        }
+        .frame(height: 36)
+        .onTapGesture {
+            if locked {
+                showPaywall = true
+            } else {
+                localPlayer.iconName = iconName
+            }
+        }
     }
 }

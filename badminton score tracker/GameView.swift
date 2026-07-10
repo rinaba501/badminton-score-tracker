@@ -17,10 +17,18 @@ struct GameView: View {
     let onExit: () -> Void
 
     @EnvironmentObject private var appStore: AppStore
+    @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
 
     @StateObject private var viewModel = GameViewModel()
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    /// Read-site theme gate: a premium theme renders only while entitled
+    /// (Pro or theme pack); otherwise fall back to green without writing the
+    /// setting back — the entitlement may return (restore, re-purchase).
+    private var effectiveTheme: CourtTheme {
+        !courtTheme.isPremium || storeManager.entitlements.hasAllThemes ? courtTheme : .green
+    }
 
     // MARK: - Avatar helpers
 
@@ -161,7 +169,7 @@ struct GameView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                courtTheme.color.ignoresSafeArea()
+                effectiveTheme.color.ignoresSafeArea()
                 scoreboard
                 pointBanners
                 resultOverlay

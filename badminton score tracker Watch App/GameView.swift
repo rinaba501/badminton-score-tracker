@@ -55,12 +55,20 @@ struct GameView: View {
     @EnvironmentObject private var appStore: AppStore
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
     @AppStorage(AppStorageKeys.enableCrownScoring) private var enableCrownScoring = true
+    @EnvironmentObject private var storeManager: StoreManager
 
     @StateObject private var viewModel = GameViewModel()
     @State private var crownValue: Double = 0
     @State private var lastCrownScore: Double = 0
     private let crownThreshold: Double = 1.0
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    /// Read-site theme gate: a premium theme renders only while entitled
+    /// (Pro or theme pack); otherwise fall back to green without writing the
+    /// setting back — the entitlement may return (restore, re-purchase).
+    private var effectiveTheme: CourtTheme {
+        !courtTheme.isPremium || storeManager.entitlements.hasAllThemes ? courtTheme : .green
+    }
 
     // MARK: - Avatar helpers (presentation — reads published appStore.roster)
 
@@ -245,7 +253,7 @@ struct GameView: View {
 
     var body: some View {
         ZStack {
-            courtTheme.color
+            effectiveTheme.color
                 .ignoresSafeArea()
 
             scoreboard

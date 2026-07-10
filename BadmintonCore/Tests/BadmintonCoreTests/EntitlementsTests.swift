@@ -47,6 +47,17 @@ struct EntitlementsTests {
         #expect(e.showsAds)
     }
 
+    @Test func proCountsPacksAsOwnedSoTheyCannotBeBoughtTwice() {
+        let pro = Entitlements(ownedProductIDs: [ProductID.pro])
+        #expect(pro.owns(ProductID.pro))
+        #expect(pro.owns(ProductID.themePack))
+        #expect(pro.owns(ProductID.avatarPack))
+        let free = Entitlements.none
+        #expect(!free.owns(ProductID.pro))
+        #expect(!free.owns(ProductID.themePack))
+        #expect(!free.owns("some.future.product"))
+    }
+
     @Test func unknownProductIDsAreIgnored() {
         let e = Entitlements(ownedProductIDs: ["some.future.product"])
         #expect(e == .none)
