@@ -31,6 +31,29 @@ final class AppStore: ObservableObject {
     /// Roadmap Phase 5 backlog (#164): CloudKit-only, same contract as
     /// `challenges` — no KV fallback (see saveReactions).
     @Published private(set) var reactions: [ReactionRecord]
+    /// Friends v1 (graph-only, #7c): public-database CloudKit only — unlike
+    /// challenges/reactions (club-scoped, still synced via CKSyncEngine's
+    /// shared/private DB `enqueue*` path), friend-request writes bypass
+    /// CKSyncEngine entirely and go straight to the public DB via
+    /// `CloudKitSyncManager.sendFriendRequest`/`respondToFriendRequest` (see
+    /// saveFriendRequests). This cache is updated only after such a direct
+    /// call succeeds, or after a `fetchMyFriendRequests()` poll.
+    @Published private(set) var friendRequests: [FriendRequest]
+
+    /// Accepted friend requests, derived — Friends v1 has no separate
+    /// `Friendship` record (see `FriendRequest.swift`).
+    var friends: [(participantId: String, displayName: String)] {
+        friendRequests.compactMap { request in
+            guard request.status == .accepted else { return nil }
+            guard let myId = UserDefaults.standard.string(forKey: AppStorageKeys.myParticipantId) else { return nil }
+            if request.fromParticipantId == myId {
+                return (request.toParticipantId, request.toDisplayName)
+            } else if request.toParticipantId == myId {
+                return (request.fromParticipantId, request.fromDisplayName)
+            }
+            return nil
+        }
+    }
 
     @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
 
@@ -53,11 +76,13 @@ final class AppStore: ObservableObject {
         let c = UserDefaults.standard.data(forKey: AppStorageKeys.clubs) ?? Data()
         let ch = UserDefaults.standard.data(forKey: AppStorageKeys.challenges) ?? Data()
         let re = UserDefaults.standard.data(forKey: AppStorageKeys.reactions) ?? Data()
+        let fr = UserDefaults.standard.data(forKey: AppStorageKeys.friendRequests) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
         clubs = PersistenceStore.decodeClubs(c)
         challenges = PersistenceStore.decodeChallenges(ch)
         reactions = PersistenceStore.decodeReactions(re)
+        friendRequests = PersistenceStore.decodeFriendRequests(fr)
     }
 
     // Upgrades on-disk data to the current schema before the first decode.
@@ -183,6 +208,20 @@ final class AppStore: ObservableObject {
         if CloudKitSyncManager.isEnabled {
             CloudKitSyncManager.shared.enqueueReactionChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedReactionClubIds)
         }
+    }
+
+    // Friends v1 (#7c): unlike every other save* method here, this does NOT
+    // enqueue to CloudKitSyncManager's CKSyncEngine — friend requests live in
+    // the public database, which has no CKSyncEngine of its own (see
+    // CloudKitSyncManager's "Friends" section). The actual network write
+    // already happened via a direct sendFriendRequest/respondToFriendRequest
+    // call (or a fetchMyFriendRequests() poll); this just reconciles the
+    // local cache to match afterward, the same shape as applyRemoteUpsert
+    // but driven by a poll result instead of a CKSyncEngine event.
+    func saveFriendRequests(_ friendRequests: [FriendRequest]) {
+        guard let encoded = PersistenceStore.encodeFriendRequests(friendRequests) else { return }
+        UserDefaults.standard.set(encoded, forKey: AppStorageKeys.friendRequests)
+        self.friendRequests = friendRequests
     }
 
     // Called by CloudSyncManager after external iCloud data lands in UserDefaults
