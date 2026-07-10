@@ -101,7 +101,7 @@ struct MatchReactionsView: View {
             ForEach(Self.emojiOptions, id: \.self) { emoji in
                 ReactionEmojiButton(
                     emoji: emoji,
-                    count: matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count,
+                    reactionCount: matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count,
                     isMine: myReaction(for: emoji) != nil,
                     isEnabled: myParticipantId != nil,
                     action: { toggle(emoji) }
@@ -150,7 +150,7 @@ struct MatchReactionsView: View {
 /// List row's tap; tinted when the current user has this reaction.
 struct ReactionEmojiButton: View {
     let emoji: String
-    let count: Int
+    let reactionCount: Int
     let isMine: Bool
     let isEnabled: Bool
     let action: () -> Void
@@ -159,8 +159,8 @@ struct ReactionEmojiButton: View {
         Button(action: action) {
             HStack(spacing: 4) {
                 Text(emoji)
-                if count > 0 {
-                    Text("\(count)")
+                if reactionCount > 0 {
+                    Text("\(reactionCount)")
                         .font(.caption)
                         .foregroundStyle(isMine ? Color.accentColor : Color.secondary)
                 }
@@ -174,7 +174,7 @@ struct ReactionEmojiButton: View {
         }
         .buttonStyle(.borderless)
         .disabled(!isEnabled)
-        .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.reaction_button", comment: ""), emoji, count)))
+        .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.reaction_button", comment: ""), emoji, reactionCount)))
         .accessibilityHint(isMine ? Text("a11y.my_reaction") : Text(""))
     }
 }

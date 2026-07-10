@@ -307,7 +307,7 @@ struct ClubDetailView: View {
                 ForEach(MatchReactionsView.emojiOptions, id: \.self) { emoji in
                     ReactionEmojiButton(
                         emoji: emoji,
-                        count: matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count,
+                        reactionCount: matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count,
                         isMine: matchReactions.contains {
                             $0.kind == .emoji && $0.content == emoji && $0.authorParticipantId == myParticipantId
                         },

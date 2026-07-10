@@ -71,21 +71,21 @@ struct MatchReactionsView: View {
 
     @ViewBuilder
     private func emojiRow(_ emoji: String) -> some View {
-        let count = matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count
+        let reactionCount = matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count
         let mine = myReaction(for: emoji) != nil
         Button(action: { toggle(emoji) }) {
             HStack {
                 Text(emoji)
                 Spacer()
-                if count > 0 {
-                    Text("\(count)")
+                if reactionCount > 0 {
+                    Text("\(reactionCount)")
                         .font(.caption)
                         .foregroundColor(mine ? .accentColor : .secondary)
                 }
             }
         }
         .disabled(myParticipantId == nil)
-        .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.reaction_button", comment: ""), emoji, count)))
+        .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.reaction_button", comment: ""), emoji, reactionCount)))
         .accessibilityHint(mine ? Text("a11y.my_reaction") : Text(""))
     }
 

@@ -244,8 +244,8 @@ struct ClubDetailView: View {
     private func reactionSummary(for entry: StatsCalculator.ActivityFeedEntry) -> String {
         let matchReactions = appStore.reactions.filter { $0.clubId == clubId && $0.matchId == entry.id }
         var parts = MatchReactionsView.emojiOptions.compactMap { emoji -> String? in
-            let count = matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count
-            return count > 0 ? "\(emoji) \(count)" : nil
+            let reactionCount = matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count
+            return reactionCount > 0 ? "\(emoji) \(reactionCount)" : nil
         }
         let commentCount = matchReactions.filter { $0.kind == .comment }.count
         if commentCount > 0 {
