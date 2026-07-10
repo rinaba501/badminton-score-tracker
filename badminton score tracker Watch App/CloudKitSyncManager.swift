@@ -31,11 +31,18 @@ final class CloudKitSyncManager {
     private static let clubType = "Club"
     private static let challengeType = "Challenge"
     private static let reactionType = "Reaction"
+    private static let friendProfileType = "FriendProfile"
+    private static let friendRequestType = "FriendRequest"
     private static let payloadField = "payload"
 
     private lazy var container = CKContainer(identifier: Self.containerID)
     private lazy var privateDatabase = container.privateCloudDatabase
     private lazy var sharedDatabase = container.sharedCloudDatabase
+    /// Friends v1 (graph-only): the public database, used only by the
+    /// methods in the "Friends" section below. Unlike `privateDatabase`/
+    /// `sharedDatabase`, it is NOT driven by a `CKSyncEngine` — there is no
+    /// push-based sync for it here, just direct save/fetch/query calls.
+    private lazy var publicDatabase = container.publicCloudDatabase
 
     private let privateZone = CKRecordZone(zoneName: zoneName)
 
@@ -355,6 +362,119 @@ final class CloudKitSyncManager {
         }
         operation.qualityOfService = .userInteractive
         container.add(operation)
+    }
+
+    // MARK: - Friends (v1, graph-only; public database, no CKSyncEngine)
+    //
+    // The public database isn't wired to a CKSyncEngine (private/shared DB
+    // only) — these methods talk to it directly, and the caller (AppStore's
+    // Friends integration, a later slice) polls fetchMyFriendRequests()
+    // rather than receiving push-driven events. applyRemoteUpsert/
+    // applyRemoteDeletions are deliberately not involved here: there is no
+    // CKSyncEngineDelegate event for public-DB changes to route through them.
+
+    enum FriendRequestError: Error {
+        case selfRequest
+        case alreadyPending
+    }
+
+    /// The current iCloud account's durable per-Apple-ID key. Stable for the
+    /// life of the account, so it's resolved once and cached.
+    func resolveMyParticipantId() async throws -> String {
+        if let cached = UserDefaults.standard.string(forKey: AppStorageKeys.myParticipantId) {
+            return cached
+        }
+        let recordID = try await container.userRecordID()
+        UserDefaults.standard.set(recordID.recordName, forKey: AppStorageKeys.myParticipantId)
+        return recordID.recordName
+    }
+
+    /// Fetch-or-create my public `FriendProfile`, keyed by a deterministic
+    /// `recordName == participantId` (one profile per Apple ID, upserted —
+    /// never freely appended). Re-saves only if the display name changed.
+    func ensureMyProfileExists(displayName: String) async throws {
+        let participantId = try await resolveMyParticipantId()
+        let recordID = CKRecord.ID(recordName: participantId)
+
+        let existingRecord = try? await publicDatabase.record(for: recordID)
+        if let existingRecord,
+           let payload = existingRecord[Self.payloadField] as? Data,
+           let existingProfile = PersistenceStore.decodeFriendProfile(payload),
+           existingProfile.displayName == displayName {
+            return
+        }
+
+        let profile = FriendProfile(participantId: participantId, displayName: displayName)
+        guard let payload = PersistenceStore.encodeFriendProfile(profile) else { return }
+        let record = existingRecord ?? CKRecord(recordType: Self.friendProfileType, recordID: recordID)
+        record[Self.payloadField] = payload as CKRecordValue
+        _ = try await publicDatabase.save(record)
+    }
+
+    /// Used to show "X wants to add you" when consuming an invite link.
+    /// Fails soft (nil) rather than blocking — the caller falls back to a
+    /// generic label rather than stalling the confirmation sheet.
+    func fetchProfile(participantId: String) async -> FriendProfile? {
+        let recordID = CKRecord.ID(recordName: participantId)
+        guard let record = try? await publicDatabase.record(for: recordID),
+              let payload = record[Self.payloadField] as? Data else { return nil }
+        return PersistenceStore.decodeFriendProfile(payload)
+    }
+
+    /// The sync entry point: a direct query, since there's no
+    /// CKSyncEngine-driven fetch for the public database. Called by the
+    /// Friends screen on appear + pull-to-refresh (no push in v1).
+    func fetchMyFriendRequests() async throws -> [FriendRequest] {
+        let participantId = try await resolveMyParticipantId()
+        let predicate = NSPredicate(
+            format: "fromParticipantId == %@ OR toParticipantId == %@",
+            participantId, participantId
+        )
+        let query = CKQuery(recordType: Self.friendRequestType, predicate: predicate)
+        let (results, _) = try await publicDatabase.records(matching: query)
+        return results.compactMap { _, result in
+            guard case .success(let record) = result,
+                  let payload = record[Self.payloadField] as? Data else { return nil }
+            return PersistenceStore.decodeFriendRequest(payload)
+        }
+    }
+
+    /// Guards against self-requests and an existing pending request in
+    /// either direction (mirrors `ClubDetailView.hasPendingChallenge`'s
+    /// bidirectional check), then saves a new `FriendRequest`.
+    func sendFriendRequest(toParticipantId: String, toDisplayName: String) async throws {
+        let myParticipantId = try await resolveMyParticipantId()
+        guard myParticipantId != toParticipantId else { throw FriendRequestError.selfRequest }
+
+        let existing = try await fetchMyFriendRequests()
+        let alreadyPending = existing.contains {
+            $0.status == .pending &&
+            (($0.fromParticipantId == myParticipantId && $0.toParticipantId == toParticipantId) ||
+             ($0.fromParticipantId == toParticipantId && $0.toParticipantId == myParticipantId))
+        }
+        guard !alreadyPending else { throw FriendRequestError.alreadyPending }
+
+        let myDisplayName = UserDefaults.standard.string(forKey: AppStorageKeys.myFriendsDisplayName) ?? ""
+        let request = FriendRequest(
+            fromParticipantId: myParticipantId, fromDisplayName: myDisplayName,
+            toParticipantId: toParticipantId, toDisplayName: toDisplayName
+        )
+        guard let payload = PersistenceStore.encodeFriendRequest(request) else { return }
+        let record = CKRecord(recordType: Self.friendRequestType, recordID: CKRecord.ID(recordName: request.id.uuidString))
+        record[Self.payloadField] = payload as CKRecordValue
+        _ = try await publicDatabase.save(record)
+    }
+
+    /// Flips `status` in place and re-saves — same mutate-don't-delete
+    /// convention as `ClubDetailView.respond(to:accept:)`.
+    func respondToFriendRequest(_ request: FriendRequest, accept: Bool) async throws {
+        let recordID = CKRecord.ID(recordName: request.id.uuidString)
+        let record = try await publicDatabase.record(for: recordID)
+        var updated = request
+        updated.status = accept ? .accepted : .declined
+        guard let payload = PersistenceStore.encodeFriendRequest(updated) else { return }
+        record[Self.payloadField] = payload as CKRecordValue
+        _ = try await publicDatabase.save(record)
     }
 }
 
