@@ -1,0 +1,68 @@
+{
+  "identifier" : "9C1B2A3D-0000-4000-8000-000000000001",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "9C1B2A3D-0000-4000-8000-000000000010",
+      "localizations" : [
+        {
+          "description" : "Remove ads, advanced stats, all themes and avatars.",
+          "displayName" : "Badminton Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ritsuma.badminton.pro",
+      "referenceName" : "Badminton Pro",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "9C1B2A3D-0000-4000-8000-000000000011",
+      "localizations" : [
+        {
+          "description" : "Unlock all premium court themes.",
+          "displayName" : "Court Theme Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ritsuma.badminton.pack.themes",
+      "referenceName" : "Court Theme Pack",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "9C1B2A3D-0000-4000-8000-000000000012",
+      "localizations" : [
+        {
+          "description" : "Unlock all premium avatar images and icons.",
+          "displayName" : "Avatar Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ritsuma.badminton.pack.avatars",
+      "referenceName" : "Avatar Pack",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

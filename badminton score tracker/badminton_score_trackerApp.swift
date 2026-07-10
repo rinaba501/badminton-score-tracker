@@ -26,12 +26,16 @@ struct BadmintonScoreTrackerApp: App {
                 await CloudKitSyncManager.shared.start()
             }
         }
+        Task { @MainActor in
+            StoreManager.shared.start()
+        }
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(AppStore.shared)
+                .environmentObject(StoreManager.shared)
         }
     }
 }
