@@ -34,6 +34,20 @@ public enum AppStorageKeys {
     // Roadmap Phase 5 backlog (#164): CloudKit-only, no KV fallback — see
     // ReactionRecord.swift and AppStore.saveReactions.
     public static let reactions = "reactions"
+    // Friends v1 (graph-only): CloudKit public-database only, no KV
+    // fallback — see FriendRequest.swift and AppStore.saveFriendRequests.
+    public static let friendRequests = "friendRequests"
+    // Friends v1: per-device cache of CKContainer.fetchUserRecordID()'s
+    // result, resolved once (a CloudKit user record ID is stable for the
+    // life of the iCloud account). Never added to CloudSyncManager.SyncKeys
+    // — it's a per-device identity cache, not synced data.
+    public static let myParticipantId = "myParticipantId"
+    // Friends v1: per-device cache of the user-supplied free-text display
+    // name shown to other people in friend requests/lists (no Apple
+    // identity verification — same snapshotted-string convention as
+    // ChallengeRecord.fromDisplayName). Never added to
+    // CloudSyncManager.SyncKeys.
+    public static let myFriendsDisplayName = "myFriendsDisplayName"
     public static let playerSortOrder = "playerSortOrder"
     public static let pointsToWin = "pointsToWin"
     public static let gamesInMatch = "gamesInMatch"

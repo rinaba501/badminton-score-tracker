@@ -128,6 +128,21 @@ public enum PersistenceStore {
         encodeEnvelope(reactions)
     }
 
+    // MARK: - Friend requests ([FriendRequest]) — Friends v1 (graph-only)
+
+    /// Decode the friend-request list, returning an empty array if the data
+    /// is missing or corrupt. Same envelope/tolerance contract as
+    /// `decodeRoster`.
+    public static func decodeFriendRequests(_ data: Data) -> [FriendRequest] {
+        decodeTolerant(FriendRequest.self, from: data)
+    }
+
+    /// Encode the friend-request list for storage (as the current versioned
+    /// envelope), or `nil` if encoding fails.
+    public static func encodeFriendRequests(_ requests: [FriendRequest]) -> Data? {
+        encodeEnvelope(requests)
+    }
+
     // MARK: - History ([MatchRecord])
 
     /// Decode the match history, returning an empty array if the data is
@@ -206,6 +221,33 @@ public enum PersistenceStore {
     /// payload is empty or unreadable.
     public static func decodeReaction(_ data: Data) -> ReactionRecord? {
         decodeTolerant(ReactionRecord.self, from: data).first
+    }
+
+    /// Encode a single friend request as a CloudKit payload, or `nil` on
+    /// failure.
+    public static func encodeFriendRequest(_ request: FriendRequest) -> Data? {
+        encodeEnvelope([request])
+    }
+
+    /// Decode a single friend request from a CloudKit payload, or `nil` if
+    /// the payload is empty or unreadable.
+    public static func decodeFriendRequest(_ data: Data) -> FriendRequest? {
+        decodeTolerant(FriendRequest.self, from: data).first
+    }
+
+    /// Encode a single friend profile as a CloudKit payload, or `nil` on
+    /// failure. There is no array-list codec for profiles — unlike
+    /// challenges/reactions/friend requests, profiles aren't cached locally
+    /// as a synced collection; they're fetched on demand per participant
+    /// (see CloudKitSyncManager.fetchProfile).
+    public static func encodeFriendProfile(_ profile: FriendProfile) -> Data? {
+        encodeEnvelope([profile])
+    }
+
+    /// Decode a single friend profile from a CloudKit payload, or `nil` if
+    /// the payload is empty or unreadable.
+    public static func decodeFriendProfile(_ data: Data) -> FriendProfile? {
+        decodeTolerant(FriendProfile.self, from: data).first
     }
 
     // MARK: - Migration
@@ -317,6 +359,11 @@ public enum PersistenceStore {
 
     /// Upserts/deletes to sync when the reactions list changes from `old` to `new`.
     public static func diffReactions(from old: [ReactionRecord], to new: [ReactionRecord]) -> RecordDiff {
+        diff(from: old, to: new)
+    }
+
+    /// Upserts/deletes to sync when the friend-requests list changes from `old` to `new`.
+    public static func diffFriendRequests(from old: [FriendRequest], to new: [FriendRequest]) -> RecordDiff {
         diff(from: old, to: new)
     }
 
