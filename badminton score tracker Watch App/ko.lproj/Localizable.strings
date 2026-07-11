@@ -171,6 +171,7 @@
 "clubs.name" = "이름";
 "clubs.members" = "멤버";
 "clubs.you" = "나";
+"a11y.club_friend_badge" = "친구";
 "clubs.standings" = "순위표";
 "clubs.require_confirmation" = "경기 확인 필요";
 "clubs.pending_confirmation" = "확인 대기 중";
@@ -223,6 +224,10 @@
 "friends.error_self" = "본인의 초대 링크입니다.";
 "friends.error_pending" = "이 플레이어와의 요청이 이미 대기 중입니다.";
 "friends.error_generic" = "요청을 보내지 못했습니다. 연결을 확인하고 다시 시도하세요.";
+"friends.account_section_header" = "계정";
+"friends.link_account" = "이 기기 연결";
+"friends.linked_as" = "%@(으)로 연결됨";
+"friends.unlink_account" = "연결 해제";
 "friends.enter_code" = "코드 입력";
 "friends.code_prompt_message" = "초대 링크 또는 친구 코드를 붙여넣으세요";
 "friends.code_placeholder" = "초대 링크 또는 코드";

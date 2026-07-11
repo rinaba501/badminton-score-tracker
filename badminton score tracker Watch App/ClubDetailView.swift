@@ -26,6 +26,12 @@ import BadmintonCore
 private struct ClubParticipant: Identifiable, Equatable {
     let id: String
     let name: String
+    /// True when this member's CKShare participant id matches an accepted
+    /// Friend's FriendProfile.participantId — both resolve to the same
+    /// CloudKit user record id for a given Apple ID, so a plain Set lookup
+    /// is enough; this is the first place the codebase cross-references
+    /// the two id spaces (see AppStore.friends).
+    let isFriend: Bool
 }
 
 struct ClubDetailView: View {
@@ -34,6 +40,8 @@ struct ClubDetailView: View {
     @EnvironmentObject private var appStore: AppStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
+    @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
+    @AppStorage(AppStorageKeys.myFriendsDisplayName) private var myFriendsDisplayName = ""
 
     @State private var name = ""
     @State private var participants: [ClubParticipant] = []
@@ -51,6 +59,18 @@ struct ClubDetailView: View {
     }
 
     private var requireMatchConfirmation: Bool { club?.requireMatchConfirmation ?? false }
+
+    /// Shows the linked Friends display name once the user has opted into
+    /// Account linking (see FriendsView), instead of the generic "You" —
+    /// unlinked devices are unaffected, keeping the local-first fallback.
+    @ViewBuilder
+    private var myRow: some View {
+        if accountLinked, !myFriendsDisplayName.isEmpty {
+            Text(myFriendsDisplayName).font(.caption)
+        } else {
+            Text("clubs.you").font(.caption)
+        }
+    }
 
     private var clubMatches: [MatchRecord] {
         appStore.history.filter { $0.clubId == clubId }
@@ -150,14 +170,19 @@ struct ClubDetailView: View {
                 }
 
                 Section(header: Text("clubs.members")) {
-                    Text("clubs.you")
-                        .font(.caption)
+                    myRow
                     if loadingParticipants {
                         ProgressView()
                     } else {
                         ForEach(participants) { participant in
                             HStack {
                                 Text(participant.name).font(.caption)
+                                if participant.isFriend {
+                                    Image(systemName: "person.2.fill")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                        .accessibilityLabel("a11y.club_friend_badge")
+                                }
                                 Spacer()
                                 if !hasPendingChallenge(with: participant.id) {
                                     Button("clubs.challenge") { sendChallenge(to: participant) }
@@ -398,6 +423,7 @@ struct ClubDetailView: View {
                 let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
                 let me = share.currentUserParticipant
                 let myId = me?.userIdentity.userRecordID?.recordName
+                let friendIds = Set(appStore.friends.map(\.participantId))
                 // Exclude the owner (shown separately as the hardcoded "You" row when I
                 // am the owner) and, when I'm a non-owner member, exclude myself too —
                 // otherwise I'd see my own name (and a "Challenge" button) in the list.
@@ -405,7 +431,7 @@ struct ClubDetailView: View {
                     .filter { $0.role != .owner }
                     .compactMap { participant -> ClubParticipant? in
                         guard let id = participant.userIdentity.userRecordID?.recordName, id != myId else { return nil }
-                        return ClubParticipant(id: id, name: displayName(for: participant))
+                        return ClubParticipant(id: id, name: displayName(for: participant), isFriend: friendIds.contains(id))
                     }
                 await MainActor.run {
                     participants = others

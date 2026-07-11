@@ -109,6 +109,7 @@
 "clubs.name" = "名前";
 "clubs.members" = "メンバー";
 "clubs.you" = "自分";
+"a11y.club_friend_badge" = "フレンド";
 "clubs.standings" = "順位表";
 "clubs.require_confirmation" = "試合の承認を必須にする";
 "clubs.pending_confirmation" = "承認待ち";
@@ -178,6 +179,10 @@
 "friends.display_name_prompt_title" = "表示名";
 "friends.display_name_prompt_message" = "他のプレイヤーに表示される名前を入力してください";
 "friends.display_name_placeholder" = "表示名";
+"friends.account_section_header" = "アカウント";
+"friends.link_account" = "この端末をリンク";
+"friends.linked_as" = "%@ としてリンク済み";
+"friends.unlink_account" = "リンク解除";
 "friends.enter_code" = "コードを入力";
 "friends.code_prompt_message" = "招待リンクまたはフレンドコードを貼り付けてください";
 "friends.code_placeholder" = "招待リンクまたはコード";

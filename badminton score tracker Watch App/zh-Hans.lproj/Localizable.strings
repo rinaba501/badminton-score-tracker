@@ -171,6 +171,7 @@
 "clubs.name" = "名称";
 "clubs.members" = "成员";
 "clubs.you" = "你";
+"a11y.club_friend_badge" = "好友";
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
 "clubs.pending_confirmation" = "待确认";
@@ -223,6 +224,10 @@
 "friends.error_self" = "这是你自己的邀请链接。";
 "friends.error_pending" = "你与该球友之间已有待处理的申请。";
 "friends.error_generic" = "无法发送申请。请检查网络连接后重试。";
+"friends.account_section_header" = "账户";
+"friends.link_account" = "关联此设备";
+"friends.linked_as" = "已关联为 %@";
+"friends.unlink_account" = "取消关联";
 "friends.enter_code" = "输入代码";
 "friends.code_prompt_message" = "粘贴邀请链接或好友代码";
 "friends.code_placeholder" = "邀请链接或代码";

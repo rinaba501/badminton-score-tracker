@@ -64,6 +64,12 @@ public enum AppStorageKeys {
     // per-club (max date), never overwritten, on apply (see
     // AppStore.applyRemoteSettings) so a stale device can't re-raise a dot.
     public static let clubLastViewedActivity = "clubLastViewedActivity"
+    // Whether the user has opted to link this local identity to their
+    // CloudKit account (the same account backing Friends and Club
+    // membership). Synced via SettingsSnapshot (blind overwrite, like the
+    // other plain Bool settings) — the account id itself is never stored
+    // here, only re-derived via CloudKitSyncManager.resolveMyParticipantId().
+    public static let accountLinked = "accountLinked"
 
     // Monetization: local cache of owned StoreKit product IDs (JSON-encoded
     // Set<String>, via OwnedProductsCodec) so entitlement-gated UI has an

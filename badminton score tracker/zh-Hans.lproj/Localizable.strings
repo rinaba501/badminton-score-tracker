@@ -109,6 +109,7 @@
 "clubs.name" = "名称";
 "clubs.members" = "成员";
 "clubs.you" = "你";
+"a11y.club_friend_badge" = "好友";
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
 "clubs.pending_confirmation" = "待确认";
@@ -178,6 +179,10 @@
 "friends.display_name_prompt_title" = "你的昵称";
 "friends.display_name_prompt_message" = "设置一个其他球友能看到的昵称";
 "friends.display_name_placeholder" = "你的昵称";
+"friends.account_section_header" = "账户";
+"friends.link_account" = "关联此设备";
+"friends.linked_as" = "已关联为 %@";
+"friends.unlink_account" = "取消关联";
 "friends.enter_code" = "输入代码";
 "friends.code_prompt_message" = "粘贴邀请链接或好友代码";
 "friends.code_placeholder" = "邀请链接或代码";
