@@ -8,9 +8,6 @@
 //  user explicitly confirms — opening a link must never write to CloudKit by
 //  itself, since the URL is untrusted input anyone can compose.
 //
-//  Sending requires `cloudKitSyncEnabled` (same gate as ClubDetailView's
-//  invite button, Phase 5e): CloudKitSyncManager.shared is never touched
-//  while the flag is off, so the inert-without-entitlement guarantee holds.
 //  On confirm it upserts my public FriendProfile first (using the roster
 //  "Me" name as a fallback if `myFriendsDisplayName` was never set — a user
 //  can reach this sheet via a deep link before ever visiting FriendsView's
@@ -76,17 +73,10 @@ struct FriendInviteView: View {
     @ViewBuilder private var statusSection: some View {
         switch sendState {
         case .idle, .sending:
-            if CloudKitSyncManager.isEnabled {
-                Text(String(format: NSLocalizedString("friends.invite_message", comment: ""), inviterLabel))
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            } else {
-                Text("friends.invite_requires_sync")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+            Text(String(format: NSLocalizedString("friends.invite_message", comment: ""), inviterLabel))
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         case .sent:
             Label("friends.invite_sent", systemImage: "checkmark.circle.fill")
                 .font(.body.weight(.semibold))
@@ -108,7 +98,7 @@ struct FriendInviteView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-        } else if CloudKitSyncManager.isEnabled {
+        } else {
             Button {
                 send()
             } label: {

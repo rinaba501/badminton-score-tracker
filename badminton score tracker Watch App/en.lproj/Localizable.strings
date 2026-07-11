@@ -35,11 +35,6 @@
 // Settings
 "settings.title" = "Settings";
 "settings.back" = "Back";
-"settings.sync" = "Sync";
-"settings.sync_cloudkit" = "iCloud (CloudKit) Sync";
-"settings.sync_caption" = "Experimental. Syncs match history and players through iCloud (CloudKit) instead of the older method. Restart the app after changing this.";
-"settings.icloud_quota_warning" = "iCloud sync storage is nearly full — some matches may stop syncing soon.";
-"settings.icloud_quota_exceeded" = "iCloud sync storage is full — new matches on this device won't sync until space is freed.";
 "settings.game_mode" = "Game Mode";
 "settings.mode" = "Mode";
 "settings.singles" = "Singles";
@@ -212,7 +207,6 @@
 
 // Roadmap Phase 7e: Friends UI
 "settings.friends" = "Friends";
-"friends.invite_requires_sync" = "Turn on iCloud Sync in Settings to add friends.";
 "friends.unknown_inviter" = "A player";
 "friends.pending_received" = "Pending Requests";
 "friends.pending_sent" = "Sent Requests";

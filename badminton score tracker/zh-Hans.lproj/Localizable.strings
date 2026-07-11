@@ -1,9 +1,6 @@
 // iOS companion app
 "ios.title" = "羽毛球比分";
 "settings.title" = "设置";
-"settings.sync" = "同步";
-"settings.sync_cloudkit" = "iCloud（CloudKit）同步";
-"settings.sync_caption" = "实验性功能。通过 iCloud（CloudKit）而非旧方式同步比赛记录和球员信息。更改后请重新启动应用。";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "比赛记录";
@@ -162,7 +159,6 @@
 "friends.invite_message" = "向%@发送好友申请？";
 "friends.invite_send" = "发送好友申请";
 "friends.invite_sent" = "好友申请已发送！";
-"friends.invite_requires_sync" = "请在设置中开启 iCloud 同步以添加好友。";
 "friends.unknown_inviter" = "一位球友";
 "friends.error_self" = "这是你自己的邀请链接。";
 "friends.error_pending" = "你与该球友之间已有待处理的申请。";

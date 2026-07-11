@@ -2,15 +2,15 @@
 //  SettingsView.swift
 //  badminton score tracker (iOS)
 //
-//  Just the CloudKit sync toggle for now (Phase 4 cutover). Room to grow into
-//  a full settings mirror of the Watch's later; not scoped here.
+//  Just the paywall entry point for now (sync is always-on via CloudKit,
+//  no toggle). Room to grow into a full settings mirror of the Watch's
+//  later; not scoped here.
 //
 
 import SwiftUI
 import BadmintonCore
 
 struct SettingsView: View {
-    @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
     @EnvironmentObject private var storeManager: StoreManager
     @State private var showPaywall = false
 
@@ -23,10 +23,6 @@ struct SettingsView: View {
                             .foregroundStyle(.yellow)
                     }
                 }
-            }
-
-            Section(header: Text("settings.sync"), footer: Text("settings.sync_caption")) {
-                Toggle("settings.sync_cloudkit", isOn: $cloudKitSyncEnabled)
             }
         }
         .navigationTitle("settings.title")

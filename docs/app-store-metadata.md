@@ -110,7 +110,7 @@ Notes:
 ## App Privacy ("Data Not Collected")
 
 In App Store Connect → App Privacy, declare **Data Not Collected**. The app:
-- Stores all data locally and in the user's private iCloud (NSUbiquitousKeyValueStore)
+- Stores all data locally and in the user's private iCloud (CloudKit private database; shared zones for clubs)
 - Logs workouts to the user's own Health database
 - Uses no analytics, no third-party SDKs, no advertising
 - Sends no data to the developer or any server

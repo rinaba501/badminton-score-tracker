@@ -36,11 +36,6 @@
 // Settings
 "settings.title" = "設定";
 "settings.back" = "戻る";
-"settings.sync" = "同期";
-"settings.sync_cloudkit" = "iCloud（CloudKit）同期";
-"settings.sync_caption" = "実験的機能です。試合履歴とプレイヤーを、これまでの方法ではなくiCloud（CloudKit）経由で同期します。変更後はアプリを再起動してください。";
-"settings.icloud_quota_warning" = "iCloud同期のストレージが残りわずかです。まもなく一部の試合が同期されなくなる可能性があります。";
-"settings.icloud_quota_exceeded" = "iCloud同期のストレージが上限に達しました。空き容量ができるまで、この端末の新しい試合は同期されません。";
 "settings.game_mode" = "ゲームモード";
 "settings.mode" = "モード";
 "settings.singles" = "シングルス";
@@ -213,7 +208,6 @@
 
 // Roadmap Phase 7e: Friends UI
 "settings.friends" = "フレンド";
-"friends.invite_requires_sync" = "フレンドを追加するには、設定でiCloud同期をオンにしてください。";
 "friends.unknown_inviter" = "プレイヤー";
 "friends.pending_received" = "受信した申請";
 "friends.pending_sent" = "送信した申請";

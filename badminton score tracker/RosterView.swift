@@ -38,6 +38,12 @@ struct RosterView: View {
     private func savePlayerEdit(_ updated: Player) {
         let old = roster.first(where: { $0.id == updated.id })
 
+        // Write myName before any save* that enqueues Settings so the
+        // materialize path reads the updated identity name.
+        if let old, old.name != updated.name, old.name == myName {
+            myName = updated.name
+        }
+
         var r = roster
         if let idx = r.firstIndex(where: { $0.id == updated.id }) {
             r[idx] = updated
@@ -60,9 +66,6 @@ struct RosterView: View {
                 }
             }
             store.saveHistory(history)
-
-            // Also update myName AppStorage if this is the "me" player.
-            if old.name == myName { myName = updated.name }
         }
 
         editingPlayer = nil

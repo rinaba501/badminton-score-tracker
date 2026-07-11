@@ -5,8 +5,8 @@
 //  WKApplicationDelegate implementation for watchOS to catch and handle
 //  CloudKit share acceptance events. Roadmap Phase 7f adds best-effort
 //  remote-push registration for the Friends FriendRequest subscription —
-//  gated behind cloudKitSyncEnabled, and never required for Friends to work
-//  since FriendsView still polls on appear/pull-to-refresh regardless.
+//  never required for Friends to work since FriendsView still polls on
+//  appear/pull-to-refresh regardless.
 //
 
 import WatchKit
@@ -18,7 +18,6 @@ class WatchAppDelegate: NSObject, WKApplicationDelegate {
     }
 
     func applicationDidFinishLaunching() {
-        guard CloudKitSyncManager.isEnabled else { return }
         WKExtension.shared().registerForRemoteNotifications()
     }
 

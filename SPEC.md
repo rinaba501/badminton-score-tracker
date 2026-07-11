@@ -11,7 +11,7 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - **Persistence:** `@AppStorage` (UserDefaults) with JSON-encoded structs
 - **Audio:** `AVAudioEngine` + programmatic sine-wave tone generation (no audio files)
 - **Health:** `HealthKit` — logs each match as a `.badminton` `HKWorkoutSession`; activity type indoor
-- **Sync:** `NSUbiquitousKeyValueStore` — syncs player roster, match history, and settings via iCloud; pushes on data change, pulls on launch and on external update. Phase 4 (#109) CloudKit private-DB sync (`CKSyncEngine`, one record per match/player, real per-record deletion) now has code on **both** targets (Watch + iOS), behind a Settings toggle (`cloudKitSyncEnabled`, default off on both). Still default-off pending a real two-device test — the KV store keeps handling all sync until that's done and the default is flipped
+- **Sync:** CloudKit only (`CKSyncEngine` on both Watch + iOS) — one `CKRecord` per match/player/club plus a fixed personal-zone `Settings` record carrying every scalar setting (`myName`, `localPlayerId`, `pointsToWin`, `gamesInMatch`, `courtTheme`, `announceScore`, `enableSounds`, `enableCrownScoring`, `timeModeEnabled`, `timeLimitMinutes`). No iCloud KV store / `NSUbiquitousKeyValueStore` path and no feature flag — engines start on launch. Correctness still needs a real two-device iCloud test (not CI-provable)
 
 ### iOS Companion App (in progress — #41, ROADMAP Phase 6)
 
@@ -20,7 +20,7 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - **Share a match result** (#13): long-press any history row to share a rendered summary card (final score, team names, per-game line, date) as an image, plus a plain-text fallback, through the native iOS share sheet
 - **Match History and Stats are on iPhone.** A dashboard-style home screen (quick-stats strip: matches / win rate / players, plus a prominent New Match button) links to a full Match History (date-range / match-type / sort / multi-player filters, avatar'd rows, swipe-to-delete, clear-all) and a Stats screen (win-rate ring, stat cards, head-to-head with avatars) — the same information and derivations as the Watch, restyled for the phone. Deleting a match on iPhone removes it everywhere via iCloud.
 - **Roster management is on iPhone** (with a real keyboard): edit your own name/avatar, add / rename / delete saved players, choose the roster sort order, and pick an avatar color, image, or icon. Renaming a player updates their name in every past match. Changes sync to the Watch via iCloud.
-- **iCloud sync is live:** the iPhone reads (and can edit/delete) the same match history, roster, and settings the Watch records — both share one iCloud key-value bucket via a byte-identical `ubiquity-kvstore-identifier`. No new iCloud account or pairing step; sign both devices into the same Apple ID. The Watch stays the scoring device.
+- **iCloud sync is live:** the iPhone reads (and can edit/delete) the same match history, roster, clubs, and identity/match-format settings the Watch records — both share one CloudKit container (`iCloud.ritsuma.badminton-score-tracker`). No new iCloud account or pairing step; sign both devices into the same Apple ID. The Watch stays the richest scoring device.
 - Distribution shape changed with the shell: the Watch app is no longer `WKWatchOnly` — it declares the iOS app as its companion (`WKCompanionAppBundleIdentifier`) and keeps running independently (`WKRunsIndependentlyOfCompanionApp`). **An App Store submission from a commit after this change ships the iOS app too; to submit watch-only, archive from an earlier commit**
 
 ---
@@ -169,8 +169,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 - Player IDs are stored at match-save time by looking up names in the current roster
 - Old records without IDs fall back to stored name strings
 - When a player is renamed, all history records referencing their ID are updated
-- iCloud sync reconciles history by record id (a new match recorded on either device survives a sync); deleting a match or clearing all history pushes as an authoritative overwrite instead, so the deletion isn't undone by a stale copy still on iCloud
-- If the iCloud key-value store's ~1 MB quota is approached or exceeded, a non-blocking warning banner appears at the top of Settings; an actual quota violation is also logged
+- CloudKit sync is per-record: a new match recorded on either device upserts its own `CKRecord`; deleting a match or clearing history enqueues real per-record deletes (no blob merge / overwrite heuristic)
 
 ---
 

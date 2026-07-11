@@ -1,9 +1,6 @@
 // iOS companion app
 "ios.title" = "बैडमिंटन स्कोर";
 "settings.title" = "सेटिंग्स";
-"settings.sync" = "सिंक";
-"settings.sync_cloudkit" = "iCloud (CloudKit) सिंक";
-"settings.sync_caption" = "प्रायोगिक। मैच इतिहास और खिलाड़ियों को पुराने तरीके के बजाय iCloud (CloudKit) के ज़रिए सिंक करता है। बदलाव के बाद ऐप को पुनः आरंभ करें।";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "मैच इतिहास";
@@ -162,7 +159,6 @@
 "friends.invite_message" = "%@ को मित्र अनुरोध भेजें?";
 "friends.invite_send" = "मित्र अनुरोध भेजें";
 "friends.invite_sent" = "मित्र अनुरोध भेज दिया गया!";
-"friends.invite_requires_sync" = "मित्र जोड़ने के लिए सेटिंग्स में iCloud सिंक चालू करें।";
 "friends.unknown_inviter" = "एक खिलाड़ी";
 "friends.error_self" = "यह आपका अपना आमंत्रण लिंक है।";
 "friends.error_pending" = "इस खिलाड़ी के साथ पहले से एक अनुरोध लंबित है।";
