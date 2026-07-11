@@ -58,8 +58,7 @@ struct PreMatchView: View {
         guard Player.shouldBeStoredAsSavedPlayer(name, currentUserName: myName) else { return }
         var r = roster
         if !r.contains(where: { $0.name == name }) {
-            let colorIndex = r.count % Player.avatarColors.count
-            r.insert(Player(name: name, colorIndex: newPlayerColorIndex), at: 0)
+            r.insert(Player(name: name, colorIndex: newPlayerColorIndex, clubId: UUID(uuidString: matchClubId)), at: 0)
             appStore.saveRoster(r)
         }
     }
@@ -73,13 +72,19 @@ struct PreMatchView: View {
     }
 
     private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: [String] = [], showClubPicker: Bool = false, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+        let selectedClubId = UUID(uuidString: matchClubId)
         let filteredRoster = Player.sortedPlayers(
             roster.filter { player in
-                player.name != myName && !excluding.contains(player.name)
+                player.name != myName && !excluding.contains(player.name) && player.clubId == selectedClubId
             },
             order: playerSortOrder,
             history: history
         )
+        let filteredFriends = selectedClubId == nil
+            ? appStore.friends
+                .filter { $0.displayName != myName && !excluding.contains($0.displayName) }
+                .sorted { $0.displayName < $1.displayName }
+            : []
         let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 4)
         return List {
             if showClubPicker && !appStore.clubs.isEmpty {
@@ -126,6 +131,26 @@ struct PreMatchView: View {
                                     Text(player.name)
                                     if let against = h2hAgainst,
                                        let record = StatsCalculator.headToHeadIfAny(me: against, opponent: player.name, history: history, roster: roster) {
+                                        Text("\(record.wins)W – \(record.losses)L")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if !filteredFriends.isEmpty {
+                Section(header: Text("prematch.friends")) {
+                    ForEach(filteredFriends, id: \.participantId) { friend in
+                        Button(action: { onSelect(friend.displayName) }) {
+                            HStack {
+                                AvatarView(name: friend.displayName, color: .gray, size: 24)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(friend.displayName)
+                                    if let against = h2hAgainst,
+                                       let record = StatsCalculator.headToHeadIfAny(me: against, opponent: friend.displayName, history: history, roster: roster) {
                                         Text("\(record.wins)W – \(record.losses)L")
                                             .font(.caption2)
                                             .foregroundColor(.secondary)

@@ -145,6 +145,7 @@
 "prematch.near_partner" = "근거리 파트너";
 "prematch.far_partner" = "원거리 파트너";
 "prematch.saved" = "저장됨";
+"prematch.friends" = "친구";
 "prematch.new_player" = "새 플레이어";
 "prematch.add_new" = "새로 추가";
 "prematch.name" = "이름";

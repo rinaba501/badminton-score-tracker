@@ -146,6 +146,7 @@
 "prematch.near_partner" = "手前側パートナー";
 "prematch.far_partner" = "奥側パートナー";
 "prematch.saved" = "保存済み";
+"prematch.friends" = "フレンド";
 "prematch.new_player" = "新規プレイヤー";
 "prematch.add_new" = "新規追加";
 "prematch.name" = "名前";

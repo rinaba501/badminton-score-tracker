@@ -92,6 +92,7 @@
 "prematch.near_partner" = "नज़दीकी साथी";
 "prematch.far_partner" = "दूर का साथी";
 "prematch.saved" = "सहेजे गए";
+"prematch.friends" = "मित्र";
 "prematch.add_new" = "नया जोड़ें";
 "prematch.guest_near" = "अतिथि (नज़दीक)";
 "prematch.guest_far" = "अतिथि (दूर)";

@@ -92,6 +92,7 @@
 "prematch.near_partner" = "Near Partner";
 "prematch.far_partner" = "Far Partner";
 "prematch.saved" = "Saved";
+"prematch.friends" = "Friends";
 "prematch.add_new" = "Add New";
 "prematch.guest_near" = "Guest (Near)";
 "prematch.guest_far" = "Guest (Far)";
