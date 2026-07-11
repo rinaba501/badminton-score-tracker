@@ -224,7 +224,6 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | # | Feature |
 |---|---------|
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
-| 109 | Migrate history sync to CloudKit private database — Roadmap Phase 4 |
 | 163 | Club seasons: time-boxed standings resets — Roadmap Phase 5 backlog |
 | 165 | Push notifications for async club interactions — Roadmap Phase 5 backlog |
 
@@ -234,6 +233,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 109 | Migrate history sync to CloudKit private database (Roadmap Phase 4) — CloudKit is now the only sync path, KV store retired | #129, #130, #141, #183 |
 | 41 | iPhone companion app — history, stats, roster, share, and live scoring (Roadmap Phase 6) | #133, #135, #136, #137, #138, #139 |
 | 13 | Share match result as an image/summary card (iPhone) | #138 |
 | 5 | Match Timer mode | #42 |
