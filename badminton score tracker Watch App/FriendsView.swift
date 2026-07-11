@@ -35,6 +35,18 @@ struct FriendsView: View {
         myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
     }
 
+    // Same avatarColor(for:)/avatarIcon(for:) roster lookup ClubDetailView/
+    // PreMatchView use — editing "Me" in Settings saves a real Player row,
+    // so the linked-account row shows your actual customized avatar instead
+    // of a flat gray placeholder.
+    private func avatarColor(for name: String) -> Color {
+        appStore.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
+    }
+
+    private func avatarIcon(for name: String) -> String? {
+        appStore.roster.first(where: { $0.name == name })?.iconName
+    }
+
     private var incomingRequests: [FriendRequest] {
         guard let myParticipantId else { return [] }
         return appStore.friendRequests.filter { $0.status == .pending && $0.toParticipantId == myParticipantId }
@@ -70,7 +82,7 @@ struct FriendsView: View {
             Section(header: Text("friends.account_section_header")) {
                 if accountLinked {
                     HStack(spacing: 8) {
-                        AvatarView(name: Player.displayName(for: myName), color: .gray, size: 24)
+                        AvatarView(name: Player.displayName(for: myName), color: avatarColor(for: myName), size: 24, iconName: avatarIcon(for: myName))
                         Text(String(format: NSLocalizedString("friends.linked_as", comment: ""), Player.displayName(for: myName)))
                     }
                     Button("friends.unlink_account", role: .destructive) { unlinkAccount() }

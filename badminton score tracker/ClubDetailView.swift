@@ -80,6 +80,20 @@ struct ClubDetailView: View {
     /// as the badge's accessibility label instead.
     private var myRowName: String { Player.displayName(for: myName) }
 
+    /// Same avatarColor(for:)/avatarIcon(for:) roster lookup PreMatchView
+    /// already uses for its near-side default button — editing "Me" in
+    /// RosterView saves a real Player row, so this shows your actual
+    /// customized avatar instead of a flat gray placeholder. Falls back to
+    /// gray for names with no matching roster entry (real Club/Friends
+    /// identities we have no local avatar for).
+    private func avatarColor(for name: String) -> Color {
+        store.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
+    }
+
+    private func avatarIcon(for name: String) -> String? {
+        store.roster.first(where: { $0.name == name })?.iconName
+    }
+
     /// Small badge marking a name as "me" — used on the Members row and on
     /// the matching Standings entry (matched by myName, since that's the
     /// exact string every MatchRecord stores as the participant name).
@@ -92,7 +106,7 @@ struct ClubDetailView: View {
 
     private var myRow: some View {
         HStack(spacing: 8) {
-            AvatarView(name: myRowName, color: .gray, size: 24)
+            AvatarView(name: myRowName, color: avatarColor(for: myName), size: 24, iconName: avatarIcon(for: myName))
             Text(myRowName)
             youBadge
         }
@@ -246,7 +260,7 @@ struct ClubDetailView: View {
                     } else {
                         ForEach(standings) { entry in
                             HStack {
-                                AvatarView(name: entry.name, color: .gray, size: 24)
+                                AvatarView(name: entry.name, color: avatarColor(for: entry.name), size: 24, iconName: avatarIcon(for: entry.name))
                                 Text(entry.name)
                                 if entry.name == myName {
                                     youBadge
@@ -390,7 +404,12 @@ struct ClubDetailView: View {
         let matchReactions = store.reactions.filter { $0.clubId == clubId && $0.matchId == entry.id }
         let commentCount = matchReactions.filter { $0.kind == .comment }.count
         VStack(alignment: .leading, spacing: 4) {
-            Text("\(entry.myName) vs \(entry.opponentName)")
+            HStack(spacing: 2) {
+                Text(entry.myName)
+                if entry.myName == myName { youBadge }
+                Text("vs \(entry.opponentName)")
+                if entry.opponentName == myName { youBadge }
+            }
             Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
