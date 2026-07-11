@@ -156,3 +156,14 @@
 "paywall.feature_stats" = "高级统计:对战记录与连胜";
 "paywall.feature_cosmetics" = "全部球场主题、头像和图标";
 "ads.banner" = "广告";
+
+// Roadmap Phase 7d: Friends invite link (badminton://addfriend)
+"friends.invite_title" = "添加好友";
+"friends.invite_message" = "向%@发送好友申请？";
+"friends.invite_send" = "发送好友申请";
+"friends.invite_sent" = "好友申请已发送！";
+"friends.invite_requires_sync" = "请在设置中开启 iCloud 同步以添加好友。";
+"friends.unknown_inviter" = "一位球友";
+"friends.error_self" = "这是你自己的邀请链接。";
+"friends.error_pending" = "你与该球友之间已有待处理的申请。";
+"friends.error_generic" = "无法发送申请。请检查网络连接后重试。";

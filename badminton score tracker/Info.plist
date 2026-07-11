@@ -16,6 +16,18 @@
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<!-- Same custom scheme the Watch app registers. On iOS it carries the
+	     Friends invite link (badminton://addfriend, Roadmap 7d); the Watch's
+	     badminton://newmatch complication deep link is not handled here. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>badminton</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>UIApplicationSceneManifest</key>

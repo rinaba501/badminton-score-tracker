@@ -156,3 +156,14 @@
 "paywall.feature_stats" = "Statistik lanjutan: head-to-head & rentetan kemenangan";
 "paywall.feature_cosmetics" = "Semua tema lapangan, avatar & ikon";
 "ads.banner" = "Iklan";
+
+// Roadmap Phase 7d: Friends invite link (badminton://addfriend)
+"friends.invite_title" = "Tambah Teman";
+"friends.invite_message" = "Kirim permintaan pertemanan ke %@?";
+"friends.invite_send" = "Kirim Permintaan Pertemanan";
+"friends.invite_sent" = "Permintaan pertemanan terkirim!";
+"friends.invite_requires_sync" = "Aktifkan sinkronisasi iCloud di Pengaturan untuk menambah teman.";
+"friends.unknown_inviter" = "Seorang pemain";
+"friends.error_self" = "Ini tautan undangan milikmu sendiri.";
+"friends.error_pending" = "Sudah ada permintaan tertunda dengan pemain ini.";
+"friends.error_generic" = "Tidak dapat mengirim permintaan. Periksa koneksi lalu coba lagi.";
