@@ -370,7 +370,7 @@ struct ClubDetailView: View {
                     if entry.opponentName == myName { youBadge }
                 }
                 .font(.caption)
-                Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
+                Text(entry.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", "))
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 if !summary.isEmpty {
