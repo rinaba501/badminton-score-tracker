@@ -12,10 +12,11 @@
 //  invite button, Phase 5e): CloudKitSyncManager.shared is never touched
 //  while the flag is off, so the inert-without-entitlement guarantee holds.
 //  On confirm it upserts my public FriendProfile first (using the roster
-//  "Me" name as a one-time fallback if `myFriendsDisplayName` was never set
-//  — the dedicated display-name prompt is 7e), sends the request, then
-//  reconciles AppStore.friendRequests with a fresh public-DB fetch (the
-//  saveFriendRequests convention — no CKSyncEngine involved).
+//  "Me" name as a fallback if `myFriendsDisplayName` was never set — a user
+//  can reach this sheet via a deep link before ever visiting FriendsView's
+//  7e display-name prompt, so the fallback stays as a backstop), sends the
+//  request, then reconciles AppStore.friendRequests with a fresh public-DB
+//  fetch (the saveFriendRequests convention — no CKSyncEngine involved).
 //
 
 import SwiftUI
@@ -128,9 +129,10 @@ struct FriendInviteView: View {
 
     private func send() {
         sendState = .sending
-        // One-time fallback: never send an anonymous request. 7e adds the
-        // real display-name prompt; until then the roster "Me" name stands in
-        // (rendered through displayName(for:) so the sentinel never leaks).
+        // Backstop for a deep link opened before FriendsView's display-name
+        // prompt ever ran: never send an anonymous request. The roster "Me"
+        // name stands in (rendered through displayName(for:) so the sentinel
+        // never leaks).
         if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             myFriendsDisplayName = Player.displayName(for: myName)
         }

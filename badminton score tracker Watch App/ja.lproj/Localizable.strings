@@ -210,3 +210,19 @@
 "paywall.unavailable" = "現在App Storeを利用できません。後でもう一度お試しください。";
 "paywall.locked" = "ロック中";
 "stats.unlock_pro" = "Badminton Proで解除";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "フレンド";
+"friends.invite_requires_sync" = "フレンドを追加するには、設定でiCloud同期をオンにしてください。";
+"friends.unknown_inviter" = "プレイヤー";
+"friends.pending_received" = "受信した申請";
+"friends.pending_sent" = "送信した申請";
+"friends.your_friends" = "フレンド";
+"friends.no_friends_yet" = "フレンドはまだいません";
+"friends.accept" = "承認";
+"friends.decline" = "拒否";
+"friends.cancel_request" = "取り消す";
+"friends.add_friend" = "フレンドを追加";
+"friends.display_name_prompt_title" = "表示名";
+"friends.display_name_prompt_message" = "他のプレイヤーに表示される名前を入力してください";
+"friends.display_name_placeholder" = "表示名";

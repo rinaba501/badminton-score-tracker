@@ -167,3 +167,17 @@
 "friends.error_self" = "これは自分の招待リンクです。";
 "friends.error_pending" = "このプレイヤーとの申請はすでに保留中です。";
 "friends.error_generic" = "申請を送信できませんでした。接続を確認してもう一度お試しください。";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "フレンド";
+"friends.pending_received" = "受信した申請";
+"friends.pending_sent" = "送信した申請";
+"friends.your_friends" = "フレンド";
+"friends.no_friends_yet" = "フレンドはまだいません";
+"friends.accept" = "承認";
+"friends.decline" = "拒否";
+"friends.cancel_request" = "取り消す";
+"friends.add_friend" = "フレンドを追加";
+"friends.display_name_prompt_title" = "表示名";
+"friends.display_name_prompt_message" = "他のプレイヤーに表示される名前を入力してください";
+"friends.display_name_placeholder" = "表示名";

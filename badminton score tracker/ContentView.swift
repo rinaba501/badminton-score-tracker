@@ -34,6 +34,14 @@ struct ContentView: View {
         StatsCalculator.winRate(player: myName, playerHistory: myHistory)
     }
 
+    /// Same cached-`UserDefaults` lookup `AppStore.friends` uses — the menu
+    /// row's badge doesn't need an async `resolveMyParticipantId()` round
+    /// trip, just whatever id was already resolved by an earlier visit.
+    private var pendingFriendRequestCount: Int {
+        guard let myId = UserDefaults.standard.string(forKey: AppStorageKeys.myParticipantId) else { return 0 }
+        return store.friendRequests.filter { $0.status == .pending && $0.toParticipantId == myId }.count
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -70,6 +78,11 @@ struct ContentView: View {
                         ClubsView()
                     } label: {
                         menuRow("settings.clubs", systemImage: "person.3.fill", color: .teal)
+                    }
+                    NavigationLink {
+                        FriendsView()
+                    } label: {
+                        friendsMenuRow
                     }
                     NavigationLink {
                         SettingsView()
@@ -148,6 +161,21 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
+    }
+
+    private var friendsMenuRow: some View {
+        HStack {
+            menuRow("settings.friends", systemImage: "person.2.circle.fill", color: .pink)
+            if pendingFriendRequestCount > 0 {
+                Spacer()
+                Text("\(pendingFriendRequestCount)")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.red))
+            }
+        }
     }
 
     private func menuRow(_ titleKey: LocalizedStringKey, systemImage: String, color: Color) -> some View {

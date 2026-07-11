@@ -167,3 +167,17 @@
 "friends.error_self" = "Ini tautan undangan milikmu sendiri.";
 "friends.error_pending" = "Sudah ada permintaan tertunda dengan pemain ini.";
 "friends.error_generic" = "Tidak dapat mengirim permintaan. Periksa koneksi lalu coba lagi.";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "Teman";
+"friends.pending_received" = "Permintaan Masuk";
+"friends.pending_sent" = "Permintaan Terkirim";
+"friends.your_friends" = "Teman";
+"friends.no_friends_yet" = "Belum ada teman";
+"friends.accept" = "Terima";
+"friends.decline" = "Tolak";
+"friends.cancel_request" = "Batalkan";
+"friends.add_friend" = "Tambah Teman";
+"friends.display_name_prompt_title" = "Nama Kamu";
+"friends.display_name_prompt_message" = "Pilih nama yang akan dilihat pemain lain";
+"friends.display_name_placeholder" = "Nama kamu";

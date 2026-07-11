@@ -209,3 +209,19 @@
 "paywall.unavailable" = "App Store tidak tersedia saat ini. Coba lagi nanti.";
 "paywall.locked" = "Terkunci";
 "stats.unlock_pro" = "Buka dengan Badminton Pro";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "Teman";
+"friends.invite_requires_sync" = "Aktifkan sinkronisasi iCloud di Pengaturan untuk menambah teman.";
+"friends.unknown_inviter" = "Seorang pemain";
+"friends.pending_received" = "Permintaan Masuk";
+"friends.pending_sent" = "Permintaan Terkirim";
+"friends.your_friends" = "Teman";
+"friends.no_friends_yet" = "Belum ada teman";
+"friends.accept" = "Terima";
+"friends.decline" = "Tolak";
+"friends.cancel_request" = "Batalkan";
+"friends.add_friend" = "Tambah Teman";
+"friends.display_name_prompt_title" = "Nama Kamu";
+"friends.display_name_prompt_message" = "Pilih nama yang akan dilihat pemain lain";
+"friends.display_name_placeholder" = "Nama kamu";
