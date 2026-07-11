@@ -125,6 +125,7 @@ struct FriendInviteView: View {
         // never leaks).
         if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             myFriendsDisplayName = Player.displayName(for: myName)
+            CloudKitSyncManager.shared.enqueueSettingsChange()
         }
         let displayName = myFriendsDisplayName
         // @MainActor: the awaits on the (MainActor) sync manager would

@@ -41,10 +41,11 @@ public enum AppStorageKeys {
     // life of the iCloud account) — it's a per-device identity cache, not
     // synced data.
     public static let myParticipantId = "myParticipantId"
-    // Friends v1: per-device cache of the user-supplied free-text display
-    // name shown to other people in friend requests/lists (no Apple
-    // identity verification — same snapshotted-string convention as
-    // ChallengeRecord.fromDisplayName). Never synced.
+    // Friends v1: user-supplied free-text display name shown to other people
+    // in friend requests/lists (no Apple identity verification — same
+    // snapshotted-string convention as ChallengeRecord.fromDisplayName).
+    // Synced across a person's own devices via SettingsSnapshot (last-writer
+    // -wins, like myName).
     public static let myFriendsDisplayName = "myFriendsDisplayName"
     public static let playerSortOrder = "playerSortOrder"
     public static let pointsToWin = "pointsToWin"
@@ -57,9 +58,11 @@ public enum AppStorageKeys {
     public static let timeLimitMinutes = "timeLimitMinutes"
     public static let gameMode = "gameMode"
     public static let localPlayerId = "localPlayerId"
-    // #161 activity feed: per-device "last viewed" timestamp per club (JSON
-    // dictionary, club id string -> Date), so an unread marker can compare
-    // against it. Deliberately local-only (read state, not data) — never synced.
+    // #161 activity feed: "last viewed" timestamp per club (JSON dictionary,
+    // club id string -> Date), so an unread marker can compare against it.
+    // Synced across a person's own devices via SettingsSnapshot — merged
+    // per-club (max date), never overwritten, on apply (see
+    // AppStore.applyRemoteSettings) so a stale device can't re-raise a dot.
     public static let clubLastViewedActivity = "clubLastViewedActivity"
 
     // Monetization: local cache of owned StoreKit product IDs (JSON-encoded
