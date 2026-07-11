@@ -1,6 +1,29 @@
 // iOS companion app
 "ios.title" = "बैडमिंटन स्कोर";
 "settings.title" = "सेटिंग्स";
+"settings.game_mode" = "गेम मोड";
+"settings.audio" = "ऑडियो";
+"settings.sound_effects" = "ध्वनि प्रभाव";
+"settings.announce_score" = "स्कोर बोलें";
+"settings.court_theme" = "कोर्ट थीम";
+"settings.theme" = "थीम";
+"theme.green" = "हरा";
+"theme.blue" = "नीला";
+"theme.red" = "लाल";
+"theme.purple" = "बैंगनी";
+"theme.black" = "काला";
+"settings.match_format" = "मैच प्रारूप";
+"settings.points_to_win" = "जीतने के अंक";
+"settings.pts_11" = "11 अंक";
+"settings.pts_15" = "15 अंक";
+"settings.pts_21" = "21 अंक";
+"settings.games_in_match" = "मैच में गेम्स";
+"settings.games_1" = "1 गेम";
+"settings.games_3" = "बेस्ट ऑफ 3";
+"settings.games_5" = "बेस्ट ऑफ 5";
+"settings.timer" = "मैच टाइमर";
+"settings.timer_enable" = "सक्षम करें";
+"settings.minutes" = "%d मिनट";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "मैच इतिहास";

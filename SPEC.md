@@ -86,10 +86,12 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - **Match Format** — Points to win (11 / 15 / 21), Games in match (1 / 3 / 5)
 - **Match Timer** — toggle on/off; when enabled, duration stepper (±1 min, ±5 min buttons; min 1, max 99, default 10)
 - **Court Theme** — Green / Blue / Red / Purple / Black
-- **Digital Crown** — toggle crown scoring on/off (default on); off prevents accidental scoring from wrist movement
+- **Digital Crown** — toggle crown scoring on/off (default on); off prevents accidental scoring from wrist movement. **Watch-only** — no Digital Crown on iPhone, so this row doesn't exist on iOS
 - **Score Announcement** — toggle spoken score via `AVSpeechSynthesizer`
 - **Sound Effects** — toggle programmatic tones
-- **Controls** — permanent gesture reference screen (tap, crown directions, undo)
+- **Controls** — permanent gesture reference screen (tap, crown directions, undo). **Watch-only** — the hints are Digital Crown gestures, so there's no iOS equivalent
+
+iOS Settings mirrors all of the above except Digital Crown and Controls (both scoring-input hints tied to Watch hardware). Roster, Clubs, and Friends management live as their own rows on iOS's main menu instead of nesting under Settings, since iOS navigation is push-based rather than Settings-as-hub.
 
 ---
 
