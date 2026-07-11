@@ -197,7 +197,9 @@ final class CloudKitSyncManager {
             enableSounds: defaults.object(forKey: AppStorageKeys.enableSounds) as? Bool ?? true,
             enableCrownScoring: defaults.object(forKey: AppStorageKeys.enableCrownScoring) as? Bool ?? true,
             timeModeEnabled: defaults.object(forKey: AppStorageKeys.timeModeEnabled) as? Bool ?? false,
-            timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10
+            timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10,
+            myFriendsDisplayName: defaults.string(forKey: AppStorageKeys.myFriendsDisplayName) ?? "",
+            clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data())
         )
     }
 

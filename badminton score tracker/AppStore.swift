@@ -215,6 +215,15 @@ final class AppStore: ObservableObject {
         defaults.set(snapshot.enableCrownScoring, forKey: AppStorageKeys.enableCrownScoring)
         defaults.set(snapshot.timeModeEnabled, forKey: AppStorageKeys.timeModeEnabled)
         defaults.set(snapshot.timeLimitMinutes, forKey: AppStorageKeys.timeLimitMinutes)
+        defaults.set(snapshot.myFriendsDisplayName, forKey: AppStorageKeys.myFriendsDisplayName)
+        // Merge (per-club max), never overwrite: two devices can mark different
+        // clubs viewed before their Settings records converge, and a blind
+        // overwrite would re-raise an unread dot the user already cleared.
+        var merged = ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data())
+        for (clubId, remoteDate) in snapshot.clubLastViewedActivity {
+            merged[clubId] = max(merged[clubId] ?? .distantPast, remoteDate)
+        }
+        defaults.set(ClubActivityCodec.encode(merged), forKey: AppStorageKeys.clubLastViewedActivity)
     }
 
     // MARK: - CloudKit apply (called by CloudKitSyncManager)

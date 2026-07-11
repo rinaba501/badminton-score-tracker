@@ -438,6 +438,7 @@ struct ClubDetailView: View {
         var lastViewed = ClubActivityCodec.decode(lastViewedData)
         lastViewed[clubId.uuidString] = Date()
         lastViewedData = ClubActivityCodec.encode(lastViewed)
+        CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 
     private func prepareShare(for club: Club?) async {

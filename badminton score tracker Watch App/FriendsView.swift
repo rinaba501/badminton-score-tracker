@@ -189,6 +189,7 @@ struct FriendsView: View {
         guard !trimmed.isEmpty else { return }
         myFriendsDisplayName = trimmed
         promptingForDisplayName = false
+        CloudKitSyncManager.shared.enqueueSettingsChange()
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: trimmed)
         }
@@ -217,6 +218,7 @@ struct FriendsView: View {
             // Same backstop as FriendInviteView.send(): never send anonymously.
             if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 myFriendsDisplayName = Player.displayName(for: myName)
+                manager.enqueueSettingsChange()
             }
             do {
                 try await manager.ensureMyProfileExists(displayName: myFriendsDisplayName)
