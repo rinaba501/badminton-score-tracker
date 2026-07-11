@@ -373,11 +373,13 @@ final class CloudKitSyncManager {
     // MARK: - Friends (v1, graph-only; public database, no CKSyncEngine)
     //
     // The public database isn't wired to a CKSyncEngine (private/shared DB
-    // only) — these methods talk to it directly, and the caller (AppStore's
-    // Friends integration, a later slice) polls fetchMyFriendRequests()
-    // rather than receiving push-driven events. applyRemoteUpsert/
+    // only) — these methods talk to it directly. applyRemoteUpsert/
     // applyRemoteDeletions are deliberately not involved here: there is no
     // CKSyncEngineDelegate event for public-DB changes to route through them.
+    // A best-effort CKQuerySubscription (Phase 7f, ensureFriendRequestSubscriptionExists)
+    // can trigger a silent push on a new incoming request, but the Friends
+    // screen's poll-on-appear/pull-to-refresh (fetchMyFriendRequests) remains
+    // the source of truth regardless of whether that push ever arrives.
 
     enum FriendRequestError: Error {
         case selfRequest
@@ -442,6 +444,38 @@ final class CloudKitSyncManager {
             guard case .success(let record) = result,
                   let payload = record[Self.payloadField] as? Data else { return nil }
             return PersistenceStore.decodeFriendRequest(payload)
+        }
+    }
+
+    private static let friendRequestSubscriptionID = "friend-request-inbox"
+
+    /// Best-effort (Phase 7f): registers a CKQuerySubscription so a new
+    /// incoming FriendRequest triggers a silent push. Never throws to the
+    /// caller — if it fails (bad entitlement, simulator, no device token
+    /// yet), the Friends screen's existing poll-on-appear/pull-to-refresh is
+    /// unaffected. Not verifiable without a real device + real push
+    /// delivery; see ROADMAP.md's 7f note.
+    func ensureFriendRequestSubscriptionExists() async {
+        guard let participantId = try? await resolveMyParticipantId() else { return }
+        let registeredFor = UserDefaults.standard.string(forKey: AppStorageKeys.friendRequestSubscriptionParticipantId)
+        guard registeredFor != participantId else { return }
+
+        let predicate = NSPredicate(format: "toParticipantId == %@", participantId)
+        let subscription = CKQuerySubscription(
+            recordType: Self.friendRequestType,
+            predicate: predicate,
+            subscriptionID: Self.friendRequestSubscriptionID,
+            options: .firesOnRecordCreation
+        )
+        let notificationInfo = CKSubscription.NotificationInfo()
+        notificationInfo.shouldSendContentAvailable = true
+        subscription.notificationInfo = notificationInfo
+
+        do {
+            _ = try await publicDatabase.save(subscription)
+            UserDefaults.standard.set(participantId, forKey: AppStorageKeys.friendRequestSubscriptionParticipantId)
+        } catch {
+            // Best effort — see doc comment above.
         }
     }
 

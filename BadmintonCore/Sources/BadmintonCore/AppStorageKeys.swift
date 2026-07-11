@@ -83,6 +83,11 @@ public enum AppStorageKeys {
     // Per-record CKRecord system fields (change tags), keyed by recordName, so
     // in-place updates carry the right tag instead of conflicting every time.
     public static let ckRecordMetadata = "ckRecordMetadata"
+    // Friends v1 push (Phase 7f): which participantId the FriendRequest
+    // CKQuerySubscription was last registered for, so re-registering isn't a
+    // network call on every launch. Local device state, never added to
+    // CloudSyncManager.SyncKeys.
+    public static let friendRequestSubscriptionParticipantId = "friendRequestSubscriptionParticipantId"
 }
 
 /// Codec for `AppStorageKeys.clubLastViewedActivity`'s `Data`-backed
