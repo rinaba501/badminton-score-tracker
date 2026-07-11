@@ -156,3 +156,14 @@
 "paywall.feature_stats" = "उन्नत आँकड़े: आमने-सामने रिकॉर्ड और जीत की लय";
 "paywall.feature_cosmetics" = "सभी कोर्ट थीम, अवतार और आइकन";
 "ads.banner" = "विज्ञापन";
+
+// Roadmap Phase 7d: Friends invite link (badminton://addfriend)
+"friends.invite_title" = "मित्र जोड़ें";
+"friends.invite_message" = "%@ को मित्र अनुरोध भेजें?";
+"friends.invite_send" = "मित्र अनुरोध भेजें";
+"friends.invite_sent" = "मित्र अनुरोध भेज दिया गया!";
+"friends.invite_requires_sync" = "मित्र जोड़ने के लिए सेटिंग्स में iCloud सिंक चालू करें।";
+"friends.unknown_inviter" = "एक खिलाड़ी";
+"friends.error_self" = "यह आपका अपना आमंत्रण लिंक है।";
+"friends.error_pending" = "इस खिलाड़ी के साथ पहले से एक अनुरोध लंबित है।";
+"friends.error_generic" = "अनुरोध नहीं भेजा जा सका। कनेक्शन जांचकर फिर से प्रयास करें।";

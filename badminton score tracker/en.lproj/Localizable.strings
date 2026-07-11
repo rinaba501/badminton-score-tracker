@@ -156,3 +156,14 @@
 "paywall.feature_stats" = "Advanced stats: head-to-head & streaks";
 "paywall.feature_cosmetics" = "All court themes, avatars & icons";
 "ads.banner" = "Advertisement";
+
+// Roadmap Phase 7d: Friends invite link (badminton://addfriend)
+"friends.invite_title" = "Add Friend";
+"friends.invite_message" = "Send a friend request to %@?";
+"friends.invite_send" = "Send Friend Request";
+"friends.invite_sent" = "Friend request sent!";
+"friends.invite_requires_sync" = "Turn on iCloud Sync in Settings to add friends.";
+"friends.unknown_inviter" = "A player";
+"friends.error_self" = "This is your own invite link.";
+"friends.error_pending" = "You already have a pending request with this player.";
+"friends.error_generic" = "Couldn't send the request. Check your connection and try again.";

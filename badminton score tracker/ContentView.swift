@@ -16,6 +16,15 @@ struct ContentView: View {
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @State private var showScoring = false
+    @State private var pendingFriendInvite: PendingFriendInvite?
+
+    /// Identifiable wrapper so a parsed `badminton://addfriend` link can
+    /// drive `.sheet(item:)` — a fresh id per link open means re-tapping the
+    /// same invite re-presents the sheet (Roadmap 7d).
+    private struct PendingFriendInvite: Identifiable {
+        let id = UUID()
+        let invite: FriendInviteLink.Invite
+    }
 
     private var myHistory: [MatchRecord] {
         StatsCalculator.playerHistory(store.history, player: myName)
@@ -70,6 +79,15 @@ struct ContentView: View {
                 }
             }
             .navigationTitle(Text("ios.title"))
+            .onOpenURL { url in
+                guard let invite = FriendInviteLink.parse(url) else { return }
+                pendingFriendInvite = PendingFriendInvite(invite: invite)
+            }
+            .sheet(item: $pendingFriendInvite) { pending in
+                FriendInviteView(invite: pending.invite) {
+                    pendingFriendInvite = nil
+                }
+            }
             .fullScreenCover(isPresented: $showScoring) {
                 NewMatchFlow(onClose: { showScoring = false })
                     .environmentObject(AppStore.shared)

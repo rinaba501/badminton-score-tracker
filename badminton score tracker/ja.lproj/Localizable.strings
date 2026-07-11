@@ -156,3 +156,14 @@
 "paywall.feature_stats" = "詳細統計:対戦成績と連勝記録";
 "paywall.feature_cosmetics" = "すべてのコートテーマ・アバター・アイコン";
 "ads.banner" = "広告";
+
+// Roadmap Phase 7d: Friends invite link (badminton://addfriend)
+"friends.invite_title" = "フレンドを追加";
+"friends.invite_message" = "%@さんにフレンド申請を送りますか？";
+"friends.invite_send" = "フレンド申請を送る";
+"friends.invite_sent" = "フレンド申請を送りました！";
+"friends.invite_requires_sync" = "フレンドを追加するには、設定でiCloud同期をオンにしてください。";
+"friends.unknown_inviter" = "プレイヤー";
+"friends.error_self" = "これは自分の招待リンクです。";
+"friends.error_pending" = "このプレイヤーとの申請はすでに保留中です。";
+"friends.error_generic" = "申請を送信できませんでした。接続を確認してもう一度お試しください。";
