@@ -135,7 +135,9 @@ struct FriendInviteView: View {
             myFriendsDisplayName = Player.displayName(for: myName)
         }
         let displayName = myFriendsDisplayName
-        Task {
+        // @MainActor: the awaits on the (MainActor) sync manager would
+        // otherwise resume on a background executor before mutating @State.
+        Task { @MainActor in
             do {
                 let manager = CloudKitSyncManager.shared
                 try await manager.ensureMyProfileExists(displayName: displayName)
