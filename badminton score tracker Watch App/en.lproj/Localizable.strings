@@ -225,3 +225,11 @@
 "friends.display_name_prompt_title" = "Your Name";
 "friends.display_name_prompt_message" = "Choose a name other players will see";
 "friends.display_name_placeholder" = "Your name";
+"friends.error_self" = "This is your own invite link.";
+"friends.error_pending" = "You already have a pending request with this player.";
+"friends.error_generic" = "Couldn't send the request. Check your connection and try again.";
+"friends.enter_code" = "Enter a Code";
+"friends.code_prompt_message" = "Paste an invite link or friend code";
+"friends.code_placeholder" = "Invite link or code";
+"friends.code_send" = "Send Request";
+"friends.error_not_found" = "No player found with that code.";

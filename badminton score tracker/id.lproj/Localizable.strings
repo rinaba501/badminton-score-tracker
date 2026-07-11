@@ -181,3 +181,8 @@
 "friends.display_name_prompt_title" = "Nama Kamu";
 "friends.display_name_prompt_message" = "Pilih nama yang akan dilihat pemain lain";
 "friends.display_name_placeholder" = "Nama kamu";
+"friends.enter_code" = "Masukkan Kode";
+"friends.code_prompt_message" = "Tempel tautan undangan atau kode teman";
+"friends.code_placeholder" = "Tautan undangan atau kode";
+"friends.code_send" = "Kirim Permintaan";
+"friends.error_not_found" = "Tidak ada pemain dengan kode tersebut.";

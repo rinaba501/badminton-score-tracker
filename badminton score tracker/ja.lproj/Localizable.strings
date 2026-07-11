@@ -181,3 +181,8 @@
 "friends.display_name_prompt_title" = "表示名";
 "friends.display_name_prompt_message" = "他のプレイヤーに表示される名前を入力してください";
 "friends.display_name_placeholder" = "表示名";
+"friends.enter_code" = "コードを入力";
+"friends.code_prompt_message" = "招待リンクまたはフレンドコードを貼り付けてください";
+"friends.code_placeholder" = "招待リンクまたはコード";
+"friends.code_send" = "申請を送る";
+"friends.error_not_found" = "そのコードのプレイヤーが見つかりません。";

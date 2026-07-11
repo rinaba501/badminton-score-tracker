@@ -181,3 +181,8 @@
 "friends.display_name_prompt_title" = "आपका नाम";
 "friends.display_name_prompt_message" = "एक नाम चुनें जो अन्य खिलाड़ियों को दिखे";
 "friends.display_name_placeholder" = "आपका नाम";
+"friends.enter_code" = "कोड दर्ज करें";
+"friends.code_prompt_message" = "आमंत्रण लिंक या मित्र कोड पेस्ट करें";
+"friends.code_placeholder" = "आमंत्रण लिंक या कोड";
+"friends.code_send" = "अनुरोध भेजें";
+"friends.error_not_found" = "उस कोड वाला कोई खिलाड़ी नहीं मिला।";
