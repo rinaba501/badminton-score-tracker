@@ -145,7 +145,10 @@ struct FriendsView: View {
                 TextField("friends.display_name_placeholder", text: $pendingDisplayName)
                 Button("playeredit.save") { saveDisplayName() }
                     .disabled(pendingDisplayName.trimmingCharacters(in: .whitespaces).isEmpty)
-                Button("history.cancel") { promptingForDisplayName = false }
+                Button("history.cancel") {
+                    promptingForDisplayName = false
+                    linkingAccount = false
+                }
             }
             .padding()
             .navigationTitle(Text("friends.display_name_prompt_title"))

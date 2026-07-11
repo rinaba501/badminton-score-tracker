@@ -152,7 +152,10 @@ struct FriendsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("history.cancel") { promptingForDisplayName = false }
+                    Button("history.cancel") {
+                        promptingForDisplayName = false
+                        linkingAccount = false
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("playeredit.save") { saveDisplayName() }
