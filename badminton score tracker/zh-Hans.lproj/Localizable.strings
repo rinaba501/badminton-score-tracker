@@ -1,6 +1,29 @@
 // iOS companion app
 "ios.title" = "羽毛球比分";
 "settings.title" = "设置";
+"settings.game_mode" = "比赛模式";
+"settings.audio" = "音频";
+"settings.sound_effects" = "音效";
+"settings.announce_score" = "播报分数";
+"settings.court_theme" = "球场主题";
+"settings.theme" = "主题";
+"theme.green" = "绿色";
+"theme.blue" = "蓝色";
+"theme.red" = "红色";
+"theme.purple" = "紫色";
+"theme.black" = "黑色";
+"settings.match_format" = "比赛格式";
+"settings.points_to_win" = "获胜分数";
+"settings.pts_11" = "11分";
+"settings.pts_15" = "15分";
+"settings.pts_21" = "21分";
+"settings.games_in_match" = "局数";
+"settings.games_1" = "1局";
+"settings.games_3" = "三局两胜";
+"settings.games_5" = "五局三胜";
+"settings.timer" = "比赛计时器";
+"settings.timer_enable" = "启用";
+"settings.minutes" = "%d分钟";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "比赛记录";

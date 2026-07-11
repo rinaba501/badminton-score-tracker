@@ -1,6 +1,29 @@
 // iOS companion app
 "ios.title" = "Badminton Score";
 "settings.title" = "Settings";
+"settings.game_mode" = "Game Mode";
+"settings.audio" = "Audio";
+"settings.sound_effects" = "Sound effects";
+"settings.announce_score" = "Announce score";
+"settings.court_theme" = "Court Theme";
+"settings.theme" = "Theme";
+"theme.green" = "Green";
+"theme.blue" = "Blue";
+"theme.red" = "Red";
+"theme.purple" = "Purple";
+"theme.black" = "Black";
+"settings.match_format" = "Match Format";
+"settings.points_to_win" = "Points to win";
+"settings.pts_11" = "11 pts";
+"settings.pts_15" = "15 pts";
+"settings.pts_21" = "21 pts";
+"settings.games_in_match" = "Games in match";
+"settings.games_1" = "1 game";
+"settings.games_3" = "Best of 3";
+"settings.games_5" = "Best of 5";
+"settings.timer" = "Match Timer";
+"settings.timer_enable" = "Enable";
+"settings.minutes" = "%d min";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "Match History";

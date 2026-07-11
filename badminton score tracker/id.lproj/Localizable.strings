@@ -1,6 +1,29 @@
 // iOS companion app
 "ios.title" = "Skor Bulu Tangkis";
 "settings.title" = "Pengaturan";
+"settings.game_mode" = "Mode Permainan";
+"settings.audio" = "Audio";
+"settings.sound_effects" = "Efek suara";
+"settings.announce_score" = "Umumkan skor";
+"settings.court_theme" = "Tema Lapangan";
+"settings.theme" = "Tema";
+"theme.green" = "Hijau";
+"theme.blue" = "Biru";
+"theme.red" = "Merah";
+"theme.purple" = "Ungu";
+"theme.black" = "Hitam";
+"settings.match_format" = "Format Pertandingan";
+"settings.points_to_win" = "Poin untuk menang";
+"settings.pts_11" = "11 poin";
+"settings.pts_15" = "15 poin";
+"settings.pts_21" = "21 poin";
+"settings.games_in_match" = "Game dalam pertandingan";
+"settings.games_1" = "1 game";
+"settings.games_3" = "Terbaik dari 3";
+"settings.games_5" = "Terbaik dari 5";
+"settings.timer" = "Timer Pertandingan";
+"settings.timer_enable" = "Aktifkan";
+"settings.minutes" = "%d mnt";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "Riwayat Pertandingan";

@@ -1,6 +1,29 @@
 // iOS companion app
 "ios.title" = "バドミントンスコア";
 "settings.title" = "設定";
+"settings.game_mode" = "ゲームモード";
+"settings.audio" = "オーディオ";
+"settings.sound_effects" = "効果音";
+"settings.announce_score" = "スコアを読み上げる";
+"settings.court_theme" = "コートテーマ";
+"settings.theme" = "テーマ";
+"theme.green" = "グリーン";
+"theme.blue" = "ブルー";
+"theme.red" = "レッド";
+"theme.purple" = "パープル";
+"theme.black" = "ブラック";
+"settings.match_format" = "試合形式";
+"settings.points_to_win" = "獲得ポイント";
+"settings.pts_11" = "11点";
+"settings.pts_15" = "15点";
+"settings.pts_21" = "21点";
+"settings.games_in_match" = "試合のゲーム数";
+"settings.games_1" = "1ゲーム";
+"settings.games_3" = "3ゲーム制";
+"settings.games_5" = "5ゲーム制";
+"settings.timer" = "試合タイマー";
+"settings.timer_enable" = "有効";
+"settings.minutes" = "%d分";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "試合履歴";

@@ -1,6 +1,29 @@
 // iOS companion app
 "ios.title" = "배드민턴 스코어";
 "settings.title" = "설정";
+"settings.game_mode" = "게임 모드";
+"settings.audio" = "오디오";
+"settings.sound_effects" = "효과음";
+"settings.announce_score" = "점수 읽기";
+"settings.court_theme" = "코트 테마";
+"settings.theme" = "테마";
+"theme.green" = "초록";
+"theme.blue" = "파랑";
+"theme.red" = "빨강";
+"theme.purple" = "보라";
+"theme.black" = "검정";
+"settings.match_format" = "경기 형식";
+"settings.points_to_win" = "승리 점수";
+"settings.pts_11" = "11점";
+"settings.pts_15" = "15점";
+"settings.pts_21" = "21점";
+"settings.games_in_match" = "경기 게임 수";
+"settings.games_1" = "1게임";
+"settings.games_3" = "3게임제";
+"settings.games_5" = "5게임제";
+"settings.timer" = "경기 타이머";
+"settings.timer_enable" = "사용";
+"settings.minutes" = "%d분";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "경기 기록";
