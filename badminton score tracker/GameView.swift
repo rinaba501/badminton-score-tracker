@@ -19,6 +19,7 @@ struct GameView: View {
     @EnvironmentObject private var appStore: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @StateObject private var viewModel = GameViewModel()
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -125,6 +126,8 @@ struct GameView: View {
             avatarIcon: avatarIcon(for: name),
             partnerAvatarColor: viewModel.partnerName(for: side).map(avatarColor(for:)) ?? .gray,
             partnerAvatarIcon: viewModel.partnerName(for: side).flatMap(avatarIcon(for:)),
+            isMe: name == myName,
+            partnerIsMe: viewModel.partnerName(for: side) == myName,
             onTap: { viewModel.tap(side) }
         )
     }
@@ -256,10 +259,23 @@ struct ScoreView: View {
     var avatarIcon: String?
     var partnerAvatarColor: Color = .gray
     var partnerAvatarIcon: String?
+    var isMe: Bool = false
+    var partnerIsMe: Bool = false
     let onTap: () -> Void
 
     @State private var scorePulse = false
     @State private var winnerGlow = false
+
+    /// Same "me" marker ClubDetailView uses — a tile's name isn't always
+    /// literally the current user (near/far side can be reassigned to any
+    /// roster player in PreMatchView), so this only lights up when it
+    /// actually matches the local myName identity.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.caption)
+            .foregroundStyle(.white.opacity(0.8))
+            .accessibilityLabel("clubs.you")
+    }
 
     private var teamName: String {
         guard let partnerName else { return name }
@@ -285,7 +301,7 @@ struct ScoreView: View {
         isWinner ? 3 : (isServing ? 2.5 : 1.5)
     }
 
-    private func nameRow(_ label: String, showDot: Bool) -> some View {
+    private func nameRow(_ label: String, showDot: Bool, isMeLabel: Bool = false) -> some View {
         HStack(spacing: 6) {
             if showDot {
                 Image(systemName: "circle.fill").font(.system(size: 10)).foregroundStyle(.yellow)
@@ -295,13 +311,16 @@ struct ScoreView: View {
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
+            if isMeLabel {
+                youBadge
+            }
         }
     }
 
-    private func avatarNameRow(_ label: String, color: Color, icon: String?) -> some View {
+    private func avatarNameRow(_ label: String, color: Color, icon: String?, isMeLabel: Bool) -> some View {
         HStack(spacing: 6) {
             AvatarView(name: label, color: color, size: 26, iconName: icon)
-            nameRow(label, showDot: false)
+            nameRow(label, showDot: false, isMeLabel: isMeLabel)
         }
     }
 
@@ -309,13 +328,13 @@ struct ScoreView: View {
     private var leadingContent: some View {
         if let partnerName {
             VStack(alignment: .leading, spacing: 4) {
-                avatarNameRow(name, color: isWinner ? .yellow : avatarColor, icon: avatarIcon)
-                avatarNameRow(partnerName, color: isWinner ? .yellow : partnerAvatarColor, icon: partnerAvatarIcon)
+                avatarNameRow(name, color: isWinner ? .yellow : avatarColor, icon: avatarIcon, isMeLabel: isMe)
+                avatarNameRow(partnerName, color: isWinner ? .yellow : partnerAvatarColor, icon: partnerAvatarIcon, isMeLabel: partnerIsMe)
             }
         } else {
             HStack(spacing: 8) {
                 AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 34, iconName: avatarIcon)
-                nameRow(name, showDot: isServing)
+                nameRow(name, showDot: isServing, isMeLabel: isMe)
             }
         }
     }

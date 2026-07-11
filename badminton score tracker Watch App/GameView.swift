@@ -55,6 +55,7 @@ struct GameView: View {
     @EnvironmentObject private var appStore: AppStore
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
     @AppStorage(AppStorageKeys.enableCrownScoring) private var enableCrownScoring = true
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @EnvironmentObject private var storeManager: StoreManager
 
     @StateObject private var viewModel = GameViewModel()
@@ -178,6 +179,8 @@ struct GameView: View {
             avatarIcon: avatarIcon(for: viewModel.effectiveOpponentName),
             partnerAvatarColor: viewModel.partnerName(for: .opponent).map(avatarColor(for:)) ?? .gray,
             partnerAvatarIcon: viewModel.partnerName(for: .opponent).flatMap(avatarIcon(for:)),
+            isMe: viewModel.effectiveOpponentName == myName,
+            partnerIsMe: viewModel.partnerName(for: .opponent) == myName,
             onTap: { viewModel.tap(.opponent) }
         )
     }
@@ -194,6 +197,8 @@ struct GameView: View {
             avatarIcon: avatarIcon(for: viewModel.effectiveMyName),
             partnerAvatarColor: viewModel.partnerName(for: .me).map(avatarColor(for:)) ?? .gray,
             partnerAvatarIcon: viewModel.partnerName(for: .me).flatMap(avatarIcon(for:)),
+            isMe: viewModel.effectiveMyName == myName,
+            partnerIsMe: viewModel.partnerName(for: .me) == myName,
             onTap: { viewModel.tap(.me) }
         )
     }
@@ -359,10 +364,23 @@ struct ScoreView: View {
     var avatarIcon: String? = nil
     var partnerAvatarColor: Color = .gray
     var partnerAvatarIcon: String?
+    var isMe: Bool = false
+    var partnerIsMe: Bool = false
     let onTap: () -> Void
 
     @State private var scorePulse = false
     @State private var winnerGlow = false
+
+    /// Same "me" marker ClubDetailView uses — a tile's name isn't always
+    /// literally the current user (near/far side can be reassigned to any
+    /// roster player in PreMatchView), so this only lights up when it
+    /// actually matches the local myName identity.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.system(size: 9))
+            .foregroundColor(.white.opacity(0.8))
+            .accessibilityLabel("clubs.you")
+    }
 
     /// Combined team name for accessibility/announcements — "Alice" for
     /// singles, "Alice & Bob" (localized) for doubles.
@@ -391,7 +409,7 @@ struct ScoreView: View {
     }
 
     @ViewBuilder
-    private func nameRow(_ label: String, showDot: Bool) -> some View {
+    private func nameRow(_ label: String, showDot: Bool, isMeLabel: Bool = false) -> some View {
         HStack(spacing: 4) {
             if showDot {
                 Image(systemName: "circle.fill")
@@ -403,14 +421,17 @@ struct ScoreView: View {
                 .fontWeight(.medium)
                 .foregroundColor(.white)
                 .lineLimit(1)
+            if isMeLabel {
+                youBadge
+            }
         }
     }
 
     @ViewBuilder
-    private func avatarNameRow(_ label: String, color: Color, icon: String?) -> some View {
+    private func avatarNameRow(_ label: String, color: Color, icon: String?, isMeLabel: Bool) -> some View {
         HStack(spacing: 4) {
             AvatarView(name: label, color: color, size: 16, iconName: icon)
-            nameRow(label, showDot: false)
+            nameRow(label, showDot: false, isMeLabel: isMeLabel)
         }
     }
 
@@ -418,13 +439,13 @@ struct ScoreView: View {
     private var leadingContent: some View {
         if let partnerName {
             VStack(alignment: .leading, spacing: 1) {
-                avatarNameRow(name, color: isWinner ? .yellow : avatarColor, icon: avatarIcon)
-                avatarNameRow(partnerName, color: isWinner ? .yellow : partnerAvatarColor, icon: partnerAvatarIcon)
+                avatarNameRow(name, color: isWinner ? .yellow : avatarColor, icon: avatarIcon, isMeLabel: isMe)
+                avatarNameRow(partnerName, color: isWinner ? .yellow : partnerAvatarColor, icon: partnerAvatarIcon, isMeLabel: partnerIsMe)
             }
         } else {
             HStack(spacing: 4) {
                 AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 20, iconName: avatarIcon)
-                nameRow(name, showDot: isServing)
+                nameRow(name, showDot: isServing, isMeLabel: isMe)
             }
         }
     }
