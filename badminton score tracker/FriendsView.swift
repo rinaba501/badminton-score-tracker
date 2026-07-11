@@ -19,9 +19,11 @@ struct FriendsView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.myFriendsDisplayName) private var myFriendsDisplayName = ""
+    @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
 
     @State private var myParticipantId: String?
     @State private var promptingForDisplayName = false
+    @State private var linkingAccount = false
     @State private var pendingDisplayName = ""
     @State private var enteringCode = false
     @State private var codeInput = ""
@@ -60,6 +62,19 @@ struct FriendsView: View {
 
     private var friendsList: some View {
         List {
+            Section("friends.account_section_header") {
+                if accountLinked {
+                    Text(String(format: NSLocalizedString("friends.linked_as", comment: ""), myFriendsDisplayName))
+                    Button("friends.unlink_account", role: .destructive) { unlinkAccount() }
+                } else {
+                    Button {
+                        linkAccount()
+                    } label: {
+                        Label("friends.link_account", systemImage: "link")
+                    }
+                }
+            }
+
             if !incomingRequests.isEmpty {
                 Section("friends.pending_received") {
                     ForEach(incomingRequests) { request in
@@ -206,10 +221,37 @@ struct FriendsView: View {
         guard !trimmed.isEmpty else { return }
         myFriendsDisplayName = trimmed
         promptingForDisplayName = false
+        if linkingAccount {
+            accountLinked = true
+            linkingAccount = false
+        }
         CloudKitSyncManager.shared.enqueueSettingsChange()
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: trimmed)
         }
+    }
+
+    // Explicit "link this device to one CloudKit account" action — separate
+    // from the auto-prompt in refresh(), which only seeds a Friends display
+    // name. Linking additionally flips accountLinked, which Club reads to
+    // show the same name on the "You" row (see ClubDetailView).
+    private func linkAccount() {
+        if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            pendingDisplayName = Player.displayName(for: myName)
+            linkingAccount = true
+            promptingForDisplayName = true
+        } else {
+            accountLinked = true
+            CloudKitSyncManager.shared.enqueueSettingsChange()
+        }
+    }
+
+    // Non-destructive: does not delete the FriendProfile, remove friends, or
+    // leave clubs — just detaches the local link so Club stops showing the
+    // shared name. Re-linking later restores it.
+    private func unlinkAccount() {
+        accountLinked = false
+        CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 
     private func sendCode() {

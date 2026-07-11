@@ -109,6 +109,7 @@
 "clubs.name" = "Name";
 "clubs.members" = "Members";
 "clubs.you" = "You";
+"a11y.club_friend_badge" = "Friend";
 "clubs.standings" = "Standings";
 "clubs.require_confirmation" = "Require Match Confirmation";
 "clubs.pending_confirmation" = "Pending Confirmation";
@@ -178,6 +179,10 @@
 "friends.display_name_prompt_title" = "Your Name";
 "friends.display_name_prompt_message" = "Choose a name other players will see";
 "friends.display_name_placeholder" = "Your name";
+"friends.account_section_header" = "Account";
+"friends.link_account" = "Link This Device";
+"friends.linked_as" = "Linked as %@";
+"friends.unlink_account" = "Unlink";
 "friends.enter_code" = "Enter a Code";
 "friends.code_prompt_message" = "Paste an invite link or friend code";
 "friends.code_placeholder" = "Invite link or code";

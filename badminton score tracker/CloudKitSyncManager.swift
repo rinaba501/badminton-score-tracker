@@ -199,7 +199,8 @@ final class CloudKitSyncManager {
             timeModeEnabled: defaults.object(forKey: AppStorageKeys.timeModeEnabled) as? Bool ?? false,
             timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10,
             myFriendsDisplayName: defaults.string(forKey: AppStorageKeys.myFriendsDisplayName) ?? "",
-            clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data())
+            clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
+            accountLinked: defaults.object(forKey: AppStorageKeys.accountLinked) as? Bool ?? false
         )
     }
 

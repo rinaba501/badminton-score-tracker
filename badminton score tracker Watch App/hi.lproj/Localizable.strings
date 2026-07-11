@@ -171,6 +171,7 @@
 "clubs.name" = "नाम";
 "clubs.members" = "सदस्य";
 "clubs.you" = "आप";
+"a11y.club_friend_badge" = "मित्र";
 "clubs.standings" = "स्टैंडिंग्स";
 "clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
 "clubs.pending_confirmation" = "पुष्टि लंबित";
@@ -223,6 +224,10 @@
 "friends.error_self" = "यह आपका अपना आमंत्रण लिंक है।";
 "friends.error_pending" = "इस खिलाड़ी के साथ पहले से एक अनुरोध लंबित है।";
 "friends.error_generic" = "अनुरोध नहीं भेजा जा सका। कनेक्शन जांचकर फिर से प्रयास करें।";
+"friends.account_section_header" = "खाता";
+"friends.link_account" = "इस डिवाइस को लिंक करें";
+"friends.linked_as" = "%@ के रूप में लिंक किया गया";
+"friends.unlink_account" = "अनलिंक करें";
 "friends.enter_code" = "कोड दर्ज करें";
 "friends.code_prompt_message" = "आमंत्रण लिंक या मित्र कोड पेस्ट करें";
 "friends.code_placeholder" = "आमंत्रण लिंक या कोड";

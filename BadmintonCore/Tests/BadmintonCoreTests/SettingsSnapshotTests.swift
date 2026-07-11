@@ -23,7 +23,8 @@ struct SettingsSnapshotTests {
         timeModeEnabled: Bool = false,
         timeLimitMinutes: Int = 10,
         myFriendsDisplayName: String = "Alex",
-        clubLastViewedActivity: [String: Date] = [:]
+        clubLastViewedActivity: [String: Date] = [:],
+        accountLinked: Bool = false
     ) -> SettingsSnapshot {
         SettingsSnapshot(
             myName: myName, localPlayerId: localPlayerId,
@@ -32,7 +33,8 @@ struct SettingsSnapshotTests {
             enableSounds: enableSounds, enableCrownScoring: enableCrownScoring,
             timeModeEnabled: timeModeEnabled, timeLimitMinutes: timeLimitMinutes,
             myFriendsDisplayName: myFriendsDisplayName,
-            clubLastViewedActivity: clubLastViewedActivity
+            clubLastViewedActivity: clubLastViewedActivity,
+            accountLinked: accountLinked
         )
     }
 
@@ -48,6 +50,13 @@ struct SettingsSnapshotTests {
         let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
         let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
         #expect(decoded.localPlayerId == "")
+    }
+
+    @Test func accountLinkedRoundTrips() throws {
+        let snapshot = makeSnapshot(accountLinked: true)
+        let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
+        let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
+        #expect(decoded.accountLinked == true)
     }
 
     @Test func decodeSettingsSnapshotReturnsNilOnEmptyOrGarbageData() {
@@ -67,8 +76,9 @@ struct SettingsSnapshotTests {
     }
 
     // A Settings payload written before myFriendsDisplayName /
-    // clubLastViewedActivity existed must still decode, defaulting the two new
-    // fields — the whole point of the custom decodeIfPresent init.
+    // clubLastViewedActivity / accountLinked existed must still decode,
+    // defaulting the new fields — the whole point of the custom
+    // decodeIfPresent init.
     @Test func decodesPreMigrationPayloadWithoutNewFields() throws {
         let legacyJSON = """
         {"schemaVersion":1,"records":[{\
@@ -83,5 +93,6 @@ struct SettingsSnapshotTests {
         #expect(decoded.pointsToWin == 15)
         #expect(decoded.myFriendsDisplayName == "")
         #expect(decoded.clubLastViewedActivity == [:])
+        #expect(decoded.accountLinked == false)
     }
 }

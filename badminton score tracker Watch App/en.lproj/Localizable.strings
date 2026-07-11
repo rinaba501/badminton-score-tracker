@@ -171,6 +171,7 @@
 "clubs.name" = "Name";
 "clubs.members" = "Members";
 "clubs.you" = "You";
+"a11y.club_friend_badge" = "Friend";
 "clubs.standings" = "Standings";
 "clubs.require_confirmation" = "Require Match Confirmation";
 "clubs.pending_confirmation" = "Pending Confirmation";
@@ -223,6 +224,10 @@
 "friends.error_self" = "This is your own invite link.";
 "friends.error_pending" = "You already have a pending request with this player.";
 "friends.error_generic" = "Couldn't send the request. Check your connection and try again.";
+"friends.account_section_header" = "Account";
+"friends.link_account" = "Link This Device";
+"friends.linked_as" = "Linked as %@";
+"friends.unlink_account" = "Unlink";
 "friends.enter_code" = "Enter a Code";
 "friends.code_prompt_message" = "Paste an invite link or friend code";
 "friends.code_placeholder" = "Invite link or code";

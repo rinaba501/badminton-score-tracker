@@ -12,7 +12,8 @@
 //  were written must decode as optional-with-default so an older payload
 //  (missing those keys) still decodes instead of failing the whole record —
 //  same self-migration approach MatchRecord uses for its `winner` field.
-//  myFriendsDisplayName / clubLastViewedActivity were added in this vein.
+//  myFriendsDisplayName / clubLastViewedActivity / accountLinked were added
+//  in this vein.
 //
 
 import Foundation
@@ -35,6 +36,12 @@ public struct SettingsSnapshot: Codable, Equatable {
     /// backing the unread dot on ClubsView. Merged (per-club max), never
     /// overwritten, on apply — see AppStore.applyRemoteSettings.
     public var clubLastViewedActivity: [String: Date]
+    /// Whether the user has opted to link this local identity to their
+    /// CloudKit account (the same account backing Friends/Club). The account
+    /// id itself is never stored here — it's always re-derived via
+    /// CloudKitSyncManager.resolveMyParticipantId(), which is deterministic
+    /// per Apple ID. Blind-overwritten on apply, like the other plain Bools.
+    public var accountLinked: Bool
 
     public init(
         myName: String,
@@ -48,7 +55,8 @@ public struct SettingsSnapshot: Codable, Equatable {
         timeModeEnabled: Bool,
         timeLimitMinutes: Int,
         myFriendsDisplayName: String = "",
-        clubLastViewedActivity: [String: Date] = [:]
+        clubLastViewedActivity: [String: Date] = [:],
+        accountLinked: Bool = false
     ) {
         self.myName = myName
         self.localPlayerId = localPlayerId
@@ -62,12 +70,14 @@ public struct SettingsSnapshot: Codable, Equatable {
         self.timeLimitMinutes = timeLimitMinutes
         self.myFriendsDisplayName = myFriendsDisplayName
         self.clubLastViewedActivity = clubLastViewedActivity
+        self.accountLinked = accountLinked
     }
 
     private enum CodingKeys: String, CodingKey {
         case myName, localPlayerId, pointsToWin, gamesInMatch, courtTheme
         case announceScore, enableSounds, enableCrownScoring, timeModeEnabled
         case timeLimitMinutes, myFriendsDisplayName, clubLastViewedActivity
+        case accountLinked
     }
 
     public init(from decoder: Decoder) throws {
@@ -85,6 +95,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         // Added after the first Settings records shipped — tolerate absence.
         myFriendsDisplayName = try container.decodeIfPresent(String.self, forKey: .myFriendsDisplayName) ?? ""
         clubLastViewedActivity = try container.decodeIfPresent([String: Date].self, forKey: .clubLastViewedActivity) ?? [:]
+        accountLinked = try container.decodeIfPresent(Bool.self, forKey: .accountLinked) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -101,5 +112,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         try container.encode(timeLimitMinutes, forKey: .timeLimitMinutes)
         try container.encode(myFriendsDisplayName, forKey: .myFriendsDisplayName)
         try container.encode(clubLastViewedActivity, forKey: .clubLastViewedActivity)
+        try container.encode(accountLinked, forKey: .accountLinked)
     }
 }

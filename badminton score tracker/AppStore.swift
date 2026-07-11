@@ -221,6 +221,7 @@ final class AppStore: ObservableObject {
         if !snapshot.myFriendsDisplayName.isEmpty {
             defaults.set(snapshot.myFriendsDisplayName, forKey: AppStorageKeys.myFriendsDisplayName)
         }
+        defaults.set(snapshot.accountLinked, forKey: AppStorageKeys.accountLinked)
         // Merge (per-club max), never overwrite: two devices can mark different
         // clubs viewed before their Settings records converge, and a blind
         // overwrite would re-raise an unread dot the user already cleared.
