@@ -155,11 +155,17 @@ struct PreMatchView: View {
                         showClubPicker: Bool = false,
                         h2hAgainst: String? = nil,
                         onSelect: @escaping (String) -> Void) -> some View {
+        let selectedClubId = UUID(uuidString: matchClubId)
         let filteredRoster = Player.sortedPlayers(
-            roster.filter { $0.name != myName && !excluding.contains($0.name) },
+            roster.filter { $0.name != myName && !excluding.contains($0.name) && $0.clubId == selectedClubId },
             order: playerSortOrder,
             history: history
         )
+        let filteredFriends = selectedClubId == nil
+            ? appStore.friends
+                .filter { $0.displayName != myName && !excluding.contains($0.displayName) }
+                .sorted { $0.displayName < $1.displayName }
+            : []
         return List {
             if showModePicker {
                 Section {
@@ -218,6 +224,24 @@ struct PreMatchView: View {
                 }
             }
 
+            if !filteredFriends.isEmpty {
+                Section(header: Text("prematch.friends")) {
+                    ForEach(filteredFriends, id: \.participantId) { friend in
+                        Button { onSelect(friend.displayName) } label: {
+                            HStack {
+                                playerRow(name: friend.displayName, color: .gray, icon: nil)
+                                if let against = h2hAgainst,
+                                   let record = StatsCalculator.headToHeadIfAny(me: against, opponent: friend.displayName, history: history, roster: roster) {
+                                    Text("\(record.wins)W – \(record.losses)L")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Section {
                 Button { showAddPlayer = true } label: {
                     Label("prematch.add_new", systemImage: "plus")
@@ -225,7 +249,7 @@ struct PreMatchView: View {
             }
         }
         .sheet(isPresented: $showAddPlayer) {
-            PlayerEditView(initialPlayer: Player(name: "", colorIndex: roster.count % Player.avatarColors.count),
+            PlayerEditView(initialPlayer: Player(name: "", colorIndex: roster.count % Player.avatarColors.count, clubId: selectedClubId),
                            existingNames: roster.map(\.name)) { newPlayer in
                 addPlayer(newPlayer, thenSelect: onSelect)
                 showAddPlayer = false

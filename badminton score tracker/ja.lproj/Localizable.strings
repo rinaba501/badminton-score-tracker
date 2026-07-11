@@ -92,6 +92,7 @@
 "prematch.near_partner" = "手前側パートナー";
 "prematch.far_partner" = "奥側パートナー";
 "prematch.saved" = "保存済み";
+"prematch.friends" = "フレンド";
 "prematch.add_new" = "新規追加";
 "prematch.guest_near" = "ゲスト（手前）";
 "prematch.guest_far" = "ゲスト（奥）";

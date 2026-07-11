@@ -92,6 +92,7 @@
 "prematch.near_partner" = "近侧搭档";
 "prematch.far_partner" = "远侧搭档";
 "prematch.saved" = "已保存";
+"prematch.friends" = "好友";
 "prematch.add_new" = "添加新的";
 "prematch.guest_near" = "访客（近侧）";
 "prematch.guest_far" = "访客（远侧）";

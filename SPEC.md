@@ -41,10 +41,12 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 
 ### Pre-Match
 Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game Mode):
-1. **Near Side** — pick yourself or a roster player or a guest
+1. **Near Side** — pick yourself or a roster player or a guest; also offers the Club picker (default "Personal", hidden if the user has no clubs)
 2. **Near Partner** (Doubles only) — pick your teammate; excludes the Near Side pick
 3. **Far Side** — pick opponent; excludes everyone already picked on the near team
 4. **Far Partner** (Doubles only) — pick the opponent's teammate; excludes everyone already picked; selecting starts the match
+
+**Roster scoping by Club** — the "Saved" roster list is scoped to whichever Club is selected on the Near Side step (Personal shows only `clubId == nil` players; a Club shows only that club's members), for every step of the flow, not just Near Side. A quick-added player (the "+" sheet, or the full Player Editor) is tagged with the currently-selected club, so a player added while a club match is being set up shows up as a club member next time, not a Personal player invisible from club matches. **Friends section** — when Personal is selected, an additional "Friends" section lists accepted friends (from `AppStore.friends`) as selectable opponents/partners alongside the Saved roster; hidden for club matches and hidden entirely if the user has no friends.
 
 ### Game Screen
 - **Tap** top/bottom half to score for that player (or team, in Doubles)

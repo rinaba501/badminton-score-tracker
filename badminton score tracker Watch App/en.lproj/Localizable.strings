@@ -145,6 +145,7 @@
 "prematch.near_partner" = "Near Partner";
 "prematch.far_partner" = "Far Partner";
 "prematch.saved" = "Saved";
+"prematch.friends" = "Friends";
 "prematch.new_player" = "New Player";
 "prematch.add_new" = "Add New";
 "prematch.name" = "Name";
