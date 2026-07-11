@@ -35,7 +35,6 @@ struct ClubDetailView: View {
 
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
     @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
 
     @State private var name = ""
@@ -176,7 +175,7 @@ struct ClubDetailView: View {
                             }
                         }
                     }
-                    if isOwned && cloudKitSyncEnabled {
+                    if isOwned {
                         Button {
                             Task { await prepareShare(for: club) }
                         } label: {
@@ -471,7 +470,7 @@ struct ClubDetailView: View {
     }
 
     private func loadParticipants() {
-        guard cloudKitSyncEnabled, let club else {
+        guard let club else {
             loadingParticipants = false
             return
         }

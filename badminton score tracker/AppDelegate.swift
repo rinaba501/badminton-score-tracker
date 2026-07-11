@@ -5,9 +5,8 @@
 //  Registers the SceneDelegate class to handle incoming scene connections,
 //  enabling CloudKit share acceptance callbacks. Roadmap Phase 7f adds
 //  best-effort remote-push registration for the Friends FriendRequest
-//  subscription — gated behind cloudKitSyncEnabled, and never required for
-//  Friends to work since FriendsView still polls on appear/pull-to-refresh
-//  regardless.
+//  subscription — never required for Friends to work since FriendsView
+//  still polls on appear/pull-to-refresh regardless.
 //
 
 import UIKit
@@ -27,9 +26,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        if CloudKitSyncManager.isEnabled {
-            application.registerForRemoteNotifications()
-        }
+        application.registerForRemoteNotifications()
         return true
     }
 

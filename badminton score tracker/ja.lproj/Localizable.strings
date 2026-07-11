@@ -1,9 +1,6 @@
 // iOS companion app
 "ios.title" = "バドミントンスコア";
 "settings.title" = "設定";
-"settings.sync" = "同期";
-"settings.sync_cloudkit" = "iCloud（CloudKit）同期";
-"settings.sync_caption" = "実験的機能です。試合履歴とプレイヤーを、これまでの方法ではなくiCloud（CloudKit）経由で同期します。変更後はアプリを再起動してください。";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "試合履歴";
@@ -162,7 +159,6 @@
 "friends.invite_message" = "%@さんにフレンド申請を送りますか？";
 "friends.invite_send" = "フレンド申請を送る";
 "friends.invite_sent" = "フレンド申請を送りました！";
-"friends.invite_requires_sync" = "フレンドを追加するには、設定でiCloud同期をオンにしてください。";
 "friends.unknown_inviter" = "プレイヤー";
 "friends.error_self" = "これは自分の招待リンクです。";
 "friends.error_pending" = "このプレイヤーとの申請はすでに保留中です。";

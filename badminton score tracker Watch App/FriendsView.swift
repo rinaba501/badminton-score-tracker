@@ -44,32 +44,19 @@ struct FriendsView: View {
     }
 
     var body: some View {
-        Group {
-            if CloudKitSyncManager.isEnabled {
-                friendsList
-            } else {
-                requiresSyncMessage
+        friendsList
+            .navigationTitle("settings.friends")
+            .navigationBarTitleDisplayMode(.inline)
+            .task { await refresh() }
+            .sheet(isPresented: $promptingForDisplayName) {
+                displayNamePrompt
             }
-        }
-        .navigationTitle("settings.friends")
-        .navigationBarTitleDisplayMode(.inline)
-        .task { await refresh() }
-        .sheet(isPresented: $promptingForDisplayName) {
-            displayNamePrompt
-        }
-        .sheet(isPresented: $enteringCode) {
-            codeEntryPrompt
-        }
+            .sheet(isPresented: $enteringCode) {
+                codeEntryPrompt
+            }
     }
 
     // MARK: - Pieces
-
-    private var requiresSyncMessage: some View {
-        Text("friends.invite_requires_sync")
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .multilineTextAlignment(.center)
-    }
 
     private var friendsList: some View {
         List {
@@ -184,7 +171,6 @@ struct FriendsView: View {
     // MARK: - Actions
 
     private func refresh() async {
-        guard CloudKitSyncManager.isEnabled else { return }
         let manager = CloudKitSyncManager.shared
         if let id = try? await manager.resolveMyParticipantId() {
             myParticipantId = id

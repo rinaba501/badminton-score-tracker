@@ -250,6 +250,17 @@ public enum PersistenceStore {
         decodeTolerant(FriendProfile.self, from: data).first
     }
 
+    /// Encode a settings snapshot as a CloudKit payload, or `nil` on failure.
+    public static func encodeSettingsSnapshot(_ snapshot: SettingsSnapshot) -> Data? {
+        encodeEnvelope([snapshot])
+    }
+
+    /// Decode a settings snapshot from a CloudKit payload, or `nil` if the
+    /// payload is empty or unreadable.
+    public static func decodeSettingsSnapshot(_ data: Data) -> SettingsSnapshot? {
+        decodeTolerant(SettingsSnapshot.self, from: data).first
+    }
+
     // MARK: - Migration
 
     /// Returns upgraded roster `Data` if `data` isn't already the current

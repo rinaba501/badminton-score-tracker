@@ -16,9 +16,6 @@ final class AppStore: ObservableObject {
 
     @Published private(set) var roster: [Player]
     @Published private(set) var history: [MatchRecord]
-    /// Roadmap Phase 5b: local-only club list — no CloudKit sync yet, so
-    /// unlike roster/history this never pushes through CloudSyncManager (see
-    /// saveClubs).
     @Published private(set) var clubs: [Club]
     /// Roadmap Phase 5 backlog (#162): CloudKit-only — there's no meaningful
     /// "personal" challenge, so unlike roster/history there's no KV fallback
@@ -93,12 +90,8 @@ final class AppStore: ObservableObject {
         }
     }
 
-    // Each save updates the local cache + UserDefaults, then syncs. When
-    // CloudKit owns history/roster it gets precise per-record upserts/deletes;
-    // CloudSyncManager.pushToCloud is still called either way — it carries the
-    // scalar settings, and (only when CloudKit is disabled) the history/roster
-    // blobs as the fallback. See CloudSyncManager for how it skips the data
-    // blobs when CloudKit is enabled.
+    // Each save updates the local cache + UserDefaults, then enqueues precise
+    // per-record upserts/deletes to CloudKitSyncManager — the only sync path.
     func saveRoster(_ players: [Player]) {
         guard let encoded = PersistenceStore.encodeRoster(players) else { return }
         let diff = PersistenceStore.diffRoster(from: roster, to: players)
@@ -109,10 +102,8 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.playerRoster)
         roster = players
-        if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueRosterChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
-        }
-        CloudSyncManager.shared.pushToCloud()
+        CloudKitSyncManager.shared.enqueueRosterChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
+        CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 
     func saveHistory(_ records: [MatchRecord]) {
@@ -124,17 +115,10 @@ final class AppStore: ObservableObject {
                 .map { ($0.id, $0.clubId) },
             uniquingKeysWith: { first, _ in first }
         )
-        // KV fallback only: a deletion must push as an authoritative overwrite,
-        // not merge — merging would silently resurrect the removed record(s)
-        // from iCloud's still-unshrunk copy. The CloudKit path deletes per
-        // record instead (below), so it has no such hazard.
-        let isShrink = PersistenceStore.isHistoryShrink(from: history, to: records)
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.matchHistory)
         history = records
-        if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
-        }
-        CloudSyncManager.shared.pushToCloud(overwriteHistory: isShrink)
+        CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
+        CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 
     func clearHistory() {
@@ -144,36 +128,30 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(Data(), forKey: AppStorageKeys.matchHistory)
         history = []
-        if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: [], deletedIds: deletedClubIds)
-        }
-        CloudSyncManager.shared.pushToCloud(overwriteHistory: true)
+        CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: [], deletedIds: deletedClubIds)
+        CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 
     // Roadmap Phase 5b/c: a Club only becomes a real shared group
-    // once Phase 5c wires it to a CloudKit CKShare zone. If CloudKit is enabled,
-    // we enqueue club changes.
+    // once Phase 5c wires it to a CloudKit CKShare zone.
     func saveClubs(_ clubs: [Club]) {
         guard let encoded = PersistenceStore.encodeClubs(clubs) else { return }
         let diff = PersistenceStore.diffClubs(from: self.clubs, to: clubs)
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.clubs)
         let oldClubs = self.clubs
         self.clubs = clubs
-        if CloudKitSyncManager.isEnabled {
-            let deletedClubs = Dictionary(
-                oldClubs.filter { oldClub in diff.deletedIds.contains(oldClub.id) }
-                    .map { ($0.id, $0.ownerRecordName) },
-                uniquingKeysWith: { first, _ in first }
-            )
-            CloudKitSyncManager.shared.enqueueClubChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubs)
-        }
+        let deletedClubs = Dictionary(
+            oldClubs.filter { oldClub in diff.deletedIds.contains(oldClub.id) }
+                .map { ($0.id, $0.ownerRecordName) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        CloudKitSyncManager.shared.enqueueClubChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubs)
     }
 
     // Roadmap Phase 5 backlog (#162): challenges only exist as a CloudKit
-    // concept (a ping between two real CKShare participants), so — unlike
-    // saveRoster/saveHistory — there's no KV-store fallback path at all;
-    // when CloudKit sync is off, the feature is simply invisible (see the
-    // ClubDetailView challenge UI, which is gated behind cloudKitSyncEnabled).
+    // concept (a ping between two real CKShare participants) — no
+    // "personal" challenge, so unlike roster/history there's no local-only
+    // state to reconcile.
     func saveChallenges(_ challenges: [ChallengeRecord]) {
         guard let encoded = PersistenceStore.encodeChallenges(challenges) else { return }
         let diff = PersistenceStore.diffChallenges(from: self.challenges, to: challenges)
@@ -183,14 +161,11 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.challenges)
         self.challenges = challenges
-        if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueChallengeChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedChallengeClubIds)
-        }
+        CloudKitSyncManager.shared.enqueueChallengeChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedChallengeClubIds)
     }
 
     // Roadmap Phase 5 backlog (#164): reactions follow saveChallenges'
-    // CloudKit-only contract exactly — no KV-store fallback; with CloudKit
-    // sync off the reaction UI is read-only over whatever was already synced.
+    // CloudKit-only contract.
     func saveReactions(_ reactions: [ReactionRecord]) {
         guard let encoded = PersistenceStore.encodeReactions(reactions) else { return }
         let diff = PersistenceStore.diffReactions(from: self.reactions, to: reactions)
@@ -200,9 +175,7 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.reactions)
         self.reactions = reactions
-        if CloudKitSyncManager.isEnabled {
-            CloudKitSyncManager.shared.enqueueReactionChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedReactionClubIds)
-        }
+        CloudKitSyncManager.shared.enqueueReactionChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedReactionClubIds)
     }
 
     // Friends v1 (#7c): unlike every other save* method here, this does NOT
@@ -219,13 +192,25 @@ final class AppStore: ObservableObject {
         self.friendRequests = friendRequests
     }
 
-    // Called by CloudSyncManager after external iCloud data lands in UserDefaults
-    // (KV path). The CloudKit path uses the targeted apply* methods below instead.
-    func reloadFromStorage() {
-        let r = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster) ?? Data()
-        let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
-        roster = PersistenceStore.decodeRoster(r)
-        history = PersistenceStore.decodeHistory(h)
+    /// Writes a remotely-fetched settings snapshot straight to UserDefaults.
+    /// `@AppStorage` observes external `UserDefaults` writes via KVO, so
+    /// every view bound to these keys stays reactive with no further wiring.
+    /// Empty/invalid `localPlayerId` is ignored so a device that materializes
+    /// Settings before generating an id cannot wipe a valid "Me" identity.
+    func applyRemoteSettings(_ snapshot: SettingsSnapshot) {
+        let defaults = UserDefaults.standard
+        defaults.set(snapshot.myName, forKey: AppStorageKeys.myName)
+        if UUID(uuidString: snapshot.localPlayerId) != nil {
+            defaults.set(snapshot.localPlayerId, forKey: AppStorageKeys.localPlayerId)
+        }
+        defaults.set(snapshot.pointsToWin, forKey: AppStorageKeys.pointsToWin)
+        defaults.set(snapshot.gamesInMatch, forKey: AppStorageKeys.gamesInMatch)
+        defaults.set(snapshot.courtTheme, forKey: AppStorageKeys.courtTheme)
+        defaults.set(snapshot.announceScore, forKey: AppStorageKeys.announceScore)
+        defaults.set(snapshot.enableSounds, forKey: AppStorageKeys.enableSounds)
+        defaults.set(snapshot.enableCrownScoring, forKey: AppStorageKeys.enableCrownScoring)
+        defaults.set(snapshot.timeModeEnabled, forKey: AppStorageKeys.timeModeEnabled)
+        defaults.set(snapshot.timeLimitMinutes, forKey: AppStorageKeys.timeLimitMinutes)
     }
 
     // MARK: - CloudKit apply (called by CloudKitSyncManager)

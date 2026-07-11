@@ -35,11 +35,6 @@
 // Settings
 "settings.title" = "Pengaturan";
 "settings.back" = "Kembali";
-"settings.sync" = "Sinkronisasi";
-"settings.sync_cloudkit" = "Sinkronisasi iCloud (CloudKit)";
-"settings.sync_caption" = "Eksperimental. Menyinkronkan riwayat pertandingan dan pemain melalui iCloud (CloudKit), bukan metode lama. Mulai ulang aplikasi setelah mengubah ini.";
-"settings.icloud_quota_warning" = "Penyimpanan sinkronisasi iCloud hampir penuh — beberapa pertandingan mungkin berhenti tersinkron.";
-"settings.icloud_quota_exceeded" = "Penyimpanan sinkronisasi iCloud penuh — pertandingan baru di perangkat ini tidak akan tersinkron sampai ruang dikosongkan.";
 "settings.game_mode" = "Mode Permainan";
 "settings.mode" = "Mode";
 "settings.singles" = "Tunggal";
@@ -212,7 +207,6 @@
 
 // Roadmap Phase 7e: Friends UI
 "settings.friends" = "Teman";
-"friends.invite_requires_sync" = "Aktifkan sinkronisasi iCloud di Pengaturan untuk menambah teman.";
 "friends.unknown_inviter" = "Seorang pemain";
 "friends.pending_received" = "Permintaan Masuk";
 "friends.pending_sent" = "Permintaan Terkirim";

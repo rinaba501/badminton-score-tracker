@@ -1,9 +1,6 @@
 // iOS companion app
 "ios.title" = "배드민턴 스코어";
 "settings.title" = "설정";
-"settings.sync" = "동기화";
-"settings.sync_cloudkit" = "iCloud(CloudKit) 동기화";
-"settings.sync_caption" = "실험적 기능입니다. 경기 기록과 선수 정보를 기존 방식 대신 iCloud(CloudKit)를 통해 동기화합니다. 변경 후 앱을 다시 시작하세요.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "경기 기록";
@@ -162,7 +159,6 @@
 "friends.invite_message" = "%@님에게 친구 요청을 보낼까요?";
 "friends.invite_send" = "친구 요청 보내기";
 "friends.invite_sent" = "친구 요청을 보냈습니다!";
-"friends.invite_requires_sync" = "친구를 추가하려면 설정에서 iCloud 동기화를 켜세요.";
 "friends.unknown_inviter" = "플레이어";
 "friends.error_self" = "본인의 초대 링크입니다.";
 "friends.error_pending" = "이 플레이어와의 요청이 이미 대기 중입니다.";

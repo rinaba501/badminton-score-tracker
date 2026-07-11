@@ -35,11 +35,6 @@
 // Settings
 "settings.title" = "설정";
 "settings.back" = "뒤로";
-"settings.sync" = "동기화";
-"settings.sync_cloudkit" = "iCloud(CloudKit) 동기화";
-"settings.sync_caption" = "실험적 기능입니다. 경기 기록과 선수 정보를 기존 방식 대신 iCloud(CloudKit)를 통해 동기화합니다. 변경 후 앱을 다시 시작하세요.";
-"settings.icloud_quota_warning" = "iCloud 동기화 저장 공간이 거의 다 찼습니다. 곧 일부 경기가 동기화되지 않을 수 있습니다.";
-"settings.icloud_quota_exceeded" = "iCloud 동기화 저장 공간이 가득 찼습니다. 공간을 확보할 때까지 이 기기의 새 경기는 동기화되지 않습니다.";
 "settings.game_mode" = "게임 모드";
 "settings.mode" = "모드";
 "settings.singles" = "단식";
@@ -212,7 +207,6 @@
 
 // Roadmap Phase 7e: Friends UI
 "settings.friends" = "친구";
-"friends.invite_requires_sync" = "친구를 추가하려면 설정에서 iCloud 동기화를 켜세요.";
 "friends.unknown_inviter" = "플레이어";
 "friends.pending_received" = "받은 요청";
 "friends.pending_sent" = "보낸 요청";

@@ -1,9 +1,6 @@
 // iOS companion app
 "ios.title" = "Badminton Score";
 "settings.title" = "Settings";
-"settings.sync" = "Sync";
-"settings.sync_cloudkit" = "iCloud (CloudKit) Sync";
-"settings.sync_caption" = "Experimental. Syncs match history and players through iCloud (CloudKit) instead of the older method. Restart the app after changing this.";
 
 // Shared with the Watch (same keys, so translations copy verbatim)
 "history.title" = "Match History";
@@ -162,7 +159,6 @@
 "friends.invite_message" = "Send a friend request to %@?";
 "friends.invite_send" = "Send Friend Request";
 "friends.invite_sent" = "Friend request sent!";
-"friends.invite_requires_sync" = "Turn on iCloud Sync in Settings to add friends.";
 "friends.unknown_inviter" = "A player";
 "friends.error_self" = "This is your own invite link.";
 "friends.error_pending" = "You already have a pending request with this player.";

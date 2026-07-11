@@ -23,10 +23,8 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
-    @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
     @EnvironmentObject private var appStore: AppStore
     @EnvironmentObject private var storeManager: StoreManager
-    @ObservedObject private var cloudSync = CloudSyncManager.shared
     @State private var editingPlayer: Player? = nil
     @State private var showAddPlayer = false
     @State private var showPaywall = false
@@ -54,6 +52,12 @@ struct SettingsView: View {
     private func savePlayerEdit(_ updated: Player) {
         let old = roster.first(where: { $0.id == updated.id })
 
+        // Write myName before any save* that enqueues Settings so the
+        // materialize path reads the updated identity name.
+        if let old, old.name != updated.name, old.name == myName {
+            myName = updated.name
+        }
+
         var r = roster
         if let idx = r.firstIndex(where: { $0.id == updated.id }) {
             r[idx] = updated
@@ -76,9 +80,6 @@ struct SettingsView: View {
                 }
             }
             appStore.saveHistory(history)
-
-            // Also update myName AppStorage if this is the "me" player
-            if old.name == myName { myName = updated.name }
         }
 
         editingPlayer = nil
@@ -90,18 +91,6 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            if let warning = cloudSync.syncWarning {
-                Section {
-                    Label(warning.messageKey, systemImage: "exclamationmark.icloud")
-                        .foregroundColor(.orange)
-                        .font(.caption)
-                }
-            }
-
-            Section(header: Text("settings.sync"), footer: Text("settings.sync_caption")) {
-                Toggle("settings.sync_cloudkit", isOn: $cloudKitSyncEnabled)
-            }
-
             if !storeManager.entitlements.isPro {
                 Section {
                     Button(action: { showPaywall = true }) {
@@ -238,6 +227,12 @@ struct SettingsView: View {
                     Text("settings.games_3").tag(3)
                     Text("settings.games_5").tag(5)
                 }
+            }
+            .onChange(of: pointsToWin) { _ in
+                CloudKitSyncManager.shared.enqueueSettingsChange()
+            }
+            .onChange(of: gamesInMatch) { _ in
+                CloudKitSyncManager.shared.enqueueSettingsChange()
             }
 
             Section(header: Text("settings.timer")) {

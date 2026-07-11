@@ -2,10 +2,12 @@
 //  CloudKitSyncManager.swift
 //  badminton score tracker (iOS)
 //
-//  Phase 5c: syncs match history + roster + clubs through the CloudKit private
-//  and shared databases via CKSyncEngine. Manages two sync engine instances
-//  to synchronize personal data (private DB) and shared club data (shared DB).
-//  Supports creating zone-wide CKShare for clubs and accepting share invitations.
+//  Syncs match history + roster + clubs + scalar settings through the
+//  CloudKit private and shared databases via CKSyncEngine —
+//  the only sync path (no KV-store fallback, no feature flag). Manages two
+//  sync engine instances to synchronize personal data (private DB) and
+//  shared club data (shared DB). Supports creating zone-wide CKShare for
+//  clubs and accepting share invitations.
 //
 
 import Foundation
@@ -16,11 +18,6 @@ import BadmintonCore
 @MainActor
 final class CloudKitSyncManager {
     static let shared = CloudKitSyncManager()
-
-    /// Whether CloudKit owns history/roster/clubs sync.
-    static var isEnabled: Bool {
-        UserDefaults.standard.object(forKey: AppStorageKeys.cloudKitSyncEnabled) as? Bool ?? false
-    }
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "badminton-score-tracker", category: "CloudKitSync")
 
@@ -33,6 +30,8 @@ final class CloudKitSyncManager {
     private static let reactionType = "Reaction"
     private static let friendProfileType = "FriendProfile"
     private static let friendRequestType = "FriendRequest"
+    private static let settingsType = "Settings"
+    private static let settingsRecordName = "Settings"
     private static let payloadField = "payload"
 
     private lazy var container = CKContainer(identifier: Self.containerID)
@@ -46,6 +45,12 @@ final class CloudKitSyncManager {
 
     private let privateZone = CKRecordZone(zoneName: zoneName)
 
+    /// A single fixed record (never deleted, only ever upserted) carrying
+    /// the scalar settings that used to sync via the iCloud KV store.
+    private var settingsRecordID: CKRecord.ID {
+        CKRecord.ID(recordName: Self.settingsRecordName, zoneID: privateZone.zoneID)
+    }
+
     private var privateSyncEngine: CKSyncEngine?
     private var sharedSyncEngine: CKSyncEngine?
 
@@ -57,11 +62,21 @@ final class CloudKitSyncManager {
     /// Set while a first-launch migration upload is pending.
     private var migrationPending = false
 
+    /// Ensures `start()` is idempotent — safe if called more than once.
+    private var didStart = false
+
     private init() {}
 
     // MARK: - Lifecycle
 
+    /// Creates both `CKSyncEngine`s and kicks off first-launch migration /
+    /// a Settings upsert. Must run on the main actor **before** interactive
+    /// UI can call AppStore save paths — enqueues silently no-op while the
+    /// engines are still nil, and CloudKit is the only sync path.
     func start() {
+        guard !didStart else { return }
+        didStart = true
+
         loadMetadata()
 
         // 1. Initialize Private Database Sync Engine
@@ -87,6 +102,11 @@ final class CloudKitSyncManager {
                 migrateLocalDataToCloud(using: engine)
             }
         }
+
+        // Always enqueue Settings once engines exist so identity/match-format
+        // converge on devices that already migrated under the old dual-path
+        // (those never seed Settings from migrateLocalDataToCloud again).
+        enqueueSettingsChange()
     }
 
     private func migrateLocalDataToCloud(using engine: CKSyncEngine) {
@@ -101,6 +121,7 @@ final class CloudKitSyncManager {
 
         // Enqueue any local clubs as well (we own these since they are locally created)
         enqueueClubChanges(upsertedIds: AppStore.shared.clubs.map(\.id), deletedIds: [:])
+        enqueueSettingsChange()
     }
 
     // MARK: - Write paths (called by AppStore)
@@ -152,6 +173,32 @@ final class CloudKitSyncManager {
     /// Reactions (#164) share challenges' always-club-zoned contract.
     func enqueueReactionChanges(upsertedIds: [UUID], deletedIds: [UUID: UUID]) {
         enqueue(upsertedIds: upsertedIds, deletedIds: deletedIds.mapValues { $0 as UUID? })
+    }
+
+    /// Enqueues the fixed Settings record for upload. Call sites: `start()`,
+    /// first-launch migration, personal-zone recovery, AppStore
+    /// saveRoster/saveHistory/clearHistory, and Settings match-format changes.
+    func enqueueSettingsChange() {
+        guard let privateSyncEngine else { return }
+        privateSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(settingsRecordID)])
+    }
+
+    private func currentSettingsSnapshot() -> SettingsSnapshot {
+        let defaults = UserDefaults.standard
+        // Route localPlayerId through AppStore so the first Settings upload
+        // never ships an empty value (AppStore generates-and-persists once).
+        return SettingsSnapshot(
+            myName: defaults.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName,
+            localPlayerId: AppStore.shared.localPlayerId.uuidString,
+            pointsToWin: defaults.object(forKey: AppStorageKeys.pointsToWin) as? Int ?? 21,
+            gamesInMatch: defaults.object(forKey: AppStorageKeys.gamesInMatch) as? Int ?? 3,
+            courtTheme: defaults.string(forKey: AppStorageKeys.courtTheme) ?? "Green",
+            announceScore: defaults.object(forKey: AppStorageKeys.announceScore) as? Bool ?? true,
+            enableSounds: defaults.object(forKey: AppStorageKeys.enableSounds) as? Bool ?? true,
+            enableCrownScoring: defaults.object(forKey: AppStorageKeys.enableCrownScoring) as? Bool ?? true,
+            timeModeEnabled: defaults.object(forKey: AppStorageKeys.timeModeEnabled) as? Bool ?? false,
+            timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10
+        )
     }
 
     private func enqueue(upsertedIds: [UUID], deletedIds: [UUID: UUID?]) {
@@ -219,6 +266,10 @@ final class CloudKitSyncManager {
 
     // Build the CKRecord to upload for a pending save.
     private func materializeRecord(for recordID: CKRecord.ID) -> CKRecord? {
+        if recordID == settingsRecordID {
+            guard let payload = PersistenceStore.encodeSettingsSnapshot(currentSettingsSnapshot()) else { return nil }
+            return record(for: recordID, type: Self.settingsType, payload: payload)
+        }
         guard let uuid = UUID(uuidString: recordID.recordName) else { return nil }
 
         if let match = AppStore.shared.history.first(where: { $0.id == uuid }) {
@@ -594,6 +645,10 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
             let recordClubId = clubId(from: record.recordID.zoneID)
 
             switch record.recordType {
+            case Self.settingsType:
+                if let snapshot = PersistenceStore.decodeSettingsSnapshot(payload) {
+                    AppStore.shared.applyRemoteSettings(snapshot)
+                }
             case Self.matchType:
                 if var match = PersistenceStore.decodeRecord(payload) {
                     // Backfill clubId from zone if missing.
@@ -704,6 +759,7 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                 if zoneID.zoneName == Self.zoneName {
                     enqueueHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == nil }.map(\.id), deletedIds: [:])
                     enqueueRosterChanges(upsertedIds: AppStore.shared.roster.filter { $0.clubId == nil }.map(\.id), deletedIds: [:])
+                    enqueueSettingsChange()
                 } else if let clubId = clubId(from: zoneID) {
                     enqueueClubChanges(upsertedIds: [clubId], deletedIds: [:])
                     enqueueHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == clubId }.map(\.id), deletedIds: [:])
@@ -722,6 +778,10 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
     private func applyServerRecord(_ record: CKRecord, payload: Data) {
         let recordClubId = clubId(from: record.recordID.zoneID)
         switch record.recordType {
+        case Self.settingsType:
+            if let snapshot = PersistenceStore.decodeSettingsSnapshot(payload) {
+                AppStore.shared.applyRemoteSettings(snapshot)
+            }
         case Self.matchType:
             if var match = PersistenceStore.decodeRecord(payload) {
                 if match.clubId == nil {

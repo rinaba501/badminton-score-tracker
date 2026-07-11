@@ -12,16 +12,9 @@ struct badminton_score_tracker_Watch_AppApp: App {
     @WKApplicationDelegateAdaptor(WatchAppDelegate.self) var appDelegate
 
     init() {
-        Task {
-            // CloudSyncManager always runs (scalar settings sync via the KV
-            // store). When the CloudKit flag is on it also drives history +
-            // roster through CloudKitSyncManager; while off (default), the KV
-            // store keeps handling those too — behavior is unchanged.
-            await CloudSyncManager.shared.start()
-            if CloudKitSyncManager.isEnabled {
-                await CloudKitSyncManager.shared.start()
-            }
-        }
+        // Synchronous on the main actor so CKSyncEngine exists before any
+        // AppStore save can race a still-nil engine (CloudKit is the only path).
+        CloudKitSyncManager.shared.start()
         Task { @MainActor in
             StoreManager.shared.start()
         }

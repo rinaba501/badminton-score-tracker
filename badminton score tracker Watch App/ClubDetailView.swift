@@ -33,7 +33,6 @@ struct ClubDetailView: View {
 
     @EnvironmentObject private var appStore: AppStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(AppStorageKeys.cloudKitSyncEnabled) private var cloudKitSyncEnabled = false
     @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
 
     @State private var name = ""
@@ -388,7 +387,7 @@ struct ClubDetailView: View {
     }
 
     private func loadParticipants() {
-        guard cloudKitSyncEnabled, let club else {
+        guard let club else {
             loadingParticipants = false
             return
         }

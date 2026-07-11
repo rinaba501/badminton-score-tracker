@@ -3,10 +3,10 @@
 //  badminton score tracker (iOS)
 //
 //  Entry point for the iPhone companion app (ROADMAP Phase 6, #41).
-//  Starts iCloud KV sync and injects the shared AppStore, so the phone reads
-//  the same history/roster/settings the Watch writes (shared KV bucket via a
-//  byte-identical ubiquity-kvstore-identifier). The Watch remains the scoring
-//  device; the phone also has its own live-scoring flow (PR6).
+//  Starts CloudKit sync and injects the shared AppStore so the phone reads
+//  the same history/roster/settings the Watch writes (shared CloudKit
+//  container `iCloud.ritsuma.badminton-score-tracker`). The Watch remains
+//  the richest scoring device; the phone also has its own live-scoring flow.
 //
 
 import SwiftUI
@@ -16,16 +16,9 @@ struct BadmintonScoreTrackerApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     init() {
-        Task {
-            // CloudSyncManager always runs (scalar settings sync via the KV
-            // store). When the CloudKit flag is on it also drives history +
-            // roster through CloudKitSyncManager; while off (default), the KV
-            // store keeps handling those too — behavior is unchanged.
-            await CloudSyncManager.shared.start()
-            if CloudKitSyncManager.isEnabled {
-                await CloudKitSyncManager.shared.start()
-            }
-        }
+        // Synchronous on the main actor so CKSyncEngine exists before any
+        // AppStore save can race a still-nil engine (CloudKit is the only path).
+        CloudKitSyncManager.shared.start()
         Task { @MainActor in
             StoreManager.shared.start()
         }
