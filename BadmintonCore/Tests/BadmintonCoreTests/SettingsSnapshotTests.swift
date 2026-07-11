@@ -22,7 +22,6 @@ struct SettingsSnapshotTests {
         enableCrownScoring: Bool = true,
         timeModeEnabled: Bool = false,
         timeLimitMinutes: Int = 10,
-        myFriendsDisplayName: String = "Alex",
         clubLastViewedActivity: [String: Date] = [:],
         accountLinked: Bool = false
     ) -> SettingsSnapshot {
@@ -32,7 +31,6 @@ struct SettingsSnapshotTests {
             courtTheme: courtTheme, announceScore: announceScore,
             enableSounds: enableSounds, enableCrownScoring: enableCrownScoring,
             timeModeEnabled: timeModeEnabled, timeLimitMinutes: timeLimitMinutes,
-            myFriendsDisplayName: myFriendsDisplayName,
             clubLastViewedActivity: clubLastViewedActivity,
             accountLinked: accountLinked
         )
@@ -68,17 +66,16 @@ struct SettingsSnapshotTests {
         var dates: [String: Date] = [:]
         dates[UUID().uuidString] = Date(timeIntervalSince1970: 1_700_000_000)
         dates[UUID().uuidString] = Date(timeIntervalSince1970: 1_700_500_000.5)
-        let snapshot = makeSnapshot(myFriendsDisplayName: "Al", clubLastViewedActivity: dates)
+        let snapshot = makeSnapshot(clubLastViewedActivity: dates)
         let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
         let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
         #expect(decoded == snapshot)
         #expect(decoded.clubLastViewedActivity == dates)
     }
 
-    // A Settings payload written before myFriendsDisplayName /
-    // clubLastViewedActivity / accountLinked existed must still decode,
-    // defaulting the new fields — the whole point of the custom
-    // decodeIfPresent init.
+    // A Settings payload written before clubLastViewedActivity /
+    // accountLinked existed must still decode, defaulting the new fields —
+    // the whole point of the custom decodeIfPresent init.
     @Test func decodesPreMigrationPayloadWithoutNewFields() throws {
         let legacyJSON = """
         {"schemaVersion":1,"records":[{\
@@ -91,7 +88,6 @@ struct SettingsSnapshotTests {
         )
         #expect(decoded.myName == "Sam")
         #expect(decoded.pointsToWin == 15)
-        #expect(decoded.myFriendsDisplayName == "")
         #expect(decoded.clubLastViewedActivity == [:])
         #expect(decoded.accountLinked == false)
     }

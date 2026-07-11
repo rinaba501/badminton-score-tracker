@@ -211,12 +211,6 @@ final class AppStore: ObservableObject {
         defaults.set(snapshot.enableCrownScoring, forKey: AppStorageKeys.enableCrownScoring)
         defaults.set(snapshot.timeModeEnabled, forKey: AppStorageKeys.timeModeEnabled)
         defaults.set(snapshot.timeLimitMinutes, forKey: AppStorageKeys.timeLimitMinutes)
-        // Ignore an empty remote name (same guard as localPlayerId above): a
-        // device that never opened Friends pushes myFriendsDisplayName="",
-        // which must not wipe a name already set on this device.
-        if !snapshot.myFriendsDisplayName.isEmpty {
-            defaults.set(snapshot.myFriendsDisplayName, forKey: AppStorageKeys.myFriendsDisplayName)
-        }
         defaults.set(snapshot.accountLinked, forKey: AppStorageKeys.accountLinked)
         // Merge (per-club max), never overwrite: two devices can mark different
         // clubs viewed before their Settings records converge, and a blind

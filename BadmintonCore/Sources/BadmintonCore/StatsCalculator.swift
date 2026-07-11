@@ -248,9 +248,13 @@ public enum StatsCalculator {
         public let opponentGamesWon: Int
         public let winner: RecordSide
         public let date: Date
+        /// Per-game point scores (e.g. 21-18, 15-21, 21-19) — same source
+        /// HistoryView's gameLine formats, so an activity row can show the
+        /// exact score instead of just the games-won tally.
+        public let games: [GameScore]
 
         public init(id: UUID, myName: String, opponentName: String, myGamesWon: Int,
-                    opponentGamesWon: Int, winner: RecordSide, date: Date) {
+                    opponentGamesWon: Int, winner: RecordSide, date: Date, games: [GameScore]) {
             self.id = id
             self.myName = myName
             self.opponentName = opponentName
@@ -258,6 +262,7 @@ public enum StatsCalculator {
             self.opponentGamesWon = opponentGamesWon
             self.winner = winner
             self.date = date
+            self.games = games
         }
     }
 
@@ -269,7 +274,7 @@ public enum StatsCalculator {
         history.reversed().map { record in
             ActivityFeedEntry(id: record.id, myName: record.myName, opponentName: record.opponentName,
                               myGamesWon: record.myGamesWon, opponentGamesWon: record.opponentGamesWon,
-                              winner: record.winner, date: record.date)
+                              winner: record.winner, date: record.date, games: record.games)
         }
     }
 

@@ -49,7 +49,7 @@ struct MatchReactionsView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("\(entry.myName) vs \(entry.opponentName)")
-                        Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
+                        Text(entry.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

@@ -5,7 +5,12 @@
 //  Root menu, dashboard-style: a quick-stats strip (live from the iCloud-synced
 //  history), a prominent New Match button (modal scoring flow), and
 //  Settings-style icon rows into History / Stats / Players. iOS uses
-//  NavigationStack-based navigation (per ROADMAP Phase 6).
+//  NavigationStack-based navigation (per ROADMAP Phase 6). Also owns the
+//  first-launch "what should we call you?" prompt (shown once, skippable —
+//  see AppStorageKeys.didPromptForName), so a new user's name doesn't sit at
+//  the "Me" placeholder by the time Friends/Clubs are ever touched.
+//  FriendsView/ClubDetailView carry a lighter backstop nudge for anyone who
+//  skips this.
 //
 
 import SwiftUI
@@ -15,7 +20,10 @@ struct ContentView: View {
     @EnvironmentObject private var store: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.didPromptForName) private var didPromptForName = false
     @State private var showScoring = false
+    @State private var showNamePrompt = false
+    @State private var pendingName = ""
     @State private var pendingFriendInvite: PendingFriendInvite?
 
     /// Identifiable wrapper so a parsed `badminton://addfriend` link can
@@ -24,6 +32,10 @@ struct ContentView: View {
     private struct PendingFriendInvite: Identifiable {
         let id = UUID()
         let invite: FriendInviteLink.Invite
+    }
+
+    private var needsName: Bool {
+        myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
     }
 
     private var myHistory: [MatchRecord] {
@@ -92,6 +104,12 @@ struct ContentView: View {
                 }
             }
             .navigationTitle(Text("ios.title"))
+            .onAppear {
+                if !didPromptForName && needsName {
+                    pendingName = ""
+                    showNamePrompt = true
+                }
+            }
             .onOpenURL { url in
                 guard let invite = FriendInviteLink.parse(url) else { return }
                 pendingFriendInvite = PendingFriendInvite(invite: invite)
@@ -100,6 +118,9 @@ struct ContentView: View {
                 FriendInviteView(invite: pending.invite) {
                     pendingFriendInvite = nil
                 }
+            }
+            .sheet(isPresented: $showNamePrompt) {
+                welcomeNamePrompt
             }
             .fullScreenCover(isPresented: $showScoring) {
                 NewMatchFlow(onClose: { showScoring = false })
@@ -190,6 +211,44 @@ struct ContentView: View {
                 )
                 .accessibilityHidden(true)
             Text(titleKey)
+        }
+    }
+
+    private var welcomeNamePrompt: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text("onboarding.welcome_name_message")
+                        .foregroundStyle(.secondary)
+                    TextField("friends.display_name_placeholder", text: $pendingName)
+                }
+            }
+            .navigationTitle(Text("onboarding.welcome_name_title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("onboarding.skip") {
+                        didPromptForName = true
+                        showNamePrompt = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("playeredit.save") { saveWelcomeName() }
+                        .disabled(pendingName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+    }
+
+    private func saveWelcomeName() {
+        let trimmed = pendingName.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        myName = trimmed
+        didPromptForName = true
+        showNamePrompt = false
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        Task { @MainActor in
+            try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
         }
     }
 }

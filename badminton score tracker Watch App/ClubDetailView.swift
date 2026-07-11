@@ -4,11 +4,12 @@
 //
 //  Roadmap Phase 5d: rename, member list, and per-club roster for a single
 //  Club. Member list is read live from the CKShare (Phase 5c's
-//  fetchOrCreateShare) when CloudKit sync is on, and always shows "You" as a
-//  fallback first row so viewing a club never depends on CloudKit — see the
+//  fetchOrCreateShare) when CloudKit sync is on, and always shows a self row
+//  (myRow, badged rather than labeled "You" — see youBadge) as a fallback
+//  first row so viewing a club never depends on CloudKit — see the
 //  local-first invariant in ROADMAP.md. Since invite-sending UI (5e) doesn't
 //  exist yet, a club's only real participant today is its owner, so the
-//  fetched list filters out the `.owner` role to avoid double-listing "You".
+//  fetched list filters out the `.owner` role to avoid double-listing myRow.
 //  Deleting/leaving a club never deletes match/player data — it only clears
 //  clubId back to personal (nil) on every roster player and match record
 //  tagged with it, then removes the club via the same AppStore.saveClubs
@@ -40,8 +41,7 @@ struct ClubDetailView: View {
     @EnvironmentObject private var appStore: AppStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
-    @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
-    @AppStorage(AppStorageKeys.myFriendsDisplayName) private var myFriendsDisplayName = ""
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @State private var name = ""
     @State private var participants: [ClubParticipant] = []
@@ -50,6 +50,8 @@ struct ClubDetailView: View {
     @State private var loadingParticipants = true
     @State private var showRemoveConfirm = false
     @State private var editingPlayer: Player?
+    @State private var promptingForName = false
+    @State private var pendingName = ""
 
     private var club: Club? { appStore.clubs.first { $0.id == clubId } }
     private var isOwned: Bool { club?.ownerRecordName == nil }
@@ -60,15 +62,47 @@ struct ClubDetailView: View {
 
     private var requireMatchConfirmation: Bool { club?.requireMatchConfirmation ?? false }
 
-    /// Shows the linked Friends display name once the user has opted into
-    /// Account linking (see FriendsView), instead of the generic "You" —
-    /// unlinked devices are unaffected, keeping the local-first fallback.
-    @ViewBuilder
+    // Backstop for anyone who skipped the first-launch prompt (ContentView) —
+    // passive nudge only, doesn't block viewing/using the club.
+    private var needsName: Bool {
+        myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
+    }
+
+    /// Always the local scoring name (myName) — Friends/Clubs no longer have
+    /// a separate display name, so this reads like every other name in the
+    /// list instead of a generic "You" string. The "clubs.you" key is reused
+    /// as the badge's accessibility label instead.
+    private var myRowName: String { Player.displayName(for: myName) }
+
+    /// Same avatarColor(for:)/avatarIcon(for:) roster lookup PreMatchView
+    /// already uses for its near-side default button — editing "Me" in
+    /// Settings saves a real Player row (SettingsView.savePlayerEdit), so
+    /// this shows your actual customized avatar instead of a flat gray
+    /// placeholder. Falls back to gray for names with no matching roster
+    /// entry (real Club/Friends identities we have no local avatar for).
+    private func avatarColor(for name: String) -> Color {
+        appStore.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
+    }
+
+    private func avatarIcon(for name: String) -> String? {
+        appStore.roster.first(where: { $0.name == name })?.iconName
+    }
+
+    /// Small badge marking a name as "me" — used on the Members row and on
+    /// the matching Standings entry (matched by myName, since that's the
+    /// exact string every MatchRecord stores as the participant name).
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .accessibilityLabel("clubs.you")
+    }
+
     private var myRow: some View {
-        if accountLinked, !myFriendsDisplayName.isEmpty {
-            Text(myFriendsDisplayName).font(.caption)
-        } else {
-            Text("clubs.you").font(.caption)
+        HStack(spacing: 8) {
+            AvatarView(name: myRowName, color: avatarColor(for: myName), size: 24, iconName: avatarIcon(for: myName))
+            Text(myRowName).font(.caption)
+            youBadge
         }
     }
 
@@ -176,6 +210,7 @@ struct ClubDetailView: View {
                     } else {
                         ForEach(participants) { participant in
                             HStack {
+                                AvatarView(name: participant.name, color: .gray, size: 24)
                                 Text(participant.name).font(.caption)
                                 if participant.isFriend {
                                     Image(systemName: "person.2.fill")
@@ -201,7 +236,11 @@ struct ClubDetailView: View {
                     } else {
                         ForEach(standings) { entry in
                             HStack {
+                                AvatarView(name: entry.name, color: avatarColor(for: entry.name), size: 24, iconName: avatarIcon(for: entry.name))
                                 Text(entry.name).font(.caption)
+                                if entry.name == myName {
+                                    youBadge
+                                }
                                 Spacer()
                                 Text("\(entry.wins)-\(entry.losses)")
                                     .font(.caption)
@@ -246,6 +285,13 @@ struct ClubDetailView: View {
             if let club { name = club.name }
             loadParticipants()
             markActivityViewed()
+            if needsName {
+                pendingName = ""
+                promptingForName = true
+            }
+        }
+        .sheet(isPresented: $promptingForName) {
+            namePrompt
         }
         .confirmationDialog(
             isOwned ? "clubs.delete_confirm" : "clubs.leave_confirm",
@@ -259,6 +305,34 @@ struct ClubDetailView: View {
         .sheet(item: $editingPlayer) { player in
             let others = appStore.roster.filter { $0.id != player.id }.map(\.name)
             PlayerEditView(initialPlayer: player, existingNames: others, clubs: appStore.clubs, onSave: savePlayer)
+        }
+    }
+
+    private var namePrompt: some View {
+        NavigationStack {
+            VStack(spacing: 10) {
+                Text("friends.display_name_prompt_message")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                TextField("friends.display_name_placeholder", text: $pendingName)
+                Button("playeredit.save") { savePendingName() }
+                    .disabled(pendingName.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button("history.cancel") { promptingForName = false }
+            }
+            .padding()
+            .navigationTitle(Text("friends.display_name_prompt_title"))
+        }
+    }
+
+    private func savePendingName() {
+        let trimmed = pendingName.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        myName = trimmed
+        promptingForName = false
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        Task { @MainActor in
+            try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
         }
     }
 
@@ -286,9 +360,17 @@ struct ClubDetailView: View {
             myParticipantId: myParticipantId, myDisplayName: myDisplayName
         )) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(entry.myName) vs \(entry.opponentName)")
-                    .font(.caption)
-                Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
+                HStack(spacing: 4) {
+                    AvatarView(name: entry.myName, color: avatarColor(for: entry.myName), size: 18, iconName: avatarIcon(for: entry.myName))
+                    Text(entry.myName)
+                    if entry.myName == myName { youBadge }
+                    Text("vs")
+                    AvatarView(name: entry.opponentName, color: avatarColor(for: entry.opponentName), size: 18, iconName: avatarIcon(for: entry.opponentName))
+                    Text(entry.opponentName)
+                    if entry.opponentName == myName { youBadge }
+                }
+                .font(.caption)
+                Text(entry.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", "))
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 if !summary.isEmpty {
@@ -424,9 +506,9 @@ struct ClubDetailView: View {
                 let me = share.currentUserParticipant
                 let myId = me?.userIdentity.userRecordID?.recordName
                 let friendIds = Set(appStore.friends.map(\.participantId))
-                // Exclude the owner (shown separately as the hardcoded "You" row when I
-                // am the owner) and, when I'm a non-owner member, exclude myself too —
-                // otherwise I'd see my own name (and a "Challenge" button) in the list.
+                // Exclude the owner (shown separately as myRow when I am the owner)
+                // and, when I'm a non-owner member, exclude myself too — otherwise
+                // I'd see my own name (and a "Challenge" button) in the list.
                 let others = share.participants
                     .filter { $0.role != .owner }
                     .compactMap { participant -> ClubParticipant? in

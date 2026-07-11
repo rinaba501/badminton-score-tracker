@@ -9,11 +9,10 @@
 //  itself, since the URL is untrusted input anyone can compose.
 //
 //  On confirm it upserts my public FriendProfile first (using the roster
-//  "Me" name as a fallback if `myFriendsDisplayName` was never set — a user
-//  can reach this sheet via a deep link before ever visiting FriendsView's
-//  7e display-name prompt, so the fallback stays as a backstop), sends the
-//  request, then reconciles AppStore.friendRequests with a fresh public-DB
-//  fetch (the saveFriendRequests convention — no CKSyncEngine involved).
+//  "Me" name, myName — there's no separate Friends display name to seed),
+//  sends the request, then reconciles AppStore.friendRequests with a fresh
+//  public-DB fetch (the saveFriendRequests convention — no CKSyncEngine
+//  involved).
 //
 
 import SwiftUI
@@ -25,7 +24,6 @@ struct FriendInviteView: View {
 
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.myFriendsDisplayName) private var myFriendsDisplayName = ""
 
     private enum SendState: Equatable {
         case idle, sending, sent, failed(String)
@@ -119,15 +117,9 @@ struct FriendInviteView: View {
 
     private func send() {
         sendState = .sending
-        // Backstop for a deep link opened before FriendsView's display-name
-        // prompt ever ran: never send an anonymous request. The roster "Me"
-        // name stands in (rendered through displayName(for:) so the sentinel
-        // never leaks).
-        if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            myFriendsDisplayName = Player.displayName(for: myName)
-            CloudKitSyncManager.shared.enqueueSettingsChange()
-        }
-        let displayName = myFriendsDisplayName
+        // Rendered through displayName(for:) so the roster "Me" sentinel
+        // never leaks to another player.
+        let displayName = Player.displayName(for: myName)
         // @MainActor: the awaits on the (MainActor) sync manager would
         // otherwise resume on a background executor before mutating @State.
         Task { @MainActor in
