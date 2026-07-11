@@ -71,6 +71,16 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
+    /// Same "me" marker ClubDetailView uses — `defaultLabel` is only ever
+    /// non-empty for the near-side step, so whenever it's shown it's always
+    /// your own name.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .accessibilityLabel("clubs.you")
+    }
+
     private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: [String] = [], showClubPicker: Bool = false, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let selectedClubId = UUID(uuidString: matchClubId)
         let filteredRoster = Player.sortedPlayers(
@@ -103,6 +113,7 @@ struct PreMatchView: View {
                         HStack {
                             AvatarView(name: defaultLabel, color: defaultColor, size: 24, iconName: avatarIcon(for: defaultLabel))
                             Text(defaultLabel)
+                            youBadge
                         }
                     }
                 }

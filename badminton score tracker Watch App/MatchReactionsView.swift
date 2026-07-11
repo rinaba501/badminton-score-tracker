@@ -20,6 +20,7 @@ struct MatchReactionsView: View {
     let myDisplayName: String?
 
     @EnvironmentObject private var appStore: AppStore
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     /// The fixed reaction palette. UI-only — the model stores whatever string
     /// it's given, so this list can grow without a data migration.
@@ -33,12 +34,26 @@ struct MatchReactionsView: View {
         matchReactions.filter { $0.kind == .comment }.sorted { $0.createdDate < $1.createdDate }
     }
 
+    /// Same "me" marker as ClubDetailView's youBadge — kept as a local copy
+    /// since this view has no shared UI target with ClubDetailView.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .accessibilityLabel("clubs.you")
+    }
+
     var body: some View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(entry.myName) vs \(entry.opponentName)")
-                        .font(.caption)
+                    HStack(spacing: 4) {
+                        Text("\(entry.myName) vs \(entry.opponentName)")
+                            .font(.caption)
+                        if entry.myName == myName || entry.opponentName == myName {
+                            youBadge
+                        }
+                    }
                     Text(entry.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", "))
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -55,9 +70,14 @@ struct MatchReactionsView: View {
                 Section(header: Text("clubs.comments")) {
                     ForEach(comments) { comment in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(comment.authorDisplayName)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                            HStack(spacing: 4) {
+                                Text(comment.authorDisplayName)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                if comment.authorParticipantId == myParticipantId {
+                                    youBadge
+                                }
+                            }
                             Text(comment.content)
                                 .font(.caption)
                         }

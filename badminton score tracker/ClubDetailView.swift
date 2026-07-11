@@ -174,7 +174,12 @@ struct ClubDetailView: View {
                     Section {
                         ForEach(pendingMatches) { record in
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("\(record.myName) vs \(record.opponentName)")
+                                HStack(spacing: 4) {
+                                    Text("\(record.myName) vs \(record.opponentName)")
+                                    if record.myName == myName || record.opponentName == myName {
+                                        youBadge
+                                    }
+                                }
                                 Text("\(record.myGamesWon)-\(record.opponentGamesWon)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
