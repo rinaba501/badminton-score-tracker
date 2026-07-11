@@ -404,10 +404,13 @@ struct ClubDetailView: View {
         let matchReactions = store.reactions.filter { $0.clubId == clubId && $0.matchId == entry.id }
         let commentCount = matchReactions.filter { $0.kind == .comment }.count
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 2) {
+            HStack(spacing: 4) {
+                AvatarView(name: entry.myName, color: avatarColor(for: entry.myName), size: 20, iconName: avatarIcon(for: entry.myName))
                 Text(entry.myName)
                 if entry.myName == myName { youBadge }
-                Text("vs \(entry.opponentName)")
+                Text("vs")
+                AvatarView(name: entry.opponentName, color: avatarColor(for: entry.opponentName), size: 20, iconName: avatarIcon(for: entry.opponentName))
+                Text(entry.opponentName)
                 if entry.opponentName == myName { youBadge }
             }
             Text("\(entry.myGamesWon)-\(entry.opponentGamesWon)")
