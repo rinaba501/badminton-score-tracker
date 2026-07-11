@@ -53,6 +53,16 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
+    /// Same "me" marker ClubDetailView uses — `defaultLabel` is only ever
+    /// non-empty for the near-side step, so whenever it's shown it's always
+    /// your own name.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel("clubs.you")
+    }
+
     private func addPlayer(_ player: Player, thenSelect select: (String) -> Void) {
         var r = roster
         if !r.contains(where: { $0.name == player.name }) {
@@ -191,7 +201,10 @@ struct PreMatchView: View {
             Section(header: Text(titleKey)) {
                 if let defaultLabel, !defaultLabel.isEmpty {
                     Button { onSelect(defaultLabel) } label: {
-                        playerRow(name: defaultLabel, color: defaultColor, icon: avatarIcon(for: defaultLabel))
+                        HStack(spacing: 10) {
+                            playerRow(name: defaultLabel, color: defaultColor, icon: avatarIcon(for: defaultLabel))
+                            youBadge
+                        }
                     }
                 }
                 Button { onSelect(guestToken) } label: {
