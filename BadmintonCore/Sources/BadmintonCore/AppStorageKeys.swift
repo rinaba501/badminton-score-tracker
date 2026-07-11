@@ -41,12 +41,6 @@ public enum AppStorageKeys {
     // life of the iCloud account) — it's a per-device identity cache, not
     // synced data.
     public static let myParticipantId = "myParticipantId"
-    // Friends v1: user-supplied free-text display name shown to other people
-    // in friend requests/lists (no Apple identity verification — same
-    // snapshotted-string convention as ChallengeRecord.fromDisplayName).
-    // Synced across a person's own devices via SettingsSnapshot (last-writer
-    // -wins, like myName).
-    public static let myFriendsDisplayName = "myFriendsDisplayName"
     public static let playerSortOrder = "playerSortOrder"
     public static let pointsToWin = "pointsToWin"
     public static let gamesInMatch = "gamesInMatch"
@@ -85,6 +79,13 @@ public enum AppStorageKeys {
     public static let ckSyncEngineState = "ckSyncEngineState"
     public static let ckSharedSyncEngineState = "ckSharedSyncEngineState"
     public static let didMigrateToCloudKit = "didMigrateToCloudKit"
+    // Whether the first-launch "what should we call you?" prompt has been
+    // shown (skip or save both count) — device-local, never synced, so a
+    // fresh device always gets asked once regardless of other devices'
+    // state. Doesn't gate app usage: skipping leaves myName at its default
+    // and the app fully usable (local-first invariant) — Friends/Clubs
+    // carry a lighter one-time-per-visit nudge as a backstop instead.
+    public static let didPromptForName = "didPromptForName"
     // Per-record CKRecord system fields (change tags), keyed by recordName, so
     // in-place updates carry the right tag instead of conflicting every time.
     public static let ckRecordMetadata = "ckRecordMetadata"

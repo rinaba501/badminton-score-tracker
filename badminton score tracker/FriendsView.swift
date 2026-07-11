@@ -18,17 +18,22 @@ import BadmintonCore
 struct FriendsView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.myFriendsDisplayName) private var myFriendsDisplayName = ""
     @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
 
     @State private var myParticipantId: String?
-    @State private var promptingForDisplayName = false
-    @State private var linkingAccount = false
-    @State private var pendingDisplayName = ""
     @State private var enteringCode = false
     @State private var codeInput = ""
     @State private var isSendingCode = false
     @State private var codeError: String?
+    @State private var promptingForName = false
+    @State private var pendingName = ""
+    @State private var pendingAction: (() -> Void)?
+
+    // Backstop for anyone who skipped the first-launch prompt (ContentView) —
+    // still lets Friends work, just nudges before anything gets sent.
+    private var needsName: Bool {
+        myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
+    }
 
     private var incomingRequests: [FriendRequest] {
         guard let myParticipantId else { return [] }
@@ -42,7 +47,7 @@ struct FriendsView: View {
 
     private var inviteURL: URL? {
         guard let myParticipantId else { return nil }
-        return FriendInviteLink.url(participantId: myParticipantId, displayName: myFriendsDisplayName)
+        return FriendInviteLink.url(participantId: myParticipantId, displayName: Player.displayName(for: myName))
     }
 
     var body: some View {
@@ -50,11 +55,11 @@ struct FriendsView: View {
             .navigationTitle("settings.friends")
             .navigationBarTitleDisplayMode(.inline)
             .task { await refresh() }
-            .sheet(isPresented: $promptingForDisplayName) {
-                displayNamePrompt
-            }
             .sheet(isPresented: $enteringCode) {
                 codeEntryPrompt
+            }
+            .sheet(isPresented: $promptingForName) {
+                namePrompt
             }
     }
 
@@ -64,7 +69,10 @@ struct FriendsView: View {
         List {
             Section("friends.account_section_header") {
                 if accountLinked {
-                    Text(String(format: NSLocalizedString("friends.linked_as", comment: ""), myFriendsDisplayName))
+                    HStack(spacing: 8) {
+                        AvatarView(name: Player.displayName(for: myName), color: .gray, size: 24)
+                        Text(String(format: NSLocalizedString("friends.linked_as", comment: ""), Player.displayName(for: myName)))
+                    }
                     Button("friends.unlink_account", role: .destructive) { unlinkAccount() }
                 } else {
                     Button {
@@ -86,12 +94,15 @@ struct FriendsView: View {
             if !outgoingRequests.isEmpty {
                 Section("friends.pending_sent") {
                     ForEach(outgoingRequests) { request in
-                        Text(request.toDisplayName)
-                            .swipeActions {
-                                Button("friends.cancel_request", role: .destructive) {
-                                    respond(to: request, accept: false)
-                                }
+                        HStack(spacing: 8) {
+                            AvatarView(name: request.toDisplayName, color: .gray, size: 24)
+                            Text(request.toDisplayName)
+                        }
+                        .swipeActions {
+                            Button("friends.cancel_request", role: .destructive) {
+                                respond(to: request, accept: false)
                             }
+                        }
                     }
                 }
             }
@@ -103,7 +114,10 @@ struct FriendsView: View {
                         .font(.callout)
                 } else {
                     ForEach(store.friends, id: \.participantId) { friend in
-                        Text(friend.displayName)
+                        HStack(spacing: 8) {
+                            AvatarView(name: friend.displayName, color: .gray, size: 24)
+                            Text(friend.displayName)
+                        }
                     }
                 }
             }
@@ -128,39 +142,17 @@ struct FriendsView: View {
     }
 
     private func incomingRequestRow(_ request: FriendRequest) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(request.fromDisplayName.isEmpty
-                 ? NSLocalizedString("friends.unknown_inviter", comment: "")
-                 : request.fromDisplayName)
+        let name = request.fromDisplayName.isEmpty
+            ? NSLocalizedString("friends.unknown_inviter", comment: "")
+            : request.fromDisplayName
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                AvatarView(name: name, color: .gray, size: 24)
+                Text(name)
+            }
             HStack {
                 Button("friends.accept") { respond(to: request, accept: true) }
                 Button("friends.decline", role: .destructive) { respond(to: request, accept: false) }
-            }
-        }
-    }
-
-    private var displayNamePrompt: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    Text("friends.display_name_prompt_message")
-                        .foregroundStyle(.secondary)
-                    TextField("friends.display_name_placeholder", text: $pendingDisplayName)
-                }
-            }
-            .navigationTitle(Text("friends.display_name_prompt_title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("history.cancel") {
-                        promptingForDisplayName = false
-                        linkingAccount = false
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("playeredit.save") { saveDisplayName() }
-                        .disabled(pendingDisplayName.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
             }
         }
     }
@@ -203,6 +195,32 @@ struct FriendsView: View {
         }
     }
 
+    private var namePrompt: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text("friends.display_name_prompt_message")
+                        .foregroundStyle(.secondary)
+                    TextField("friends.display_name_placeholder", text: $pendingName)
+                }
+            }
+            .navigationTitle(Text("friends.display_name_prompt_title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("history.cancel") {
+                        pendingAction = nil
+                        promptingForName = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("playeredit.save") { savePendingName() }
+                        .disabled(pendingName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+        }
+    }
+
     // MARK: - Actions
 
     private func refresh() async {
@@ -210,43 +228,45 @@ struct FriendsView: View {
         if let id = try? await manager.resolveMyParticipantId() {
             myParticipantId = id
         }
-        if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            pendingDisplayName = Player.displayName(for: myName)
-            promptingForDisplayName = true
+        if needsName {
+            pendingName = ""
+            promptingForName = true
+        } else {
+            try? await manager.ensureMyProfileExists(displayName: Player.displayName(for: myName))
         }
         if let requests = try? await manager.fetchMyFriendRequests() {
             store.saveFriendRequests(requests)
         }
     }
 
-    private func saveDisplayName() {
-        let trimmed = pendingDisplayName.trimmingCharacters(in: .whitespaces)
+    private func savePendingName() {
+        let trimmed = pendingName.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        myFriendsDisplayName = trimmed
-        promptingForDisplayName = false
-        if linkingAccount {
-            accountLinked = true
-            linkingAccount = false
-        }
+        myName = trimmed
+        promptingForName = false
         CloudKitSyncManager.shared.enqueueSettingsChange()
         Task { @MainActor in
-            try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: trimmed)
+            try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
+            pendingAction?()
+            pendingAction = nil
         }
     }
 
-    // Explicit "link this device to one CloudKit account" action — separate
-    // from the auto-prompt in refresh(), which only seeds a Friends display
-    // name. Linking additionally flips accountLinked, which Club reads to
-    // show the same name on the "You" row (see ClubDetailView).
+    // Explicit "link this device to one CloudKit account" opt-in flag —
+    // purely informational today (Club's "you" row/badge no longer branches
+    // on it, since there's only one identity to show), kept for future use.
     private func linkAccount() {
-        if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            pendingDisplayName = Player.displayName(for: myName)
-            linkingAccount = true
-            promptingForDisplayName = true
-        } else {
-            accountLinked = true
-            CloudKitSyncManager.shared.enqueueSettingsChange()
+        guard !needsName else {
+            pendingName = ""
+            pendingAction = { [self] in
+                accountLinked = true
+                CloudKitSyncManager.shared.enqueueSettingsChange()
+            }
+            promptingForName = true
+            return
         }
+        accountLinked = true
+        CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 
     // Non-destructive: does not delete the FriendProfile, remove friends, or
@@ -258,6 +278,12 @@ struct FriendsView: View {
     }
 
     private func sendCode() {
+        guard !needsName else {
+            pendingName = ""
+            pendingAction = { [self] in sendCode() }
+            promptingForName = true
+            return
+        }
         let trimmed = codeInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         let participantId: String
@@ -277,13 +303,8 @@ struct FriendsView: View {
                 isSendingCode = false
                 return
             }
-            // Same backstop as FriendInviteView.send(): never send anonymously.
-            if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                myFriendsDisplayName = Player.displayName(for: myName)
-                manager.enqueueSettingsChange()
-            }
             do {
-                try await manager.ensureMyProfileExists(displayName: myFriendsDisplayName)
+                try await manager.ensureMyProfileExists(displayName: Player.displayName(for: myName))
                 try await manager.sendFriendRequest(toParticipantId: participantId, toDisplayName: profile.displayName)
                 if let requests = try? await manager.fetchMyFriendRequests() {
                     store.saveFriendRequests(requests)

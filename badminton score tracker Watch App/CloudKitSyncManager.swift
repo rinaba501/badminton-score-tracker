@@ -198,7 +198,6 @@ final class CloudKitSyncManager {
             enableCrownScoring: defaults.object(forKey: AppStorageKeys.enableCrownScoring) as? Bool ?? true,
             timeModeEnabled: defaults.object(forKey: AppStorageKeys.timeModeEnabled) as? Bool ?? false,
             timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10,
-            myFriendsDisplayName: defaults.string(forKey: AppStorageKeys.myFriendsDisplayName) ?? "",
             clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
             accountLinked: defaults.object(forKey: AppStorageKeys.accountLinked) as? Bool ?? false
         )
@@ -542,7 +541,8 @@ final class CloudKitSyncManager {
         }
         guard !alreadyPending else { throw FriendRequestError.alreadyPending }
 
-        let myDisplayName = UserDefaults.standard.string(forKey: AppStorageKeys.myFriendsDisplayName) ?? ""
+        let storedMyName = UserDefaults.standard.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName
+        let myDisplayName = Player.displayName(for: storedMyName)
         let request = FriendRequest(
             fromParticipantId: myParticipantId, fromDisplayName: myDisplayName,
             toParticipantId: toParticipantId, toDisplayName: toDisplayName
