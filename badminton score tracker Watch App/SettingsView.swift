@@ -181,6 +181,12 @@ struct SettingsView: View {
                 }
             }
 
+            Section(header: Text("settings.friends")) {
+                NavigationLink(destination: FriendsView()) {
+                    Label(LocalizedStringKey("settings.friends"), systemImage: "person.2.circle")
+                }
+            }
+
             Section(header: Text("settings.crown")) {
                 Toggle("settings.crown_scoring", isOn: $enableCrownScoring)
             }

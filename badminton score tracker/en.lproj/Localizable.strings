@@ -167,3 +167,17 @@
 "friends.error_self" = "This is your own invite link.";
 "friends.error_pending" = "You already have a pending request with this player.";
 "friends.error_generic" = "Couldn't send the request. Check your connection and try again.";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "Friends";
+"friends.pending_received" = "Pending Requests";
+"friends.pending_sent" = "Sent Requests";
+"friends.your_friends" = "Friends";
+"friends.no_friends_yet" = "No friends yet";
+"friends.accept" = "Accept";
+"friends.decline" = "Decline";
+"friends.cancel_request" = "Cancel";
+"friends.add_friend" = "Add Friend";
+"friends.display_name_prompt_title" = "Your Name";
+"friends.display_name_prompt_message" = "Choose a name other players will see";
+"friends.display_name_placeholder" = "Your name";

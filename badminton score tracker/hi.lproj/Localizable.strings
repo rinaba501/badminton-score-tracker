@@ -167,3 +167,17 @@
 "friends.error_self" = "यह आपका अपना आमंत्रण लिंक है।";
 "friends.error_pending" = "इस खिलाड़ी के साथ पहले से एक अनुरोध लंबित है।";
 "friends.error_generic" = "अनुरोध नहीं भेजा जा सका। कनेक्शन जांचकर फिर से प्रयास करें।";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "मित्र";
+"friends.pending_received" = "प्राप्त अनुरोध";
+"friends.pending_sent" = "भेजे गए अनुरोध";
+"friends.your_friends" = "मित्र";
+"friends.no_friends_yet" = "अभी कोई मित्र नहीं";
+"friends.accept" = "स्वीकारें";
+"friends.decline" = "अस्वीकारें";
+"friends.cancel_request" = "रद्द करें";
+"friends.add_friend" = "मित्र जोड़ें";
+"friends.display_name_prompt_title" = "आपका नाम";
+"friends.display_name_prompt_message" = "एक नाम चुनें जो अन्य खिलाड़ियों को दिखे";
+"friends.display_name_placeholder" = "आपका नाम";

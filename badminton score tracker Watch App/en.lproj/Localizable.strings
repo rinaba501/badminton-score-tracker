@@ -209,3 +209,19 @@
 "paywall.unavailable" = "The App Store is unavailable right now. Try again later.";
 "paywall.locked" = "Locked";
 "stats.unlock_pro" = "Unlock with Badminton Pro";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "Friends";
+"friends.invite_requires_sync" = "Turn on iCloud Sync in Settings to add friends.";
+"friends.unknown_inviter" = "A player";
+"friends.pending_received" = "Pending Requests";
+"friends.pending_sent" = "Sent Requests";
+"friends.your_friends" = "Friends";
+"friends.no_friends_yet" = "No friends yet";
+"friends.accept" = "Accept";
+"friends.decline" = "Decline";
+"friends.cancel_request" = "Cancel";
+"friends.add_friend" = "Add Friend";
+"friends.display_name_prompt_title" = "Your Name";
+"friends.display_name_prompt_message" = "Choose a name other players will see";
+"friends.display_name_placeholder" = "Your name";

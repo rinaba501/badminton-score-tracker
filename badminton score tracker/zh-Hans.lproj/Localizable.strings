@@ -167,3 +167,17 @@
 "friends.error_self" = "这是你自己的邀请链接。";
 "friends.error_pending" = "你与该球友之间已有待处理的申请。";
 "friends.error_generic" = "无法发送申请。请检查网络连接后重试。";
+
+// Roadmap Phase 7e: Friends UI
+"settings.friends" = "好友";
+"friends.pending_received" = "收到的申请";
+"friends.pending_sent" = "发出的申请";
+"friends.your_friends" = "好友";
+"friends.no_friends_yet" = "暂无好友";
+"friends.accept" = "接受";
+"friends.decline" = "拒绝";
+"friends.cancel_request" = "取消";
+"friends.add_friend" = "添加好友";
+"friends.display_name_prompt_title" = "你的昵称";
+"friends.display_name_prompt_message" = "设置一个其他球友能看到的昵称";
+"friends.display_name_placeholder" = "你的昵称";
