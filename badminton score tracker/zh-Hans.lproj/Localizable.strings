@@ -181,3 +181,8 @@
 "friends.display_name_prompt_title" = "你的昵称";
 "friends.display_name_prompt_message" = "设置一个其他球友能看到的昵称";
 "friends.display_name_placeholder" = "你的昵称";
+"friends.enter_code" = "输入代码";
+"friends.code_prompt_message" = "粘贴邀请链接或好友代码";
+"friends.code_placeholder" = "邀请链接或代码";
+"friends.code_send" = "发送申请";
+"friends.error_not_found" = "未找到该代码对应的球友。";

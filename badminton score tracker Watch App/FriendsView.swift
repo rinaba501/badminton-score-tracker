@@ -23,6 +23,10 @@ struct FriendsView: View {
     @State private var myParticipantId: String?
     @State private var promptingForDisplayName = false
     @State private var pendingDisplayName = ""
+    @State private var enteringCode = false
+    @State private var codeInput = ""
+    @State private var isSendingCode = false
+    @State private var codeError: String?
 
     private var incomingRequests: [FriendRequest] {
         guard let myParticipantId else { return [] }
@@ -52,6 +56,9 @@ struct FriendsView: View {
         .task { await refresh() }
         .sheet(isPresented: $promptingForDisplayName) {
             displayNamePrompt
+        }
+        .sheet(isPresented: $enteringCode) {
+            codeEntryPrompt
         }
     }
 
@@ -107,6 +114,11 @@ struct FriendsView: View {
                 } else {
                     ProgressView()
                 }
+                Button {
+                    enteringCode = true
+                } label: {
+                    Label("friends.enter_code", systemImage: "number")
+                }
             }
         }
     }
@@ -138,6 +150,37 @@ struct FriendsView: View {
         }
     }
 
+    private var codeEntryPrompt: some View {
+        NavigationStack {
+            VStack(spacing: 10) {
+                Text("friends.code_prompt_message")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                TextField("friends.code_placeholder", text: $codeInput)
+                if let codeError {
+                    Text(codeError)
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                }
+                if isSendingCode {
+                    ProgressView()
+                } else {
+                    Button("friends.code_send") { sendCode() }
+                        .disabled(codeInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                Button("history.cancel") {
+                    codeInput = ""
+                    codeError = nil
+                    enteringCode = false
+                }
+            }
+            .padding()
+            .navigationTitle(Text("friends.enter_code"))
+        }
+    }
+
     // MARK: - Actions
 
     private func refresh() async {
@@ -162,6 +205,52 @@ struct FriendsView: View {
         promptingForDisplayName = false
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: trimmed)
+        }
+    }
+
+    private func sendCode() {
+        let trimmed = codeInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let participantId: String
+        if let url = URL(string: trimmed), let invite = FriendInviteLink.parse(url) {
+            participantId = invite.participantId
+        } else {
+            participantId = trimmed
+        }
+        isSendingCode = true
+        codeError = nil
+        // @MainActor: the awaits on the (MainActor) sync manager would
+        // otherwise resume on a background executor before mutating @State.
+        Task { @MainActor in
+            let manager = CloudKitSyncManager.shared
+            guard let profile = await manager.fetchProfile(participantId: participantId) else {
+                codeError = NSLocalizedString("friends.error_not_found", comment: "")
+                isSendingCode = false
+                return
+            }
+            // Same backstop as FriendInviteView.send(): never send anonymously.
+            if myFriendsDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                myFriendsDisplayName = Player.displayName(for: myName)
+            }
+            do {
+                try await manager.ensureMyProfileExists(displayName: myFriendsDisplayName)
+                try await manager.sendFriendRequest(toParticipantId: participantId, toDisplayName: profile.displayName)
+                if let requests = try? await manager.fetchMyFriendRequests() {
+                    appStore.saveFriendRequests(requests)
+                }
+                isSendingCode = false
+                enteringCode = false
+                codeInput = ""
+            } catch CloudKitSyncManager.FriendRequestError.selfRequest {
+                codeError = NSLocalizedString("friends.error_self", comment: "")
+                isSendingCode = false
+            } catch CloudKitSyncManager.FriendRequestError.alreadyPending {
+                codeError = NSLocalizedString("friends.error_pending", comment: "")
+                isSendingCode = false
+            } catch {
+                codeError = NSLocalizedString("friends.error_generic", comment: "")
+                isSendingCode = false
+            }
         }
     }
 
