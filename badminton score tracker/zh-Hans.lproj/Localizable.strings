@@ -132,6 +132,10 @@
 "ios.game_screen_style_depth" = "立体";
 "ios.game_screen_style_split" = "分屏";
 "ios.game_screen_style_minimal" = "极简";
+"ios.game_screen_style_blackbird" = "黑鸟";
+"ios.game_screen_style_matchstick" = "火柴";
+"ios.game_screen_style_birdseye" = "鸟瞰";
+"ios.game_screen_style_tug" = "拉锯";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "俱乐部";

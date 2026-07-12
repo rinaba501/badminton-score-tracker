@@ -132,6 +132,10 @@
 "ios.game_screen_style_depth" = "立体感";
 "ios.game_screen_style_split" = "分割";
 "ios.game_screen_style_minimal" = "ミニマル";
+"ios.game_screen_style_blackbird" = "ブラックバード";
+"ios.game_screen_style_matchstick" = "マッチスティック";
+"ios.game_screen_style_birdseye" = "バーズアイ";
+"ios.game_screen_style_tug" = "タグ";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "クラブ";
