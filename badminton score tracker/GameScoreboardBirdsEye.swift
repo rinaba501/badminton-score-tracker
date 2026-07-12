@@ -21,6 +21,17 @@ struct BirdsEyeScoreboard: View {
 
     private let line = Color.white.opacity(0.55)
 
+    /// Fraction of a zone's height, measured from the net-adjacent edge,
+    /// where the short service line sits — real courts put it close to the
+    /// net (~1.98m of a ~6.7m half-court, ≈0.3), not out near the baseline.
+    private let serviceLineFraction: CGFloat = 0.32
+
+    /// Fraction from the net-adjacent edge where the serve marker sits —
+    /// behind (farther from the net than) the short service line, inside
+    /// the actual service box, since a server may never stand in front of
+    /// that line.
+    private let serveMarkerFraction: CGFloat = 0.66
+
     /// Simplified court markings for one half: outer boundary, a short-service
     /// line, and a center line splitting the two service courts.
     private func courtLines(flip: Bool) -> some View {
@@ -29,7 +40,7 @@ struct BirdsEyeScoreboard: View {
             let h = geo.size.height
             Path { path in
                 path.addRect(CGRect(x: w * 0.06, y: 0, width: w * 0.88, height: h))
-                let shortServiceY = flip ? h * 0.78 : h * 0.22
+                let shortServiceY = flip ? h * serviceLineFraction : h * (1 - serviceLineFraction)
                 path.move(to: CGPoint(x: w * 0.06, y: shortServiceY))
                 path.addLine(to: CGPoint(x: w * 0.94, y: shortServiceY))
                 path.move(to: CGPoint(x: w * 0.5, y: shortServiceY))
@@ -54,14 +65,25 @@ struct BirdsEyeScoreboard: View {
         .ignoresSafeArea()
     }
 
+    /// Positions the marker inside the correct service box: behind the
+    /// short service line (serveMarkerFraction) and on the correct side.
+    /// The far zone's player faces the near player across the net — a
+    /// mirrored, not rotated, view — so their own right-hand court renders
+    /// on screen-left, the opposite of the near zone's mapping.
     private func serveMarker(_ data: ScoreSideData, flip: Bool) -> some View {
-        Circle()
-            .fill(Color.white)
-            .frame(width: 12, height: 12)
-            .shadow(color: .black.opacity(0.4), radius: 3)
-            .opacity(data.isServing ? 1 : 0)
-            .frame(maxWidth: .infinity, alignment: data.serveRight != flip ? .trailing : .leading)
-            .padding(.horizontal, 28)
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let markerY = flip ? h * serveMarkerFraction : h * (1 - serveMarkerFraction)
+            let onScreenRight = data.serveRight == flip
+            let markerX = onScreenRight ? w * 0.72 : w * 0.28
+            Circle()
+                .fill(Color.white)
+                .frame(width: 12, height: 12)
+                .shadow(color: .black.opacity(0.4), radius: 3)
+                .opacity(data.isServing ? 1 : 0)
+                .position(x: markerX, y: markerY)
+        }
     }
 
     private func gameTally(_ games: Int) -> some View {
@@ -132,7 +154,7 @@ struct BirdsEyeScoreboard: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: flip ? .top : .bottom) { serveMarker(data, flip: flip) }
+        .overlay { serveMarker(data, flip: flip) }
         .contentShape(Rectangle())
         .onTapGesture { data.onTap() }
         .accessibilityElement(children: .ignore)
