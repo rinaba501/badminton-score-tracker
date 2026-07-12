@@ -117,6 +117,12 @@ struct TugScoreboard: View {
     }
 
     var body: some View {
+        // geo.size is already safe-area-constrained (no ignoresSafeArea on
+        // this GeometryReader), so the zone heights derived from it line up
+        // exactly with the space SwiftUI actually lays the VStack out in —
+        // calling ignoresSafeArea() on content sized from a *smaller*
+        // reading left a gap/misalignment at the screen edges and let the
+        // top zone's name row sit under the toolbar.
         GeometryReader { geo in
             VStack(spacing: 0) {
                 zone(top, isTop: true, isLeader: top.score >= bottom.score)
@@ -126,7 +132,6 @@ struct TugScoreboard: View {
             }
             .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75), value: topFraction)
             .overlay(centerBadge)
-            .ignoresSafeArea()
         }
     }
 }
