@@ -152,7 +152,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 - **12 SF Symbol sport icons** — star, bolt, flame, crown, etc.
 - **12 avatar colors** — blue, green, orange, purple, pink, red, cyan, mint, teal, indigo, yellow, brown
 - Roster players are saved on first match with a new name
-- New players can be created from either the pre-match picker or Settings, with color and icon selection available at creation time
+- New players can be created from either the pre-match picker or Settings, with color and icon selection available at creation time; the editor pre-fills a randomized color + icon (`Player.randomDefaultAppearance()`, free-catalog only) so a player saved without touching the pickers still looks visually distinct, and reopening the add-player sheet without saving re-randomizes rather than repeating the same suggestion
 - **"Me" player** — stored in roster like any other player; shown under "Me" section in Settings, hidden from the Players list
 - Duplicate names are rejected when renaming (alert shown)
 - Renaming a player propagates to all match history records that reference their `UUID`

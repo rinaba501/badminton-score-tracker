@@ -329,8 +329,8 @@ final class GameViewModel: ObservableObject {
         guard Player.shouldBeStoredAsSavedPlayer(name, currentUserName: myName) else { return }
         var roster = appStore.roster
         if !roster.contains(where: { $0.name == name }) {
-            let colorIndex = roster.count % Player.avatarColors.count
-            roster.insert(Player(name: name, colorIndex: colorIndex), at: 0)
+            let appearance = Player.randomDefaultAppearance()
+            roster.insert(Player(name: name, colorIndex: appearance.colorIndex, iconName: appearance.iconName), at: 0)
             appStore.saveRoster(roster)
         }
     }

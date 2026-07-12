@@ -58,6 +58,15 @@ extension Player {
     }
 
     var avatarColor: Color { Self.avatarColors[colorIndex % Self.avatarColors.count] }
+
+    /// Default color + icon for a newly-added player who hasn't picked one —
+    /// randomized (not roster.count-indexed) so reopening the add-player sheet
+    /// without saving shows a visibly different suggestion each time, instead of
+    /// the same combination until an actual player is added. Icon is always from
+    /// the free catalog so non-Pro users never get a locked default.
+    static func randomDefaultAppearance() -> (colorIndex: Int, iconName: String) {
+        (Int.random(in: 0..<avatarColors.count), freeAvatarImageNames.randomElement()!)
+    }
 }
 
 struct AvatarView: View {

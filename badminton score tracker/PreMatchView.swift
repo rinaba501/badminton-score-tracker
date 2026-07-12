@@ -262,8 +262,14 @@ struct PreMatchView: View {
             }
         }
         .sheet(isPresented: $showAddPlayer) {
-            PlayerEditView(initialPlayer: Player(name: "", colorIndex: roster.count % Player.avatarColors.count, clubId: selectedClubId),
-                           existingNames: roster.map(\.name)) { newPlayer in
+            let appearance = Player.randomDefaultAppearance()
+            let defaultPlayer = Player(
+                name: "",
+                colorIndex: appearance.colorIndex,
+                iconName: appearance.iconName,
+                clubId: selectedClubId
+            )
+            PlayerEditView(initialPlayer: defaultPlayer, existingNames: roster.map(\.name)) { newPlayer in
                 addPlayer(newPlayer, thenSelect: onSelect)
                 showAddPlayer = false
             }
