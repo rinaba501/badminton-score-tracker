@@ -13,6 +13,7 @@ struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
     @State private var showingClearConfirmation = false
+    @State private var pendingDeleteRecord: MatchRecord?
     @State private var showingFilters = false
     @State private var showingClubFilter = false
     /// Every name here must have participated (on either team) for a record
@@ -241,7 +242,7 @@ struct HistoryView: View {
                             MatchHistoryRow(record: record)
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
-                                        delete(record)
+                                        pendingDeleteRecord = record
                                     } label: {
                                         Label("history.clear", systemImage: "trash")
                                     }
@@ -324,6 +325,18 @@ struct HistoryView: View {
             Button("history.clear", role: .destructive) { appStore.clearHistory() }
         } message: {
             Text("history.clear_confirm")
+        }
+        .confirmationDialog(
+            "history.delete_match_confirm",
+            isPresented: Binding(
+                get: { pendingDeleteRecord != nil },
+                set: { if !$0 { pendingDeleteRecord = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("history.clear", role: .destructive) {
+                if let pendingDeleteRecord { delete(pendingDeleteRecord) }
+            }
         }
     }
 }

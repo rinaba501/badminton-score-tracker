@@ -32,6 +32,7 @@ struct SettingsView: View {
     /// without the entitlement (tracks the last free selection; the paywall
     /// opens instead).
     @State private var lastFreeTheme: CourtTheme = .green
+    @State private var pendingPlayerIdsToDelete: Set<Player.ID>?
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -45,8 +46,13 @@ struct SettingsView: View {
     }
 
     private func deletePlayers(at offsets: IndexSet) {
-        let toDelete = Set(offsets.map { opponents[$0].id })
-        appStore.saveRoster(roster.filter { !toDelete.contains($0.id) })
+        pendingPlayerIdsToDelete = Set(offsets.map { opponents[$0].id })
+    }
+
+    private func confirmPendingPlayerDeletion() {
+        guard let pendingPlayerIdsToDelete else { return }
+        appStore.saveRoster(roster.filter { !pendingPlayerIdsToDelete.contains($0.id) })
+        self.pendingPlayerIdsToDelete = nil
     }
 
     private func savePlayerEdit(_ updated: Player) {
@@ -150,7 +156,7 @@ struct SettingsView: View {
                         }
                         .contextMenu {
                             Button(role: .destructive) {
-                                appStore.saveRoster(roster.filter { $0.id != player.id })
+                                pendingPlayerIdsToDelete = [player.id]
                             } label: {
                                 Label("settings.delete", systemImage: "trash")
                             }
@@ -278,6 +284,16 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
+        }
+        .confirmationDialog(
+            "settings.delete_player_confirm",
+            isPresented: Binding(
+                get: { pendingPlayerIdsToDelete != nil },
+                set: { if !$0 { pendingPlayerIdsToDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("settings.delete", role: .destructive) { confirmPendingPlayerDeletion() }
         }
         .onAppear {
             if !courtTheme.isPremium { lastFreeTheme = courtTheme }

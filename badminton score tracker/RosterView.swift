@@ -19,6 +19,7 @@ struct RosterView: View {
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
 
     @State private var editingPlayer: Player?
+    @State private var pendingPlayerIdsToDelete: Set<Player.ID>?
 
     private var roster: [Player] { store.roster }
 
@@ -31,8 +32,13 @@ struct RosterView: View {
     }
 
     private func deletePlayers(at offsets: IndexSet) {
-        let toDelete = Set(offsets.map { opponents[$0].id })
-        store.saveRoster(roster.filter { !toDelete.contains($0.id) })
+        pendingPlayerIdsToDelete = Set(offsets.map { opponents[$0].id })
+    }
+
+    private func confirmPendingPlayerDeletion() {
+        guard let pendingPlayerIdsToDelete else { return }
+        store.saveRoster(roster.filter { !pendingPlayerIdsToDelete.contains($0.id) })
+        self.pendingPlayerIdsToDelete = nil
     }
 
     private func savePlayerEdit(_ updated: Player) {
@@ -120,6 +126,16 @@ struct RosterView: View {
                            existingNames: roster.filter { $0.id != player.id }.map(\.name),
                            clubs: store.clubs,
                            onSave: savePlayerEdit)
+        }
+        .confirmationDialog(
+            "settings.delete_player_confirm",
+            isPresented: Binding(
+                get: { pendingPlayerIdsToDelete != nil },
+                set: { if !$0 { pendingPlayerIdsToDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("settings.delete", role: .destructive) { confirmPendingPlayerDeletion() }
         }
     }
 

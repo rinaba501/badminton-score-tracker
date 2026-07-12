@@ -68,6 +68,7 @@
 "history.clear_confirm" = "すべての試合履歴を削除しますか？この操作は元に戻せません。";
 "history.cancel" = "キャンセル";
 "history.clear" = "削除";
+"history.delete_match_confirm" = "この試合を削除しますか？元に戻せません。";
 
 // Court Themes
 "theme.green" = "グリーン";
@@ -141,6 +142,7 @@
 "settings.timer_enable" = "有効";
 "settings.minutes" = "%d分";
 "settings.delete" = "削除";
+"settings.delete_player_confirm" = "このプレイヤーを削除しますか？過去の試合にはこの名前が残りますが、名簿からは削除されます。";
 "prematch.near_side" = "手前側";
 "prematch.far_side" = "奥側";
 "prematch.near_partner" = "手前側パートナー";
@@ -181,11 +183,14 @@
 "clubs.comments" = "コメント";
 "clubs.confirm_match" = "承認";
 "clubs.decline_match" = "却下";
+"clubs.decline_match_confirm" = "この試合を辞退しますか？クラブの承認待ちリストから削除されます。";
 "clubs.challenges" = "対戦申請";
 "clubs.challenge" = "挑戦する";
 "clubs.accept_challenge" = "承諾";
 "clubs.decline_challenge" = "却下";
+"clubs.decline_challenge_confirm" = "この対戦の誘いを辞退しますか？";
 "clubs.cancel_challenge" = "キャンセル";
+"clubs.cancel_challenge_confirm" = "この対戦の誘いをキャンセルしますか？";
 "clubs.challenge_pending" = "保留中";
 "clubs.challenge_accepted" = "承諾済み";
 "clubs.roster" = "メンバー一覧";
@@ -217,7 +222,9 @@
 "friends.no_friends_yet" = "フレンドはまだいません";
 "friends.accept" = "承認";
 "friends.decline" = "拒否";
+"friends.decline_confirm" = "このフレンド申請を辞退しますか？";
 "friends.cancel_request" = "取り消す";
+"friends.cancel_request_confirm" = "このフレンド申請をキャンセルしますか？";
 "friends.add_friend" = "フレンドを追加";
 "friends.error_self" = "これは自分の招待リンクです。";
 "friends.error_pending" = "このプレイヤーとの申請はすでに保留中です。";
@@ -232,6 +239,7 @@
 "friends.link_account" = "この端末をリンク";
 "friends.linked_as" = "%@ としてリンク済み";
 "friends.unlink_account" = "リンク解除";
+"friends.unlink_account_confirm" = "このデバイスのアカウント連携を解除しますか？いつでも再度連携できます。";
 "friends.enter_code" = "コードを入力";
 "friends.code_prompt_message" = "招待リンクまたはフレンドコードを貼り付けてください";
 "friends.code_placeholder" = "招待リンクまたはコード";

@@ -67,6 +67,7 @@
 "history.clear_confirm" = "모든 경기 기록을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.";
 "history.cancel" = "취소";
 "history.clear" = "삭제";
+"history.delete_match_confirm" = "이 경기를 삭제하시겠습니까? 되돌릴 수 없습니다.";
 
 // Court Themes
 "theme.green" = "초록";
@@ -140,6 +141,7 @@
 "settings.timer_enable" = "사용";
 "settings.minutes" = "%d분";
 "settings.delete" = "삭제";
+"settings.delete_player_confirm" = "이 선수를 삭제하시겠습니까? 지난 경기 기록에는 이름이 남지만 명단에서는 제거됩니다.";
 "prematch.near_side" = "근거리";
 "prematch.far_side" = "원거리";
 "prematch.near_partner" = "근거리 파트너";
@@ -180,11 +182,14 @@
 "clubs.comments" = "댓글";
 "clubs.confirm_match" = "확인";
 "clubs.decline_match" = "거절";
+"clubs.decline_match_confirm" = "이 경기를 거절하시겠습니까? 클럽의 확인 대기 목록에서 제거됩니다.";
 "clubs.challenges" = "도전";
 "clubs.challenge" = "도전하기";
 "clubs.accept_challenge" = "수락";
 "clubs.decline_challenge" = "거절";
+"clubs.decline_challenge_confirm" = "이 대결 신청을 거절하시겠습니까?";
 "clubs.cancel_challenge" = "취소";
+"clubs.cancel_challenge_confirm" = "이 대결 신청을 취소하시겠습니까?";
 "clubs.challenge_pending" = "대기 중";
 "clubs.challenge_accepted" = "수락됨";
 "clubs.roster" = "명단";
@@ -216,7 +221,9 @@
 "friends.no_friends_yet" = "아직 친구가 없습니다";
 "friends.accept" = "수락";
 "friends.decline" = "거절";
+"friends.decline_confirm" = "이 친구 요청을 거절하시겠습니까?";
 "friends.cancel_request" = "취소";
+"friends.cancel_request_confirm" = "이 친구 요청을 취소하시겠습니까?";
 "friends.add_friend" = "친구 추가";
 "friends.error_self" = "본인의 초대 링크입니다.";
 "friends.error_pending" = "이 플레이어와의 요청이 이미 대기 중입니다.";
@@ -231,6 +238,7 @@
 "friends.link_account" = "이 기기 연결";
 "friends.linked_as" = "%@(으)로 연결됨";
 "friends.unlink_account" = "연결 해제";
+"friends.unlink_account_confirm" = "이 기기의 계정 연결을 해제하시겠습니까? 언제든 다시 연결할 수 있습니다.";
 "friends.enter_code" = "코드 입력";
 "friends.code_prompt_message" = "초대 링크 또는 친구 코드를 붙여넣으세요";
 "friends.code_placeholder" = "초대 링크 또는 코드";

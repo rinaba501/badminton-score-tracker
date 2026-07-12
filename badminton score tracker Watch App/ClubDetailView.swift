@@ -35,6 +35,16 @@ private struct ClubParticipant: Identifiable, Equatable {
     let isFriend: Bool
 }
 
+/// Pending decline/cancel of a ChallengeRecord, awaiting confirmation —
+/// `isCancel` distinguishes the two so the dialog message/button read right
+/// for whichever side of the challenge tapped it (`respond` itself is the
+/// same call either way).
+private struct PendingChallengeResponse: Identifiable {
+    let challenge: ChallengeRecord
+    let isCancel: Bool
+    var id: UUID { challenge.id }
+}
+
 struct ClubDetailView: View {
     let clubId: UUID
 
@@ -49,6 +59,8 @@ struct ClubDetailView: View {
     @State private var myDisplayName: String?
     @State private var loadingParticipants = true
     @State private var showRemoveConfirm = false
+    @State private var pendingDeclineMatch: MatchRecord?
+    @State private var pendingChallengeResponse: PendingChallengeResponse?
     @State private var editingPlayer: Player?
     @State private var promptingForName = false
     @State private var pendingName = ""
@@ -180,7 +192,7 @@ struct ClubDetailView: View {
                                 HStack {
                                     Button("clubs.confirm_match") { confirmMatch(record) }
                                         .font(.caption2)
-                                    Button("clubs.decline_match", role: .destructive) { declineMatch(record) }
+                                    Button("clubs.decline_match", role: .destructive) { pendingDeclineMatch = record }
                                         .font(.caption2)
                                 }
                             }
@@ -307,6 +319,32 @@ struct ClubDetailView: View {
                 removeClub()
             }
         }
+        .confirmationDialog(
+            "clubs.decline_match_confirm",
+            isPresented: Binding(
+                get: { pendingDeclineMatch != nil },
+                set: { if !$0 { pendingDeclineMatch = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("clubs.decline_match", role: .destructive) {
+                if let pendingDeclineMatch { declineMatch(pendingDeclineMatch) }
+            }
+        }
+        .confirmationDialog(
+            pendingChallengeResponse?.isCancel == true ? "clubs.cancel_challenge_confirm" : "clubs.decline_challenge_confirm",
+            isPresented: Binding(
+                get: { pendingChallengeResponse != nil },
+                set: { if !$0 { pendingChallengeResponse = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let pendingChallengeResponse {
+                Button(pendingChallengeResponse.isCancel ? "clubs.cancel_challenge" : "clubs.decline_challenge", role: .destructive) {
+                    respond(to: pendingChallengeResponse.challenge, accept: false)
+                }
+            }
+        }
         .sheet(item: $editingPlayer) { player in
             let others = appStore.roster.filter { $0.id != player.id }.map(\.name)
             PlayerEditView(initialPlayer: player, existingNames: others, clubs: appStore.clubs, onSave: savePlayer)
@@ -403,7 +441,9 @@ struct ClubDetailView: View {
                 HStack {
                     Button("clubs.accept_challenge") { respond(to: challenge, accept: true) }
                         .font(.caption2)
-                    Button("clubs.decline_challenge", role: .destructive) { respond(to: challenge, accept: false) }
+                    Button("clubs.decline_challenge", role: .destructive) {
+                        pendingChallengeResponse = PendingChallengeResponse(challenge: challenge, isCancel: false)
+                    }
                         .font(.caption2)
                 }
             case .pending:
@@ -411,7 +451,9 @@ struct ClubDetailView: View {
                     Text("clubs.challenge_pending")
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    Button("clubs.cancel_challenge", role: .destructive) { respond(to: challenge, accept: false) }
+                    Button("clubs.cancel_challenge", role: .destructive) {
+                        pendingChallengeResponse = PendingChallengeResponse(challenge: challenge, isCancel: true)
+                    }
                         .font(.caption2)
                 }
             case .accepted:

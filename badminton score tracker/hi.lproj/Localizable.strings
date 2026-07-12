@@ -32,6 +32,7 @@
 "history.clear_confirm" = "क्या आप सभी मैच इतिहास साफ़ करना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।";
 "history.cancel" = "रद्द करें";
 "history.clear" = "साफ़ करें";
+"history.delete_match_confirm" = "इस मैच को हटाएं? यह वापस नहीं किया जा सकता।";
 "history.filter_player" = "खिलाड़ी";
 "history.filter_all_players" = "सभी खिलाड़ी";
 "history.filter_all" = "सभी समय";
@@ -68,6 +69,7 @@
 "settings.sort_most_played" = "सबसे ज़्यादा खेले गए";
 "settings.sort_recently_used" = "हाल ही में इस्तेमाल किए गए";
 "settings.delete" = "हटाएं";
+"settings.delete_player_confirm" = "इस खिलाड़ी को हटाएं? पिछले मैचों में यह नाम बना रहेगा, लेकिन इसे आपकी सूची से हटा दिया जाएगा।";
 "playeredit.name" = "नाम";
 "playeredit.name_taken" = "नाम पहले से मौजूद है";
 "playeredit.color" = "रंग";
@@ -144,11 +146,14 @@
 "clubs.comment_send" = "भेजें";
 "clubs.confirm_match" = "पुष्टि करें";
 "clubs.decline_match" = "अस्वीकार करें";
+"clubs.decline_match_confirm" = "इस मैच को अस्वीकार करें? इसे क्लब की लंबित पुष्टि सूची से हटा दिया जाएगा।";
 "clubs.challenges" = "चुनौतियाँ";
 "clubs.challenge" = "चुनौती दें";
 "clubs.accept_challenge" = "स्वीकार करें";
 "clubs.decline_challenge" = "अस्वीकार करें";
+"clubs.decline_challenge_confirm" = "इस चुनौती को अस्वीकार करें?";
 "clubs.cancel_challenge" = "रद्द करें";
+"clubs.cancel_challenge_confirm" = "इस चुनौती को रद्द करें?";
 "clubs.challenge_pending" = "लंबित";
 "clubs.challenge_accepted" = "स्वीकृत";
 "clubs.roster" = "रोस्टर";
@@ -203,12 +208,15 @@
 "friends.no_friends_yet" = "अभी कोई मित्र नहीं";
 "friends.accept" = "स्वीकारें";
 "friends.decline" = "अस्वीकारें";
+"friends.decline_confirm" = "इस मित्र अनुरोध को अस्वीकार करें?";
 "friends.cancel_request" = "रद्द करें";
+"friends.cancel_request_confirm" = "इस मित्र अनुरोध को रद्द करें?";
 "friends.add_friend" = "मित्र जोड़ें";
 "friends.account_section_header" = "खाता";
 "friends.link_account" = "इस डिवाइस को लिंक करें";
 "friends.linked_as" = "%@ के रूप में लिंक किया गया";
 "friends.unlink_account" = "अनलिंक करें";
+"friends.unlink_account_confirm" = "इस डिवाइस को अपने खाते से अनलिंक करें? आप इसे कभी भी फिर से लिंक कर सकते हैं।";
 "friends.enter_code" = "कोड दर्ज करें";
 "friends.code_prompt_message" = "आमंत्रण लिंक या मित्र कोड पेस्ट करें";
 "friends.code_placeholder" = "आमंत्रण लिंक या कोड";

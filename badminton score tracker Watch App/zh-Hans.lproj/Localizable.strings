@@ -67,6 +67,7 @@
 "history.clear_confirm" = "确定要清除所有比赛记录吗？此操作无法撤销。";
 "history.cancel" = "取消";
 "history.clear" = "清除";
+"history.delete_match_confirm" = "删除这场比赛？此操作无法撤销。";
 
 // Court Themes
 "theme.green" = "绿色";
@@ -140,6 +141,7 @@
 "settings.timer_enable" = "启用";
 "settings.minutes" = "%d分钟";
 "settings.delete" = "删除";
+"settings.delete_player_confirm" = "删除这位选手？他们过去的比赛记录会保留此姓名，但会从名单中移除。";
 "prematch.near_side" = "近侧";
 "prematch.far_side" = "远侧";
 "prematch.near_partner" = "近侧搭档";
@@ -180,11 +182,14 @@
 "clubs.comments" = "评论";
 "clubs.confirm_match" = "确认";
 "clubs.decline_match" = "拒绝";
+"clubs.decline_match_confirm" = "拒绝这场比赛？它将从俱乐部的待确认列表中移除。";
 "clubs.challenges" = "挑战";
 "clubs.challenge" = "发起挑战";
 "clubs.accept_challenge" = "接受";
 "clubs.decline_challenge" = "拒绝";
+"clubs.decline_challenge_confirm" = "拒绝这个挑战邀请？";
 "clubs.cancel_challenge" = "取消";
+"clubs.cancel_challenge_confirm" = "取消这个挑战邀请？";
 "clubs.challenge_pending" = "待处理";
 "clubs.challenge_accepted" = "已接受";
 "clubs.roster" = "名单";
@@ -216,7 +221,9 @@
 "friends.no_friends_yet" = "暂无好友";
 "friends.accept" = "接受";
 "friends.decline" = "拒绝";
+"friends.decline_confirm" = "拒绝这条好友请求？";
 "friends.cancel_request" = "取消";
+"friends.cancel_request_confirm" = "取消这条好友请求？";
 "friends.add_friend" = "添加好友";
 "friends.error_self" = "这是你自己的邀请链接。";
 "friends.error_pending" = "你与该球友之间已有待处理的申请。";
@@ -231,6 +238,7 @@
 "friends.link_account" = "关联此设备";
 "friends.linked_as" = "已关联为 %@";
 "friends.unlink_account" = "取消关联";
+"friends.unlink_account_confirm" = "取消此设备与你账号的关联？你可以随时重新关联。";
 "friends.enter_code" = "输入代码";
 "friends.code_prompt_message" = "粘贴邀请链接或好友代码";
 "friends.code_placeholder" = "邀请链接或代码";
