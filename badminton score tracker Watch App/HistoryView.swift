@@ -331,7 +331,19 @@ struct HistoryView: View {
 struct MatchHistoryRow: View {
     let record: MatchRecord
 
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+
     private var iWon: Bool { record.winner == .near }
+
+    /// Small badge marking a name as "me" — needed once club history can
+    /// contain matches recorded by other members (record.myName is then
+    /// someone else's name), same treatment as ClubDetailView's youBadge.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.system(size: 9))
+            .foregroundColor(.secondary)
+            .accessibilityLabel("clubs.you")
+    }
 
     private var gameLine: String {
         record.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")
@@ -360,12 +372,18 @@ struct MatchHistoryRow: View {
             // Head-to-head score line
             HStack(alignment: .center, spacing: 0) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(myLabel)
-                        .font(.system(size: 12, weight: iWon ? .bold : .regular))
-                        .lineLimit(1)
-                    Text(opponentLabel)
-                        .font(.system(size: 12, weight: iWon ? .regular : .bold))
-                        .lineLimit(1)
+                    HStack(spacing: 3) {
+                        Text(myLabel)
+                            .font(.system(size: 12, weight: iWon ? .bold : .regular))
+                            .lineLimit(1)
+                        if record.myName == myName { youBadge }
+                    }
+                    HStack(spacing: 3) {
+                        Text(opponentLabel)
+                            .font(.system(size: 12, weight: iWon ? .regular : .bold))
+                            .lineLimit(1)
+                        if record.opponentName == myName { youBadge }
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 1) {
