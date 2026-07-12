@@ -260,8 +260,19 @@ struct MatchHistoryRow: View {
     let record: MatchRecord
 
     @EnvironmentObject private var store: AppStore
+    @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     private var iWon: Bool { record.winner == .near }
+
+    /// Small badge marking a name as "me" — needed once club history can
+    /// contain matches recorded by other members (record.myName is then
+    /// someone else's name), same treatment as ClubDetailView's youBadge.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .accessibilityLabel("clubs.you")
+    }
 
     private var gameLine: String {
         record.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")
@@ -315,6 +326,7 @@ struct MatchHistoryRow: View {
             Text(label)
                 .fontWeight(won ? .semibold : .regular)
                 .lineLimit(1)
+            if rawName == myName { youBadge }
             Spacer()
             Text("\(games)")
                 .font(.system(.title3, design: .rounded).weight(won ? .bold : .regular))
