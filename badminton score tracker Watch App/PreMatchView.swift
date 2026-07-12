@@ -58,7 +58,7 @@ struct PreMatchView: View {
         guard Player.shouldBeStoredAsSavedPlayer(name, currentUserName: myName) else { return }
         var r = roster
         if !r.contains(where: { $0.name == name }) {
-            r.insert(Player(name: name, colorIndex: newPlayerColorIndex, clubId: UUID(uuidString: matchClubId)), at: 0)
+            r.insert(Player(name: name, colorIndex: newPlayerColorIndex, iconName: newPlayerIconName, clubId: UUID(uuidString: matchClubId)), at: 0)
             appStore.saveRoster(r)
         }
     }
@@ -173,7 +173,12 @@ struct PreMatchView: View {
                 }
             }
             Section {
-                Button(action: { showAddPlayer = true }) {
+                Button(action: {
+                    let appearance = Player.randomDefaultAppearance()
+                    newPlayerColorIndex = appearance.colorIndex
+                    newPlayerIconName = appearance.iconName
+                    showAddPlayer = true
+                }) {
                     Label("prematch.add_new", systemImage: "plus")
                 }
             }

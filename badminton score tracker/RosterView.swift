@@ -113,7 +113,8 @@ struct RosterView: View {
                 }
 
                 Button {
-                    editingPlayer = Player(name: "", colorIndex: roster.count % Player.avatarColors.count)
+                    let appearance = Player.randomDefaultAppearance()
+                    editingPlayer = Player(name: "", colorIndex: appearance.colorIndex, iconName: appearance.iconName)
                 } label: {
                     Label("settings.add_player", systemImage: "plus")
                 }

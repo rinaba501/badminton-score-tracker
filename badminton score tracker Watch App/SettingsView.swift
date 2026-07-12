@@ -165,7 +165,10 @@ struct SettingsView: View {
                     .onDelete(perform: deletePlayers)
                 }
 
-                Button(action: { editingPlayer = Player(name: "", colorIndex: roster.count % Player.avatarColors.count) }) {
+                Button(action: {
+                    let appearance = Player.randomDefaultAppearance()
+                    editingPlayer = Player(name: "", colorIndex: appearance.colorIndex, iconName: appearance.iconName)
+                }) {
                     Label("settings.add_player", systemImage: "plus")
                 }
             }

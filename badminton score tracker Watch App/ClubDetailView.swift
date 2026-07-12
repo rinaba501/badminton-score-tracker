@@ -283,7 +283,13 @@ struct ClubDetailView: View {
                         }
                     }
                     Button(action: {
-                        editingPlayer = Player(name: "", colorIndex: appStore.roster.count % Player.avatarColors.count, clubId: clubId)
+                        let appearance = Player.randomDefaultAppearance()
+                        editingPlayer = Player(
+                            name: "",
+                            colorIndex: appearance.colorIndex,
+                            iconName: appearance.iconName,
+                            clubId: clubId
+                        )
                     }) {
                         Label("clubs.add_player", systemImage: "plus")
                     }
