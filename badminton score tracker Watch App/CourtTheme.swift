@@ -14,14 +14,15 @@ enum CourtTheme: String, Codable, CaseIterable {
     case purple = "Purple"
     case black  = "Black"
 
-    /// Monetization: green/blue are free; the rest need Pro or the theme pack
-    /// (Entitlements.hasAllThemes). Gated at the picker (SettingsView) and at
-    /// the read site (GameView falls back to .green when unentitled — e.g.
-    /// after a refund — without ever writing the setting back).
+    /// Monetization: green/blue/purple are free; red/black need Pro or the
+    /// theme pack (Entitlements.hasAllThemes). Gated at the picker
+    /// (SettingsView) and at the read site (GameView falls back to .green
+    /// when unentitled — e.g. after a refund — without ever writing the
+    /// setting back).
     var isPremium: Bool {
         switch self {
-        case .green, .blue: return false
-        case .red, .purple, .black: return true
+        case .green, .blue, .purple: return false
+        case .red, .black: return true
         }
     }
 
