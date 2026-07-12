@@ -85,8 +85,11 @@ struct FriendsView: View {
             .sheet(isPresented: $promptingForName) {
                 namePrompt
             }
-            .alert("friends.unlink_account_confirm", isPresented: $showUnlinkConfirm) {
-                Button("history.cancel", role: .cancel) { }
+            .confirmationDialog(
+                "friends.unlink_account_confirm",
+                isPresented: $showUnlinkConfirm,
+                titleVisibility: .visible
+            ) {
                 Button("friends.unlink_account", role: .destructive) { unlinkAccount() }
             }
             .confirmationDialog(
