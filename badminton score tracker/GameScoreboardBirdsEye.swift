@@ -87,9 +87,13 @@ struct BirdsEyeScoreboard: View {
             }
             if let partnerName = data.partnerName {
                 Text("· \(partnerName)")
-                    .font(.system(size: 13, weight: .medium))
-                    .opacity(0.75)
+                    .font(.system(size: 16, weight: .bold))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                if data.partnerIsMe {
+                    Image(systemName: "checkmark.seal.fill").font(.caption2)
+                        .accessibilityLabel("clubs.you")
+                }
             }
         }
         .foregroundStyle(.white)

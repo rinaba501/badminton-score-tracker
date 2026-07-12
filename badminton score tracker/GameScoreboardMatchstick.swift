@@ -70,8 +70,8 @@ struct MatchstickScoreboard: View {
                 .minimumScaleFactor(0.7)
             if let partnerName = data.partnerName {
                 Text(partnerName)
-                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .font(.system(size: 15, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.85))
                     .lineLimit(1)
             }
             serveLamp(lit: data.isServing)

@@ -45,6 +45,9 @@ struct TugScoreboard: View {
             .opacity(data.isServing ? 1 : 0)
     }
 
+    /// Doubles partners are equal teammates, not a lead player + a
+    /// secondary tag — both names render at the same weight/size, matching
+    /// the Depth style's stacked treatment instead of demoting the second.
     private func nameRow(_ data: ScoreSideData) -> some View {
         VStack(spacing: 4) {
             HStack(spacing: 6) {
@@ -58,9 +61,13 @@ struct TugScoreboard: View {
                 }
                 if let partnerName = data.partnerName {
                     Text("/ \(partnerName)")
-                        .font(.system(size: 13, weight: .semibold))
-                        .opacity(0.7)
+                        .font(.system(size: 16, weight: .bold))
                         .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    if data.partnerIsMe {
+                        Image(systemName: "checkmark.seal.fill").font(.caption2)
+                            .accessibilityLabel("clubs.you")
+                    }
                 }
             }
             serveUnderline(data)

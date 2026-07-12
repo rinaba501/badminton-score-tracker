@@ -45,9 +45,16 @@ struct BlackbirdScoreboard: View {
             }
             if let partnerName = data.partnerName {
                 Text("/ \(partnerName.uppercased())")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .font(.system(size: 17, weight: .heavy))
+                    .foregroundStyle(.white)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                if data.partnerIsMe {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .accessibilityLabel("clubs.you")
+                }
             }
         }
     }
