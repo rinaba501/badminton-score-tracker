@@ -45,6 +45,10 @@ public enum AppStorageKeys {
     public static let pointsToWin = "pointsToWin"
     public static let gamesInMatch = "gamesInMatch"
     public static let courtTheme = "courtTheme"
+    // iOS-only (Watch has its own GameView, unaffected) — which of the 3
+    // GameView visual styles to render. Synced via SettingsSnapshot even
+    // though only iOS reads it, matching every other scalar setting.
+    public static let gameScreenStyle = "gameScreenStyle"
     public static let announceScore = "announceScore"
     public static let enableSounds = "enableSounds"
     public static let enableCrownScoring = "enableCrownScoring"

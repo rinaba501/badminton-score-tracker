@@ -23,7 +23,8 @@ struct SettingsSnapshotTests {
         timeModeEnabled: Bool = false,
         timeLimitMinutes: Int = 10,
         clubLastViewedActivity: [String: Date] = [:],
-        accountLinked: Bool = false
+        accountLinked: Bool = false,
+        gameScreenStyle: String = "Depth"
     ) -> SettingsSnapshot {
         SettingsSnapshot(
             myName: myName, localPlayerId: localPlayerId,
@@ -32,7 +33,8 @@ struct SettingsSnapshotTests {
             enableSounds: enableSounds, enableCrownScoring: enableCrownScoring,
             timeModeEnabled: timeModeEnabled, timeLimitMinutes: timeLimitMinutes,
             clubLastViewedActivity: clubLastViewedActivity,
-            accountLinked: accountLinked
+            accountLinked: accountLinked,
+            gameScreenStyle: gameScreenStyle
         )
     }
 
@@ -55,6 +57,13 @@ struct SettingsSnapshotTests {
         let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
         let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
         #expect(decoded.accountLinked == true)
+    }
+
+    @Test func gameScreenStyleRoundTrips() throws {
+        let snapshot = makeSnapshot(gameScreenStyle: "Split")
+        let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
+        let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
+        #expect(decoded.gameScreenStyle == "Split")
     }
 
     @Test func decodeSettingsSnapshotReturnsNilOnEmptyOrGarbageData() {
@@ -90,5 +99,6 @@ struct SettingsSnapshotTests {
         #expect(decoded.pointsToWin == 15)
         #expect(decoded.clubLastViewedActivity == [:])
         #expect(decoded.accountLinked == false)
+        #expect(decoded.gameScreenStyle == "Depth")
     }
 }

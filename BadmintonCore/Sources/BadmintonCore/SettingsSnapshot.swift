@@ -38,6 +38,10 @@ public struct SettingsSnapshot: Codable, Equatable {
     /// CloudKitSyncManager.resolveMyParticipantId(), which is deterministic
     /// per Apple ID. Blind-overwritten on apply, like the other plain Bools.
     public var accountLinked: Bool
+    /// iOS-only GameView visual style ("Depth"/"Split"/"Minimal") stored as
+    /// its raw String value, same rationale as courtTheme — Watch round-trips
+    /// this field without ever reading it into a typed enum.
+    public var gameScreenStyle: String
 
     public init(
         myName: String,
@@ -51,7 +55,8 @@ public struct SettingsSnapshot: Codable, Equatable {
         timeModeEnabled: Bool,
         timeLimitMinutes: Int,
         clubLastViewedActivity: [String: Date] = [:],
-        accountLinked: Bool = false
+        accountLinked: Bool = false,
+        gameScreenStyle: String = "Depth"
     ) {
         self.myName = myName
         self.localPlayerId = localPlayerId
@@ -65,13 +70,14 @@ public struct SettingsSnapshot: Codable, Equatable {
         self.timeLimitMinutes = timeLimitMinutes
         self.clubLastViewedActivity = clubLastViewedActivity
         self.accountLinked = accountLinked
+        self.gameScreenStyle = gameScreenStyle
     }
 
     private enum CodingKeys: String, CodingKey {
         case myName, localPlayerId, pointsToWin, gamesInMatch, courtTheme
         case announceScore, enableSounds, enableCrownScoring, timeModeEnabled
         case timeLimitMinutes, clubLastViewedActivity
-        case accountLinked
+        case accountLinked, gameScreenStyle
     }
 
     public init(from decoder: Decoder) throws {
@@ -89,6 +95,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         // Added after the first Settings records shipped — tolerate absence.
         clubLastViewedActivity = try container.decodeIfPresent([String: Date].self, forKey: .clubLastViewedActivity) ?? [:]
         accountLinked = try container.decodeIfPresent(Bool.self, forKey: .accountLinked) ?? false
+        gameScreenStyle = try container.decodeIfPresent(String.self, forKey: .gameScreenStyle) ?? "Depth"
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -105,5 +112,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         try container.encode(timeLimitMinutes, forKey: .timeLimitMinutes)
         try container.encode(clubLastViewedActivity, forKey: .clubLastViewedActivity)
         try container.encode(accountLinked, forKey: .accountLinked)
+        try container.encode(gameScreenStyle, forKey: .gameScreenStyle)
     }
 }

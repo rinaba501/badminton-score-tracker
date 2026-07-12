@@ -83,6 +83,10 @@
 "prematch.back" = "Back";
 "game.menu" = "Menu";
 "game.games" = "Games";
+"game.split_serve" = "Serve";
+"game.timer_label" = "Timer";
+"game.won_last_game" = "Won last game";
+"game.tap_hint" = "TAP A SIDE TO SCORE";
 "game.right_court" = "Right court";
 "game.left_court" = "Left court";
 "game.game_point" = "Game Point!";
@@ -124,6 +128,10 @@
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "It's a Tie!";
 "ios.new_match" = "New Match";
+"ios.game_screen_style" = "Score Screen Style";
+"ios.game_screen_style_depth" = "Depth";
+"ios.game_screen_style_split" = "Split";
+"ios.game_screen_style_minimal" = "Minimal";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "Clubs";

@@ -216,6 +216,7 @@ final class AppStore: ObservableObject {
         defaults.set(snapshot.timeModeEnabled, forKey: AppStorageKeys.timeModeEnabled)
         defaults.set(snapshot.timeLimitMinutes, forKey: AppStorageKeys.timeLimitMinutes)
         defaults.set(snapshot.accountLinked, forKey: AppStorageKeys.accountLinked)
+        defaults.set(snapshot.gameScreenStyle, forKey: AppStorageKeys.gameScreenStyle)
         // Merge (per-club max), never overwrite: two devices can mark different
         // clubs viewed before their Settings records converge, and a blind
         // overwrite would re-raise an unread dot the user already cleared.

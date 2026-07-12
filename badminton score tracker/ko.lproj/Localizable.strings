@@ -83,6 +83,10 @@
 "prematch.back" = "뒤로";
 "game.menu" = "메뉴";
 "game.games" = "게임";
+"game.split_serve" = "서브";
+"game.timer_label" = "타이머";
+"game.won_last_game" = "이전 게임 승리";
+"game.tap_hint" = "탭하여 점수 추가";
 "game.right_court" = "오른쪽 코트";
 "game.left_court" = "왼쪽 코트";
 "game.game_point" = "게임 포인트!";
@@ -124,6 +128,10 @@
 "game.sudden_death" = "서든데스!";
 "game.tie" = "무승부!";
 "ios.new_match" = "새 경기";
+"ios.game_screen_style" = "스코어 화면 스타일";
+"ios.game_screen_style_depth" = "입체감";
+"ios.game_screen_style_split" = "분할";
+"ios.game_screen_style_minimal" = "미니멀";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "클럽";

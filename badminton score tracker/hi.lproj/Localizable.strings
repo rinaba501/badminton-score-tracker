@@ -83,6 +83,10 @@
 "prematch.back" = "वापस";
 "game.menu" = "मेनू";
 "game.games" = "गेम्स";
+"game.split_serve" = "सर्व";
+"game.timer_label" = "टाइमर";
+"game.won_last_game" = "पिछला गेम जीता";
+"game.tap_hint" = "स्कोर के लिए टैप करें";
 "game.right_court" = "दायाँ कोर्ट";
 "game.left_court" = "बायाँ कोर्ट";
 "game.game_point" = "गेम पॉइंट!";
@@ -124,6 +128,10 @@
 "game.sudden_death" = "सडन डेथ!";
 "game.tie" = "बराबरी!";
 "ios.new_match" = "नया मैच";
+"ios.game_screen_style" = "स्कोर स्क्रीन शैली";
+"ios.game_screen_style_depth" = "डेप्थ";
+"ios.game_screen_style_split" = "स्प्लिट";
+"ios.game_screen_style_minimal" = "मिनिमल";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "क्लब";

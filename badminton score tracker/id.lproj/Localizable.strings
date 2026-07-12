@@ -83,6 +83,10 @@
 "prematch.back" = "Kembali";
 "game.menu" = "Menu";
 "game.games" = "Game";
+"game.split_serve" = "Servis";
+"game.timer_label" = "Timer";
+"game.won_last_game" = "Menang game terakhir";
+"game.tap_hint" = "KETUK UNTUK MENCETAK SKOR";
 "game.right_court" = "Kotak kanan";
 "game.left_court" = "Kotak kiri";
 "game.game_point" = "Poin Game!";
@@ -124,6 +128,10 @@
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "Seri!";
 "ios.new_match" = "Pertandingan Baru";
+"ios.game_screen_style" = "Gaya Layar Skor";
+"ios.game_screen_style_depth" = "Depth";
+"ios.game_screen_style_split" = "Split";
+"ios.game_screen_style_minimal" = "Minimal";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "Klub";
