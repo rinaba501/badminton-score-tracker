@@ -15,6 +15,16 @@
 import SwiftUI
 import BadmintonCore
 
+/// Pending decline/cancel of a FriendRequest, awaiting confirmation —
+/// `isCancel` distinguishes an outgoing-request cancel from an incoming
+/// decline so the dialog message/button read right (`respond` itself is the
+/// same call either way).
+private struct PendingFriendRequestResponse: Identifiable {
+    let request: FriendRequest
+    let isCancel: Bool
+    var id: UUID { request.id }
+}
+
 struct FriendsView: View {
     @EnvironmentObject private var appStore: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
@@ -28,6 +38,8 @@ struct FriendsView: View {
     @State private var promptingForName = false
     @State private var pendingName = ""
     @State private var pendingAction: (() -> Void)?
+    @State private var pendingRequestResponse: PendingFriendRequestResponse?
+    @State private var showUnlinkConfirm = false
 
     // Backstop for anyone who skipped the first-launch prompt (ContentView) —
     // still lets Friends work, just nudges before anything gets sent.
@@ -73,6 +85,24 @@ struct FriendsView: View {
             .sheet(isPresented: $promptingForName) {
                 namePrompt
             }
+            .alert("friends.unlink_account_confirm", isPresented: $showUnlinkConfirm) {
+                Button("history.cancel", role: .cancel) { }
+                Button("friends.unlink_account", role: .destructive) { unlinkAccount() }
+            }
+            .confirmationDialog(
+                pendingRequestResponse?.isCancel == true ? "friends.cancel_request_confirm" : "friends.decline_confirm",
+                isPresented: Binding(
+                    get: { pendingRequestResponse != nil },
+                    set: { if !$0 { pendingRequestResponse = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                if let pendingRequestResponse {
+                    Button(pendingRequestResponse.isCancel ? "friends.cancel_request" : "friends.decline", role: .destructive) {
+                        respond(to: pendingRequestResponse.request, accept: false)
+                    }
+                }
+            }
     }
 
     // MARK: - Pieces
@@ -85,7 +115,7 @@ struct FriendsView: View {
                         AvatarView(name: Player.displayName(for: myName), color: avatarColor(for: myName), size: 24, iconName: avatarIcon(for: myName))
                         Text(String(format: NSLocalizedString("friends.linked_as", comment: ""), Player.displayName(for: myName)))
                     }
-                    Button("friends.unlink_account", role: .destructive) { unlinkAccount() }
+                    Button("friends.unlink_account", role: .destructive) { showUnlinkConfirm = true }
                 } else {
                     Button {
                         linkAccount()
@@ -112,7 +142,7 @@ struct FriendsView: View {
                                 Text(request.toDisplayName)
                             }
                             Button("friends.cancel_request", role: .destructive) {
-                                respond(to: request, accept: false)
+                                pendingRequestResponse = PendingFriendRequestResponse(request: request, isCancel: true)
                             }
                         }
                     }
@@ -161,7 +191,9 @@ struct FriendsView: View {
                 Text(name)
             }
             Button("friends.accept") { respond(to: request, accept: true) }
-            Button("friends.decline", role: .destructive) { respond(to: request, accept: false) }
+            Button("friends.decline", role: .destructive) {
+                pendingRequestResponse = PendingFriendRequestResponse(request: request, isCancel: false)
+            }
         }
     }
 

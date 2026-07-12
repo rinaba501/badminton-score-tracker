@@ -32,6 +32,7 @@
 "history.clear_confirm" = "Are you sure you want to clear all match history? This cannot be undone.";
 "history.cancel" = "Cancel";
 "history.clear" = "Clear";
+"history.delete_match_confirm" = "Delete this match? This cannot be undone.";
 "history.filter_player" = "Player";
 "history.filter_all_players" = "All Players";
 "history.filter_all" = "All Time";
@@ -68,6 +69,7 @@
 "settings.sort_most_played" = "Most played";
 "settings.sort_recently_used" = "Recently used";
 "settings.delete" = "Delete";
+"settings.delete_player_confirm" = "Delete this player? Their past matches will keep this name, but they'll be removed from your roster.";
 "playeredit.name" = "Name";
 "playeredit.name_taken" = "Name already taken";
 "playeredit.color" = "Color";
@@ -144,11 +146,14 @@
 "clubs.comment_send" = "Send";
 "clubs.confirm_match" = "Confirm";
 "clubs.decline_match" = "Decline";
+"clubs.decline_match_confirm" = "Decline this match? It will be removed from the club's pending confirmations.";
 "clubs.challenges" = "Challenges";
 "clubs.challenge" = "Challenge";
 "clubs.accept_challenge" = "Accept";
 "clubs.decline_challenge" = "Decline";
+"clubs.decline_challenge_confirm" = "Decline this challenge?";
 "clubs.cancel_challenge" = "Cancel";
+"clubs.cancel_challenge_confirm" = "Cancel this challenge?";
 "clubs.challenge_pending" = "Pending";
 "clubs.challenge_accepted" = "Accepted";
 "clubs.roster" = "Roster";
@@ -203,12 +208,15 @@
 "friends.no_friends_yet" = "No friends yet";
 "friends.accept" = "Accept";
 "friends.decline" = "Decline";
+"friends.decline_confirm" = "Decline this friend request?";
 "friends.cancel_request" = "Cancel";
+"friends.cancel_request_confirm" = "Cancel this friend request?";
 "friends.add_friend" = "Add Friend";
 "friends.account_section_header" = "Account";
 "friends.link_account" = "Link This Device";
 "friends.linked_as" = "Linked as %@";
 "friends.unlink_account" = "Unlink";
+"friends.unlink_account_confirm" = "Unlink this device from your account? You can link it again anytime.";
 "friends.enter_code" = "Enter a Code";
 "friends.code_prompt_message" = "Paste an invite link or friend code";
 "friends.code_placeholder" = "Invite link or code";

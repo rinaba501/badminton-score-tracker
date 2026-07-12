@@ -67,6 +67,7 @@
 "history.clear_confirm" = "Yakin ingin menghapus semua riwayat pertandingan? Tindakan ini tidak dapat dibatalkan.";
 "history.cancel" = "Batal";
 "history.clear" = "Hapus";
+"history.delete_match_confirm" = "Hapus pertandingan ini? Tindakan ini tidak dapat dibatalkan.";
 
 // Court Themes
 "theme.green" = "Hijau";
@@ -140,6 +141,7 @@
 "settings.timer_enable" = "Aktifkan";
 "settings.minutes" = "%d mnt";
 "settings.delete" = "Hapus";
+"settings.delete_player_confirm" = "Hapus pemain ini? Nama ini akan tetap ada di pertandingan sebelumnya, tetapi akan dihapus dari daftar pemain.";
 "prematch.near_side" = "Sisi Dekat";
 "prematch.far_side" = "Sisi Jauh";
 "prematch.near_partner" = "Pasangan Sisi Dekat";
@@ -180,11 +182,14 @@
 "clubs.comments" = "Komentar";
 "clubs.confirm_match" = "Konfirmasi";
 "clubs.decline_match" = "Tolak";
+"clubs.decline_match_confirm" = "Tolak pertandingan ini? Pertandingan akan dihapus dari daftar konfirmasi tertunda klub.";
 "clubs.challenges" = "Tantangan";
 "clubs.challenge" = "Tantang";
 "clubs.accept_challenge" = "Terima";
 "clubs.decline_challenge" = "Tolak";
+"clubs.decline_challenge_confirm" = "Tolak tantangan ini?";
 "clubs.cancel_challenge" = "Batal";
+"clubs.cancel_challenge_confirm" = "Batalkan tantangan ini?";
 "clubs.challenge_pending" = "Menunggu";
 "clubs.challenge_accepted" = "Diterima";
 "clubs.roster" = "Daftar Pemain";
@@ -216,7 +221,9 @@
 "friends.no_friends_yet" = "Belum ada teman";
 "friends.accept" = "Terima";
 "friends.decline" = "Tolak";
+"friends.decline_confirm" = "Tolak permintaan pertemanan ini?";
 "friends.cancel_request" = "Batalkan";
+"friends.cancel_request_confirm" = "Batalkan permintaan pertemanan ini?";
 "friends.add_friend" = "Tambah Teman";
 "friends.error_self" = "Ini tautan undangan milikmu sendiri.";
 "friends.error_pending" = "Sudah ada permintaan tertunda dengan pemain ini.";
@@ -231,6 +238,7 @@
 "friends.link_account" = "Tautkan Perangkat Ini";
 "friends.linked_as" = "Tertaut sebagai %@";
 "friends.unlink_account" = "Putuskan Tautan";
+"friends.unlink_account_confirm" = "Putuskan tautan perangkat ini dari akun Anda? Anda dapat menautkannya kembali kapan saja.";
 "friends.enter_code" = "Masukkan Kode";
 "friends.code_prompt_message" = "Tempel tautan undangan atau kode teman";
 "friends.code_placeholder" = "Tautan undangan atau kode";
