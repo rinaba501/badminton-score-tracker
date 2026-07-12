@@ -1,5 +1,6 @@
 // iOS companion app
 "ios.title" = "Skor Bulu Tangkis";
+"ios.profile" = "Profil";
 "settings.title" = "Pengaturan";
 "settings.game_mode" = "Mode Permainan";
 "settings.audio" = "Audio";
@@ -224,11 +225,11 @@
 "friends.cancel_request" = "Batalkan";
 "friends.cancel_request_confirm" = "Batalkan permintaan pertemanan ini?";
 "friends.add_friend" = "Tambah Teman";
-"friends.account_section_header" = "Akun";
-"friends.link_account" = "Tautkan Perangkat Ini";
-"friends.linked_as" = "Tertaut sebagai %@";
-"friends.unlink_account" = "Putuskan Tautan";
-"friends.unlink_account_confirm" = "Putuskan tautan perangkat ini dari akun Anda? Anda dapat menautkannya kembali kapan saja.";
+"profile.account_section_header" = "Akun";
+"profile.link_account" = "Tautkan Perangkat Ini";
+"profile.linked_as" = "Tertaut sebagai %@";
+"profile.unlink_account" = "Putuskan Tautan";
+"profile.unlink_account_confirm" = "Putuskan tautan perangkat ini dari akun Anda? Anda dapat menautkannya kembali kapan saja.";
 "friends.enter_code" = "Masukkan Kode";
 "friends.code_prompt_message" = "Tempel tautan undangan atau kode teman";
 "friends.code_placeholder" = "Tautan undangan atau kode";

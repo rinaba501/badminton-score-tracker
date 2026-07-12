@@ -4,8 +4,8 @@
 //
 //  Root menu, dashboard-style: a quick-stats strip (live from the iCloud-synced
 //  history), a prominent New Match button (modal scoring flow), and
-//  Settings-style icon rows into History / Stats / Players. iOS uses
-//  NavigationStack-based navigation (per ROADMAP Phase 6). Also owns the
+//  Settings-style icon rows into Profile / History / Stats / Players. iOS
+//  uses NavigationStack-based navigation (per ROADMAP Phase 6). Also owns the
 //  first-launch "what should we call you?" prompt (shown once, skippable —
 //  see AppStorageKeys.didPromptForName), so a new user's name doesn't sit at
 //  the "Me" placeholder by the time Friends/Clubs are ever touched.
@@ -71,6 +71,11 @@ struct ContentView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        ProfileView()
+                    } label: {
+                        profileMenuRow
+                    }
                     NavigationLink {
                         HistoryView()
                     } label: {
@@ -182,6 +187,17 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
+    }
+
+    // "You" as an avatar, not a generic icon tile — mirrors the identity
+    // treatment ClubDetailView/PreMatchView give roster names, so this row
+    // reads as "this is me" rather than another settings destination.
+    private var profileMenuRow: some View {
+        let me = store.roster.first(where: { $0.name == myName })
+        return HStack(spacing: 12) {
+            AvatarView(name: myName, color: me?.avatarColor ?? .gray, size: 30, iconName: me?.iconName)
+            Text("ios.profile")
+        }
     }
 
     private var friendsMenuRow: some View {
