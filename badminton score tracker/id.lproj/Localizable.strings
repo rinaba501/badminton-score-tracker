@@ -132,6 +132,10 @@
 "ios.game_screen_style_depth" = "Depth";
 "ios.game_screen_style_split" = "Split";
 "ios.game_screen_style_minimal" = "Minimal";
+"ios.game_screen_style_blackbird" = "Blackbird";
+"ios.game_screen_style_matchstick" = "Matchstick";
+"ios.game_screen_style_birdseye" = "Birds-Eye";
+"ios.game_screen_style_tug" = "Tarik Tambang";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "Klub";

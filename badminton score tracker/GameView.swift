@@ -260,6 +260,26 @@ struct GameView: View {
                 top: sideData(for: .opponent), bottom: sideData(for: .me),
                 header: headerData, theme: effectiveTheme
             )
+        case .blackbird:
+            BlackbirdScoreboard(
+                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                header: headerData, theme: effectiveTheme
+            )
+        case .matchstick:
+            MatchstickScoreboard(
+                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                header: headerData, theme: effectiveTheme
+            )
+        case .birdsEye:
+            BirdsEyeScoreboard(
+                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                header: headerData, theme: effectiveTheme
+            )
+        case .tug:
+            TugScoreboard(
+                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                header: headerData, theme: effectiveTheme
+            )
         }
     }
 

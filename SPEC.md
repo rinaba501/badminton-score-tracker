@@ -59,7 +59,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - **Winner glow** — winning player's avatar turns gold when game ends
 - **Game-over overlay** — shows game result and "Next Game" button; serve auto-assigns to the game winner (correct badminton rules)
 - **Match-over overlay** — shows trophy, winner name (both partners' names in Doubles), games score, "New Match" button
-- **Score Screen Style (iOS only)** — 3 selectable visual styles for the live scoring screen: Depth (gradient/glass tiles, theme-driven accents — closest to the original layout), Split (full-bleed diagonal split-screen; the currently-serving side's field takes the Court Theme color, the other side stays neutral), Minimal (flat two-row layout, hairline divider, restrained theme-tinted accent, subtle theme-tinted background wash). Free for everyone, no Pro gating. The Watch's Game Screen is unaffected — it has its own layout and no style picker
+- **Score Screen Style (iOS only)** — 7 selectable visual styles for the live scoring screen: Depth (gradient/glass tiles, theme-driven accents — closest to the original layout), Split (full-bleed diagonal split-screen; the currently-serving side's field takes the Court Theme color, the other side stays neutral), Minimal (flat two-row layout, hairline divider, restrained theme-tinted accent, subtle theme-tinted background wash), Blackbird (broadcast-style lower-third scorebar on a black field; serve is a shape marker, not a color, with a thin theme-colored edge-light), Matchstick (skeuomorphic retro LED gym scoreboard — glowing digits over a dim ghost digit, lit "SERVE" lamp per side, games-won as lamp dots), Birds-Eye (top-down court-diagram background; the serve marker sits in the correct service court per real serving rules, games-won as baseline tally marks), Tug (kinetic style — the divider between sides drags toward whoever's ahead and numerals spring-animate on each point; respects Reduce Motion). Free for everyone, no Pro gating. The Watch's Game Screen is unaffected — it has its own layout and no style picker
 
 ### Match History
 - Lists all completed matches in reverse chronological order
@@ -87,7 +87,7 @@ Two-step flow in Singles mode, four-step in Doubles mode (see Settings → Game 
 - **Match Format** — Points to win (11 / 15 / 21), Games in match (1 / 3 / 5)
 - **Match Timer** — toggle on/off; when enabled, duration stepper (±1 min, ±5 min buttons; min 1, max 99, default 10)
 - **Court Theme** — Green / Blue / Red / Purple / Black
-- **Score Screen Style** — Depth / Split / Minimal (see Game Screen above). **iOS-only** — no equivalent on Watch
+- **Score Screen Style** — Depth / Split / Minimal / Blackbird / Matchstick / Birds-Eye / Tug (see Game Screen above). **iOS-only** — no equivalent on Watch
 - **Digital Crown** — toggle crown scoring on/off (default on); off prevents accidental scoring from wrist movement. **Watch-only** — no Digital Crown on iPhone, so this row doesn't exist on iOS
 - **Score Announcement** — toggle spoken score via `AVSpeechSynthesizer`
 - **Sound Effects** — toggle programmatic tones

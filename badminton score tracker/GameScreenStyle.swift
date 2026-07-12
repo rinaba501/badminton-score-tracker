@@ -31,15 +31,23 @@ extension Color {
 }
 
 enum GameScreenStyle: String, Codable, CaseIterable {
-    case depth   = "Depth"
-    case split   = "Split"
-    case minimal = "Minimal"
+    case depth      = "Depth"
+    case split      = "Split"
+    case minimal    = "Minimal"
+    case blackbird  = "Blackbird"
+    case matchstick = "Matchstick"
+    case birdsEye   = "BirdsEye"
+    case tug        = "Tug"
 
     var labelKey: LocalizedStringKey {
         switch self {
-        case .depth:   "ios.game_screen_style_depth"
-        case .split:   "ios.game_screen_style_split"
-        case .minimal: "ios.game_screen_style_minimal"
+        case .depth:      "ios.game_screen_style_depth"
+        case .split:      "ios.game_screen_style_split"
+        case .minimal:    "ios.game_screen_style_minimal"
+        case .blackbird:  "ios.game_screen_style_blackbird"
+        case .matchstick: "ios.game_screen_style_matchstick"
+        case .birdsEye:   "ios.game_screen_style_birdseye"
+        case .tug:        "ios.game_screen_style_tug"
         }
     }
 }

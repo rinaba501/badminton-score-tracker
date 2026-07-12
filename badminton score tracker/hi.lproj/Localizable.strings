@@ -132,6 +132,10 @@
 "ios.game_screen_style_depth" = "डेप्थ";
 "ios.game_screen_style_split" = "स्प्लिट";
 "ios.game_screen_style_minimal" = "मिनिमल";
+"ios.game_screen_style_blackbird" = "ब्लैकबर्ड";
+"ios.game_screen_style_matchstick" = "मैचस्टिक";
+"ios.game_screen_style_birdseye" = "बर्ड्स-आई";
+"ios.game_screen_style_tug" = "टग";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "क्लब";
