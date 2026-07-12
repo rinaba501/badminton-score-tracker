@@ -44,7 +44,8 @@ extension Player {
         "avatar_shuttlecock_happy", "avatar_shuttlecock_cute",
         "avatar_racket_happy", "avatar_blue_cap", "avatar_red_cap",
         "avatar_purple_girl", "avatar_messy_bun",
-        "avatar_cap_shuttlecock", "avatar_racket_cool"
+        "avatar_cap_shuttlecock", "avatar_racket_cool",
+        "avatar_shuttlecock_angry", "avatar_net"
     ]
 
     static let freeSportIcons: [String] = [
