@@ -364,14 +364,19 @@ struct ClubDetailView: View {
             clubId: clubId, entry: entry,
             myParticipantId: myParticipantId, myDisplayName: myDisplayName
         )) {
+            let myDisplayNameForEntry = Player.displayName(for: entry.myName)
+            let opponentDisplayNameForEntry = Player.displayName(for: entry.opponentName)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
-                    AvatarView(name: entry.myName, color: avatarColor(for: entry.myName), size: 18, iconName: avatarIcon(for: entry.myName))
-                    Text(entry.myName)
+                    AvatarView(name: myDisplayNameForEntry, color: avatarColor(for: entry.myName), size: 18, iconName: avatarIcon(for: entry.myName))
+                    Text(myDisplayNameForEntry)
                     if entry.myName == myName { youBadge }
                     Text("vs")
-                    AvatarView(name: entry.opponentName, color: avatarColor(for: entry.opponentName), size: 18, iconName: avatarIcon(for: entry.opponentName))
-                    Text(entry.opponentName)
+                    AvatarView(
+                        name: opponentDisplayNameForEntry, color: avatarColor(for: entry.opponentName),
+                        size: 18, iconName: avatarIcon(for: entry.opponentName)
+                    )
+                    Text(opponentDisplayNameForEntry)
                     if entry.opponentName == myName { youBadge }
                 }
                 .font(.caption)
