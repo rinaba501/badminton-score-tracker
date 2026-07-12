@@ -192,7 +192,7 @@ struct SettingsView: View {
                             Circle()
                                 .fill(theme.color)
                                 .frame(width: 12, height: 12)
-                            Text(LocalizedStringKey("theme.\(theme.rawValue.lowercased())"))
+                            Text(NSLocalizedString("theme.\(theme.rawValue.lowercased())", comment: ""))
                             if theme.isPremium && !storeManager.entitlements.hasAllThemes {
                                 Spacer()
                                 Image(systemName: "lock.fill")
