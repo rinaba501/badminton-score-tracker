@@ -71,6 +71,13 @@ final class SoundPlayer: ObservableObject {
     func playScore()     { schedule(tone(frequency: 880, duration: 0.18)) }
     func playGamePoint() { schedule(tone(frequency: 740, duration: 0.18)) }
 
+    // Descending two-note "reversal" cue — mirror image of playScore's single
+    // rising tone, so undo reads as the opposite action by ear alone.
+    func playUndo() {
+        schedule(tone(frequency: 660, duration: 0.12))
+        schedule(tone(frequency: 440, duration: 0.14), after: 0.1)
+    }
+
     func playGameWin() {
         schedule(tone(frequency: 523, duration: 0.2))
         schedule(tone(frequency: 659, duration: 0.25), after: 0.18)

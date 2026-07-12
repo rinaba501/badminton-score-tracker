@@ -190,7 +190,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 | Game point reached | `.notification` | 740 Hz, 0.18s |
 | Game won | `.success` + `.retry` | C5→E5 |
 | Match won | `.success` × 2 | C5→E5→G5 fanfare |
-| Undo | `.directionUp` | — |
+| Undo | `.directionUp` | 660→440 Hz descending |
 | Sudden death | `.notification` | — |
 
 - Score announcement via `AVSpeechSynthesizer` — server score first, then receiver score

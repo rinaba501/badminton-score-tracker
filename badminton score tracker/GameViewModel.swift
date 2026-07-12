@@ -158,6 +158,7 @@ final class GameViewModel: ObservableObject {
         guard let previous = undoStack.popLast() else { return }
         match = previous
         hapticsProvider.play(.directionUp)
+        if enableSounds { soundPlayer.playUndo() }
     }
 
     func startNextGame() {
