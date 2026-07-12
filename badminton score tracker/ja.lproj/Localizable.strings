@@ -83,6 +83,10 @@
 "prematch.back" = "戻る";
 "game.menu" = "メニュー";
 "game.games" = "ゲーム";
+"game.split_serve" = "サーブ";
+"game.timer_label" = "タイマー";
+"game.won_last_game" = "前のゲームに勝利";
+"game.tap_hint" = "タップしてスコア";
 "game.right_court" = "右コート";
 "game.left_court" = "左コート";
 "game.game_point" = "ゲームポイント！";
@@ -124,6 +128,10 @@
 "game.sudden_death" = "サドンデス！";
 "game.tie" = "引き分け！";
 "ios.new_match" = "新しい試合";
+"ios.game_screen_style" = "スコア画面のスタイル";
+"ios.game_screen_style_depth" = "立体感";
+"ios.game_screen_style_split" = "分割";
+"ios.game_screen_style_minimal" = "ミニマル";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "クラブ";

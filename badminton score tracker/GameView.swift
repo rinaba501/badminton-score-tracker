@@ -13,12 +13,44 @@
 import SwiftUI
 import BadmintonCore
 
+/// One side's tile data, derived once from GameViewModel per render and
+/// shared across all 3 GameScreenStyle renderers (Depth/Split/Minimal) so
+/// the derivation logic (avatar lookups, serve/winner state) isn't tripled.
+struct ScoreSideData {
+    let name: String
+    let partnerName: String?
+    let score: Int
+    let isServing: Bool
+    let serveRight: Bool
+    let isWinner: Bool
+    let avatarColor: Color
+    let avatarIcon: String?
+    let partnerAvatarColor: Color
+    let partnerAvatarIcon: String?
+    let isMe: Bool
+    let partnerIsMe: Bool
+    let onTap: () -> Void
+}
+
+/// Games-won/timer/undo state, built once by GameView and shared by whichever
+/// GameScreenStyle renders it — see ScoreSideData's header comment for why.
+struct GameHeaderData {
+    let myGames: Int
+    let opponentGames: Int
+    let canUndo: Bool
+    let onUndo: () -> Void
+    let isTimeModeEnabled: Bool
+    let timerLabel: String
+    let timerIsUrgent: Bool
+}
+
 struct GameView: View {
     let onExit: () -> Void
 
     @EnvironmentObject private var appStore: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
+    @AppStorage(AppStorageKeys.gameScreenStyle) private var gameScreenStyle: GameScreenStyle = .depth
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @StateObject private var viewModel = GameViewModel()
@@ -84,6 +116,25 @@ struct GameView: View {
 
     // MARK: - Sub-views
 
+    /// Shared games/timer/undo state, built once and consumed by whichever
+    /// GameScreenStyle is active — Depth renders it via timerBadge/
+    /// gamesHeader below, Split/Minimal build their own layout from the same
+    /// data so none of the three re-derive it from viewModel separately.
+    private var headerData: GameHeaderData {
+        GameHeaderData(
+            myGames: viewModel.match.myGamesWon,
+            opponentGames: viewModel.match.opponentGamesWon,
+            canUndo: !viewModel.undoStack.isEmpty &&
+                viewModel.match.gameWinner == nil &&
+                viewModel.match.matchWinner == nil &&
+                viewModel.timeModeWinner == nil,
+            onUndo: viewModel.undo,
+            isTimeModeEnabled: viewModel.isTimeModeEnabled,
+            timerLabel: timerLabel,
+            timerIsUrgent: viewModel.timeRemaining <= 30 && viewModel.timeRemaining > 0
+        )
+    }
+
     @ViewBuilder
     private var timerBadge: some View {
         if viewModel.isTimeModeEnabled {
@@ -94,10 +145,11 @@ struct GameView: View {
                     .foregroundStyle(viewModel.timeRemaining <= 30 && viewModel.timeRemaining > 0 ? Color.red : Color.white)
                     .accessibilityLabel(Text(timerAccessibilityLabel))
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(Color.black.opacity(0.4))
-            .clipShape(Capsule())
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().stroke(.white.opacity(0.18), lineWidth: 1))
+            .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
         }
     }
 
@@ -113,9 +165,9 @@ struct GameView: View {
         )
     }
 
-    private func tile(for side: Side) -> some View {
+    private func sideData(for side: Side) -> ScoreSideData {
         let name = side == .me ? viewModel.effectiveMyName : viewModel.effectiveOpponentName
-        return ScoreView(
+        return ScoreSideData(
             name: Player.displayName(for: name),
             partnerName: viewModel.partnerName(for: side).map(Player.displayName(for:)),
             score: side == .me ? viewModel.match.myScore : viewModel.match.opponentScore,
@@ -132,6 +184,10 @@ struct GameView: View {
         )
     }
 
+    private func tile(for side: Side) -> some View {
+        ScoreView(data: sideData(for: side), theme: effectiveTheme)
+    }
+
     private var scoreboard: some View {
         VStack(spacing: 10) {
             timerBadge
@@ -141,6 +197,25 @@ struct GameView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+    }
+
+    /// Layered court-light gradient (radial highlight top, radial shadow
+    /// bottom, vertical wash) derived from the active theme color so all 5
+    /// themes get the same treatment instead of one hardcoded green gradient.
+    private var depthBackground: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    effectiveTheme.color.blended(toward: .white, by: 0.2),
+                    effectiveTheme.color,
+                    effectiveTheme.color.blended(toward: .black, by: 0.3)
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            RadialGradient(colors: [.white.opacity(0.22), .clear], center: .top, startRadius: 0, endRadius: 420)
+            RadialGradient(colors: [.black.opacity(0.4), .clear], center: .bottom, startRadius: 0, endRadius: 480)
+        }
+        .ignoresSafeArea()
     }
 
     @ViewBuilder
@@ -169,11 +244,29 @@ struct GameView: View {
         }
     }
 
+    @ViewBuilder
+    private var styledContent: some View {
+        switch gameScreenStyle {
+        case .depth:
+            depthBackground
+            scoreboard
+        case .split:
+            SplitScoreboard(
+                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                header: headerData, theme: effectiveTheme
+            )
+        case .minimal:
+            MinimalScoreboard(
+                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                header: headerData, theme: effectiveTheme
+            )
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
-                effectiveTheme.color.ignoresSafeArea()
-                scoreboard
+                styledContent
                 pointBanners
                 resultOverlay
             }
@@ -183,7 +276,9 @@ struct GameView: View {
                     Button("game.menu") {
                         if matchInProgress { viewModel.showDiscardAlert = true } else { onExit() }
                     }
-                    .tint(.white)
+                    // Minimal's near-white background makes a plain white
+                    // tint invisible — everything else keeps the original.
+                    .tint(gameScreenStyle == .minimal ? Color.black.opacity(0.7) : Color.white)
                 }
             }
             .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $viewModel.showDiscardAlert) {
@@ -248,23 +343,31 @@ struct GamesWonHeader: View {
     }
 }
 
+/// Depth-style tile: gradient/glass surface with theme-tinted accents,
+/// replacing the flat black-opacity fill + hardcoded yellow the original
+/// design used.
 struct ScoreView: View {
-    let name: String
-    var partnerName: String?
-    let score: Int
-    let isServing: Bool
-    let serveRight: Bool
-    let isWinner: Bool
-    let avatarColor: Color
-    var avatarIcon: String?
-    var partnerAvatarColor: Color = .gray
-    var partnerAvatarIcon: String?
-    var isMe: Bool = false
-    var partnerIsMe: Bool = false
-    let onTap: () -> Void
+    let data: ScoreSideData
+    let theme: CourtTheme
 
     @State private var scorePulse = false
     @State private var winnerGlow = false
+
+    private var name: String { data.name }
+    private var partnerName: String? { data.partnerName }
+    private var score: Int { data.score }
+    private var isServing: Bool { data.isServing }
+    private var serveRight: Bool { data.serveRight }
+    private var isWinner: Bool { data.isWinner }
+    private var isMe: Bool { data.isMe }
+    private var partnerIsMe: Bool { data.partnerIsMe }
+
+    /// A light, low-saturation tint of the active theme color, used for the
+    /// "won last game" glow and serve indicator instead of hardcoded yellow —
+    /// mirrors mockup A's "every accent derived from the theme hue" intent.
+    private var themeTint: Color {
+        theme.color.blended(toward: .white, by: 0.55)
+    }
 
     /// Same "me" marker ClubDetailView uses — a tile's name isn't always
     /// literally the current user (near/far side can be reassigned to any
@@ -289,12 +392,17 @@ struct ScoreView: View {
         return String(format: NSLocalizedString("a11y.score_tile_serving_suffix", comment: ""), base, court)
     }
 
-    private var backgroundFill: Color {
-        isWinner ? Color.yellow.opacity(winnerGlow ? 0.35 : 0.15) : Color.black.opacity(0.25)
+    private var tileGradient: LinearGradient {
+        LinearGradient(
+            colors: isWinner
+                ? [themeTint.opacity(winnerGlow ? 0.4 : 0.2), themeTint.opacity(winnerGlow ? 0.18 : 0.08)]
+                : [.white.opacity(0.16), .white.opacity(0.05), .black.opacity(0.12)],
+            startPoint: .topLeading, endPoint: .bottomTrailing
+        )
     }
 
     private var borderColor: Color {
-        isWinner ? Color.yellow : (isServing ? Color.yellow.opacity(0.8) : Color.white.opacity(0.5))
+        isWinner ? themeTint : (isServing ? themeTint.opacity(0.8) : Color.white.opacity(0.5))
     }
 
     private var borderWidth: CGFloat {
@@ -304,7 +412,7 @@ struct ScoreView: View {
     private func nameRow(_ label: String, showDot: Bool, isMeLabel: Bool = false) -> some View {
         HStack(spacing: 6) {
             if showDot {
-                Image(systemName: "circle.fill").font(.system(size: 10)).foregroundStyle(.yellow)
+                Image(systemName: "circle.fill").font(.system(size: 10)).foregroundStyle(themeTint)
             }
             Text(label)
                 .font(.title3.weight(.medium))
@@ -328,12 +436,12 @@ struct ScoreView: View {
     private var leadingContent: some View {
         if let partnerName {
             VStack(alignment: .leading, spacing: 4) {
-                avatarNameRow(name, color: isWinner ? .yellow : avatarColor, icon: avatarIcon, isMeLabel: isMe)
-                avatarNameRow(partnerName, color: isWinner ? .yellow : partnerAvatarColor, icon: partnerAvatarIcon, isMeLabel: partnerIsMe)
+                avatarNameRow(name, color: isWinner ? themeTint : data.avatarColor, icon: data.avatarIcon, isMeLabel: isMe)
+                avatarNameRow(partnerName, color: isWinner ? themeTint : data.partnerAvatarColor, icon: data.partnerAvatarIcon, isMeLabel: partnerIsMe)
             }
         } else {
             HStack(spacing: 8) {
-                AvatarView(name: name, color: isWinner ? .yellow : avatarColor, size: 34, iconName: avatarIcon)
+                AvatarView(name: name, color: isWinner ? themeTint : data.avatarColor, size: 34, iconName: data.avatarIcon)
                 nameRow(name, showDot: isServing, isMeLabel: isMe)
             }
         }
@@ -346,7 +454,7 @@ struct ScoreView: View {
                 if isServing {
                     Text(serveRight ? "game.right_court" : "game.left_court")
                         .font(.caption)
-                        .foregroundStyle(.yellow.opacity(0.9))
+                        .foregroundStyle(themeTint.opacity(0.9))
                 }
             }
             Spacer()
@@ -354,6 +462,7 @@ struct ScoreView: View {
                 .font(.system(size: 76, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .monospacedDigit()
+                .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
                 .scaleEffect(scorePulse ? 1.25 : 1.0)
                 .animation(.spring(response: 0.2, dampingFraction: 0.4), value: scorePulse)
         }
@@ -363,21 +472,24 @@ struct ScoreView: View {
         tileContent
             .padding(.horizontal, 18)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(.ultraThinMaterial)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(backgroundFill)
+                    .fill(tileGradient)
                     .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: winnerGlow)
             )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20).stroke(borderColor, lineWidth: borderWidth)
             )
+            .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
             .scaleEffect(isWinner ? 1.03 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isWinner)
             .contentShape(Rectangle())
             .onTapGesture {
                 scorePulse = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { scorePulse = false }
-                onTap()
+                data.onTap()
             }
             .onChange(of: isWinner) { _, won in winnerGlow = won }
             .accessibilityElement(children: .ignore)

@@ -83,6 +83,10 @@
 "prematch.back" = "返回";
 "game.menu" = "菜单";
 "game.games" = "局数";
+"game.split_serve" = "发球";
+"game.timer_label" = "计时";
+"game.won_last_game" = "赢得上一局";
+"game.tap_hint" = "点按一侧计分";
 "game.right_court" = "右场";
 "game.left_court" = "左场";
 "game.game_point" = "局点！";
@@ -124,6 +128,10 @@
 "game.sudden_death" = "突然死亡！";
 "game.tie" = "平局！";
 "ios.new_match" = "新比赛";
+"ios.game_screen_style" = "比分屏幕样式";
+"ios.game_screen_style_depth" = "立体";
+"ios.game_screen_style_split" = "分屏";
+"ios.game_screen_style_minimal" = "极简";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "俱乐部";

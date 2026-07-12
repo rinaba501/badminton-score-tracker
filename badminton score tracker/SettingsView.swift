@@ -17,6 +17,7 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
     @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
+    @AppStorage(AppStorageKeys.gameScreenStyle) private var gameScreenStyle: GameScreenStyle = .depth
     @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
@@ -78,6 +79,14 @@ struct SettingsView: View {
                         showPaywall = true
                     } else if !newTheme.isPremium {
                         lastFreeTheme = newTheme
+                    }
+                }
+            }
+
+            Section(header: Text("ios.game_screen_style")) {
+                Picker("ios.game_screen_style", selection: $gameScreenStyle) {
+                    ForEach(GameScreenStyle.allCases, id: \.self) { style in
+                        Text(style.labelKey).tag(style)
                     }
                 }
             }
