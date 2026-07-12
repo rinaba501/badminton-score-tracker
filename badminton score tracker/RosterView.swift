@@ -2,12 +2,11 @@
 //  RosterView.swift
 //  badminton score tracker (iOS)
 //
-//  Roster management: edit "Me", add / rename / delete saved players, choose
-//  sort order. Ported from the Watch's SettingsView roster section — same
+//  Roster management: add / rename / delete saved players, choose sort
+//  order. Ported from the Watch's SettingsView roster section — same
 //  AppStore.saveRoster call pattern and the same rename→history propagation
-//  (a rename updates the player's name in every past match via player id, and
-//  updates myName when editing the local user). "Me" is never auto-added to
-//  the roster; guests never persist.
+//  (a rename updates the player's name in every past match via player id).
+//  "Me" editing lives in ProfileView, not here; guests never persist.
 //
 
 import SwiftUI
@@ -27,10 +26,6 @@ struct RosterView: View {
         Player.sortedPlayers(roster.filter { $0.name != myName }, order: playerSortOrder, history: store.history)
     }
 
-    private func meAsPlayer() -> Player {
-        roster.first(where: { $0.name == myName }) ?? Player(id: store.localPlayerId, name: myName, colorIndex: 0)
-    }
-
     private func deletePlayers(at offsets: IndexSet) {
         pendingPlayerIdsToDelete = Set(offsets.map { opponents[$0].id })
     }
@@ -43,12 +38,6 @@ struct RosterView: View {
 
     private func savePlayerEdit(_ updated: Player) {
         let old = roster.first(where: { $0.id == updated.id })
-
-        // Write myName before any save* that enqueues Settings so the
-        // materialize path reads the updated identity name.
-        if let old, old.name != updated.name, old.name == myName {
-            myName = updated.name
-        }
 
         var r = roster
         if let idx = r.firstIndex(where: { $0.id == updated.id }) {
@@ -79,15 +68,6 @@ struct RosterView: View {
 
     var body: some View {
         List {
-            Section(header: Text("settings.me")) {
-                Button {
-                    editingPlayer = meAsPlayer()
-                } label: {
-                    let me = meAsPlayer()
-                    playerRow(name: myName, color: me.avatarColor, iconName: me.iconName)
-                }
-            }
-
             Section(header: Text("settings.players")) {
                 Picker("settings.sort_order", selection: $playerSortOrder) {
                     Text("settings.sort_name").tag(Player.SortOrder.name)

@@ -1,5 +1,6 @@
 // iOS companion app
 "ios.title" = "Badminton Score";
+"ios.profile" = "Profile";
 "settings.title" = "Settings";
 "settings.game_mode" = "Game Mode";
 "settings.audio" = "Audio";
@@ -224,11 +225,11 @@
 "friends.cancel_request" = "Cancel";
 "friends.cancel_request_confirm" = "Cancel this friend request?";
 "friends.add_friend" = "Add Friend";
-"friends.account_section_header" = "Account";
-"friends.link_account" = "Link This Device";
-"friends.linked_as" = "Linked as %@";
-"friends.unlink_account" = "Unlink";
-"friends.unlink_account_confirm" = "Unlink this device from your account? You can link it again anytime.";
+"profile.account_section_header" = "Account";
+"profile.link_account" = "Link This Device";
+"profile.linked_as" = "Linked as %@";
+"profile.unlink_account" = "Unlink";
+"profile.unlink_account_confirm" = "Unlink this device from your account? You can link it again anytime.";
 "friends.enter_code" = "Enter a Code";
 "friends.code_prompt_message" = "Paste an invite link or friend code";
 "friends.code_placeholder" = "Invite link or code";

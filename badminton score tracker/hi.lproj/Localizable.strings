@@ -1,5 +1,6 @@
 // iOS companion app
 "ios.title" = "बैडमिंटन स्कोर";
+"ios.profile" = "प्रोफ़ाइल";
 "settings.title" = "सेटिंग्स";
 "settings.game_mode" = "गेम मोड";
 "settings.audio" = "ऑडियो";
@@ -224,11 +225,11 @@
 "friends.cancel_request" = "रद्द करें";
 "friends.cancel_request_confirm" = "इस मित्र अनुरोध को रद्द करें?";
 "friends.add_friend" = "मित्र जोड़ें";
-"friends.account_section_header" = "खाता";
-"friends.link_account" = "इस डिवाइस को लिंक करें";
-"friends.linked_as" = "%@ के रूप में लिंक किया गया";
-"friends.unlink_account" = "अनलिंक करें";
-"friends.unlink_account_confirm" = "इस डिवाइस को अपने खाते से अनलिंक करें? आप इसे कभी भी फिर से लिंक कर सकते हैं।";
+"profile.account_section_header" = "खाता";
+"profile.link_account" = "इस डिवाइस को लिंक करें";
+"profile.linked_as" = "%@ के रूप में लिंक किया गया";
+"profile.unlink_account" = "अनलिंक करें";
+"profile.unlink_account_confirm" = "इस डिवाइस को अपने खाते से अनलिंक करें? आप इसे कभी भी फिर से लिंक कर सकते हैं।";
 "friends.enter_code" = "कोड दर्ज करें";
 "friends.code_prompt_message" = "आमंत्रण लिंक या मित्र कोड पेस्ट करें";
 "friends.code_placeholder" = "आमंत्रण लिंक या कोड";

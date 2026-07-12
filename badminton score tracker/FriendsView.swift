@@ -9,7 +9,8 @@
 //  UIKit-only, hence iOS-only), a friend invite is just a URL
 //  (FriendInviteLink.url), so ShareLink works natively on watchOS too — this
 //  view is symmetric with the Watch's FriendsView, styling aside, the same
-//  way ClubsView is.
+//  way ClubsView is. The account link/unlink toggle lives in ProfileView, not
+//  here — this view is the friend graph only.
 //
 
 import SwiftUI
@@ -28,7 +29,6 @@ private struct PendingFriendRequestResponse: Identifiable {
 struct FriendsView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
 
     @State private var myParticipantId: String?
     @State private var enteringCode = false
@@ -39,24 +39,11 @@ struct FriendsView: View {
     @State private var pendingName = ""
     @State private var pendingAction: (() -> Void)?
     @State private var pendingRequestResponse: PendingFriendRequestResponse?
-    @State private var showUnlinkConfirm = false
 
     // Backstop for anyone who skipped the first-launch prompt (ContentView) —
     // still lets Friends work, just nudges before anything gets sent.
     private var needsName: Bool {
         myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
-    }
-
-    // Same avatarColor(for:)/avatarIcon(for:) roster lookup ClubDetailView/
-    // PreMatchView use — editing "Me" in RosterView saves a real Player row,
-    // so the linked-account row shows your actual customized avatar instead
-    // of a flat gray placeholder.
-    private func avatarColor(for name: String) -> Color {
-        store.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
-    }
-
-    private func avatarIcon(for name: String) -> String? {
-        store.roster.first(where: { $0.name == name })?.iconName
     }
 
     private var incomingRequests: [FriendRequest] {
@@ -86,13 +73,6 @@ struct FriendsView: View {
                 namePrompt
             }
             .confirmationDialog(
-                "friends.unlink_account_confirm",
-                isPresented: $showUnlinkConfirm,
-                titleVisibility: .visible
-            ) {
-                Button("friends.unlink_account", role: .destructive) { unlinkAccount() }
-            }
-            .confirmationDialog(
                 pendingRequestResponse?.isCancel == true ? "friends.cancel_request_confirm" : "friends.decline_confirm",
                 isPresented: Binding(
                     get: { pendingRequestResponse != nil },
@@ -112,22 +92,6 @@ struct FriendsView: View {
 
     private var friendsList: some View {
         List {
-            Section("friends.account_section_header") {
-                if accountLinked {
-                    HStack(spacing: 8) {
-                        AvatarView(name: Player.displayName(for: myName), color: avatarColor(for: myName), size: 24, iconName: avatarIcon(for: myName))
-                        Text(String(format: NSLocalizedString("friends.linked_as", comment: ""), Player.displayName(for: myName)))
-                    }
-                    Button("friends.unlink_account", role: .destructive) { showUnlinkConfirm = true }
-                } else {
-                    Button {
-                        linkAccount()
-                    } label: {
-                        Label("friends.link_account", systemImage: "link")
-                    }
-                }
-            }
-
             if !incomingRequests.isEmpty {
                 Section("friends.pending_received") {
                     ForEach(incomingRequests) { request in
@@ -297,31 +261,6 @@ struct FriendsView: View {
             pendingAction?()
             pendingAction = nil
         }
-    }
-
-    // Explicit "link this device to one CloudKit account" opt-in flag —
-    // purely informational today (Club's "you" row/badge no longer branches
-    // on it, since there's only one identity to show), kept for future use.
-    private func linkAccount() {
-        guard !needsName else {
-            pendingName = ""
-            pendingAction = { [self] in
-                accountLinked = true
-                CloudKitSyncManager.shared.enqueueSettingsChange()
-            }
-            promptingForName = true
-            return
-        }
-        accountLinked = true
-        CloudKitSyncManager.shared.enqueueSettingsChange()
-    }
-
-    // Non-destructive: does not delete the FriendProfile, remove friends, or
-    // leave clubs — just detaches the local link so Club stops showing the
-    // shared name. Re-linking later restores it.
-    private func unlinkAccount() {
-        accountLinked = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 
     private func sendCode() {
