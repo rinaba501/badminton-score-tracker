@@ -144,6 +144,7 @@
 "ios.game_screen_style_matchstick" = "Matchstick";
 "ios.game_screen_style_birdseye" = "Birds-Eye";
 "ios.game_screen_style_tug" = "Tug";
+"ios.change_player" = "Change";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "Clubs";

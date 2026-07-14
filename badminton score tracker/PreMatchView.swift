@@ -2,12 +2,16 @@
 //  PreMatchView.swift
 //  badminton score tracker (iOS)
 //
-//  Player selection before a match: pick singles/doubles, then the near side
-//  (and partner), then the far side (and partner), with head-to-head records
-//  surfaced against the chosen near player. iOS restyle of the Watch's
-//  PreMatchView — same match-config @AppStorage keys and guest-token identity,
-//  driven by onReady/onCancel closures (no currentView binding). Adding a new
-//  player reuses the iOS PlayerEditView.
+//  Player selection before a match: near side, then far side, with
+//  head-to-head records surfaced against the chosen near-side player.
+//  Diverges from the Watch's PreMatchView here: the Watch steps through one
+//  player per pushed screen, while iOS keeps a side's player and partner on
+//  the same screen — picking the player swaps the same list in place to
+//  prompt for the partner (no sheet, no extra "next" tap; a summary banner
+//  keeps the already-picked player visible) instead of pushing a new
+//  screen. Same match-config @AppStorage keys and guest-token identity,
+//  driven by onReady/onCancel closures (no currentView binding). Adding a
+//  new player reuses the iOS PlayerEditView.
 //
 
 import SwiftUI
@@ -27,10 +31,14 @@ struct PreMatchView: View {
     @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
 
-    @State private var step: Step = .pickMyPlayer
+    @State private var step: Step = .near
+    /// Which slot of the current side is being picked. Doubles only ever
+    /// reaches `.partner`; singles stays on `.player` the whole time.
+    @State private var subStep: SubStep = .player
     @State private var showAddPlayer = false
 
-    enum Step { case pickMyPlayer, pickMyPartner, pickOpponent, pickOpponentPartner }
+    enum Step { case near, far }
+    enum SubStep { case player, partner }
 
     private var clubSelection: Binding<UUID?> {
         Binding(
@@ -42,6 +50,7 @@ struct PreMatchView: View {
     private var history: [MatchRecord] { appStore.history }
     private var roster: [Player] { appStore.roster }
     private var isDoubles: Bool { gameMode == .doubles }
+    private var nearDisplayName: String { matchMyName.isEmpty ? myName : matchMyName }
 
     // MARK: - Roster helpers
 
@@ -51,16 +60,6 @@ struct PreMatchView: View {
 
     private func avatarIcon(for name: String) -> String? {
         roster.first(where: { $0.name == name })?.iconName
-    }
-
-    /// Same "me" marker ClubDetailView uses — `defaultLabel` is only ever
-    /// non-empty for the near-side step, so whenever it's shown it's always
-    /// your own name.
-    private var youBadge: some View {
-        Image(systemName: "checkmark.seal.fill")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .accessibilityLabel("clubs.you")
     }
 
     private func addPlayer(_ player: Player, thenSelect select: (String) -> Void) {
@@ -81,7 +80,7 @@ struct PreMatchView: View {
                     // Unconditionally cleared (not just when switching to
                     // singles): these 3 fields are read as "already used
                     // this match" input to the guest-token draw (see
-                    // picker's usedGuestTokens) at steps earlier than the
+                    // picker's usedGuestTokens) at slots earlier than the
                     // one that sets them, so a leftover value from the
                     // *previous* match would otherwise be mistaken for a
                     // pick already made in this one.
@@ -98,69 +97,105 @@ struct PreMatchView: View {
     @ViewBuilder
     private var content: some View {
         switch step {
-        case .pickMyPlayer:
-            let usedGuestTokens = Set([matchMyPartnerName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
-            picker(titleKey: "prematch.near_side",
-                   defaultLabel: myName, defaultColor: avatarColor(for: myName),
-                   usedGuestTokens: usedGuestTokens,
-                   showModePicker: true, showClubPicker: true) { name in
-                matchMyName = name
-                step = isDoubles ? .pickMyPartner : .pickOpponent
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("prematch.back", action: onCancel)
+        case .near:
+            switch subStep {
+            case .player:
+                let usedGuestTokens = Set([matchMyPartnerName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
+                picker(titleKey: "prematch.near_side",
+                       defaultLabel: myName, defaultColor: avatarColor(for: myName),
+                       usedGuestTokens: usedGuestTokens,
+                       showModePicker: true, showClubPicker: true) { name in
+                    matchMyName = name
+                    if isDoubles { subStep = .partner } else { step = .far }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("prematch.back", action: onCancel)
+                    }
+                }
+
+            case .partner:
+                let usedGuestTokens = Set([matchMyName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
+                picker(titleKey: "prematch.near_partner",
+                       defaultLabel: nil, defaultColor: .gray,
+                       usedGuestTokens: usedGuestTokens,
+                       excluding: [nearDisplayName]) { name in
+                    matchMyPartnerName = name
+                    step = .far
+                    subStep = .player
+                }
+                .safeAreaInset(edge: .top) {
+                    summaryBanner(name: nearDisplayName) { subStep = .player }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("prematch.back") { subStep = .player }
+                    }
                 }
             }
 
-        case .pickMyPartner:
-            let usedGuestTokens = Set([matchMyName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
-            picker(titleKey: "prematch.near_partner",
-                   defaultLabel: nil, defaultColor: .gray,
-                   usedGuestTokens: usedGuestTokens,
-                   excluding: [matchMyName]) { name in
-                matchMyPartnerName = name
-                step = .pickOpponent
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("prematch.back") { step = .pickMyPlayer }
+        case .far:
+            switch subStep {
+            case .player:
+                let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentPartnerName].filter(Player.isGuestName))
+                picker(titleKey: "prematch.far_side",
+                       defaultLabel: nil, defaultColor: .gray,
+                       usedGuestTokens: usedGuestTokens,
+                       excluding: [nearDisplayName, matchMyPartnerName].filter { !$0.isEmpty },
+                       h2hAgainst: nearDisplayName) { name in
+                    matchOpponentName = name
+                    if isDoubles { subStep = .partner } else { onReady() }
                 }
-            }
-
-        case .pickOpponent:
-            let nearName = matchMyName.isEmpty ? myName : matchMyName
-            let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentPartnerName].filter(Player.isGuestName))
-            picker(titleKey: "prematch.far_side",
-                   defaultLabel: nil, defaultColor: .gray,
-                   usedGuestTokens: usedGuestTokens,
-                   excluding: [nearName, matchMyPartnerName].filter { !$0.isEmpty },
-                   h2hAgainst: nearName) { name in
-                matchOpponentName = name
-                if isDoubles { step = .pickOpponentPartner } else { onReady() }
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("prematch.back") { step = isDoubles ? .pickMyPartner : .pickMyPlayer }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("prematch.back") {
+                            step = .near
+                            subStep = isDoubles ? .partner : .player
+                        }
+                    }
                 }
-            }
 
-        case .pickOpponentPartner:
-            let nearName = matchMyName.isEmpty ? myName : matchMyName
-            let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentName].filter(Player.isGuestName))
-            picker(titleKey: "prematch.far_partner",
-                   defaultLabel: nil, defaultColor: .gray,
-                   usedGuestTokens: usedGuestTokens,
-                   excluding: [nearName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }) { name in
-                matchOpponentPartnerName = name
-                onReady()
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("prematch.back") { step = .pickOpponent }
+            case .partner:
+                let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentName].filter(Player.isGuestName))
+                picker(titleKey: "prematch.far_partner",
+                       defaultLabel: nil, defaultColor: .gray,
+                       usedGuestTokens: usedGuestTokens,
+                       excluding: [nearDisplayName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }) { name in
+                    matchOpponentPartnerName = name
+                    onReady()
+                }
+                .safeAreaInset(edge: .top) {
+                    summaryBanner(name: matchOpponentName) { subStep = .player }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("prematch.back") { subStep = .player }
+                    }
                 }
             }
         }
+    }
+
+    /// Keeps the side's already-picked player visible while choosing their
+    /// partner, so both slots read as one screen instead of two.
+    private func summaryBanner(name: String, onChange: @escaping () -> Void) -> some View {
+        let displayLabel = Player.displayName(for: name)
+        let color = Player.isGuestName(name) ? Player.guestAvatarColor(for: name) : avatarColor(for: name)
+        let icon = Player.isGuestName(name) ? nil : avatarIcon(for: name)
+        return Button(action: onChange) {
+            HStack(spacing: 10) {
+                AvatarView(name: displayLabel, color: color, size: 24, iconName: icon)
+                Text(displayLabel)
+                Spacer()
+                Text("ios.change_player")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(.bar)
+        }
+        .foregroundStyle(.primary)
     }
 
     // MARK: - Reusable picker
@@ -289,6 +324,16 @@ struct PreMatchView: View {
                 showAddPlayer = false
             }
         }
+    }
+
+    /// Same "me" marker ClubDetailView uses — `defaultLabel` is only ever
+    /// non-empty for the near-player slot, so whenever it's shown it's
+    /// always your own name.
+    private var youBadge: some View {
+        Image(systemName: "checkmark.seal.fill")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel("clubs.you")
     }
 
     private func playerRow(name: String, color: Color, icon: String?) -> some View {
