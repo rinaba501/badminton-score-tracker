@@ -38,6 +38,14 @@ private struct DiagonalSplit: Shape {
     }
 }
 
+/// A wall-clock-driven 0...1 pulse, independent of view-identity churn —
+/// score updates redraw `SplitScoreboard` frequently enough that a one-shot
+/// `withAnimation` + `.repeatForever` on `@State` was unreliable in practice.
+private func blinkPhase(at date: Date, period: Double = 0.85) -> Double {
+    let t = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: period) / period
+    return (sin(t * 2 * .pi) + 1) / 2
+}
+
 struct SplitScoreboard: View {
     let top: ScoreSideData
     let bottom: ScoreSideData
@@ -96,14 +104,22 @@ struct SplitScoreboard: View {
                     }
                 }
                 if data.isServing {
-                    HStack(spacing: 5) {
-                        Circle().fill(Color.white.opacity(0.95)).frame(width: 6, height: 6)
-                        Text("game.split_serve")
-                            .font(.caption2.weight(.heavy))
+                    TimelineView(.animation) { context in
+                        let pulse = blinkPhase(at: context.date)
+                        HStack(spacing: 5) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 7, height: 7)
+                                .shadow(color: .red.opacity(0.3 + pulse * 0.65), radius: 1 + pulse * 5)
+                                .opacity(0.35 + pulse * 0.65)
+                            Text("game.split_serve")
+                                .font(.caption2.weight(.heavy))
+                        }
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(theme.color, in: RoundedRectangle(cornerRadius: 4))
+                        .foregroundStyle(.white)
                     }
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(theme.color, in: RoundedRectangle(cornerRadius: 4))
-                    .foregroundStyle(.white)
+                    .fixedSize()
                 }
             }
             .padding(.horizontal, 14)
@@ -113,6 +129,32 @@ struct SplitScoreboard: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .rotationEffect(.degrees(-4))
         .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
+        .shadow(color: theme.color.opacity(data.isServing ? 0.55 : 0), radius: 12)
+    }
+
+    /// Renders the score as a distinct blurred, offset "ghost" layer behind
+    /// the crisp digits — a real cast shadow rather than a stacked `.shadow()`
+    /// modifier (which just darkens the same silhouette in place and reads
+    /// flat at this size) — so the number reads as floating off the field.
+    private func floatingScore(_ score: Int, isServing: Bool) -> some View {
+        let font = Font.system(size: 150, weight: .heavy, design: .rounded)
+        return ZStack {
+            Text("\(score)")
+                .font(font)
+                .foregroundStyle(.black.opacity(0.55))
+                .blur(radius: 12)
+                .offset(x: 7, y: 12)
+            Text("\(score)")
+                .font(font)
+                .foregroundStyle(theme.color.opacity(isServing ? 0.65 : 0))
+                .blur(radius: 22)
+            Text("\(score)")
+                .font(font)
+                .foregroundStyle(.white)
+        }
+        .monospacedDigit()
+        .contentTransition(.numericText())
+        .animation(.spring(response: 0.32, dampingFraction: 0.55), value: score)
     }
 
     private func zone(_ data: ScoreSideData, alignment: Alignment) -> some View {
@@ -123,11 +165,7 @@ struct SplitScoreboard: View {
             }
             HStack {
                 if alignment == .bottomLeading { Spacer() }
-                Text("\(data.score)")
-                    .font(.system(size: 150, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white)
-                    .monospacedDigit()
-                    .shadow(color: .black.opacity(0.45), radius: 14, y: 6)
+                floatingScore(data.score, isServing: data.isServing)
                 if alignment == .topTrailing { Spacer() }
             }
             if alignment == .bottomLeading {
