@@ -319,6 +319,41 @@ struct PlayerIdentityTests {
         // already *are* display text.
         #expect(Player.displayName(for: Player.guestNearLabel) == Player.guestNearLabel)
     }
+
+    @Test func guestPoolTokensAreAllRecognizedAndMutuallyDistinct() {
+        #expect(Set(Player.guestTokens).count == Player.guestTokens.count)
+        for token in Player.guestTokens {
+            #expect(Player.isGuestName(token))
+        }
+    }
+
+    @Test func guestPoolTokensAreDistinctFromLegacyTokens() {
+        #expect(Set(Player.guestTokens).isDisjoint(with: [Player.guestNearToken, Player.guestFarToken]))
+    }
+
+    @Test func displayNameMapsEachPoolTokenToItsOwnLabel() {
+        let labels = Player.guestTokens.map { Player.displayName(for: $0) }
+        #expect(Set(labels).count == Player.guestTokens.count)
+        for label in labels {
+            #expect(!label.isEmpty)
+        }
+    }
+
+    @Test func poolTokensAreNotStoredAsSavedPlayer() {
+        for token in Player.guestTokens {
+            #expect(!Player.shouldBeStoredAsSavedPlayer(token, currentUserName: Player.defaultMyName))
+        }
+    }
+
+    @Test func randomGuestTokenExcludesUsedTokens() {
+        let allButLast = Set(Player.guestTokens.dropLast())
+        #expect(Player.randomGuestToken(excluding: allButLast) == Player.guestTokens.last)
+    }
+
+    @Test func randomGuestTokenFallsBackWhenPoolFullyExcluded() {
+        let drawn = Player.randomGuestToken(excluding: Set(Player.guestTokens))
+        #expect(Player.guestTokens.contains(drawn))
+    }
 }
 
 struct PlayerSortingTests {

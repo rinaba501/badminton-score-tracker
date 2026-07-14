@@ -126,6 +126,13 @@
 "prematch.add_new" = "Tambah Baru";
 "prematch.guest_near" = "Tamu (Dekat)";
 "prematch.guest_far" = "Tamu (Jauh)";
+"prematch.guest" = "Tamu";
+"prematch.guest_falcon" = "Tamu Alap-alap";
+"prematch.guest_owl" = "Tamu Burung Hantu";
+"prematch.guest_hawk" = "Tamu Elang";
+"prematch.guest_robin" = "Tamu Robin";
+"prematch.guest_heron" = "Tamu Bangau";
+"prematch.guest_sparrow" = "Tamu Pipit";
 "game.sudden_death" = "Sudden Death!";
 "game.tie" = "Seri!";
 "ios.new_match" = "Pertandingan Baru";

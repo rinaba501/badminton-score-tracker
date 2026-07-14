@@ -126,6 +126,13 @@
 "prematch.add_new" = "नया जोड़ें";
 "prematch.guest_near" = "अतिथि (नज़दीक)";
 "prematch.guest_far" = "अतिथि (दूर)";
+"prematch.guest" = "अतिथि";
+"prematch.guest_falcon" = "अतिथि बाज़";
+"prematch.guest_owl" = "अतिथि उल्लू";
+"prematch.guest_hawk" = "अतिथि श्येन";
+"prematch.guest_robin" = "अतिथि रॉबिन";
+"prematch.guest_heron" = "अतिथि बगुला";
+"prematch.guest_sparrow" = "अतिथि गौरैया";
 "game.sudden_death" = "सडन डेथ!";
 "game.tie" = "बराबरी!";
 "ios.new_match" = "नया मैच";

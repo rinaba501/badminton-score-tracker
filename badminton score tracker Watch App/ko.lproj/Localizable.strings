@@ -162,6 +162,13 @@
 "game.tie" = "무승부!";
 "prematch.guest_near" = "게스트(근거리)";
 "prematch.guest_far" = "게스트(원거리)";
+"prematch.guest" = "게스트";
+"prematch.guest_falcon" = "게스트 송골매";
+"prematch.guest_owl" = "게스트 올빼미";
+"prematch.guest_hawk" = "게스트 매";
+"prematch.guest_robin" = "게스트 울새";
+"prematch.guest_heron" = "게스트 왜가리";
+"prematch.guest_sparrow" = "게스트 참새";
 "history.opponent_fallback" = "상대";
 
 // Roadmap Phase 5d: club management UI

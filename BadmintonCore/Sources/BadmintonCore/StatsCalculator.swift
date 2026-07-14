@@ -57,7 +57,8 @@ public enum StatsCalculator {
         var seen = Set<String>()
         var result: [String] = []
         for record in history {
-            for name in nearTeamNames(record) + farTeamNames(record) where seen.insert(name).inserted {
+            for name in nearTeamNames(record) + farTeamNames(record)
+                where !Player.isGuestName(name) && seen.insert(name).inserted {
                 result.append(name)
             }
         }
@@ -75,7 +76,7 @@ public enum StatsCalculator {
         var seen = Set<String>()
         var result: [String] = []
         for record in history {
-            for name in nearTeamNames(record) + farTeamNames(record) where !name.isEmpty {
+            for name in nearTeamNames(record) + farTeamNames(record) where !name.isEmpty && !Player.isGuestName(name) {
                 if seen.insert(name).inserted { result.append(name) }
             }
         }
@@ -96,7 +97,7 @@ public enum StatsCalculator {
         for record in playerHistory {
             let onNearTeam = nearTeamNames(record).contains(player)
             let oppTeam = onNearTeam ? farTeamNames(record) : nearTeamNames(record)
-            for opp in oppTeam where seen.insert(opp).inserted {
+            for opp in oppTeam where !Player.isGuestName(opp) && seen.insert(opp).inserted {
                 result.append(opp)
             }
         }

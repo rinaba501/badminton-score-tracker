@@ -15,6 +15,23 @@ extension Player {
         .cyan, .mint, .teal, .indigo, .yellow, .brown
     ]
 
+    /// Fixed, colorblind-safe color per guest bird token, index-aligned with
+    /// `Player.guestTokens` — deliberately skips red/green (the classic
+    /// confusable pair) rather than reusing `avatarColors`' hash-by-index
+    /// scheme, so a guest's color stays predictable across a session instead
+    /// of depending on `colorIndex` (guests have no roster `Player` row).
+    static let guestAvatarColors: [Color] = [
+        .blue, .orange, .purple, .yellow, .teal, .brown
+    ]
+
+    /// Color for a guest picker button/avatar, keyed by guest token —
+    /// index-matched into `guestAvatarColors` via `Player.guestTokens`.
+    /// `.gray` for anything not in the current pool (legacy near/far tokens).
+    static func guestAvatarColor(for token: String) -> Color {
+        guard let idx = Player.guestTokens.firstIndex(of: token) else { return .gray }
+        return guestAvatarColors[idx]
+    }
+
     static let avatarImageNames: [String] = [
         "avatar_shuttlecock_happy", "avatar_shuttlecock_cute",
         "avatar_shuttlecock_angry",

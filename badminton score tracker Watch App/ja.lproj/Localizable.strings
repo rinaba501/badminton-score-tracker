@@ -163,6 +163,13 @@
 "game.tie" = "引き分け！";
 "prematch.guest_near" = "ゲスト（手前）";
 "prematch.guest_far" = "ゲスト（奥）";
+"prematch.guest" = "ゲスト";
+"prematch.guest_falcon" = "ゲスト・ハヤブサ";
+"prematch.guest_owl" = "ゲスト・フクロウ";
+"prematch.guest_hawk" = "ゲスト・タカ";
+"prematch.guest_robin" = "ゲスト・コマドリ";
+"prematch.guest_heron" = "ゲスト・サギ";
+"prematch.guest_sparrow" = "ゲスト・スズメ";
 "history.opponent_fallback" = "対戦相手";
 
 // Roadmap Phase 5d: club management UI

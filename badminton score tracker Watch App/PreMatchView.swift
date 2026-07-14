@@ -81,8 +81,10 @@ struct PreMatchView: View {
             .accessibilityLabel("clubs.you")
     }
 
-    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, guestLabel: String, guestToken: String, excluding: [String] = [], showClubPicker: Bool = false, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
+    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, usedGuestTokens: Set<String>, excluding: [String] = [], showClubPicker: Bool = false, h2hAgainst: String? = nil, onSelect: @escaping (String) -> Void) -> some View {
         let selectedClubId = UUID(uuidString: matchClubId)
+        let guestToken = Player.randomGuestToken(excluding: usedGuestTokens)
+        let guestLabel = Player.displayName(for: guestToken)
         let filteredRoster = Player.sortedPlayers(
             roster.filter { player in
                 player.name != myName && !excluding.contains(player.name) && player.clubId == selectedClubId
@@ -119,8 +121,8 @@ struct PreMatchView: View {
                 }
                 Button(action: { onSelect(guestToken) }) {
                     HStack {
-                        AvatarView(name: guestLabel, color: .gray, size: 24)
-                        Text(guestLabel)
+                        AvatarView(name: guestLabel, color: Player.guestAvatarColor(for: guestToken), size: 24)
+                        Text(Player.guestButtonLabel)
                     }
                 }
             }
@@ -296,7 +298,8 @@ struct PreMatchView: View {
     private var content: some View {
         switch step {
         case .pickMyPlayer:
-            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken, showClubPicker: true) { name in
+            let usedGuestTokens = Set([matchMyPartnerName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
+            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), usedGuestTokens: usedGuestTokens, showClubPicker: true) { name in
                 matchMyName = name
                 step = isDoubles ? .pickMyPartner : .pickOpponent
             }
@@ -308,7 +311,8 @@ struct PreMatchView: View {
             }
 
         case .pickMyPartner:
-            playerPicker(title: NSLocalizedString("prematch.near_partner", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken, excluding: [matchMyName]) { name in
+            let usedGuestTokens = Set([matchMyName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
+            playerPicker(title: NSLocalizedString("prematch.near_partner", comment: ""), defaultLabel: "", defaultColor: .gray, usedGuestTokens: usedGuestTokens, excluding: [matchMyName]) { name in
                 matchMyPartnerName = name
                 step = .pickOpponent
             }
@@ -322,7 +326,8 @@ struct PreMatchView: View {
         case .pickOpponent:
             let nearName = matchMyName.isEmpty ? myName : matchMyName
             let nearExclusions = [nearName, matchMyPartnerName].filter { !$0.isEmpty }
-            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken, excluding: nearExclusions, h2hAgainst: nearName) { name in
+            let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentPartnerName].filter(Player.isGuestName))
+            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: "", defaultColor: .gray, usedGuestTokens: usedGuestTokens, excluding: nearExclusions, h2hAgainst: nearName) { name in
                 matchOpponentName = name
                 if isDoubles {
                     step = .pickOpponentPartner
@@ -340,7 +345,8 @@ struct PreMatchView: View {
         case .pickOpponentPartner:
             let nearName = matchMyName.isEmpty ? myName : matchMyName
             let exclusions = [nearName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }
-            playerPicker(title: NSLocalizedString("prematch.far_partner", comment: ""), defaultLabel: "", defaultColor: .gray, guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken, excluding: exclusions) { name in
+            let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentName].filter(Player.isGuestName))
+            playerPicker(title: NSLocalizedString("prematch.far_partner", comment: ""), defaultLabel: "", defaultColor: .gray, usedGuestTokens: usedGuestTokens, excluding: exclusions) { name in
                 matchOpponentPartnerName = name
                 currentView = .game
             }
