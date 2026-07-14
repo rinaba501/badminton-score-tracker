@@ -44,6 +44,8 @@ struct SplitScoreboard: View {
     let header: GameHeaderData
     let theme: CourtTheme
 
+    @State private var servePulse = false
+
     private var fields: some View {
         ZStack {
             Color(white: 0.05)
@@ -54,6 +56,11 @@ struct SplitScoreboard: View {
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
             .clipShape(DiagonalSplit(topSide: true))
+            .overlay(
+                DiagonalSplit(topSide: true)
+                    .stroke(Color.red.opacity(top.isServing ? (servePulse ? 0.9 : 0.25) : 0), lineWidth: 3)
+                    .blur(radius: 2)
+            )
             LinearGradient(
                 colors: bottom.isServing
                     ? [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
@@ -61,6 +68,11 @@ struct SplitScoreboard: View {
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
             .clipShape(DiagonalSplit(topSide: false))
+            .overlay(
+                DiagonalSplit(topSide: false)
+                    .stroke(Color.red.opacity(bottom.isServing ? (servePulse ? 0.9 : 0.25) : 0), lineWidth: 3)
+                    .blur(radius: 2)
+            )
         }
         .ignoresSafeArea()
     }
@@ -97,7 +109,11 @@ struct SplitScoreboard: View {
                 }
                 if data.isServing {
                     HStack(spacing: 5) {
-                        Circle().fill(Color.white.opacity(0.95)).frame(width: 6, height: 6)
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 7, height: 7)
+                            .shadow(color: .red.opacity(servePulse ? 0.95 : 0.3), radius: servePulse ? 6 : 1)
+                            .opacity(servePulse ? 1 : 0.35)
                         Text("game.split_serve")
                             .font(.caption2.weight(.heavy))
                     }
@@ -113,6 +129,7 @@ struct SplitScoreboard: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .rotationEffect(.degrees(-4))
         .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
+        .shadow(color: theme.color.opacity(data.isServing ? 0.55 : 0), radius: 12)
     }
 
     private func zone(_ data: ScoreSideData, alignment: Alignment) -> some View {
@@ -127,7 +144,11 @@ struct SplitScoreboard: View {
                     .font(.system(size: 150, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .monospacedDigit()
-                    .shadow(color: .black.opacity(0.45), radius: 14, y: 6)
+                    .contentTransition(.numericText())
+                    .shadow(color: .black.opacity(0.6), radius: 24, y: 14)
+                    .shadow(color: .black.opacity(0.5), radius: 8, y: 3)
+                    .shadow(color: theme.color.opacity(data.isServing ? 0.5 : 0), radius: 30)
+                    .animation(.spring(response: 0.32, dampingFraction: 0.55), value: data.score)
                 if alignment == .topTrailing { Spacer() }
             }
             if alignment == .bottomLeading {
@@ -194,6 +215,11 @@ struct SplitScoreboard: View {
                 zone(bottom, alignment: .bottomLeading)
             }
             centerBoard
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.65).repeatForever(autoreverses: true)) {
+                servePulse = true
+            }
         }
     }
 }
