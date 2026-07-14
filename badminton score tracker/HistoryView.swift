@@ -309,23 +309,29 @@ struct MatchHistoryRow: View {
         return teamLabel(name: name, partnerName: record.opponentPartnerName)
     }
 
-    // Roster lookups by raw (stored) name — guests/unknowns fall back to gray
-    // initials, matching the rest of the app's avatar behavior.
+    // Roster lookups by raw (stored) name — a guest falls back to its fixed
+    // bird color (see Player.guestAvatarColor); any other unknown name falls
+    // back to gray, matching the rest of the app's avatar behavior.
     private func rosterPlayer(_ rawName: String) -> Player? {
         store.roster.first(where: { $0.name == rawName })
+    }
+
+    private func avatarColor(rawName: String, player: Player?) -> Color {
+        if let player { return player.avatarColor }
+        return Player.isGuestName(rawName) ? Player.guestAvatarColor(for: rawName) : .gray
     }
 
     private func teamAvatars(rawName: String, fallbackLabel: String, rawPartner: String?) -> some View {
         let player = rosterPlayer(rawName)
         return HStack(spacing: rawPartner == nil ? 0 : -8) {
             AvatarView(name: Player.displayName(for: rawName.isEmpty ? fallbackLabel : rawName),
-                       color: player?.avatarColor ?? .gray,
+                       color: avatarColor(rawName: rawName, player: player),
                        size: 26,
                        iconName: player?.iconName)
             if let rawPartner {
                 let partner = rosterPlayer(rawPartner)
                 AvatarView(name: Player.displayName(for: rawPartner),
-                           color: partner?.avatarColor ?? .gray,
+                           color: avatarColor(rawName: rawPartner, player: partner),
                            size: 26,
                            iconName: partner?.iconName)
             }

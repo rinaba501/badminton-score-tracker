@@ -213,7 +213,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 
 Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indonesian (id), Korean (ko), Hindi (hi)
 
-The default local-player name ("Me") and the two guest labels offered during player selection are fully localized. These strings double as identity markers (a guest selection must never be saved to the roster), so every screen reads them from a single shared source (`Player.defaultMyName`/`.guestNearLabel`/`.guestFarLabel`) rather than each hardcoding its own copy — otherwise a guest chosen in one locale's label could fail the "is this a guest" check.
+The default local-player name ("Me") and the guest labels offered during player selection are fully localized. Guests are randomly assigned one of 6 bird names (e.g. "Guest Falcon"), drawn without replacement per match so up to 4 guest slots (near/far solo + partner) never collide; a picker's guest button shows a generic "Guest" label until the specific name is drawn at tap time. These strings double as identity markers (a guest selection must never be saved to the roster, and never becomes a selectable filter/head-to-head subject in History or Stats), so every screen reads them from a single shared source (`Player.defaultMyName`/`Player.guestTokens`/`Player.displayName(for:)`) rather than each hardcoding its own copy — otherwise a guest chosen in one locale's label could fail the "is this a guest" check.
 
 ---
 

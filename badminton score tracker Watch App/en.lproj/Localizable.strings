@@ -162,6 +162,13 @@
 "game.tie" = "It's a Tie!";
 "prematch.guest_near" = "Guest (Near)";
 "prematch.guest_far" = "Guest (Far)";
+"prematch.guest" = "Guest";
+"prematch.guest_falcon" = "Guest Falcon";
+"prematch.guest_owl" = "Guest Owl";
+"prematch.guest_hawk" = "Guest Hawk";
+"prematch.guest_robin" = "Guest Robin";
+"prematch.guest_heron" = "Guest Heron";
+"prematch.guest_sparrow" = "Guest Sparrow";
 "history.opponent_fallback" = "Opponent";
 
 // Roadmap Phase 5d: club management UI

@@ -162,6 +162,13 @@
 "game.tie" = "बराबरी!";
 "prematch.guest_near" = "अतिथि (नज़दीक)";
 "prematch.guest_far" = "अतिथि (दूर)";
+"prematch.guest" = "अतिथि";
+"prematch.guest_falcon" = "अतिथि बाज़";
+"prematch.guest_owl" = "अतिथि उल्लू";
+"prematch.guest_hawk" = "अतिथि श्येन";
+"prematch.guest_robin" = "अतिथि रॉबिन";
+"prematch.guest_heron" = "अतिथि बगुला";
+"prematch.guest_sparrow" = "अतिथि गौरैया";
 "history.opponent_fallback" = "प्रतिद्वंद्वी";
 
 // Roadmap Phase 5d: club management UI

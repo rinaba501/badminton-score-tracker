@@ -48,6 +48,17 @@ public struct Player: Identifiable, Codable, Equatable {
 // localized: every screen that offers or recognizes these labels reads the
 // same, current-locale value, so a screen never displays one language's
 // version while another screen's identity check expects a different one.
+//
+// Guest identity is a randomly-assigned, distinct bird name per slot
+// (`guestTokens`) rather than a fixed "(Near)/(Far)" qualifier — a match can
+// have up to 4 guest slots (near solo/partner, far solo/partner) and each
+// one draws a different, unused word so two guests on the same team are
+// never indistinguishable. `guestNearToken`/`guestFarToken` are the original
+// 2-token scheme this replaced; they're kept forever, never offered for a
+// new selection, purely so already-persisted MatchRecords (and
+// GameViewModel's no-opponent-picked fallback, which still returns
+// `guestFarToken`) keep decoding/resolving correctly. Adding a 7th bird only
+// requires touching `guestTokens` + `guestTokenLabels` below.
 extension Player {
     public enum SortOrder: String, CaseIterable, Codable {
         case created
@@ -66,21 +77,64 @@ extension Player {
     public static var guestNearLabel: String { NSLocalizedString("prematch.guest_near", comment: "") }
     public static var guestFarLabel: String { NSLocalizedString("prematch.guest_far", comment: "") }
 
+    // The active guest pool: one label per bird, plus a generic label for
+    // the picker's guest button before a specific bird has been drawn (see
+    // `randomGuestToken(excluding:)` — the button can't preview the word,
+    // since it isn't chosen until tap time).
+    public static var guestButtonLabel: String { NSLocalizedString("prematch.guest", comment: "") }
+    public static var guestFalconLabel: String { NSLocalizedString("prematch.guest_falcon", comment: "") }
+    public static var guestOwlLabel: String { NSLocalizedString("prematch.guest_owl", comment: "") }
+    public static var guestHawkLabel: String { NSLocalizedString("prematch.guest_hawk", comment: "") }
+    public static var guestRobinLabel: String { NSLocalizedString("prematch.guest_robin", comment: "") }
+    public static var guestHeronLabel: String { NSLocalizedString("prematch.guest_heron", comment: "") }
+    public static var guestSparrowLabel: String { NSLocalizedString("prematch.guest_sparrow", comment: "") }
+
     // Locale-independent identity tokens — what's actually stored in
     // matchMyName/matchOpponentName and MatchRecord.myName/opponentName for a
     // guest selection, instead of the localized label. Because these are
     // fixed literals (never run through NSLocalizedString), guest identity no
     // longer depends on which locale was active when the record was saved or
-    // is later read. `guestNearLabel`/`guestFarLabel` remain display-only —
-    // use `displayName(for:)` to turn a stored value back into display text.
+    // is later read. Labels remain display-only — use `displayName(for:)` to
+    // turn a stored value back into display text.
     public static let guestNearToken = "@@guest_near@@"
     public static let guestFarToken = "@@guest_far@@"
 
+    public static let guestFalconToken = "@@guest_falcon@@"
+    public static let guestOwlToken = "@@guest_owl@@"
+    public static let guestHawkToken = "@@guest_hawk@@"
+    public static let guestRobinToken = "@@guest_robin@@"
+    public static let guestHeronToken = "@@guest_heron@@"
+    public static let guestSparrowToken = "@@guest_sparrow@@"
+
+    /// The current guest pool, in a fixed order (also the order the app's
+    /// per-target guest avatar color palette is indexed against — keep the
+    /// two lists index-aligned if either changes). `guestNearToken`/
+    /// `guestFarToken` are deliberately excluded: legacy-decode-only, never
+    /// offered or drawn for a new selection.
+    public static let guestTokens: [String] = [
+        guestFalconToken, guestOwlToken, guestHawkToken,
+        guestRobinToken, guestHeronToken, guestSparrowToken
+    ]
+
+    /// Token → current-locale label, for every guest identity the app
+    /// recognizes: the active pool plus the legacy near/far tokens. Computed
+    /// (not stored) so it always reflects the current locale.
+    private static var guestTokenLabels: [String: String] {
+        [
+            guestFalconToken: guestFalconLabel, guestOwlToken: guestOwlLabel,
+            guestHawkToken: guestHawkLabel, guestRobinToken: guestRobinLabel,
+            guestHeronToken: guestHeronLabel, guestSparrowToken: guestSparrowLabel,
+            guestNearToken: guestNearLabel, guestFarToken: guestFarLabel
+        ]
+    }
+
     /// True for a guest identity token, or (for records saved before the
-    /// tokens existed) either localized guest label under the *current*
-    /// locale. Guests are intentionally never persisted to the roster.
+    /// tokens existed) any of those tokens' localized labels under the
+    /// *current* locale. Guests are intentionally never persisted to the
+    /// roster.
     public static func isGuestName(_ name: String) -> Bool {
-        name == guestNearToken || name == guestFarToken || name == guestNearLabel || name == guestFarLabel
+        let labels = guestTokenLabels
+        return labels[name] != nil || Set(labels.values).contains(name)
     }
 
     /// Maps a stored identity value back to what should be shown to the
@@ -88,11 +142,18 @@ extension Player {
     /// anything else (a real name, or a legacy pre-token guest label) passes
     /// through unchanged.
     public static func displayName(for storedName: String) -> String {
-        switch storedName {
-        case guestNearToken: return guestNearLabel
-        case guestFarToken: return guestFarLabel
-        default: return storedName
-        }
+        guestTokenLabels[storedName] ?? storedName
+    }
+
+    /// Picks a random not-yet-used guest token for one match's guest slots,
+    /// drawn without replacement from `guestTokens`. `usedTokens` is the
+    /// caller's current snapshot of tokens already assigned to the match's
+    /// other slots. Falls back to a uniform draw from the full pool if every
+    /// token is already used — unreachable via the normal 4-slot flow (pool
+    /// size 6), but keeps this safe if the pool is ever shrunk below 4.
+    public static func randomGuestToken(excluding usedTokens: Set<String>) -> String {
+        let available = guestTokens.filter { !usedTokens.contains($0) }
+        return available.randomElement() ?? guestTokens.randomElement()!
     }
 
     /// Returns whether a name should be persisted as a saved roster player.

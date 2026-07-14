@@ -78,10 +78,16 @@ struct PreMatchView: View {
                 .navigationTitle("prematch.title")
                 .navigationBarTitleDisplayMode(.inline)
                 .onAppear {
-                    if !isDoubles {
-                        matchMyPartnerName = ""
-                        matchOpponentPartnerName = ""
-                    }
+                    // Unconditionally cleared (not just when switching to
+                    // singles): these 3 fields are read as "already used
+                    // this match" input to the guest-token draw (see
+                    // picker's usedGuestTokens) at steps earlier than the
+                    // one that sets them, so a leftover value from the
+                    // *previous* match would otherwise be mistaken for a
+                    // pick already made in this one.
+                    matchMyPartnerName = ""
+                    matchOpponentName = ""
+                    matchOpponentPartnerName = ""
                     if let id = UUID(uuidString: matchClubId), !appStore.clubs.contains(where: { $0.id == id }) {
                         matchClubId = ""
                     }
@@ -93,9 +99,10 @@ struct PreMatchView: View {
     private var content: some View {
         switch step {
         case .pickMyPlayer:
+            let usedGuestTokens = Set([matchMyPartnerName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
             picker(titleKey: "prematch.near_side",
                    defaultLabel: myName, defaultColor: avatarColor(for: myName),
-                   guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken,
+                   usedGuestTokens: usedGuestTokens,
                    showModePicker: true, showClubPicker: true) { name in
                 matchMyName = name
                 step = isDoubles ? .pickMyPartner : .pickOpponent
@@ -107,9 +114,10 @@ struct PreMatchView: View {
             }
 
         case .pickMyPartner:
+            let usedGuestTokens = Set([matchMyName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
             picker(titleKey: "prematch.near_partner",
                    defaultLabel: nil, defaultColor: .gray,
-                   guestLabel: Player.guestNearLabel, guestToken: Player.guestNearToken,
+                   usedGuestTokens: usedGuestTokens,
                    excluding: [matchMyName]) { name in
                 matchMyPartnerName = name
                 step = .pickOpponent
@@ -122,9 +130,10 @@ struct PreMatchView: View {
 
         case .pickOpponent:
             let nearName = matchMyName.isEmpty ? myName : matchMyName
+            let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentPartnerName].filter(Player.isGuestName))
             picker(titleKey: "prematch.far_side",
                    defaultLabel: nil, defaultColor: .gray,
-                   guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken,
+                   usedGuestTokens: usedGuestTokens,
                    excluding: [nearName, matchMyPartnerName].filter { !$0.isEmpty },
                    h2hAgainst: nearName) { name in
                 matchOpponentName = name
@@ -138,9 +147,10 @@ struct PreMatchView: View {
 
         case .pickOpponentPartner:
             let nearName = matchMyName.isEmpty ? myName : matchMyName
+            let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentName].filter(Player.isGuestName))
             picker(titleKey: "prematch.far_partner",
                    defaultLabel: nil, defaultColor: .gray,
-                   guestLabel: Player.guestFarLabel, guestToken: Player.guestFarToken,
+                   usedGuestTokens: usedGuestTokens,
                    excluding: [nearName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }) { name in
                 matchOpponentPartnerName = name
                 onReady()
@@ -158,14 +168,15 @@ struct PreMatchView: View {
     private func picker(titleKey: LocalizedStringKey,
                         defaultLabel: String?,
                         defaultColor: Color,
-                        guestLabel: String,
-                        guestToken: String,
+                        usedGuestTokens: Set<String>,
                         excluding: [String] = [],
                         showModePicker: Bool = false,
                         showClubPicker: Bool = false,
                         h2hAgainst: String? = nil,
                         onSelect: @escaping (String) -> Void) -> some View {
         let selectedClubId = UUID(uuidString: matchClubId)
+        let guestToken = Player.randomGuestToken(excluding: usedGuestTokens)
+        let guestLabel = Player.displayName(for: guestToken)
         let filteredRoster = Player.sortedPlayers(
             roster.filter { $0.name != myName && !excluding.contains($0.name) && $0.clubId == selectedClubId },
             order: playerSortOrder,
@@ -208,7 +219,11 @@ struct PreMatchView: View {
                     }
                 }
                 Button { onSelect(guestToken) } label: {
-                    playerRow(name: guestLabel, color: .gray, icon: nil)
+                    HStack(spacing: 10) {
+                        AvatarView(name: guestLabel, color: Player.guestAvatarColor(for: guestToken), size: 28, iconName: nil)
+                        Text(Player.guestButtonLabel)
+                        Spacer()
+                    }
                 }
             }
 

@@ -53,6 +53,27 @@ struct StatsCalculatorTests {
         #expect(players == ["Alice", "Bob", "Me"])
     }
 
+    @Test func participantsExcludesGuestTokens() {
+        let history = [record(my: "Alice", opp: Player.guestFalconToken, winner: "Alice")]
+        let players = StatsCalculator.participants(history: history)
+        #expect(!players.contains(Player.guestFalconToken))
+        #expect(players == ["Alice"])
+    }
+
+    @Test func allPlayersExcludesGuestTokens() {
+        let history = [record(my: "Alice", opp: Player.guestFalconToken, winner: "Alice")]
+        let players = StatsCalculator.allPlayers(history: history, hoisting: "Alice")
+        #expect(!players.contains(Player.guestFalconToken))
+        #expect(players == ["Alice"])
+    }
+
+    @Test func opponentsExcludesGuestTokens() {
+        let history = [record(my: "Alice", opp: Player.guestFalconToken, winner: "Alice")]
+        let opponents = StatsCalculator.opponents(of: "Alice", playerHistory: history)
+        #expect(!opponents.contains(Player.guestFalconToken))
+        #expect(opponents.isEmpty)
+    }
+
     // MARK: - Player history & aggregates
 
     @Test func playerHistoryMatchesEitherSide() {

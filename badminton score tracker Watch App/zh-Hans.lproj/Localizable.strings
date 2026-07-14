@@ -162,6 +162,13 @@
 "game.tie" = "平局！";
 "prematch.guest_near" = "访客（近侧）";
 "prematch.guest_far" = "访客（远侧）";
+"prematch.guest" = "访客";
+"prematch.guest_falcon" = "访客·猎鹰";
+"prematch.guest_owl" = "访客·猫头鹰";
+"prematch.guest_hawk" = "访客·鹰";
+"prematch.guest_robin" = "访客·知更鸟";
+"prematch.guest_heron" = "访客·苍鹭";
+"prematch.guest_sparrow" = "访客·麻雀";
 "history.opponent_fallback" = "对手";
 
 // Roadmap Phase 5d: club management UI
