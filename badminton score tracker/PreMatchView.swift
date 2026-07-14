@@ -116,10 +116,12 @@ struct PreMatchView: View {
 
             case .partner:
                 let usedGuestTokens = Set([matchMyName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
+                let excludingNames = [nearDisplayName]
+                let meLabel = excludingNames.contains(myName) ? nil : myName
                 picker(titleKey: "prematch.near_partner",
-                       defaultLabel: nil, defaultColor: .gray,
+                       defaultLabel: meLabel, defaultColor: avatarColor(for: myName),
                        usedGuestTokens: usedGuestTokens,
-                       excluding: [nearDisplayName]) { name in
+                       excluding: excludingNames) { name in
                     matchMyPartnerName = name
                     step = .far
                     subStep = .player
@@ -138,10 +140,12 @@ struct PreMatchView: View {
             switch subStep {
             case .player:
                 let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentPartnerName].filter(Player.isGuestName))
+                let excludingNames = [nearDisplayName, matchMyPartnerName].filter { !$0.isEmpty }
+                let meLabel = excludingNames.contains(myName) ? nil : myName
                 picker(titleKey: "prematch.far_side",
-                       defaultLabel: nil, defaultColor: .gray,
+                       defaultLabel: meLabel, defaultColor: avatarColor(for: myName),
                        usedGuestTokens: usedGuestTokens,
-                       excluding: [nearDisplayName, matchMyPartnerName].filter { !$0.isEmpty },
+                       excluding: excludingNames,
                        h2hAgainst: nearDisplayName) { name in
                     matchOpponentName = name
                     if isDoubles { subStep = .partner } else { onReady() }
@@ -157,10 +161,12 @@ struct PreMatchView: View {
 
             case .partner:
                 let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentName].filter(Player.isGuestName))
+                let excludingNames = [nearDisplayName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }
+                let meLabel = excludingNames.contains(myName) ? nil : myName
                 picker(titleKey: "prematch.far_partner",
-                       defaultLabel: nil, defaultColor: .gray,
+                       defaultLabel: meLabel, defaultColor: avatarColor(for: myName),
                        usedGuestTokens: usedGuestTokens,
-                       excluding: [nearDisplayName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }) { name in
+                       excluding: excludingNames) { name in
                     matchOpponentPartnerName = name
                     onReady()
                 }
@@ -326,9 +332,9 @@ struct PreMatchView: View {
         }
     }
 
-    /// Same "me" marker ClubDetailView uses — `defaultLabel` is only ever
-    /// non-empty for the near-player slot, so whenever it's shown it's
-    /// always your own name.
+    /// Same "me" marker ClubDetailView uses — `defaultLabel` is a pinned
+    /// "Me" shortcut shown on any slot where you haven't already been
+    /// placed in another slot this match.
     private var youBadge: some View {
         Image(systemName: "checkmark.seal.fill")
             .font(.caption)

@@ -82,6 +82,7 @@ Two-step flow in Singles mode, four-step in Doubles mode on the Watch (see Setti
 
 ### Pre-Match (opponent picker)
 - Roster rows show H2H record (`XW – YL`) against the near-side player when picking an opponent; hidden if no prior matches exist
+- **"Me" is selectable in any slot** — near-side player, near partner, far side, or far partner — not just the near-side default. A pinned "Me" shortcut (with the same checkmark-seal badge Clubs uses) appears on every step you haven't already been placed in this match; once picked in one slot, it's excluded from the rest, same as any other player
 
 ### Settings
 - **Me** section — single tappable row showing avatar + name; opens Player Edit
