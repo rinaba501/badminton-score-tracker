@@ -89,11 +89,10 @@ struct SplitScoreboard: View {
                         .minimumScaleFactor(0.7)
                     if let partnerName = data.partnerName {
                         Text("/ \(partnerName.uppercased())")
-                            .font(.caption2.weight(.heavy))
+                            .font(.subheadline.weight(.heavy))
                             .italic()
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
-                            .opacity(0.85)
                     }
                 }
                 if data.isServing {
