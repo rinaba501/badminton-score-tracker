@@ -82,6 +82,13 @@ struct MinimalScoreboard: View {
                     .foregroundStyle(ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
+                if let partnerName = data.partnerName {
+                    Text(partnerName)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(inkSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
                 if data.isServing {
                     HStack(spacing: 6) {
                         HStack(spacing: 6) {
