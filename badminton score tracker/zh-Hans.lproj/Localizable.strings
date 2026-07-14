@@ -144,6 +144,7 @@
 "ios.game_screen_style_matchstick" = "火柴";
 "ios.game_screen_style_birdseye" = "鸟瞰";
 "ios.game_screen_style_tug" = "拉锯";
+"ios.change_player" = "更改";
 
 // Roadmap Phase 5d: club management UI
 "settings.clubs" = "俱乐部";
