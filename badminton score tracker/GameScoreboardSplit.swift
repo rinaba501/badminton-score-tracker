@@ -81,11 +81,20 @@ struct SplitScoreboard: View {
                 .frame(width: 40, height: 40)
                 .background(tabColor)
             HStack(spacing: 8) {
-                Text(data.name.uppercased())
-                    .font(.subheadline.weight(.heavy))
-                    .italic()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(data.name.uppercased())
+                        .font(.subheadline.weight(.heavy))
+                        .italic()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    if let partnerName = data.partnerName {
+                        Text("/ \(partnerName.uppercased())")
+                            .font(.subheadline.weight(.heavy))
+                            .italic()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                }
                 if data.isServing {
                     HStack(spacing: 5) {
                         Circle().fill(Color.white.opacity(0.95)).frame(width: 6, height: 6)
