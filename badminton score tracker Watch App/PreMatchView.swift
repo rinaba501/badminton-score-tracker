@@ -284,10 +284,15 @@ struct PreMatchView: View {
             content
         }
         .onAppear {
-            if !isDoubles {
-                matchMyPartnerName = ""
-                matchOpponentPartnerName = ""
-            }
+            // Unconditionally cleared (not just when switching to singles):
+            // these 3 fields are read as "already used this match" input to
+            // the guest-token draw (see playerPicker's usedGuestTokens) at
+            // steps earlier than the one that sets them, so a leftover value
+            // from the *previous* match would otherwise be mistaken for a
+            // pick already made in this one.
+            matchMyPartnerName = ""
+            matchOpponentName = ""
+            matchOpponentPartnerName = ""
             if let id = UUID(uuidString: matchClubId), !appStore.clubs.contains(where: { $0.id == id }) {
                 matchClubId = ""
             }
