@@ -66,7 +66,8 @@ struct GameView: View {
     // MARK: - Avatar helpers
 
     private func avatarColor(for name: String) -> Color {
-        appStore.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
+        if let player = appStore.roster.first(where: { $0.name == name }) { return player.avatarColor }
+        return Player.isGuestName(name) ? Player.guestAvatarColor(for: name) : .gray
     }
 
     private func avatarIcon(for name: String) -> String? {
