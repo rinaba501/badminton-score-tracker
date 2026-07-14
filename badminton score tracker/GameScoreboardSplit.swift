@@ -53,35 +53,22 @@ struct SplitScoreboard: View {
     let theme: CourtTheme
 
     private var fields: some View {
-        TimelineView(.animation) { context in
-            let pulse = blinkPhase(at: context.date)
-            ZStack {
-                Color(white: 0.05)
-                LinearGradient(
-                    colors: top.isServing
-                        ? [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
-                        : [Color(white: 0.09), Color(white: 0.06)],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                )
-                .clipShape(DiagonalSplit(topSide: true))
-                .overlay(
-                    DiagonalSplit(topSide: true)
-                        .stroke(Color.red.opacity(top.isServing ? 0.25 + pulse * 0.65 : 0), lineWidth: 3)
-                        .blur(radius: 2)
-                )
-                LinearGradient(
-                    colors: bottom.isServing
-                        ? [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
-                        : [Color(white: 0.09), Color(white: 0.06)],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                )
-                .clipShape(DiagonalSplit(topSide: false))
-                .overlay(
-                    DiagonalSplit(topSide: false)
-                        .stroke(Color.red.opacity(bottom.isServing ? 0.25 + pulse * 0.65 : 0), lineWidth: 3)
-                        .blur(radius: 2)
-                )
-            }
+        ZStack {
+            Color(white: 0.05)
+            LinearGradient(
+                colors: top.isServing
+                    ? [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
+                    : [Color(white: 0.09), Color(white: 0.06)],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+            .clipShape(DiagonalSplit(topSide: true))
+            LinearGradient(
+                colors: bottom.isServing
+                    ? [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
+                    : [Color(white: 0.09), Color(white: 0.06)],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+            .clipShape(DiagonalSplit(topSide: false))
         }
         .ignoresSafeArea()
     }
