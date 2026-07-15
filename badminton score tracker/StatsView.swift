@@ -7,6 +7,13 @@
 //  head-to-head rows. All math lives in BadmintonCore.StatsCalculator (shared
 //  with the Watch); this screen binds it to the selected player.
 //
+//  When viewing your own personal stats (selectedClubId == nil && activePlayer
+//  == myName — the only case shareStatsWithFriends actually applies to), the
+//  header carries an inline icon-only "share with friends" toggle plus a
+//  confirmation toast, same pattern as ProfileView's identity-field toggles.
+//  toggleStatsSharing here is a deliberate duplicate of
+//  FriendSharingSettingsView's.
+//
 
 import SwiftUI
 import BadmintonCore
@@ -15,10 +22,12 @@ struct StatsView: View {
     @EnvironmentObject private var store: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.shareStatsWithFriends) private var shareStatsWithFriends = false
 
     @State private var selectedPlayer: String = ""
     @State private var selectedClubId: UUID?
     @State private var showPaywall = false
+    @State private var toastMessage: String?
 
     private var history: [MatchRecord] { store.history.filter { $0.clubId == selectedClubId } }
     private var roster: [Player] { store.roster.filter { $0.clubId == selectedClubId } }
@@ -64,6 +73,19 @@ struct StatsView: View {
                 statsList
             }
         }
+        .overlay(alignment: .bottom) {
+            if let toastMessage {
+                Text(toastMessage)
+                    .font(.footnote)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.thinMaterial, in: Capsule())
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .allowsHitTesting(false)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: toastMessage)
         .navigationTitle("stats.title")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
@@ -198,8 +220,31 @@ struct StatsView: View {
                 .foregroundStyle(.secondary)
             }
             Spacer()
+            if isViewingOwnPersonalStats {
+                shareStatsToggle
+            }
         }
         .padding(.vertical, 4)
+    }
+
+    // shareStatsWithFriends gates YOUR OWN precomputed stats snapshot, so the
+    // inline toggle only makes sense while looking at your own personal
+    // (non-club) numbers — showing it against a club scope or another
+    // player's stats would suggest it controls something it doesn't.
+    private var isViewingOwnPersonalStats: Bool {
+        selectedClubId == nil && activePlayer == myName
+    }
+
+    private var shareStatsToggle: some View {
+        Toggle(isOn: $shareStatsWithFriends) {
+            Label("friends.share_stats_toggle", systemImage: shareStatsWithFriends ? "person.2.fill" : "person.2")
+        }
+        .toggleStyle(.button)
+        .labelStyle(.iconOnly)
+        .onChange(of: shareStatsWithFriends) { _, isOn in
+            toggleStatsSharing(isOn)
+            showToast(isOn ? "profile.share_toast_on" : "profile.share_toast_off")
+        }
     }
 
     private var winRateRing: some View {
@@ -274,6 +319,37 @@ struct StatsView: View {
                 .fontWeight(.semibold)
                 .monospacedDigit()
                 .foregroundStyle(record.wins >= record.losses ? Color.accentColor : Color.secondary)
+        }
+    }
+
+    // MARK: - Sharing
+
+    private func toggleStatsSharing(_ isOn: Bool) {
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        Task { @MainActor in
+            let manager = CloudKitSyncManager.shared
+            if isOn {
+                await manager.syncFriendsHistoryParticipants()
+                manager.enqueueFriendStatsChange()
+            } else {
+                manager.removeFriendStatsRecord()
+                if !store.isSharingAnyProfileData {
+                    await manager.revokeFriendsHistoryAccess()
+                }
+            }
+        }
+    }
+
+    // Icon-only toggle has no room for a text label, so a toast teaches what
+    // just happened at the moment it happens — same pattern as ProfileView.
+    private func showToast(_ messageKey: String) {
+        let message = NSLocalizedString(messageKey, comment: "")
+        toastMessage = message
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_600_000_000)
+            if toastMessage == message {
+                toastMessage = nil
+            }
         }
     }
 }
