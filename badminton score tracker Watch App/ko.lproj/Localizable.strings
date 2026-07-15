@@ -236,6 +236,8 @@
 "friends.share_introduction_toggle" = "자기소개 공유";
 "friends.share_stats_toggle" = "전적 공유";
 "friends.activity_title" = "친구 활동";
+"friends.more_section_header" = "더보기";
+"friends.sharing_settings_title" = "공유 설정";
 "friends.profile_stats_section" = "전적";
 "friends.profile_history_section" = "경기 기록";
 "friends.profile_nothing_shared" = "이 친구는 아직 아무것도 공유하지 않았습니다.";

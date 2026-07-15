@@ -243,6 +243,8 @@
 "profile.gender_female" = "Wanita";
 "profile.gender_nonbinary" = "Non-biner";
 "friends.activity_title" = "Aktivitas Teman";
+"friends.more_section_header" = "Lainnya";
+"friends.sharing_settings_title" = "Pengaturan Berbagi";
 "friends.activity_empty" = "Belum ada teman yang membagikan riwayatnya.";
 "friends.activity_no_matches" = "Belum ada pertandingan.";
 "friends.accept" = "Terima";

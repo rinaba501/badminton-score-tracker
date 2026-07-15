@@ -236,6 +236,8 @@
 "friends.share_introduction_toggle" = "मेरा परिचय साझा करें";
 "friends.share_stats_toggle" = "मेरे आँकड़े साझा करें";
 "friends.activity_title" = "मित्र गतिविधि";
+"friends.more_section_header" = "अधिक";
+"friends.sharing_settings_title" = "साझाकरण सेटिंग्स";
 "friends.profile_stats_section" = "आँकड़े";
 "friends.profile_history_section" = "मैच इतिहास";
 "friends.profile_nothing_shared" = "इस मित्र ने अभी तक कुछ भी साझा नहीं किया है।";

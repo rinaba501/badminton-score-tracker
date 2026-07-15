@@ -236,6 +236,8 @@
 "friends.share_introduction_toggle" = "共享我的简介";
 "friends.share_stats_toggle" = "共享我的战绩";
 "friends.activity_title" = "好友动态";
+"friends.more_section_header" = "更多";
+"friends.sharing_settings_title" = "共享设置";
 "friends.profile_stats_section" = "战绩";
 "friends.profile_history_section" = "比赛记录";
 "friends.profile_nothing_shared" = "这位好友还没有共享任何内容。";

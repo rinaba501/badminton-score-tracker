@@ -243,6 +243,8 @@
 "profile.gender_female" = "女";
 "profile.gender_nonbinary" = "非二元性别";
 "friends.activity_title" = "好友动态";
+"friends.more_section_header" = "更多";
+"friends.sharing_settings_title" = "共享设置";
 "friends.activity_empty" = "还没有好友分享他们的记录。";
 "friends.activity_no_matches" = "还没有比赛记录。";
 "friends.accept" = "接受";

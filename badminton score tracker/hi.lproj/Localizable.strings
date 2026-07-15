@@ -243,6 +243,8 @@
 "profile.gender_female" = "महिला";
 "profile.gender_nonbinary" = "नॉन-बाइनरी";
 "friends.activity_title" = "मित्र गतिविधि";
+"friends.more_section_header" = "अधिक";
+"friends.sharing_settings_title" = "साझाकरण सेटिंग्स";
 "friends.activity_empty" = "अभी तक कोई मित्र अपना इतिहास साझा नहीं कर रहा है।";
 "friends.activity_no_matches" = "अभी तक कोई मैच नहीं।";
 "friends.accept" = "स्वीकारें";

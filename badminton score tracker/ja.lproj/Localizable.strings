@@ -243,6 +243,8 @@
 "profile.gender_female" = "女性";
 "profile.gender_nonbinary" = "ノンバイナリー";
 "friends.activity_title" = "フレンドのアクティビティ";
+"friends.more_section_header" = "その他";
+"friends.sharing_settings_title" = "共有設定";
 "friends.activity_empty" = "履歴を共有しているフレンドはまだいません。";
 "friends.activity_no_matches" = "試合はまだありません。";
 "friends.accept" = "承認";
