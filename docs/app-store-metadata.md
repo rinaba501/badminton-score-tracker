@@ -1,4 +1,4 @@
-# App Store Metadata — Badminton Score Tracker
+# App Store Metadata — Featherkeep
 
 Copy-paste source for App Store Connect. Character limits noted per field.
 
@@ -7,21 +7,21 @@ Copy-paste source for App Store Connect. Character limits noted per field.
 ## App Name (30 chars max)
 
 ```
-Badminton Score Tracker
+Featherkeep
 ```
-*(23 chars)*
+*(11 chars)*
 
 ## Subtitle (30 chars max)
 
 ```
-Live match scoring on watch
+Score badminton, iPhone/Watch
 ```
-*(27 chars)*
+*(29 chars)*
 
-Alternatives if you want a different angle:
-- `Keep score, play more` (21)
-- `Tap to score every rally` (24)
-- `Your wrist-side umpire` (22)
+Options that fit:
+- `Badminton scoring, iOS & Watch` (30)
+- `Live scoring, iPhone & Watch` (28)
+- `Your wrist-side umpire` (22 — Watch-only framing, avoid now)
 
 ---
 
@@ -37,13 +37,14 @@ Tap your side of the court to score. The app tracks serve, games, and match wins
 ## Description (4000 chars max)
 
 ```
-Keep score of your badminton matches right from your wrist — no phone, no paper, no shouting "what's the score?" mid-rally.
+Keep score of your badminton matches from your wrist or your phone — no paper, no shouting "what's the score?" mid-rally.
 
-Badminton Score Tracker is built for watchOS from the ground up. Tap the top or bottom of the screen to score a point, and the app handles everything else: serve rotation, service court, game wins, and match completion — all following official badminton rules.
+Featherkeep runs as an Apple Watch app and an iPhone companion, sharing the same roster, history, and stats via iCloud. Tap the top or bottom of the screen to score a point, and the app handles everything else: serve rotation, service court, game wins, and match completion — all following official badminton rules.
 
 SCORING MADE EFFORTLESS
 • Tap top or bottom of the screen to score for either player
-• Or rotate the Digital Crown to score without looking
+• On Apple Watch, rotate the Digital Crown to score without looking
+• Score live from your iPhone too — no watch required
 • Undo any accidental point with one tap
 • Serve indicator shows who's serving and from which court
 • Game-point and match-point banners so you always know what's on the line
@@ -69,8 +70,10 @@ MADE FOR PLAYERS
 
 SYNC & HEALTH
 • iCloud sync keeps your roster, history, and settings on all your devices
+• Score on your Watch, review on your iPhone — or the other way around
 • Each match is logged to Apple Health as a badminton workout
 • Watch face complication — start a new match with one tap
+• Share a match result as an image from iPhone
 
 Available in English, Japanese, Chinese (Simplified), Korean, Indonesian, and Hindi.
 
@@ -87,7 +90,7 @@ badminton,score,scorekeeper,racket,sport,match,shuttlecock,tracker,counter,umpir
 *(94 chars)*
 
 Notes:
-- Don't repeat words already in the app name ("badminton" is borderline — kept because it's the core search term).
+- "Featherkeep" doesn't contain "badminton" or "score" at all now, so keep both as keywords — they carry the core search intent the name no longer signals.
 - Apple ignores spaces after commas, so omit them to save characters.
 
 ---
@@ -125,6 +128,10 @@ Captured in `docs/screenshots/`:
 
 Five screens each: menu, pre-match, live game, match history, stats.
 
+**Missing — needs capture before submission:** App Store Connect requires iPhone screenshots too, since this is now a combined iOS + watchOS listing (6.9" display class at minimum, plus possibly 6.3"/6.1"). None exist yet in `docs/screenshots/`.
+
+**Note for whoever captures these:** a first attempt on the iPhone 17 Pro Max simulator pulled down real synced CloudKit data (actual roster names) instead of fixture data — the simulator was signed into a real iCloud account. Use a fresh simulator with no iCloud account signed in, or disable network before creating fixture players, so no real personal data (or accidental writes to the real account) ends up in App Store assets.
+
 ---
 
 ## Age Rating
@@ -136,5 +143,5 @@ Five screens each: menu, pre-match, live game, match history, stats.
 ## Review Notes (for App Review team)
 
 ```
-Badminton Score Tracker is a standalone watchOS app for keeping score during badminton matches. No login or account is required — all features are available immediately. HealthKit is used only to log a workout when a match starts; declining the permission does not affect scoring. iCloud sync is optional and degrades gracefully if the user is not signed in.
+Featherkeep is a badminton scorekeeping app with an Apple Watch app and an iPhone companion — either can score a match standalone, or run together with iCloud sync. No login or account is required — all features are available immediately. HealthKit is used only to log a workout when a match starts on Apple Watch; declining the permission does not affect scoring. iCloud sync is optional and degrades gracefully if the user is not signed in.
 ```
