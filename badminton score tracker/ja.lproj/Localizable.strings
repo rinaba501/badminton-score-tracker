@@ -264,6 +264,7 @@
 "profile.birthday_clear" = "消去";
 "profile.introduction_label" = "自己紹介";
 "profile.introduction_placeholder" = "フレンドに自己紹介を書きましょう";
+"profile.share_toggle_footer" = "各項目の横のアイコンで、承認済みのフレンドと共有できます。";
 "friends.enter_code" = "コードを入力";
 "friends.code_prompt_message" = "招待リンクまたはフレンドコードを貼り付けてください";
 "friends.code_placeholder" = "招待リンクまたはコード";

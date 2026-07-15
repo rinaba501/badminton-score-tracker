@@ -264,6 +264,7 @@
 "profile.birthday_clear" = "Hapus";
 "profile.introduction_label" = "Tentang Saya";
 "profile.introduction_placeholder" = "Ceritakan sedikit tentang diri Anda kepada teman";
+"profile.share_toggle_footer" = "Ikon di samping setiap kolom membagikannya ke teman yang sudah diterima.";
 "friends.enter_code" = "Masukkan Kode";
 "friends.code_prompt_message" = "Tempel tautan undangan atau kode teman";
 "friends.code_placeholder" = "Tautan undangan atau kode";
