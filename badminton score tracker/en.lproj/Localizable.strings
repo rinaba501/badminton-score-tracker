@@ -265,6 +265,8 @@
 "profile.introduction_label" = "About Me";
 "profile.introduction_placeholder" = "Tell friends a bit about yourself";
 "profile.share_toggle_footer" = "The icon next to each field shares it with your accepted friends.";
+"profile.share_toast_on" = "Shared with friends";
+"profile.share_toast_off" = "No longer shared with friends";
 "friends.enter_code" = "Enter a Code";
 "friends.code_prompt_message" = "Paste an invite link or friend code";
 "friends.code_placeholder" = "Invite link or code";

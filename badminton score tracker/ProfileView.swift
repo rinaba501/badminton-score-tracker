@@ -35,6 +35,7 @@ struct ProfileView: View {
     @State private var pendingName = ""
     @State private var pendingAction: (() -> Void)?
     @State private var showUnlinkConfirm = false
+    @State private var toastMessage: String?
 
     // Gender/birthday/introduction aren't @AppStorage-native types (String?/
     // Date?), so they're loaded once on appear and written straight to
@@ -162,6 +163,19 @@ struct ProfileView: View {
                 }
             }
         }
+        .overlay(alignment: .bottom) {
+            if let toastMessage {
+                Text(toastMessage)
+                    .font(.footnote)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.thinMaterial, in: Capsule())
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .allowsHitTesting(false)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: toastMessage)
         .navigationTitle("ios.profile")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editingPlayer) { player in
@@ -201,7 +215,25 @@ struct ProfileView: View {
         }
         .toggleStyle(.button)
         .labelStyle(.iconOnly)
-        .onChange(of: isOn.wrappedValue) { _, newValue in onChange(newValue) }
+        .onChange(of: isOn.wrappedValue) { _, newValue in
+            onChange(newValue)
+            showToast(newValue ? "profile.share_toast_on" : "profile.share_toast_off")
+        }
+    }
+
+    // Icon-only toggles have no room for a text label, so a toast teaches
+    // what just happened at the moment it happens instead of relying on the
+    // section footer alone. Re-tapping restarts the timer via the message
+    // identity check, so a rapid on/off/on doesn't dismiss early.
+    private func showToast(_ messageKey: String) {
+        let message = NSLocalizedString(messageKey, comment: "")
+        toastMessage = message
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_600_000_000)
+            if toastMessage == message {
+                toastMessage = nil
+            }
+        }
     }
 
     private var namePrompt: some View {

@@ -265,6 +265,8 @@
 "profile.introduction_label" = "자기소개";
 "profile.introduction_placeholder" = "친구에게 자신을 소개해보세요";
 "profile.share_toggle_footer" = "각 항목 옆 아이콘으로 수락된 친구와 공유할 수 있습니다.";
+"profile.share_toast_on" = "친구와 공유되었습니다";
+"profile.share_toast_off" = "친구 공유가 해제되었습니다";
 "friends.enter_code" = "코드 입력";
 "friends.code_prompt_message" = "초대 링크 또는 친구 코드를 붙여넣으세요";
 "friends.code_placeholder" = "초대 링크 또는 코드";
