@@ -125,12 +125,13 @@ In App Store Connect → App Privacy, declare **Data Not Collected**. The app:
 Captured in `docs/screenshots/`:
 - `docs/screenshots/` — Apple Watch Ultra 3 (49mm)
 - `docs/screenshots/46mm/` — Apple Watch Series 11 (46mm)
+- `docs/screenshots/ios/6.9in/` — iPhone 17 Pro Max (6.9", 1320×2868) — menu, pre-match, live game (3 variants: Depth style in-progress, BirdsEye style, game-point banner), match history, stats
 
-Five screens each: menu, pre-match, live game, match history, stats.
+Watch: five screens each (menu, pre-match, live game, match history, stats). iOS: same five plus two extra live-game variants showing off different `GameScreenStyle` options.
 
-**Missing — needs capture before submission:** App Store Connect requires iPhone screenshots too, since this is now a combined iOS + watchOS listing (6.9" display class at minimum, plus possibly 6.3"/6.1"). None exist yet in `docs/screenshots/`.
+All captured with fixture data only (players Jordan/Morgan/Sam/Taylor, "Me" name Alex) on an erased/iCloud-free simulator — no real personal data.
 
-**Note for whoever captures these:** a first attempt on the iPhone 17 Pro Max simulator pulled down real synced CloudKit data (actual roster names) instead of fixture data — the simulator was signed into a real iCloud account. Use a fresh simulator with no iCloud account signed in, or disable network before creating fixture players, so no real personal data (or accidental writes to the real account) ends up in App Store assets.
+**Still open:** Apple's current App Store Connect screenshot requirements only strictly require the largest display class per device family (6.9" here covers iPhone); double-check at upload time whether 6.5"/6.3" iPhone slots are still separately requested, and capture those from the same fixture-data simulator session if so.
 
 ---
 
