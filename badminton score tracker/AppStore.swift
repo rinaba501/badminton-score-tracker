@@ -35,6 +35,14 @@ final class AppStore: ObservableObject {
     /// saveFriendRequests). This cache is updated only after such a direct
     /// call succeeds, or after a `fetchMyFriendRequests()` poll.
     @Published private(set) var friendRequests: [FriendRequest]
+    /// Friends' shared personal roster/history, keyed by their participantId
+    /// — mirrored in from each friend's own "FriendsHistory" CKShare zone
+    /// once SettingsSnapshot.shareHistoryWithFriends is on (see
+    /// CloudKitSyncManager.applyFetched's friends-zone branch). Deliberately
+    /// separate from `roster`/`history`: this is someone else's data, shown
+    /// read-only, and must never be merged into the viewer's own caches or
+    /// stats.
+    @Published private(set) var friendActivity: [String: FriendHistorySnapshot]
 
     /// Accepted friend requests, derived — Friends v1 has no separate
     /// `Friendship` record (see `FriendRequest.swift`).
@@ -73,12 +81,16 @@ final class AppStore: ObservableObject {
         let ch = UserDefaults.standard.data(forKey: AppStorageKeys.challenges) ?? Data()
         let re = UserDefaults.standard.data(forKey: AppStorageKeys.reactions) ?? Data()
         let fr = UserDefaults.standard.data(forKey: AppStorageKeys.friendRequests) ?? Data()
+        let fa = UserDefaults.standard.data(forKey: AppStorageKeys.friendActivity) ?? Data()
         roster = PersistenceStore.decodeRoster(r)
         history = PersistenceStore.decodeHistory(h)
         clubs = PersistenceStore.decodeClubs(c)
         challenges = PersistenceStore.decodeChallenges(ch)
         reactions = PersistenceStore.decodeReactions(re)
         friendRequests = PersistenceStore.decodeFriendRequests(fr)
+        friendActivity = Dictionary(
+            uniqueKeysWithValues: PersistenceStore.decodeFriendActivity(fa).map { ($0.participantId, $0) }
+        )
     }
 
     // Upgrades on-disk data to the current schema before the first decode.
@@ -108,6 +120,15 @@ final class AppStore: ObservableObject {
         roster = players
         CloudKitSyncManager.shared.enqueueRosterChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
         CloudKitSyncManager.shared.enqueueSettingsChange()
+
+        if isSharingHistoryWithFriends {
+            let newClubIds = Dictionary(players.map { ($0.id, $0.clubId) }, uniquingKeysWith: { first, _ in first })
+            let personalUpserts = personalIds(among: diff.upsertedIds, clubIds: newClubIds)
+            let personalDeletes = personalIds(among: diff.deletedIds, clubIds: deletedClubIds)
+            if !personalUpserts.isEmpty || !personalDeletes.isEmpty {
+                CloudKitSyncManager.shared.enqueueFriendsRosterChanges(upsertedIds: personalUpserts, deletedIds: personalDeletes)
+            }
+        }
     }
 
     func saveHistory(_ records: [MatchRecord]) {
@@ -123,6 +144,15 @@ final class AppStore: ObservableObject {
         history = records
         CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
         CloudKitSyncManager.shared.enqueueSettingsChange()
+
+        if isSharingHistoryWithFriends {
+            let newClubIds = Dictionary(records.map { ($0.id, $0.clubId) }, uniquingKeysWith: { first, _ in first })
+            let personalUpserts = personalIds(among: diff.upsertedIds, clubIds: newClubIds)
+            let personalDeletes = personalIds(among: diff.deletedIds, clubIds: deletedClubIds)
+            if !personalUpserts.isEmpty || !personalDeletes.isEmpty {
+                CloudKitSyncManager.shared.enqueueFriendsHistoryChanges(upsertedIds: personalUpserts, deletedIds: personalDeletes)
+            }
+        }
     }
 
     func clearHistory() {
@@ -134,6 +164,23 @@ final class AppStore: ObservableObject {
         history = []
         CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: [], deletedIds: deletedClubIds)
         CloudKitSyncManager.shared.enqueueSettingsChange()
+
+        if isSharingHistoryWithFriends {
+            let personalDeletes = personalIds(among: Array(deletedClubIds.keys), clubIds: deletedClubIds)
+            if !personalDeletes.isEmpty {
+                CloudKitSyncManager.shared.enqueueFriendsHistoryChanges(upsertedIds: [], deletedIds: personalDeletes)
+            }
+        }
+    }
+
+    private var isSharingHistoryWithFriends: Bool {
+        UserDefaults.standard.bool(forKey: AppStorageKeys.shareHistoryWithFriends)
+    }
+
+    /// Ids whose (new, for upserts; old, for deletes) clubId is nil —
+    /// personal records are the only ones mirrored into "FriendsHistory".
+    private func personalIds(among ids: [UUID], clubIds: [UUID: UUID?]) -> [UUID] {
+        ids.filter { clubIds[$0].flatMap { $0 } == nil }
     }
 
     // Roadmap Phase 5b/c: a Club only becomes a real shared group
@@ -194,6 +241,19 @@ final class AppStore: ObservableObject {
         guard let encoded = PersistenceStore.encodeFriendRequests(friendRequests) else { return }
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.friendRequests)
         self.friendRequests = friendRequests
+        pruneFriendActivityToCurrentFriends()
+    }
+
+    /// Drops any cached `friendActivity` entry for a participantId no longer
+    /// in the accepted-friends graph (e.g. a declined/no-longer-accepted
+    /// request) — a friend's shared history must stop being visible the
+    /// moment they're no longer a friend, even before the next CloudKit fetch.
+    private func pruneFriendActivityToCurrentFriends() {
+        let friendIds = Set(friends.map(\.participantId))
+        let stale = friendActivity.keys.filter { !friendIds.contains($0) }
+        guard !stale.isEmpty else { return }
+        for id in stale { friendActivity[id] = nil }
+        persist(friendActivity: Array(friendActivity.values))
     }
 
     /// Writes a remotely-fetched settings snapshot straight to UserDefaults.
@@ -217,6 +277,7 @@ final class AppStore: ObservableObject {
         defaults.set(snapshot.timeLimitMinutes, forKey: AppStorageKeys.timeLimitMinutes)
         defaults.set(snapshot.accountLinked, forKey: AppStorageKeys.accountLinked)
         defaults.set(snapshot.gameScreenStyle, forKey: AppStorageKeys.gameScreenStyle)
+        defaults.set(snapshot.shareHistoryWithFriends, forKey: AppStorageKeys.shareHistoryWithFriends)
         // Merge (per-club max), never overwrite: two devices can mark different
         // clubs viewed before their Settings records converge, and a blind
         // overwrite would re-raise an unread dot the user already cleared.
@@ -332,6 +393,63 @@ final class AppStore: ObservableObject {
             let removed = Set(reactionIds)
             reactions = reactions.filter { !removed.contains($0.id) }
             persist(reactions: reactions)
+        }
+    }
+
+    /// Merges a friend's shared roster/history into their `friendActivity`
+    /// snapshot. Never touches `roster`/`history` — this is someone else's
+    /// data (see the `friendActivity` doc comment). `participantId` is the
+    /// owning friend's, i.e. the fetched zone's `ownerName`.
+    func applyRemoteFriendActivity(participantId: String, matches: [MatchRecord], players: [Player]) {
+        guard !matches.isEmpty || !players.isEmpty else { return }
+        let displayName = friends.first { $0.participantId == participantId }?.displayName
+            ?? friendActivity[participantId]?.displayName
+            ?? participantId
+        var snapshot = friendActivity[participantId] ?? FriendHistorySnapshot(participantId: participantId, displayName: displayName)
+        snapshot.displayName = displayName
+
+        if !matches.isEmpty {
+            var byId = Dictionary(snapshot.history.map { ($0.id, $0) }, uniquingKeysWith: { _, new in new })
+            for match in matches { byId[match.id] = match }
+            snapshot.history = byId.values.sorted { $0.date < $1.date }
+        }
+        if !players.isEmpty {
+            var updated = snapshot.roster
+            var indexById = Dictionary(snapshot.roster.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+            for player in players {
+                if let idx = indexById[player.id] {
+                    updated[idx] = player
+                } else {
+                    indexById[player.id] = updated.count
+                    updated.append(player)
+                }
+            }
+            snapshot.roster = updated
+        }
+
+        friendActivity[participantId] = snapshot
+        persist(friendActivity: Array(friendActivity.values))
+    }
+
+    /// Removes remotely-deleted records from a friend's `friendActivity`
+    /// snapshot.
+    func applyRemoteFriendActivityDeletions(participantId: String, matchIds: [UUID], playerIds: [UUID]) {
+        guard var snapshot = friendActivity[participantId], !matchIds.isEmpty || !playerIds.isEmpty else { return }
+        if !matchIds.isEmpty {
+            let removed = Set(matchIds)
+            snapshot.history = snapshot.history.filter { !removed.contains($0.id) }
+        }
+        if !playerIds.isEmpty {
+            let removed = Set(playerIds)
+            snapshot.roster = snapshot.roster.filter { !removed.contains($0.id) }
+        }
+        friendActivity[participantId] = snapshot
+        persist(friendActivity: Array(friendActivity.values))
+    }
+
+    private func persist(friendActivity snapshots: [FriendHistorySnapshot]) {
+        if let encoded = PersistenceStore.encodeFriendActivity(snapshots) {
+            UserDefaults.standard.set(encoded, forKey: AppStorageKeys.friendActivity)
         }
     }
 

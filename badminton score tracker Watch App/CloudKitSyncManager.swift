@@ -23,6 +23,14 @@ final class CloudKitSyncManager {
 
     private static let containerID = "iCloud.ritsuma.badminton-score-tracker"
     private static let zoneName = "BadmintonZone"
+    /// Fixed, always-self-owned zone carrying a mirrored, read-only copy of
+    /// this device's personal (clubId == nil) roster + history, shared via
+    /// identity (not link) to every accepted friend once
+    /// SettingsSnapshot.shareHistoryWithFriends is on. Unlike Club zones,
+    /// there is exactly one of these per user and it's never named with a
+    /// UUID — on the receiving side, `zoneID.ownerName` alone identifies
+    /// which friend's zone a fetched record came from.
+    private static let friendsHistoryZoneName = "FriendsHistory"
     private static let matchType = "MatchRecord"
     private static let playerType = "Player"
     private static let clubType = "Club"
@@ -54,10 +62,18 @@ final class CloudKitSyncManager {
     private var privateSyncEngine: CKSyncEngine?
     private var sharedSyncEngine: CKSyncEngine?
 
-    /// recordName -> encoded CKRecord system fields (change tag). Persisted so a
-    /// save of an existing record carries the server's change tag and reads as
-    /// an update, not a conflict.
+    /// Zone-qualified record key -> encoded CKRecord system fields (change
+    /// tag). Persisted so a save of an existing record carries the server's
+    /// change tag and reads as an update, not a conflict. Keyed by more than
+    /// just `recordName`: a personal match/player mirrored into the
+    /// "FriendsHistory" zone shares its `recordName` (same UUID) with the
+    /// original in the personal zone, so `recordName` alone is not a unique
+    /// key once that mirroring exists — see `metadataKey(for:)`.
     private var recordMetadata: [String: Data] = [:]
+
+    private func metadataKey(for recordID: CKRecord.ID) -> String {
+        "\(recordID.zoneID.ownerName)/\(recordID.zoneID.zoneName)/\(recordID.recordName)"
+    }
 
     /// Set while a first-launch migration upload is pending.
     private var migrationPending = false
@@ -175,6 +191,39 @@ final class CloudKitSyncManager {
         enqueue(upsertedIds: upsertedIds, deletedIds: deletedIds.mapValues { $0 as UUID? })
     }
 
+    /// Mirrors personal match records into the "FriendsHistory" zone. Unlike
+    /// `enqueue`, the destination is always the same fixed, self-owned zone —
+    /// no per-record clubId resolution needed. Callers (AppStore.saveHistory/
+    /// clearHistory) are responsible for only passing ids of records where
+    /// `clubId == nil`, and for guarding the call on
+    /// SettingsSnapshot.shareHistoryWithFriends being on.
+    func enqueueFriendsHistoryChanges(upsertedIds: [UUID], deletedIds: [UUID]) {
+        enqueueFriendsHistoryZone(upsertedIds: upsertedIds, deletedIds: deletedIds)
+    }
+
+    /// Mirrors personal roster players into the "FriendsHistory" zone — same
+    /// contract as `enqueueFriendsHistoryChanges`.
+    func enqueueFriendsRosterChanges(upsertedIds: [UUID], deletedIds: [UUID]) {
+        enqueueFriendsHistoryZone(upsertedIds: upsertedIds, deletedIds: deletedIds)
+    }
+
+    private func enqueueFriendsHistoryZone(upsertedIds: [UUID], deletedIds: [UUID]) {
+        guard let privateSyncEngine, !upsertedIds.isEmpty || !deletedIds.isEmpty else { return }
+        let zoneID = friendsHistoryZoneID()
+
+        if !upsertedIds.isEmpty {
+            privateSyncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: zoneID))])
+        }
+        for id in upsertedIds {
+            let recordID = CKRecord.ID(recordName: id.uuidString, zoneID: zoneID)
+            privateSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(recordID)])
+        }
+        for id in deletedIds {
+            let recordID = CKRecord.ID(recordName: id.uuidString, zoneID: zoneID)
+            privateSyncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(recordID)])
+        }
+    }
+
     /// Enqueues the fixed Settings record for upload. Call sites: `start()`,
     /// first-launch migration, personal-zone recovery, AppStore
     /// saveRoster/saveHistory/clearHistory, and Settings match-format changes.
@@ -200,7 +249,8 @@ final class CloudKitSyncManager {
             timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10,
             clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
             accountLinked: defaults.object(forKey: AppStorageKeys.accountLinked) as? Bool ?? false,
-            gameScreenStyle: defaults.string(forKey: AppStorageKeys.gameScreenStyle) ?? "Depth"
+            gameScreenStyle: defaults.string(forKey: AppStorageKeys.gameScreenStyle) ?? "Depth",
+            shareHistoryWithFriends: defaults.object(forKey: AppStorageKeys.shareHistoryWithFriends) as? Bool ?? false
         )
     }
 
@@ -267,6 +317,15 @@ final class CloudKitSyncManager {
         return UUID(uuidString: uuidString)
     }
 
+    /// Always this device's own "FriendsHistory" zone — the zone we mirror
+    /// personal data *into*. A friend's own FriendsHistory zone (as it
+    /// appears to us via the shared DB) is identified purely by `ownerName`
+    /// differing from `CKCurrentUserDefaultName`, not by a different zone
+    /// name — see `applyFetched`.
+    private func friendsHistoryZoneID() -> CKRecordZone.ID {
+        CKRecordZone.ID(zoneName: Self.friendsHistoryZoneName, ownerName: CKCurrentUserDefaultName)
+    }
+
     // Build the CKRecord to upload for a pending save.
     private func materializeRecord(for recordID: CKRecord.ID) -> CKRecord? {
         if recordID == settingsRecordID {
@@ -299,7 +358,7 @@ final class CloudKitSyncManager {
     }
 
     private func record(for recordID: CKRecord.ID, type: String, payload: Data) -> CKRecord {
-        let record = storedRecord(for: recordID.recordName) ?? CKRecord(recordType: type, recordID: recordID)
+        let record = storedRecord(for: recordID) ?? CKRecord(recordType: type, recordID: recordID)
         record[Self.payloadField] = payload as CKRecordValue
         return record
     }
@@ -322,17 +381,17 @@ final class CloudKitSyncManager {
     private func remember(_ record: CKRecord) {
         let coder = NSKeyedArchiver(requiringSecureCoding: true)
         record.encodeSystemFields(with: coder)
-        recordMetadata[record.recordID.recordName] = coder.encodedData
+        recordMetadata[metadataKey(for: record.recordID)] = coder.encodedData
         persistMetadata()
     }
 
-    private func forget(_ recordName: String) {
-        recordMetadata[recordName] = nil
+    private func forget(_ recordID: CKRecord.ID) {
+        recordMetadata[metadataKey(for: recordID)] = nil
         persistMetadata()
     }
 
-    private func storedRecord(for recordName: String) -> CKRecord? {
-        guard let data = recordMetadata[recordName],
+    private func storedRecord(for recordID: CKRecord.ID) -> CKRecord? {
+        guard let data = recordMetadata[metadataKey(for: recordID)],
               let unarchiver = try? NSKeyedUnarchiver(forReadingFrom: data) else { return nil }
         unarchiver.requiresSecureCoding = true
         let record = CKRecord(coder: unarchiver)
@@ -416,6 +475,121 @@ final class CloudKitSyncManager {
         }
         operation.qualityOfService = .userInteractive
         container.add(operation)
+    }
+
+    // MARK: - Friends' shared history (identity-shared, read-only)
+    //
+    // Unlike Club's `fetchOrCreateShare` (a link-based share anyone can join
+    // via UICloudSharingController), the "FriendsHistory" share must only
+    // ever be visible to accepted friends — participants are added/removed
+    // by identity (CKFetchShareParticipantsOperation, keyed by their
+    // participantId) rather than via a shareable link, and
+    // `publicPermission` stays `.none`.
+
+    /// Fetches or creates the "FriendsHistory" zone's CKShare. Must run on
+    /// this device (the zone is always self-owned). `publicPermission` is
+    /// deliberately `.none` — this share must never be joinable by link.
+    func ensureFriendsHistoryShareExists() async throws -> CKShare {
+        guard let privateSyncEngine else { throw CKError(.internalError) }
+        let zoneID = friendsHistoryZoneID()
+        let zone = CKRecordZone(zoneID: zoneID)
+        privateSyncEngine.state.add(pendingDatabaseChanges: [.saveZone(zone)])
+        // Also save directly (not just enqueue) so the CKShare save just
+        // below doesn't race the async CKSyncEngine flush — a CKShare can
+        // only be saved into a zone that already exists server-side.
+        _ = try? await privateDatabase.save(zone)
+
+        let shareID = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)
+        do {
+            let record = try await privateDatabase.record(for: shareID)
+            if let share = record as? CKShare {
+                return share
+            }
+        } catch {
+            let ckError = error as? CKError
+            if ckError?.code == .unknownItem {
+                let share = CKShare(recordZoneID: zoneID)
+                share.publicPermission = .none
+                let saved = try await privateDatabase.save(share)
+                if let savedShare = saved as? CKShare {
+                    return savedShare
+                }
+            }
+        }
+        throw CKError(.invalidArguments)
+    }
+
+    /// Reconciles the "FriendsHistory" share's participant list against the
+    /// current accepted-friends graph: adds any accepted friend missing from
+    /// the share (read-only), removes any participant who's no longer an
+    /// accepted friend. No-ops (leaves the share as-is) if nothing changed.
+    /// Call sites: the share toggle turning on, and after any friend-graph
+    /// change (accept/decline/unfriend) — always guarded by the caller on
+    /// SettingsSnapshot.shareHistoryWithFriends being on.
+    func syncFriendsHistoryParticipants() async {
+        guard let share = try? await ensureFriendsHistoryShareExists() else { return }
+
+        let friendIds = Set(AppStore.shared.friends.map(\.participantId))
+        let nonOwnerParticipants = share.participants.filter { $0.role != .owner }
+        let currentParticipantIds = Set(nonOwnerParticipants.compactMap { $0.userIdentity.userRecordID?.recordName })
+        let idsToAdd = friendIds.subtracting(currentParticipantIds)
+        let participantsToRemove = nonOwnerParticipants.filter { participant in
+            guard let recordName = participant.userIdentity.userRecordID?.recordName else { return false }
+            return !friendIds.contains(recordName)
+        }
+
+        guard !idsToAdd.isEmpty || !participantsToRemove.isEmpty else { return }
+
+        for participant in participantsToRemove {
+            share.removeParticipant(participant)
+        }
+
+        if !idsToAdd.isEmpty {
+            for participant in await fetchShareParticipants(for: idsToAdd) {
+                participant.permission = .readOnly
+                share.addParticipant(participant)
+            }
+        }
+
+        _ = try? await privateDatabase.save(share)
+    }
+
+    /// Removes every non-owner participant from the "FriendsHistory" share
+    /// without deleting the zone/share itself, so re-enabling the toggle
+    /// later is just a participant resync rather than a zone re-creation.
+    /// Call site: the share toggle turning off.
+    func revokeFriendsHistoryAccess() async {
+        guard let share = try? await ensureFriendsHistoryShareExists() else { return }
+        let nonOwnerParticipants = share.participants.filter { $0.role != .owner }
+        guard !nonOwnerParticipants.isEmpty else { return }
+        for participant in nonOwnerParticipants {
+            share.removeParticipant(participant)
+        }
+        _ = try? await privateDatabase.save(share)
+    }
+
+    /// Resolves participantIds to `CKShare.Participant`s via an identity
+    /// lookup (not an email/phone lookup — participantId is already a
+    /// `CKRecord.ID.recordName` from `resolveMyParticipantId`/
+    /// `CKContainer.userRecordID()`).
+    private func fetchShareParticipants(for participantIds: Set<String>) async -> [CKShare.Participant] {
+        let lookupInfos = participantIds.map { CKUserIdentity.LookupInfo(userRecordID: CKRecord.ID(recordName: $0)) }
+        let operation = CKFetchShareParticipantsOperation(userIdentityLookupInfos: lookupInfos)
+        return await withCheckedContinuation { continuation in
+            var participants: [CKShare.Participant] = []
+            operation.perShareParticipantResultBlock = { _, result in
+                if case .success(let participant) = result {
+                    participants.append(participant)
+                }
+            }
+            operation.fetchShareParticipantsResultBlock = { [weak self] result in
+                if case .failure(let error) = result {
+                    self?.logger.error("Failed to fetch share participants: \(error.localizedDescription)")
+                }
+                continuation.resume(returning: participants)
+            }
+            container.add(operation)
+        }
     }
 
     // MARK: - Friends (v1, graph-only; public database, no CKSyncEngine)
@@ -635,12 +809,42 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
         var upsertedClubs: [Club] = []
         var upsertedChallenges: [ChallengeRecord] = []
         var upsertedReactions: [ReactionRecord] = []
+        // Friends' shared roster/history, keyed by the owning friend's
+        // participantId (== the zone's ownerName) — deliberately kept
+        // separate from the caches above and never merged into them, since
+        // this is someone else's data (see AppStore.applyRemoteFriendActivity).
+        var friendUpsertedMatches: [String: [MatchRecord]] = [:]
+        var friendUpsertedPlayers: [String: [Player]] = [:]
 
         for modification in changes.modifications {
             let record = modification.record
             remember(record)
             guard let payload = record[Self.payloadField] as? Data else { continue }
-            let recordClubId = clubId(from: record.recordID.zoneID)
+            let zoneID = record.recordID.zoneID
+
+            if zoneID.zoneName == Self.friendsHistoryZoneName {
+                // A second copy of this device's own mirrored data (synced
+                // across this Apple ID's other devices via the private DB)
+                // is redundant with the personal-zone original — only a
+                // zone owned by someone else is new information.
+                if zoneID.ownerName != CKCurrentUserDefaultName {
+                    switch record.recordType {
+                    case Self.matchType:
+                        if let match = PersistenceStore.decodeRecord(payload) {
+                            friendUpsertedMatches[zoneID.ownerName, default: []].append(match)
+                        }
+                    case Self.playerType:
+                        if let player = PersistenceStore.decodePlayer(payload) {
+                            friendUpsertedPlayers[zoneID.ownerName, default: []].append(player)
+                        }
+                    default:
+                        break
+                    }
+                }
+                continue
+            }
+
+            let recordClubId = clubId(from: zoneID)
 
             switch record.recordType {
             case Self.settingsType:
@@ -699,10 +903,25 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
         var deletedClubIds: [UUID] = []
         var deletedChallengeIds: [UUID] = []
         var deletedReactionIds: [UUID] = []
+        var friendDeletedMatchIds: [String: [UUID]] = [:]
+        var friendDeletedPlayerIds: [String: [UUID]] = [:]
 
         for deletion in changes.deletions {
-            forget(deletion.recordID.recordName)
+            forget(deletion.recordID)
             guard let uuid = UUID(uuidString: deletion.recordID.recordName) else { continue }
+            let zoneID = deletion.recordID.zoneID
+
+            if zoneID.zoneName == Self.friendsHistoryZoneName {
+                if zoneID.ownerName != CKCurrentUserDefaultName {
+                    switch deletion.recordType {
+                    case Self.matchType: friendDeletedMatchIds[zoneID.ownerName, default: []].append(uuid)
+                    case Self.playerType: friendDeletedPlayerIds[zoneID.ownerName, default: []].append(uuid)
+                    default: break
+                    }
+                }
+                continue
+            }
+
             switch deletion.recordType {
             case Self.matchType: deletedMatchIds.append(uuid)
             case Self.playerType: deletedPlayerIds.append(uuid)
@@ -725,6 +944,21 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
             AppStore.shared.applyRemoteDeletions(
                 recordIds: deletedMatchIds, playerIds: deletedPlayerIds, clubIds: deletedClubIds,
                 challengeIds: deletedChallengeIds, reactionIds: deletedReactionIds
+            )
+        }
+
+        for ownerId in Set(friendUpsertedMatches.keys).union(friendUpsertedPlayers.keys) {
+            AppStore.shared.applyRemoteFriendActivity(
+                participantId: ownerId,
+                matches: friendUpsertedMatches[ownerId] ?? [],
+                players: friendUpsertedPlayers[ownerId] ?? []
+            )
+        }
+        for ownerId in Set(friendDeletedMatchIds.keys).union(friendDeletedPlayerIds.keys) {
+            AppStore.shared.applyRemoteFriendActivityDeletions(
+                participantId: ownerId,
+                matchIds: friendDeletedMatchIds[ownerId] ?? [],
+                playerIds: friendDeletedPlayerIds[ownerId] ?? []
             )
         }
     }
@@ -758,6 +992,9 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                     enqueueHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == nil }.map(\.id), deletedIds: [:])
                     enqueueRosterChanges(upsertedIds: AppStore.shared.roster.filter { $0.clubId == nil }.map(\.id), deletedIds: [:])
                     enqueueSettingsChange()
+                } else if zoneID.zoneName == Self.friendsHistoryZoneName {
+                    enqueueFriendsHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == nil }.map(\.id), deletedIds: [])
+                    enqueueFriendsRosterChanges(upsertedIds: AppStore.shared.roster.filter { $0.clubId == nil }.map(\.id), deletedIds: [])
                 } else if let clubId = clubId(from: zoneID) {
                     enqueueClubChanges(upsertedIds: [clubId], deletedIds: [:])
                     enqueueHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == clubId }.map(\.id), deletedIds: [:])
@@ -765,7 +1002,7 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                 }
             }
         case .unknownItem:
-            forget(recordID.recordName)
+            forget(recordID)
         case .networkFailure, .networkUnavailable, .serviceUnavailable, .requestRateLimited, .zoneBusy:
             break // CKSyncEngine retries these automatically.
         default:

@@ -29,6 +29,7 @@ private struct PendingFriendRequestResponse: Identifiable {
 struct FriendsView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
 
     @State private var myParticipantId: String?
     @State private var enteringCode = false
@@ -92,6 +93,16 @@ struct FriendsView: View {
 
     private var friendsList: some View {
         List {
+            Section(footer: Text("friends.share_history_footer")) {
+                Toggle("friends.share_history_toggle", isOn: $shareHistoryWithFriends)
+                    .onChange(of: shareHistoryWithFriends) { _, isOn in
+                        toggleShareHistoryWithFriends(isOn)
+                    }
+                NavigationLink("friends.activity_title") {
+                    FriendActivityView()
+                }
+            }
+
             if !incomingRequests.isEmpty {
                 Section("friends.pending_received") {
                     ForEach(incomingRequests) { request in
@@ -263,6 +274,26 @@ struct FriendsView: View {
         }
     }
 
+    // Turning on: create/reuse the "FriendsHistory" share and add every
+    // current friend as a read-only participant. Turning off: strip all
+    // participants (the share/zone itself is left in place — see
+    // CloudKitSyncManager.revokeFriendsHistoryAccess).
+    private func toggleShareHistoryWithFriends(_ isOn: Bool) {
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        Task { @MainActor in
+            let manager = CloudKitSyncManager.shared
+            if isOn {
+                await manager.syncFriendsHistoryParticipants()
+                let personalHistory = store.history.filter { $0.clubId == nil }.map(\.id)
+                let personalRoster = store.roster.filter { $0.clubId == nil }.map(\.id)
+                manager.enqueueFriendsHistoryChanges(upsertedIds: personalHistory, deletedIds: [])
+                manager.enqueueFriendsRosterChanges(upsertedIds: personalRoster, deletedIds: [])
+            } else {
+                await manager.revokeFriendsHistoryAccess()
+            }
+        }
+    }
+
     private func sendCode() {
         guard !needsName else {
             pendingName = ""
@@ -319,6 +350,12 @@ struct FriendsView: View {
             try? await manager.respondToFriendRequest(request, accept: accept)
             if let requests = try? await manager.fetchMyFriendRequests() {
                 store.saveFriendRequests(requests)
+            }
+            // Reconcile the FriendsHistory share's participant list against
+            // the (now-updated) friend graph — covers both a newly-accepted
+            // friend gaining access and a declined request never having had it.
+            if UserDefaults.standard.bool(forKey: AppStorageKeys.shareHistoryWithFriends) {
+                await manager.syncFriendsHistoryParticipants()
             }
         }
     }
