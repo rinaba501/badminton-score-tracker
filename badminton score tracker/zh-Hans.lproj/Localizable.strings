@@ -264,6 +264,9 @@
 "profile.birthday_clear" = "清除";
 "profile.introduction_label" = "个人简介";
 "profile.introduction_placeholder" = "向好友介绍一下自己";
+"profile.share_toggle_footer" = "点击每个字段旁边的图标即可与已接受的好友共享。";
+"profile.share_toast_on" = "已与好友共享";
+"profile.share_toast_off" = "已取消与好友共享";
 "friends.enter_code" = "输入代码";
 "friends.code_prompt_message" = "粘贴邀请链接或好友代码";
 "friends.code_placeholder" = "邀请链接或代码";

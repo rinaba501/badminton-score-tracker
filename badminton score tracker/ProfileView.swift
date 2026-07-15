@@ -9,6 +9,14 @@
 //  a distinguished row inside Settings/Roster, since the small screen doesn't
 //  warrant another top-level nav destination.
 //
+//  Each identity field (avatar/gender/birthday/bio) carries its own inline
+//  "share with friends" toggle right next to where it's edited, so the
+//  sharing decision happens at the moment the data is entered rather than
+//  requiring a trip to FriendsView's Sharing Settings screen — that screen
+//  remains the one place all six toggles (these four plus stats/history)
+//  are visible together. toggleIdentityField here is a deliberate duplicate
+//  of FriendSharingSettingsView's — keep the two in sync.
+//
 
 import SwiftUI
 import BadmintonCore
@@ -17,12 +25,17 @@ struct ProfileView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
+    @AppStorage(AppStorageKeys.shareAvatarWithFriends) private var shareAvatarWithFriends = false
+    @AppStorage(AppStorageKeys.shareGenderWithFriends) private var shareGenderWithFriends = false
+    @AppStorage(AppStorageKeys.shareBirthdayWithFriends) private var shareBirthdayWithFriends = false
+    @AppStorage(AppStorageKeys.shareIntroductionWithFriends) private var shareIntroductionWithFriends = false
 
     @State private var editingPlayer: Player?
     @State private var promptingForName = false
     @State private var pendingName = ""
     @State private var pendingAction: (() -> Void)?
     @State private var showUnlinkConfirm = false
+    @State private var toastMessage: String?
 
     // Gender/birthday/introduction aren't @AppStorage-native types (String?/
     // Date?), so they're loaded once on appear and written straight to
@@ -50,29 +63,46 @@ struct ProfileView: View {
     var body: some View {
         List {
             Section {
-                Button {
-                    editingPlayer = meAsPlayer()
-                } label: {
-                    let me = meAsPlayer()
-                    HStack(spacing: 10) {
-                        AvatarView(name: myName, color: me.avatarColor, size: 44, iconName: me.iconName)
-                        Text(myName).foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                HStack(spacing: 10) {
+                    Button {
+                        editingPlayer = meAsPlayer()
+                    } label: {
+                        let me = meAsPlayer()
+                        HStack(spacing: 10) {
+                            AvatarView(name: myName, color: me.avatarColor, size: 44, iconName: me.iconName)
+                            Text(myName).foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
                     }
+                    .buttonStyle(.plain)
+
+                    shareToggle(
+                        "friends.share_avatar_toggle",
+                        isOn: $shareAvatarWithFriends,
+                        onChange: toggleIdentityField
+                    )
                 }
             }
 
-            Section {
-                Picker("profile.gender_label", selection: $gender) {
-                    Text("profile.gender_prefer_not_to_say").tag(String?.none)
-                    Text("profile.gender_male").tag(String?.some("male"))
-                    Text("profile.gender_female").tag(String?.some("female"))
-                    Text("profile.gender_nonbinary").tag(String?.some("nonbinary"))
+            Section(footer: Text("profile.share_toggle_footer")) {
+                HStack {
+                    Picker("profile.gender_label", selection: $gender) {
+                        Text("profile.gender_prefer_not_to_say").tag(String?.none)
+                        Text("profile.gender_male").tag(String?.some("male"))
+                        Text("profile.gender_female").tag(String?.some("female"))
+                        Text("profile.gender_nonbinary").tag(String?.some("nonbinary"))
+                    }
+                    .onChange(of: gender) { _, newValue in writeGender(newValue) }
+
+                    shareToggle(
+                        "friends.share_gender_toggle",
+                        isOn: $shareGenderWithFriends,
+                        onChange: toggleIdentityField
+                    )
                 }
-                .onChange(of: gender) { _, newValue in writeGender(newValue) }
 
                 Toggle("profile.birthday_label", isOn: $hasBirthday)
                     .onChange(of: hasBirthday) { _, isOn in
@@ -83,13 +113,31 @@ struct ProfileView: View {
                         }
                     }
                 if hasBirthday {
-                    DatePicker("profile.birthday_label", selection: $birthday, displayedComponents: .date)
-                        .labelsHidden()
-                        .onChange(of: birthday) { _, newValue in writeBirthday(newValue) }
+                    HStack {
+                        DatePicker("profile.birthday_label", selection: $birthday, displayedComponents: .date)
+                            .labelsHidden()
+                            .onChange(of: birthday) { _, newValue in writeBirthday(newValue) }
+
+                        Spacer()
+
+                        shareToggle(
+                            "friends.share_birthday_toggle",
+                            isOn: $shareBirthdayWithFriends,
+                            onChange: toggleIdentityField
+                        )
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("profile.introduction_label").font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        Text("profile.introduction_label").font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        shareToggle(
+                            "friends.share_introduction_toggle",
+                            isOn: $shareIntroductionWithFriends,
+                            onChange: toggleIdentityField
+                        )
+                    }
                     TextEditor(text: $introduction)
                         .frame(minHeight: 80)
                         .onChange(of: introduction) { _, newValue in
@@ -115,6 +163,19 @@ struct ProfileView: View {
                 }
             }
         }
+        .overlay(alignment: .bottom) {
+            if let toastMessage {
+                Text(toastMessage)
+                    .font(.footnote)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.thinMaterial, in: Capsule())
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .allowsHitTesting(false)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: toastMessage)
         .navigationTitle("ios.profile")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editingPlayer) { player in
@@ -139,6 +200,41 @@ struct ProfileView: View {
     }
 
     // MARK: - Pieces
+
+    // Icon-only button-styled Toggle (native on/off accessibility + visual
+    // state come from `.toggleStyle(.button)`) — the localized `titleKey`
+    // doubles as its accessibility label since `.labelStyle(.iconOnly)`
+    // hides the text visually but keeps it for VoiceOver.
+    private func shareToggle(
+        _ titleKey: LocalizedStringKey,
+        isOn: Binding<Bool>,
+        onChange: @escaping (Bool) -> Void
+    ) -> some View {
+        Toggle(isOn: isOn) {
+            Label(titleKey, systemImage: isOn.wrappedValue ? "person.2.fill" : "person.2")
+        }
+        .toggleStyle(.button)
+        .labelStyle(.iconOnly)
+        .onChange(of: isOn.wrappedValue) { _, newValue in
+            onChange(newValue)
+            showToast(newValue ? "profile.share_toast_on" : "profile.share_toast_off")
+        }
+    }
+
+    // Icon-only toggles have no room for a text label, so a toast teaches
+    // what just happened at the moment it happens instead of relying on the
+    // section footer alone. Re-tapping restarts the timer via the message
+    // identity check, so a rapid on/off/on doesn't dismiss early.
+    private func showToast(_ messageKey: String) {
+        let message = NSLocalizedString(messageKey, comment: "")
+        toastMessage = message
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_600_000_000)
+            if toastMessage == message {
+                toastMessage = nil
+            }
+        }
+    }
 
     private var namePrompt: some View {
         NavigationStack {
@@ -272,5 +368,24 @@ struct ProfileView: View {
     private func unlinkAccount() {
         accountLinked = false
         CloudKitSyncManager.shared.enqueueSettingsChange()
+    }
+
+    // shareAvatar/Gender/Birthday/IntroductionWithFriends all gate fields on
+    // the SAME single "FriendIdentity" record (see AppStore.
+    // refreshMyIdentitySnapshotIfSharing), so every one of these four inline
+    // toggles shares this one handler. Duplicate of FriendSharingSettingsView's
+    // — see this file's header comment.
+    private func toggleIdentityField(_ isOn: Bool) {
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        Task { @MainActor in
+            let manager = CloudKitSyncManager.shared
+            if isOn {
+                await manager.syncFriendsHistoryParticipants()
+            }
+            store.refreshMyIdentitySnapshotIfSharing()
+            if !isOn && !store.isSharingAnyProfileData {
+                await manager.revokeFriendsHistoryAccess()
+            }
+        }
     }
 }

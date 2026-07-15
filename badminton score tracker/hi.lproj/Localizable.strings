@@ -264,6 +264,9 @@
 "profile.birthday_clear" = "हटाएं";
 "profile.introduction_label" = "मेरे बारे में";
 "profile.introduction_placeholder" = "मित्रों को अपने बारे में थोड़ा बताएं";
+"profile.share_toggle_footer" = "प्रत्येक फ़ील्ड के बगल में मौजूद आइकन उसे स्वीकृत मित्रों के साथ साझा करता है।";
+"profile.share_toast_on" = "मित्रों के साथ साझा किया गया";
+"profile.share_toast_off" = "मित्रों के साथ साझा करना बंद कर दिया गया";
 "friends.enter_code" = "कोड दर्ज करें";
 "friends.code_prompt_message" = "आमंत्रण लिंक या मित्र कोड पेस्ट करें";
 "friends.code_placeholder" = "आमंत्रण लिंक या कोड";
