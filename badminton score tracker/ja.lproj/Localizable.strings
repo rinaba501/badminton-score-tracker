@@ -1,5 +1,5 @@
 // iOS companion app
-"ios.title" = "バドミントンスコア";
+"ios.title" = "Featherkeep";
 "ios.profile" = "プロフィール";
 "settings.title" = "設定";
 "settings.game_mode" = "ゲームモード";
