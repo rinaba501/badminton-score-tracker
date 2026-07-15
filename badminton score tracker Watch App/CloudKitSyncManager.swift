@@ -40,6 +40,14 @@ final class CloudKitSyncManager {
     private static let friendRequestType = "FriendRequest"
     private static let settingsType = "Settings"
     private static let settingsRecordName = "Settings"
+    /// Single fixed records in the FriendsHistory zone, mirroring per-field
+    /// friend-visibility profile data — see FriendIdentitySnapshot.swift/
+    /// FriendStatsSnapshot.swift. One of each per user, same "never deleted
+    /// except when every gating toggle is off" contract as Settings.
+    private static let friendIdentityType = "FriendIdentity"
+    private static let friendIdentityRecordName = "FriendIdentity"
+    private static let friendStatsType = "FriendStats"
+    private static let friendStatsRecordName = "FriendStats"
     private static let payloadField = "payload"
 
     private lazy var container = CKContainer(identifier: Self.containerID)
@@ -57,6 +65,14 @@ final class CloudKitSyncManager {
     /// the scalar settings that used to sync via the iCloud KV store.
     private var settingsRecordID: CKRecord.ID {
         CKRecord.ID(recordName: Self.settingsRecordName, zoneID: privateZone.zoneID)
+    }
+
+    private var friendIdentityRecordID: CKRecord.ID {
+        CKRecord.ID(recordName: Self.friendIdentityRecordName, zoneID: friendsHistoryZoneID())
+    }
+
+    private var friendStatsRecordID: CKRecord.ID {
+        CKRecord.ID(recordName: Self.friendStatsRecordName, zoneID: friendsHistoryZoneID())
     }
 
     private var privateSyncEngine: CKSyncEngine?
@@ -232,6 +248,80 @@ final class CloudKitSyncManager {
         privateSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(settingsRecordID)])
     }
 
+    /// Upserts the fixed "FriendIdentity" record in the FriendsHistory zone,
+    /// rebuilt from `currentFriendIdentitySnapshot()` at send time — call
+    /// whenever any of shareAvatarWithFriends/shareGenderWithFriends/
+    /// shareBirthdayWithFriends/shareIntroductionWithFriends is on and either
+    /// the "Me" roster player or a SettingsSnapshot identity field changed.
+    /// Zone existence + participant access are handled separately by
+    /// ensureFriendsHistoryShareExists/syncFriendsHistoryParticipants.
+    func enqueueFriendIdentityChange() {
+        guard let privateSyncEngine else { return }
+        privateSyncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: friendsHistoryZoneID()))])
+        privateSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(friendIdentityRecordID)])
+    }
+
+    /// Deletes the "FriendIdentity" record — call when every identity-related
+    /// toggle turns off (unlike `SettingsSnapshot.myName`, this record must
+    /// disappear entirely rather than round-trip empty, so a friend's cached
+    /// copy also gets a clean deletion instead of a stale-but-empty record).
+    func removeFriendIdentityRecord() {
+        guard let privateSyncEngine else { return }
+        privateSyncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(friendIdentityRecordID)])
+    }
+
+    /// Upserts the fixed "FriendStats" record — call whenever
+    /// shareStatsWithFriends is on and personal history/roster changed.
+    func enqueueFriendStatsChange() {
+        guard let privateSyncEngine else { return }
+        privateSyncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: friendsHistoryZoneID()))])
+        privateSyncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(friendStatsRecordID)])
+    }
+
+    /// Deletes the "FriendStats" record — call when shareStatsWithFriends
+    /// turns off.
+    func removeFriendStatsRecord() {
+        guard let privateSyncEngine else { return }
+        privateSyncEngine.state.add(pendingRecordZoneChanges: [.deleteRecord(friendStatsRecordID)])
+    }
+
+    /// Builds this device's own identity snapshot from the current Settings
+    /// fields + the "Me" roster player, zeroing out any field whose matching
+    /// toggle is off — see SettingsSnapshot's per-field toggle doc comment.
+    /// Name always mirrors (no toggle — see that same doc comment).
+    private func currentFriendIdentitySnapshot() -> FriendIdentitySnapshot {
+        let defaults = UserDefaults.standard
+        let myName = defaults.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName
+        let mePlayer = AppStore.shared.roster.first(where: { $0.id == AppStore.shared.localPlayerId })
+        let shareAvatar = defaults.object(forKey: AppStorageKeys.shareAvatarWithFriends) as? Bool ?? false
+        let shareGender = defaults.object(forKey: AppStorageKeys.shareGenderWithFriends) as? Bool ?? false
+        let shareBirthday = defaults.object(forKey: AppStorageKeys.shareBirthdayWithFriends) as? Bool ?? false
+        let shareIntroduction = defaults.object(forKey: AppStorageKeys.shareIntroductionWithFriends) as? Bool ?? false
+        return FriendIdentitySnapshot(
+            participantId: defaults.string(forKey: AppStorageKeys.myParticipantId) ?? "",
+            displayName: Player.displayName(for: myName),
+            colorIndex: shareAvatar ? mePlayer?.colorIndex : nil,
+            iconName: shareAvatar ? mePlayer?.iconName : nil,
+            gender: shareGender ? defaults.string(forKey: AppStorageKeys.gender) : nil,
+            birthday: shareBirthday ? (defaults.object(forKey: AppStorageKeys.birthday) as? Date) : nil,
+            introduction: shareIntroduction ? defaults.string(forKey: AppStorageKeys.introduction) : nil
+        )
+    }
+
+    /// Builds this device's own stats snapshot from personal (clubId == nil)
+    /// history/roster via `FriendStatsSnapshot.compute`.
+    private func currentFriendStatsSnapshot() -> FriendStatsSnapshot {
+        let myName = Player.displayName(for: UserDefaults.standard.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName)
+        let personalHistory = AppStore.shared.history.filter { $0.clubId == nil }
+        let personalRoster = AppStore.shared.roster.filter { $0.clubId == nil }
+        return FriendStatsSnapshot.compute(
+            participantId: UserDefaults.standard.string(forKey: AppStorageKeys.myParticipantId) ?? "",
+            displayName: myName,
+            history: personalHistory,
+            roster: personalRoster
+        )
+    }
+
     private func currentSettingsSnapshot() -> SettingsSnapshot {
         let defaults = UserDefaults.standard
         // Route localPlayerId through AppStore so the first Settings upload
@@ -250,7 +340,15 @@ final class CloudKitSyncManager {
             clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
             accountLinked: defaults.object(forKey: AppStorageKeys.accountLinked) as? Bool ?? false,
             gameScreenStyle: defaults.string(forKey: AppStorageKeys.gameScreenStyle) ?? "Depth",
-            shareHistoryWithFriends: defaults.object(forKey: AppStorageKeys.shareHistoryWithFriends) as? Bool ?? false
+            shareHistoryWithFriends: defaults.object(forKey: AppStorageKeys.shareHistoryWithFriends) as? Bool ?? false,
+            shareAvatarWithFriends: defaults.object(forKey: AppStorageKeys.shareAvatarWithFriends) as? Bool ?? false,
+            shareGenderWithFriends: defaults.object(forKey: AppStorageKeys.shareGenderWithFriends) as? Bool ?? false,
+            shareBirthdayWithFriends: defaults.object(forKey: AppStorageKeys.shareBirthdayWithFriends) as? Bool ?? false,
+            shareIntroductionWithFriends: defaults.object(forKey: AppStorageKeys.shareIntroductionWithFriends) as? Bool ?? false,
+            shareStatsWithFriends: defaults.object(forKey: AppStorageKeys.shareStatsWithFriends) as? Bool ?? false,
+            gender: defaults.string(forKey: AppStorageKeys.gender),
+            birthday: defaults.object(forKey: AppStorageKeys.birthday) as? Date,
+            introduction: defaults.string(forKey: AppStorageKeys.introduction)
         )
     }
 
@@ -331,6 +429,14 @@ final class CloudKitSyncManager {
         if recordID == settingsRecordID {
             guard let payload = PersistenceStore.encodeSettingsSnapshot(currentSettingsSnapshot()) else { return nil }
             return record(for: recordID, type: Self.settingsType, payload: payload)
+        }
+        if recordID == friendIdentityRecordID {
+            guard let payload = PersistenceStore.encodeFriendIdentitySnapshot(currentFriendIdentitySnapshot()) else { return nil }
+            return record(for: recordID, type: Self.friendIdentityType, payload: payload)
+        }
+        if recordID == friendStatsRecordID {
+            guard let payload = PersistenceStore.encodeFriendStatsSnapshot(currentFriendStatsSnapshot()) else { return nil }
+            return record(for: recordID, type: Self.friendStatsType, payload: payload)
         }
         guard let uuid = UUID(uuidString: recordID.recordName) else { return nil }
 
@@ -815,6 +921,8 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
         // this is someone else's data (see AppStore.applyRemoteFriendActivity).
         var friendUpsertedMatches: [String: [MatchRecord]] = [:]
         var friendUpsertedPlayers: [String: [Player]] = [:]
+        var friendUpsertedIdentities: [String: FriendIdentitySnapshot] = [:]
+        var friendUpsertedStats: [String: FriendStatsSnapshot] = [:]
 
         for modification in changes.modifications {
             let record = modification.record
@@ -836,6 +944,14 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                     case Self.playerType:
                         if let player = PersistenceStore.decodePlayer(payload) {
                             friendUpsertedPlayers[zoneID.ownerName, default: []].append(player)
+                        }
+                    case Self.friendIdentityType:
+                        if let identity = PersistenceStore.decodeFriendIdentitySnapshot(payload) {
+                            friendUpsertedIdentities[zoneID.ownerName] = identity
+                        }
+                    case Self.friendStatsType:
+                        if let stats = PersistenceStore.decodeFriendStatsSnapshot(payload) {
+                            friendUpsertedStats[zoneID.ownerName] = stats
                         }
                     default:
                         break
@@ -905,22 +1021,31 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
         var deletedReactionIds: [UUID] = []
         var friendDeletedMatchIds: [String: [UUID]] = [:]
         var friendDeletedPlayerIds: [String: [UUID]] = [:]
+        var friendDeletedIdentityOwners: Set<String> = []
+        var friendDeletedStatsOwners: Set<String> = []
 
         for deletion in changes.deletions {
             forget(deletion.recordID)
-            guard let uuid = UUID(uuidString: deletion.recordID.recordName) else { continue }
             let zoneID = deletion.recordID.zoneID
 
             if zoneID.zoneName == Self.friendsHistoryZoneName {
                 if zoneID.ownerName != CKCurrentUserDefaultName {
                     switch deletion.recordType {
-                    case Self.matchType: friendDeletedMatchIds[zoneID.ownerName, default: []].append(uuid)
-                    case Self.playerType: friendDeletedPlayerIds[zoneID.ownerName, default: []].append(uuid)
-                    default: break
+                    case Self.friendIdentityType: friendDeletedIdentityOwners.insert(zoneID.ownerName)
+                    case Self.friendStatsType: friendDeletedStatsOwners.insert(zoneID.ownerName)
+                    default:
+                        if let uuid = UUID(uuidString: deletion.recordID.recordName) {
+                            switch deletion.recordType {
+                            case Self.matchType: friendDeletedMatchIds[zoneID.ownerName, default: []].append(uuid)
+                            case Self.playerType: friendDeletedPlayerIds[zoneID.ownerName, default: []].append(uuid)
+                            default: break
+                            }
+                        }
                     }
                 }
                 continue
             }
+            guard let uuid = UUID(uuidString: deletion.recordID.recordName) else { continue }
 
             switch deletion.recordType {
             case Self.matchType: deletedMatchIds.append(uuid)
@@ -961,6 +1086,18 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                 playerIds: friendDeletedPlayerIds[ownerId] ?? []
             )
         }
+        for (ownerId, identity) in friendUpsertedIdentities {
+            AppStore.shared.applyRemoteFriendIdentity(participantId: ownerId, snapshot: identity)
+        }
+        for ownerId in friendDeletedIdentityOwners {
+            AppStore.shared.applyRemoteFriendIdentityDeletion(participantId: ownerId)
+        }
+        for (ownerId, stats) in friendUpsertedStats {
+            AppStore.shared.applyRemoteFriendStats(participantId: ownerId, snapshot: stats)
+        }
+        for ownerId in friendDeletedStatsOwners {
+            AppStore.shared.applyRemoteFriendStatsDeletion(participantId: ownerId)
+        }
     }
 
     private func handleSent(_ sent: CKSyncEngine.Event.SentRecordZoneChanges) {
@@ -995,6 +1132,8 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
                 } else if zoneID.zoneName == Self.friendsHistoryZoneName {
                     enqueueFriendsHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == nil }.map(\.id), deletedIds: [])
                     enqueueFriendsRosterChanges(upsertedIds: AppStore.shared.roster.filter { $0.clubId == nil }.map(\.id), deletedIds: [])
+                    if AppStore.shared.isSharingAnyFriendIdentityField { enqueueFriendIdentityChange() }
+                    if AppStore.shared.isSharingStatsWithFriends { enqueueFriendStatsChange() }
                 } else if let clubId = clubId(from: zoneID) {
                     enqueueClubChanges(upsertedIds: [clubId], deletedIds: [:])
                     enqueueHistoryChanges(upsertedIds: AppStore.shared.history.filter { $0.clubId == clubId }.map(\.id), deletedIds: [:])

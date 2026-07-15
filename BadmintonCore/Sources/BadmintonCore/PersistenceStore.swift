@@ -162,6 +162,38 @@ public enum PersistenceStore {
         encodeEnvelope(snapshots)
     }
 
+    // MARK: - Friend identities ([FriendIdentitySnapshot]) — friends' shared
+    // profile fields (avatar/gender/birthday/introduction), local cache only.
+    // Same contract as friend activity: an aggregate of a single CKRecord per
+    // friend fetched from their "FriendsHistory" zone.
+
+    /// Decode the friend-identity cache, returning an empty array if the data
+    /// is missing or corrupt. Same envelope/tolerance contract as `decodeRoster`.
+    public static func decodeFriendIdentities(_ data: Data) -> [FriendIdentitySnapshot] {
+        decodeTolerant(FriendIdentitySnapshot.self, from: data)
+    }
+
+    /// Encode the friend-identity cache for storage (as the current
+    /// versioned envelope), or `nil` if encoding fails.
+    public static func encodeFriendIdentities(_ snapshots: [FriendIdentitySnapshot]) -> Data? {
+        encodeEnvelope(snapshots)
+    }
+
+    // MARK: - Friend stats ([FriendStatsSnapshot]) — friends' shared derived
+    // stats, local cache only. Same contract as friend activity.
+
+    /// Decode the friend-stats cache, returning an empty array if the data is
+    /// missing or corrupt. Same envelope/tolerance contract as `decodeRoster`.
+    public static func decodeFriendStats(_ data: Data) -> [FriendStatsSnapshot] {
+        decodeTolerant(FriendStatsSnapshot.self, from: data)
+    }
+
+    /// Encode the friend-stats cache for storage (as the current versioned
+    /// envelope), or `nil` if encoding fails.
+    public static func encodeFriendStats(_ snapshots: [FriendStatsSnapshot]) -> Data? {
+        encodeEnvelope(snapshots)
+    }
+
     // MARK: - History ([MatchRecord])
 
     /// Decode the match history, returning an empty array if the data is
@@ -278,6 +310,32 @@ public enum PersistenceStore {
     /// payload is empty or unreadable.
     public static func decodeSettingsSnapshot(_ data: Data) -> SettingsSnapshot? {
         decodeTolerant(SettingsSnapshot.self, from: data).first
+    }
+
+    /// Encode a single friend-identity snapshot as a CloudKit payload (the
+    /// fixed single "FriendIdentity" record in the FriendsHistory zone), or
+    /// `nil` on failure.
+    public static func encodeFriendIdentitySnapshot(_ snapshot: FriendIdentitySnapshot) -> Data? {
+        encodeEnvelope([snapshot])
+    }
+
+    /// Decode a single friend-identity snapshot from a CloudKit payload, or
+    /// `nil` if the payload is empty or unreadable.
+    public static func decodeFriendIdentitySnapshot(_ data: Data) -> FriendIdentitySnapshot? {
+        decodeTolerant(FriendIdentitySnapshot.self, from: data).first
+    }
+
+    /// Encode a single friend-stats snapshot as a CloudKit payload (the fixed
+    /// single "FriendStats" record in the FriendsHistory zone), or `nil` on
+    /// failure.
+    public static func encodeFriendStatsSnapshot(_ snapshot: FriendStatsSnapshot) -> Data? {
+        encodeEnvelope([snapshot])
+    }
+
+    /// Decode a single friend-stats snapshot from a CloudKit payload, or
+    /// `nil` if the payload is empty or unreadable.
+    public static func decodeFriendStatsSnapshot(_ data: Data) -> FriendStatsSnapshot? {
+        decodeTolerant(FriendStatsSnapshot.self, from: data).first
     }
 
     // MARK: - Migration

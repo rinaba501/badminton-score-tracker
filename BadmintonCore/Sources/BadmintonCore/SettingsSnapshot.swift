@@ -46,6 +46,25 @@ public struct SettingsSnapshot: Codable, Equatable {
     /// into the "FriendsHistory" CKShare zone for every accepted friend.
     /// Blind-overwritten on apply, like the other plain Bools.
     public var shareHistoryWithFriends: Bool
+    /// Per-field friend-visibility toggles for the profile fields below
+    /// (avatar/gender/birthday/introduction) plus derived stats — each
+    /// independently gates whether that one field is mirrored into
+    /// FriendIdentitySnapshot/FriendStatsSnapshot. Unlike shareHistoryWithFriends
+    /// these never expose raw match records. Name has no toggle: an accepted
+    /// FriendRequest already carries a snapshotted displayName, so there's no
+    /// way to hide it from an existing friend (see FriendIdentitySnapshot).
+    public var shareAvatarWithFriends: Bool
+    public var shareGenderWithFriends: Bool
+    public var shareBirthdayWithFriends: Bool
+    public var shareIntroductionWithFriends: Bool
+    public var shareStatsWithFriends: Bool
+    /// Free-form gender label (e.g. "male"/"female"/"nonbinary"/"custom:<text>"),
+    /// nil for "prefer not to say". Plain String rather than an enum so new
+    /// options never require a schema/migration decision.
+    public var gender: String?
+    public var birthday: Date?
+    /// Short bio, capped at 200 chars at the edit site (ProfileView).
+    public var introduction: String?
 
     public init(
         myName: String,
@@ -61,7 +80,15 @@ public struct SettingsSnapshot: Codable, Equatable {
         clubLastViewedActivity: [String: Date] = [:],
         accountLinked: Bool = false,
         gameScreenStyle: String = "Depth",
-        shareHistoryWithFriends: Bool = false
+        shareHistoryWithFriends: Bool = false,
+        shareAvatarWithFriends: Bool = false,
+        shareGenderWithFriends: Bool = false,
+        shareBirthdayWithFriends: Bool = false,
+        shareIntroductionWithFriends: Bool = false,
+        shareStatsWithFriends: Bool = false,
+        gender: String? = nil,
+        birthday: Date? = nil,
+        introduction: String? = nil
     ) {
         self.myName = myName
         self.localPlayerId = localPlayerId
@@ -77,6 +104,14 @@ public struct SettingsSnapshot: Codable, Equatable {
         self.accountLinked = accountLinked
         self.gameScreenStyle = gameScreenStyle
         self.shareHistoryWithFriends = shareHistoryWithFriends
+        self.shareAvatarWithFriends = shareAvatarWithFriends
+        self.shareGenderWithFriends = shareGenderWithFriends
+        self.shareBirthdayWithFriends = shareBirthdayWithFriends
+        self.shareIntroductionWithFriends = shareIntroductionWithFriends
+        self.shareStatsWithFriends = shareStatsWithFriends
+        self.gender = gender
+        self.birthday = birthday
+        self.introduction = introduction
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -84,6 +119,9 @@ public struct SettingsSnapshot: Codable, Equatable {
         case announceScore, enableSounds, enableCrownScoring, timeModeEnabled
         case timeLimitMinutes, clubLastViewedActivity
         case accountLinked, gameScreenStyle, shareHistoryWithFriends
+        case shareAvatarWithFriends, shareGenderWithFriends, shareBirthdayWithFriends
+        case shareIntroductionWithFriends, shareStatsWithFriends
+        case gender, birthday, introduction
     }
 
     public init(from decoder: Decoder) throws {
@@ -103,6 +141,14 @@ public struct SettingsSnapshot: Codable, Equatable {
         accountLinked = try container.decodeIfPresent(Bool.self, forKey: .accountLinked) ?? false
         gameScreenStyle = try container.decodeIfPresent(String.self, forKey: .gameScreenStyle) ?? "Depth"
         shareHistoryWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareHistoryWithFriends) ?? false
+        shareAvatarWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareAvatarWithFriends) ?? false
+        shareGenderWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareGenderWithFriends) ?? false
+        shareBirthdayWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareBirthdayWithFriends) ?? false
+        shareIntroductionWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareIntroductionWithFriends) ?? false
+        shareStatsWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareStatsWithFriends) ?? false
+        gender = try container.decodeIfPresent(String.self, forKey: .gender)
+        birthday = try container.decodeIfPresent(Date.self, forKey: .birthday)
+        introduction = try container.decodeIfPresent(String.self, forKey: .introduction)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -121,5 +167,13 @@ public struct SettingsSnapshot: Codable, Equatable {
         try container.encode(accountLinked, forKey: .accountLinked)
         try container.encode(gameScreenStyle, forKey: .gameScreenStyle)
         try container.encode(shareHistoryWithFriends, forKey: .shareHistoryWithFriends)
+        try container.encode(shareAvatarWithFriends, forKey: .shareAvatarWithFriends)
+        try container.encode(shareGenderWithFriends, forKey: .shareGenderWithFriends)
+        try container.encode(shareBirthdayWithFriends, forKey: .shareBirthdayWithFriends)
+        try container.encode(shareIntroductionWithFriends, forKey: .shareIntroductionWithFriends)
+        try container.encode(shareStatsWithFriends, forKey: .shareStatsWithFriends)
+        try container.encodeIfPresent(gender, forKey: .gender)
+        try container.encodeIfPresent(birthday, forKey: .birthday)
+        try container.encodeIfPresent(introduction, forKey: .introduction)
     }
 }
