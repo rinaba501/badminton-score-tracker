@@ -8,6 +8,13 @@
 //  is layout + selection state only, restyled for iPhone width and pushed via
 //  NavigationStack (no currentView binding — back is automatic).
 //
+//  Personal scope (selectedClubId == nil) also surfaces the "Share My History
+//  with Friends" toggle inline (visible-text Switch, not icon-only like
+//  ProfileView's — history is a bigger reveal than one profile field, so it
+//  gets a more deliberate control) — same discoverability fix as ProfileView,
+//  applied to a screen with no natural per-field home. toggleShareHistory-
+//  WithFriends here is a deliberate duplicate of FriendSharingSettingsView's.
+//
 
 import SwiftUI
 import BadmintonCore
@@ -15,6 +22,7 @@ import BadmintonCore
 struct HistoryView: View {
     @EnvironmentObject private var store: AppStore
     @EnvironmentObject private var storeManager: StoreManager
+    @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
     @State private var showingClearConfirmation = false
     @State private var pendingDeleteRecord: MatchRecord?
     /// Every name here must have participated (on either team) for a record
@@ -93,6 +101,9 @@ struct HistoryView: View {
                 emptyState(key: "history.empty")
             } else {
                 List {
+                    if selectedClubId == nil {
+                        historySharingSection
+                    }
                     filterSection
                     if filteredHistory.isEmpty {
                         Section { centeredMessage("history.empty") }
@@ -154,6 +165,13 @@ struct HistoryView: View {
             Button("history.clear", role: .destructive) {
                 if let pendingDeleteRecord { delete(pendingDeleteRecord) }
             }
+        }
+    }
+
+    @ViewBuilder private var historySharingSection: some View {
+        Section(footer: Text("friends.share_history_footer")) {
+            Toggle("friends.share_history_toggle", isOn: $shareHistoryWithFriends)
+                .onChange(of: shareHistoryWithFriends) { _, isOn in toggleShareHistoryWithFriends(isOn) }
         }
     }
 
@@ -266,6 +284,27 @@ struct HistoryView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // Turning on: create/reuse the "FriendsHistory" share and add every
+    // current friend as a read-only participant. Turning off: strip all
+    // participants only once every other per-field toggle is also off (see
+    // AppStore.isSharingAnyProfileData) — the share/zone itself is always
+    // left in place (see CloudKitSyncManager.revokeFriendsHistoryAccess).
+    private func toggleShareHistoryWithFriends(_ isOn: Bool) {
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        Task { @MainActor in
+            let manager = CloudKitSyncManager.shared
+            if isOn {
+                await manager.syncFriendsHistoryParticipants()
+                let personalHistory = store.history.filter { $0.clubId == nil }.map(\.id)
+                let personalRoster = store.roster.filter { $0.clubId == nil }.map(\.id)
+                manager.enqueueFriendsHistoryChanges(upsertedIds: personalHistory, deletedIds: [])
+                manager.enqueueFriendsRosterChanges(upsertedIds: personalRoster, deletedIds: [])
+            } else if !store.isSharingAnyProfileData {
+                await manager.revokeFriendsHistoryAccess()
+            }
+        }
     }
 }
 
