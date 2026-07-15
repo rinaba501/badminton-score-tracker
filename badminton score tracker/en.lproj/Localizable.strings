@@ -237,6 +237,8 @@
 "friends.share_introduction_toggle" = "Share My Bio";
 "friends.share_stats_toggle" = "Share My Stats";
 "friends.activity_title" = "Friend Activity";
+"friends.more_section_header" = "More";
+"friends.sharing_settings_title" = "Sharing Settings";
 "friends.activity_empty" = "No friends are sharing their history yet.";
 "friends.activity_no_matches" = "No matches yet.";
 "friends.profile_stats_section" = "Stats";

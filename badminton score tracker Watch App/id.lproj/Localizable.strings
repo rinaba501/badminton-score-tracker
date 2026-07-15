@@ -236,6 +236,8 @@
 "friends.share_introduction_toggle" = "Bagikan Bio Saya";
 "friends.share_stats_toggle" = "Bagikan Statistik Saya";
 "friends.activity_title" = "Aktivitas Teman";
+"friends.more_section_header" = "Lainnya";
+"friends.sharing_settings_title" = "Pengaturan Berbagi";
 "friends.profile_stats_section" = "Statistik";
 "friends.profile_history_section" = "Riwayat Pertandingan";
 "friends.profile_nothing_shared" = "Teman ini belum membagikan apa pun.";

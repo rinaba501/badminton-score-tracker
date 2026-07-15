@@ -29,12 +29,6 @@ private struct PendingFriendRequestResponse: Identifiable {
 struct FriendsView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
-    @AppStorage(AppStorageKeys.shareAvatarWithFriends) private var shareAvatarWithFriends = false
-    @AppStorage(AppStorageKeys.shareGenderWithFriends) private var shareGenderWithFriends = false
-    @AppStorage(AppStorageKeys.shareBirthdayWithFriends) private var shareBirthdayWithFriends = false
-    @AppStorage(AppStorageKeys.shareIntroductionWithFriends) private var shareIntroductionWithFriends = false
-    @AppStorage(AppStorageKeys.shareStatsWithFriends) private var shareStatsWithFriends = false
 
     @State private var myParticipantId: String?
     @State private var enteringCode = false
@@ -98,26 +92,6 @@ struct FriendsView: View {
 
     private var friendsList: some View {
         List {
-            Section(header: Text("friends.share_section_header"), footer: Text("friends.share_name_always_visible_footer")) {
-                Toggle("friends.share_avatar_toggle", isOn: $shareAvatarWithFriends)
-                    .onChange(of: shareAvatarWithFriends) { _, isOn in toggleIdentityField(isOn) }
-                Toggle("friends.share_gender_toggle", isOn: $shareGenderWithFriends)
-                    .onChange(of: shareGenderWithFriends) { _, isOn in toggleIdentityField(isOn) }
-                Toggle("friends.share_birthday_toggle", isOn: $shareBirthdayWithFriends)
-                    .onChange(of: shareBirthdayWithFriends) { _, isOn in toggleIdentityField(isOn) }
-                Toggle("friends.share_introduction_toggle", isOn: $shareIntroductionWithFriends)
-                    .onChange(of: shareIntroductionWithFriends) { _, isOn in toggleIdentityField(isOn) }
-                Toggle("friends.share_stats_toggle", isOn: $shareStatsWithFriends)
-                    .onChange(of: shareStatsWithFriends) { _, isOn in toggleStatsSharing(isOn) }
-                Toggle("friends.share_history_toggle", isOn: $shareHistoryWithFriends)
-                    .onChange(of: shareHistoryWithFriends) { _, isOn in
-                        toggleShareHistoryWithFriends(isOn)
-                    }
-                NavigationLink("friends.activity_title") {
-                    FriendActivityView()
-                }
-            }
-
             if !incomingRequests.isEmpty {
                 Section("friends.pending_received") {
                     ForEach(incomingRequests) { request in
@@ -170,6 +144,18 @@ struct FriendsView: View {
                     enteringCode = true
                 } label: {
                     Label("friends.enter_code", systemImage: "number")
+                }
+            }
+
+            // Deliberately last: activity/sharing are set-once-and-forget,
+            // not day-to-day actions, so they sit below the friends list
+            // instead of competing with pending requests for top billing.
+            Section("friends.more_section_header") {
+                NavigationLink("friends.activity_title") {
+                    FriendActivityView()
+                }
+                NavigationLink("friends.sharing_settings_title") {
+                    FriendSharingSettingsView()
                 }
             }
         }
@@ -286,61 +272,6 @@ struct FriendsView: View {
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
             pendingAction?()
             pendingAction = nil
-        }
-    }
-
-    // Turning on: create/reuse the "FriendsHistory" share and add every
-    // current friend as a read-only participant. Turning off: strip all
-    // participants only once every other per-field toggle is also off (see
-    // AppStore.isSharingAnyProfileData) — the share/zone itself is always
-    // left in place (see CloudKitSyncManager.revokeFriendsHistoryAccess).
-    private func toggleShareHistoryWithFriends(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
-        Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
-            if isOn {
-                await manager.syncFriendsHistoryParticipants()
-                let personalHistory = store.history.filter { $0.clubId == nil }.map(\.id)
-                let personalRoster = store.roster.filter { $0.clubId == nil }.map(\.id)
-                manager.enqueueFriendsHistoryChanges(upsertedIds: personalHistory, deletedIds: [])
-                manager.enqueueFriendsRosterChanges(upsertedIds: personalRoster, deletedIds: [])
-            } else if !store.isSharingAnyProfileData {
-                await manager.revokeFriendsHistoryAccess()
-            }
-        }
-    }
-
-    // shareAvatar/Gender/Birthday/IntroductionWithFriends all gate fields on
-    // the SAME single "FriendIdentity" record (see AppStore.
-    // refreshMyIdentitySnapshotIfSharing), so every one of these four toggles
-    // shares this one handler regardless of which direction it flipped.
-    private func toggleIdentityField(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
-        Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
-            if isOn {
-                await manager.syncFriendsHistoryParticipants()
-            }
-            store.refreshMyIdentitySnapshotIfSharing()
-            if !isOn && !store.isSharingAnyProfileData {
-                await manager.revokeFriendsHistoryAccess()
-            }
-        }
-    }
-
-    private func toggleStatsSharing(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
-        Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
-            if isOn {
-                await manager.syncFriendsHistoryParticipants()
-                manager.enqueueFriendStatsChange()
-            } else {
-                manager.removeFriendStatsRecord()
-                if !store.isSharingAnyProfileData {
-                    await manager.revokeFriendsHistoryAccess()
-                }
-            }
         }
     }
 

@@ -237,6 +237,8 @@
 "friends.share_introduction_toggle" = "自己紹介を共有";
 "friends.share_stats_toggle" = "成績を共有";
 "friends.activity_title" = "フレンドのアクティビティ";
+"friends.more_section_header" = "その他";
+"friends.sharing_settings_title" = "共有設定";
 "friends.profile_stats_section" = "成績";
 "friends.profile_history_section" = "試合履歴";
 "friends.profile_nothing_shared" = "このフレンドはまだ何も共有していません。";
