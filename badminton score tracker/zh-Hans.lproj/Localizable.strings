@@ -227,6 +227,11 @@
 "friends.pending_sent" = "发出的申请";
 "friends.your_friends" = "好友";
 "friends.no_friends_yet" = "暂无好友";
+"friends.share_history_toggle" = "与好友分享我的记录";
+"friends.share_history_footer" = "开启后，你的个人名单和比赛记录将对所有已接受的好友可见。";
+"friends.activity_title" = "好友动态";
+"friends.activity_empty" = "还没有好友分享他们的记录。";
+"friends.activity_no_matches" = "还没有比赛记录。";
 "friends.accept" = "接受";
 "friends.decline" = "拒绝";
 "friends.decline_confirm" = "拒绝这条好友请求？";

@@ -143,6 +143,25 @@ public enum PersistenceStore {
         encodeEnvelope(requests)
     }
 
+    // MARK: - Friend activity ([FriendHistorySnapshot]) — friends' shared
+    // roster/history, local cache only. Never sent to CloudKit as its own
+    // payload type: it's an aggregate of Player/MatchRecord CKRecords fetched
+    // from a friend's "FriendsHistory" zone (see CloudKitSyncManager), kept
+    // local so the Friend Activity view has something to render offline.
+
+    /// Decode the friend-activity cache, returning an empty array if the
+    /// data is missing or corrupt. Same envelope/tolerance contract as
+    /// `decodeRoster`.
+    public static func decodeFriendActivity(_ data: Data) -> [FriendHistorySnapshot] {
+        decodeTolerant(FriendHistorySnapshot.self, from: data)
+    }
+
+    /// Encode the friend-activity cache for storage (as the current
+    /// versioned envelope), or `nil` if encoding fails.
+    public static func encodeFriendActivity(_ snapshots: [FriendHistorySnapshot]) -> Data? {
+        encodeEnvelope(snapshots)
+    }
+
     // MARK: - History ([MatchRecord])
 
     /// Decode the match history, returning an empty array if the data is

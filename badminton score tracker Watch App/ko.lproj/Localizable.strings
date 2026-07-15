@@ -226,6 +226,11 @@
 "friends.pending_sent" = "보낸 요청";
 "friends.your_friends" = "친구";
 "friends.no_friends_yet" = "아직 친구가 없습니다";
+"friends.share_history_toggle" = "친구에게 내 기록 공유하기";
+"friends.share_history_footer" = "켜면 내 개인 명단과 경기 기록이 수락된 모든 친구에게 표시됩니다.";
+"friends.activity_title" = "친구 활동";
+"friends.activity_empty" = "아직 기록을 공유하는 친구가 없습니다.";
+"friends.activity_no_matches" = "아직 경기가 없습니다.";
 "friends.accept" = "수락";
 "friends.decline" = "거절";
 "friends.decline_confirm" = "이 친구 요청을 거절하시겠습니까?";

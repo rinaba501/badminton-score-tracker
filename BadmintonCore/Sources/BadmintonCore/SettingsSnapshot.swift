@@ -42,6 +42,10 @@ public struct SettingsSnapshot: Codable, Equatable {
     /// its raw String value, same rationale as courtTheme — Watch round-trips
     /// this field without ever reading it into a typed enum.
     public var gameScreenStyle: String
+    /// Whether personal (clubId == nil) roster + history mirror read-only
+    /// into the "FriendsHistory" CKShare zone for every accepted friend.
+    /// Blind-overwritten on apply, like the other plain Bools.
+    public var shareHistoryWithFriends: Bool
 
     public init(
         myName: String,
@@ -56,7 +60,8 @@ public struct SettingsSnapshot: Codable, Equatable {
         timeLimitMinutes: Int,
         clubLastViewedActivity: [String: Date] = [:],
         accountLinked: Bool = false,
-        gameScreenStyle: String = "Depth"
+        gameScreenStyle: String = "Depth",
+        shareHistoryWithFriends: Bool = false
     ) {
         self.myName = myName
         self.localPlayerId = localPlayerId
@@ -71,13 +76,14 @@ public struct SettingsSnapshot: Codable, Equatable {
         self.clubLastViewedActivity = clubLastViewedActivity
         self.accountLinked = accountLinked
         self.gameScreenStyle = gameScreenStyle
+        self.shareHistoryWithFriends = shareHistoryWithFriends
     }
 
     private enum CodingKeys: String, CodingKey {
         case myName, localPlayerId, pointsToWin, gamesInMatch, courtTheme
         case announceScore, enableSounds, enableCrownScoring, timeModeEnabled
         case timeLimitMinutes, clubLastViewedActivity
-        case accountLinked, gameScreenStyle
+        case accountLinked, gameScreenStyle, shareHistoryWithFriends
     }
 
     public init(from decoder: Decoder) throws {
@@ -96,6 +102,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         clubLastViewedActivity = try container.decodeIfPresent([String: Date].self, forKey: .clubLastViewedActivity) ?? [:]
         accountLinked = try container.decodeIfPresent(Bool.self, forKey: .accountLinked) ?? false
         gameScreenStyle = try container.decodeIfPresent(String.self, forKey: .gameScreenStyle) ?? "Depth"
+        shareHistoryWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareHistoryWithFriends) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -113,5 +120,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         try container.encode(clubLastViewedActivity, forKey: .clubLastViewedActivity)
         try container.encode(accountLinked, forKey: .accountLinked)
         try container.encode(gameScreenStyle, forKey: .gameScreenStyle)
+        try container.encode(shareHistoryWithFriends, forKey: .shareHistoryWithFriends)
     }
 }

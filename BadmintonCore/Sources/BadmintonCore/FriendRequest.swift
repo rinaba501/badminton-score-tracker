@@ -13,10 +13,15 @@
 //
 //  There is no separate `Friendship` record. An accepted FriendRequest *is*
 //  the friendship edge — the same "status flips in place, no new record"
-//  convention ChallengeRecord already uses. Accepting a request does NOT
-//  create any CKShare/CloudKit zone and does NOT wire up shared match
-//  history — that is an explicit non-goal of this phase, left to a future
-//  slice, so a future reader shouldn't assume missing wiring here.
+//  convention ChallengeRecord already uses. Accepting a request never
+//  creates a CKShare/zone by itself, and match-history sharing is never
+//  automatic — it stays an explicit, separate opt-in (see
+//  SettingsSnapshot.shareHistoryWithFriends / FriendHistorySnapshot): when
+//  that toggle is on, CloudKitSyncManager.respondToFriendRequest(accept:)
+//  additionally reconciles the sharer's "FriendsHistory" CKShare
+//  participant list against the current friend graph, as a side effect of
+//  status flipping to `.accepted` — but a FriendRequest record itself still
+//  carries no data-sharing semantics.
 //
 
 import Foundation

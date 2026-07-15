@@ -68,6 +68,17 @@ public enum AppStorageKeys {
     // other plain Bool settings) — the account id itself is never stored
     // here, only re-derived via CloudKitSyncManager.resolveMyParticipantId().
     public static let accountLinked = "accountLinked"
+    // Whether the user's personal (clubId == nil) roster and match history
+    // mirror read-only into the "FriendsHistory" CKShare zone, visible to
+    // every accepted friend. Synced via SettingsSnapshot (blind overwrite,
+    // like the other plain Bool settings) — see
+    // CloudKitSyncManager.ensureFriendsHistoryShareExists/
+    // syncFriendsHistoryParticipants.
+    public static let shareHistoryWithFriends = "shareHistoryWithFriends"
+    // Local cache of friends' shared roster/history (read-only, never merged
+    // into playerRoster/matchHistory) — see FriendHistorySnapshot.swift and
+    // AppStore.applyRemoteFriendActivity.
+    public static let friendActivity = "friendActivity"
 
     // Monetization: local cache of owned StoreKit product IDs (JSON-encoded
     // Set<String>, via OwnedProductsCodec) so entitlement-gated UI has an

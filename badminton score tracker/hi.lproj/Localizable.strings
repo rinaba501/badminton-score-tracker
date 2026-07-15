@@ -227,6 +227,11 @@
 "friends.pending_sent" = "भेजे गए अनुरोध";
 "friends.your_friends" = "मित्र";
 "friends.no_friends_yet" = "अभी कोई मित्र नहीं";
+"friends.share_history_toggle" = "मित्रों के साथ अपना इतिहास साझा करें";
+"friends.share_history_footer" = "चालू करने पर, आपकी व्यक्तिगत सूची और मैच इतिहास हर स्वीकृत मित्र को दिखाई देगा।";
+"friends.activity_title" = "मित्र गतिविधि";
+"friends.activity_empty" = "अभी तक कोई मित्र अपना इतिहास साझा नहीं कर रहा है।";
+"friends.activity_no_matches" = "अभी तक कोई मैच नहीं।";
 "friends.accept" = "स्वीकारें";
 "friends.decline" = "अस्वीकारें";
 "friends.decline_confirm" = "इस मित्र अनुरोध को अस्वीकार करें?";

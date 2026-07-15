@@ -227,6 +227,11 @@
 "friends.pending_sent" = "送信した申請";
 "friends.your_friends" = "フレンド";
 "friends.no_friends_yet" = "フレンドはまだいません";
+"friends.share_history_toggle" = "フレンドに履歴を共有";
+"friends.share_history_footer" = "オンにすると、あなたの個人プレイヤーリストと試合履歴が承認済みのフレンド全員に表示されます。";
+"friends.activity_title" = "フレンドのアクティビティ";
+"friends.activity_empty" = "履歴を共有しているフレンドはまだいません。";
+"friends.activity_no_matches" = "試合はまだありません。";
 "friends.accept" = "承認";
 "friends.decline" = "拒否";
 "friends.decline_confirm" = "このフレンド申請を辞退しますか？";
