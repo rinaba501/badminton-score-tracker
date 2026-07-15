@@ -25,7 +25,15 @@ struct SettingsSnapshotTests {
         clubLastViewedActivity: [String: Date] = [:],
         accountLinked: Bool = false,
         gameScreenStyle: String = "Depth",
-        shareHistoryWithFriends: Bool = false
+        shareHistoryWithFriends: Bool = false,
+        shareAvatarWithFriends: Bool = false,
+        shareGenderWithFriends: Bool = false,
+        shareBirthdayWithFriends: Bool = false,
+        shareIntroductionWithFriends: Bool = false,
+        shareStatsWithFriends: Bool = false,
+        gender: String? = nil,
+        birthday: Date? = nil,
+        introduction: String? = nil
     ) -> SettingsSnapshot {
         SettingsSnapshot(
             myName: myName, localPlayerId: localPlayerId,
@@ -36,7 +44,15 @@ struct SettingsSnapshotTests {
             clubLastViewedActivity: clubLastViewedActivity,
             accountLinked: accountLinked,
             gameScreenStyle: gameScreenStyle,
-            shareHistoryWithFriends: shareHistoryWithFriends
+            shareHistoryWithFriends: shareHistoryWithFriends,
+            shareAvatarWithFriends: shareAvatarWithFriends,
+            shareGenderWithFriends: shareGenderWithFriends,
+            shareBirthdayWithFriends: shareBirthdayWithFriends,
+            shareIntroductionWithFriends: shareIntroductionWithFriends,
+            shareStatsWithFriends: shareStatsWithFriends,
+            gender: gender,
+            birthday: birthday,
+            introduction: introduction
         )
     }
 
@@ -75,6 +91,42 @@ struct SettingsSnapshotTests {
         #expect(decoded.shareHistoryWithFriends == true)
     }
 
+    @Test func perFieldFriendVisibilityTogglesRoundTrip() throws {
+        let snapshot = makeSnapshot(
+            shareAvatarWithFriends: true,
+            shareGenderWithFriends: true,
+            shareBirthdayWithFriends: true,
+            shareIntroductionWithFriends: true,
+            shareStatsWithFriends: true
+        )
+        let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
+        let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
+        #expect(decoded.shareAvatarWithFriends == true)
+        #expect(decoded.shareGenderWithFriends == true)
+        #expect(decoded.shareBirthdayWithFriends == true)
+        #expect(decoded.shareIntroductionWithFriends == true)
+        #expect(decoded.shareStatsWithFriends == true)
+    }
+
+    @Test func genderBirthdayIntroductionRoundTrip() throws {
+        let birthday = Date(timeIntervalSince1970: 700_000_000)
+        let snapshot = makeSnapshot(gender: "nonbinary", birthday: birthday, introduction: "Loves smashes.")
+        let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
+        let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
+        #expect(decoded.gender == "nonbinary")
+        #expect(decoded.birthday == birthday)
+        #expect(decoded.introduction == "Loves smashes.")
+    }
+
+    @Test func genderBirthdayIntroductionDefaultToNil() throws {
+        let snapshot = makeSnapshot()
+        let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
+        let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
+        #expect(decoded.gender == nil)
+        #expect(decoded.birthday == nil)
+        #expect(decoded.introduction == nil)
+    }
+
     @Test func decodeSettingsSnapshotReturnsNilOnEmptyOrGarbageData() {
         #expect(PersistenceStore.decodeSettingsSnapshot(Data()) == nil)
         #expect(PersistenceStore.decodeSettingsSnapshot(Data("not json".utf8)) == nil)
@@ -110,5 +162,13 @@ struct SettingsSnapshotTests {
         #expect(decoded.accountLinked == false)
         #expect(decoded.gameScreenStyle == "Depth")
         #expect(decoded.shareHistoryWithFriends == false)
+        #expect(decoded.shareAvatarWithFriends == false)
+        #expect(decoded.shareGenderWithFriends == false)
+        #expect(decoded.shareBirthdayWithFriends == false)
+        #expect(decoded.shareIntroductionWithFriends == false)
+        #expect(decoded.shareStatsWithFriends == false)
+        #expect(decoded.gender == nil)
+        #expect(decoded.birthday == nil)
+        #expect(decoded.introduction == nil)
     }
 }

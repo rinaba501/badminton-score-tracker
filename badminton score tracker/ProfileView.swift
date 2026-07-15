@@ -24,6 +24,17 @@ struct ProfileView: View {
     @State private var pendingAction: (() -> Void)?
     @State private var showUnlinkConfirm = false
 
+    // Gender/birthday/introduction aren't @AppStorage-native types (String?/
+    // Date?), so they're loaded once on appear and written straight to
+    // UserDefaults on save — editing here is separate from *sharing*: filling
+    // these in doesn't share them, the per-field toggles in FriendsView do
+    // (see FriendIdentitySnapshot.swift).
+    @State private var gender: String?
+    @State private var hasBirthday = false
+    @State private var birthday = Date()
+    @State private var introduction = ""
+    private static let introductionCharacterLimit = 200
+
     // Backstop for anyone who skipped the first-launch prompt (ContentView) —
     // linkAccount() still needs a real name before it publishes a FriendProfile.
     private var needsName: Bool {
@@ -51,6 +62,40 @@ struct ProfileView: View {
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
+                }
+            }
+
+            Section {
+                Picker("profile.gender_label", selection: $gender) {
+                    Text("profile.gender_prefer_not_to_say").tag(String?.none)
+                    Text("profile.gender_male").tag(String?.some("male"))
+                    Text("profile.gender_female").tag(String?.some("female"))
+                    Text("profile.gender_nonbinary").tag(String?.some("nonbinary"))
+                }
+                .onChange(of: gender) { _, newValue in writeGender(newValue) }
+
+                Toggle("profile.birthday_label", isOn: $hasBirthday)
+                    .onChange(of: hasBirthday) { _, isOn in
+                        if isOn {
+                            writeBirthday(birthday)
+                        } else {
+                            writeBirthday(nil)
+                        }
+                    }
+                if hasBirthday {
+                    DatePicker("profile.birthday_label", selection: $birthday, displayedComponents: .date)
+                        .labelsHidden()
+                        .onChange(of: birthday) { _, newValue in writeBirthday(newValue) }
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("profile.introduction_label").font(.caption).foregroundStyle(.secondary)
+                    TextEditor(text: $introduction)
+                        .frame(minHeight: 80)
+                        .onChange(of: introduction) { _, newValue in
+                            introduction = String(newValue.prefix(Self.introductionCharacterLimit))
+                            writeIntroduction(introduction)
+                        }
                 }
             }
 
@@ -90,6 +135,7 @@ struct ProfileView: View {
         ) {
             Button("profile.unlink_account", role: .destructive) { unlinkAccount() }
         }
+        .onAppear { loadIdentityFields() }
     }
 
     // MARK: - Pieces
@@ -167,6 +213,40 @@ struct ProfileView: View {
             pendingAction?()
             pendingAction = nil
         }
+    }
+
+    private func loadIdentityFields() {
+        let defaults = UserDefaults.standard
+        gender = defaults.string(forKey: AppStorageKeys.gender)
+        if let existing = defaults.object(forKey: AppStorageKeys.birthday) as? Date {
+            hasBirthday = true
+            birthday = existing
+        } else {
+            hasBirthday = false
+        }
+        introduction = defaults.string(forKey: AppStorageKeys.introduction) ?? ""
+    }
+
+    private func writeGender(_ newValue: String?) {
+        let defaults = UserDefaults.standard
+        if let newValue { defaults.set(newValue, forKey: AppStorageKeys.gender) } else { defaults.removeObject(forKey: AppStorageKeys.gender) }
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        store.refreshMyIdentitySnapshotIfSharing()
+    }
+
+    private func writeBirthday(_ newValue: Date?) {
+        let defaults = UserDefaults.standard
+        if let newValue { defaults.set(newValue, forKey: AppStorageKeys.birthday) } else { defaults.removeObject(forKey: AppStorageKeys.birthday) }
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        store.refreshMyIdentitySnapshotIfSharing()
+    }
+
+    private func writeIntroduction(_ newValue: String) {
+        let defaults = UserDefaults.standard
+        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { defaults.removeObject(forKey: AppStorageKeys.introduction) } else { defaults.set(trimmed, forKey: AppStorageKeys.introduction) }
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+        store.refreshMyIdentitySnapshotIfSharing()
     }
 
     // Explicit "link this device to one CloudKit account" opt-in flag —

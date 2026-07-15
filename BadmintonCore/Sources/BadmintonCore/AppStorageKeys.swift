@@ -75,10 +75,32 @@ public enum AppStorageKeys {
     // CloudKitSyncManager.ensureFriendsHistoryShareExists/
     // syncFriendsHistoryParticipants.
     public static let shareHistoryWithFriends = "shareHistoryWithFriends"
+    // Per-field friend-visibility toggles for profile data (avatar/gender/
+    // birthday/introduction) and derived stats — same synced-Bool pattern as
+    // shareHistoryWithFriends, but each gates one field of
+    // FriendIdentitySnapshot/FriendStatsSnapshot independently. Name has no
+    // toggle (see SettingsSnapshot.swift doc comment).
+    public static let shareAvatarWithFriends = "shareAvatarWithFriends"
+    public static let shareGenderWithFriends = "shareGenderWithFriends"
+    public static let shareBirthdayWithFriends = "shareBirthdayWithFriends"
+    public static let shareIntroductionWithFriends = "shareIntroductionWithFriends"
+    public static let shareStatsWithFriends = "shareStatsWithFriends"
+    // Personal profile fields, synced via SettingsSnapshot (blind overwrite).
+    // Only ever leave the device via FriendIdentitySnapshot, gated by the
+    // matching share*WithFriends toggle above — see ProfileView.swift.
+    public static let gender = "gender"
+    public static let birthday = "birthday"
+    public static let introduction = "introduction"
     // Local cache of friends' shared roster/history (read-only, never merged
     // into playerRoster/matchHistory) — see FriendHistorySnapshot.swift and
     // AppStore.applyRemoteFriendActivity.
     public static let friendActivity = "friendActivity"
+    // Local caches of friends' shared identity/stats snapshots (read-only,
+    // same never-merged-into-your-own-data convention as friendActivity) —
+    // see FriendIdentitySnapshot.swift/FriendStatsSnapshot.swift and
+    // AppStore.applyRemoteFriendIdentity/applyRemoteFriendStats.
+    public static let friendIdentities = "friendIdentities"
+    public static let friendStats = "friendStats"
 
     // Monetization: local cache of owned StoreKit product IDs (JSON-encoded
     // Set<String>, via OwnedProductsCodec) so entitlement-gated UI has an
