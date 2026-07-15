@@ -1,5 +1,5 @@
 // iOS companion app
-"ios.title" = "羽毛球比分";
+"ios.title" = "Featherkeep";
 "ios.profile" = "个人资料";
 "settings.title" = "设置";
 "settings.game_mode" = "比赛模式";

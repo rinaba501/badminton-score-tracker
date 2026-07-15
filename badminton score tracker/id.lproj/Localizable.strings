@@ -1,5 +1,5 @@
 // iOS companion app
-"ios.title" = "Skor Bulu Tangkis";
+"ios.title" = "Featherkeep";
 "ios.profile" = "Profil";
 "settings.title" = "Pengaturan";
 "settings.game_mode" = "Mode Permainan";
