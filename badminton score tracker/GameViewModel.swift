@@ -64,11 +64,11 @@ final class GameViewModel: ObservableObject {
 
     // MARK: - Init
 
-    init(hapticsProvider: HapticsProvider = UIKitHapticsProvider(), appStore: AppStore = .shared) {
+    init(hapticsProvider: HapticsProvider = UIKitHapticsProvider(), appStore: AppStore? = nil) {
         self.hapticsProvider = hapticsProvider
         self.soundPlayer = SoundPlayer()
         self.announcer = ScoreAnnouncer()
-        self.appStore = appStore
+        self.appStore = appStore ?? .shared
         self.match = BadmintonMatch()
     }
 

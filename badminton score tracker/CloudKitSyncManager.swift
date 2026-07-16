@@ -876,7 +876,8 @@ extension CloudKitSyncManager: CKSyncEngineDelegate {
             handleSent(sent)
 
         case .sentDatabaseChanges, .fetchedDatabaseChanges,
-             .willFetchChanges, .didFetchChanges, .willSendChanges, .didSendChanges:
+             .willFetchChanges, .didFetchChanges, .willSendChanges, .didSendChanges,
+             .willFetchRecordZoneChanges, .didFetchRecordZoneChanges:
             break
 
         @unknown default:

@@ -124,7 +124,7 @@ private struct FriendProfileDetailView: View {
                 }
             }
 
-            if let activity {
+            if activity != nil {
                 Section(header: Text("friends.profile_history_section")) {
                     if sortedHistory.isEmpty {
                         Text("friends.activity_no_matches")
