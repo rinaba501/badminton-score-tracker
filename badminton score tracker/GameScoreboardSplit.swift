@@ -52,23 +52,30 @@ struct SplitScoreboard: View {
     let header: GameHeaderData
     let theme: CourtTheme
 
+    /// Neither side is confirmed serving yet (before the first rally — real
+    /// service order is decided by an out-of-app coin toss, so the app can't
+    /// truthfully tint one zone over the other). Rather than leave both zones
+    /// near-black in that state, both get an equal, muted theme wash so the
+    /// screen still reads as "this app" at 0–0 without falsely picking a server.
+    private var neitherServing: Bool { !top.isServing && !bottom.isServing }
+
+    private func zoneColors(isServing: Bool) -> [Color] {
+        if isServing {
+            return [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
+        } else if neitherServing {
+            return [theme.color.blended(toward: .black, by: 0.3), theme.color.blended(toward: .black, by: 0.5)]
+        } else {
+            return [Color(white: 0.09), Color(white: 0.06)]
+        }
+    }
+
     private var fields: some View {
         ZStack {
             Color(white: 0.05)
-            LinearGradient(
-                colors: top.isServing
-                    ? [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
-                    : [Color(white: 0.09), Color(white: 0.06)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            )
-            .clipShape(DiagonalSplit(topSide: true))
-            LinearGradient(
-                colors: bottom.isServing
-                    ? [theme.color.blended(toward: .white, by: 0.15), theme.color, theme.color.blended(toward: .black, by: 0.25)]
-                    : [Color(white: 0.09), Color(white: 0.06)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            )
-            .clipShape(DiagonalSplit(topSide: false))
+            LinearGradient(colors: zoneColors(isServing: top.isServing), startPoint: .topLeading, endPoint: .bottomTrailing)
+                .clipShape(DiagonalSplit(topSide: true))
+            LinearGradient(colors: zoneColors(isServing: bottom.isServing), startPoint: .topLeading, endPoint: .bottomTrailing)
+                .clipShape(DiagonalSplit(topSide: false))
         }
         .ignoresSafeArea()
     }
@@ -84,23 +91,23 @@ struct SplitScoreboard: View {
     private func chyron(for data: ScoreSideData, tabColor: Color) -> some View {
         HStack(spacing: 0) {
             Text(String(data.name.prefix(1)).uppercased())
-                .font(.headline.weight(.black))
+                .font(.title3.weight(.black))
                 .foregroundStyle(.white)
-                .frame(width: 40, height: 40)
+                .frame(width: 46, height: 46)
                 .background(tabColor)
             HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(data.name.uppercased())
-                        .font(.subheadline.weight(.heavy))
+                        .font(.headline.weight(.heavy))
                         .italic()
                         .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.55)
                     if let partnerName = data.partnerName {
                         Text("/ \(partnerName.uppercased())")
-                            .font(.subheadline.weight(.heavy))
+                            .font(.headline.weight(.heavy))
                             .italic()
                             .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                            .minimumScaleFactor(0.55)
                     }
                 }
                 if data.isServing {
@@ -123,7 +130,7 @@ struct SplitScoreboard: View {
                 }
             }
             .padding(.horizontal, 14)
-            .frame(height: 40)
+            .frame(height: 46)
             .background(.white.opacity(0.14))
         }
         .clipShape(RoundedRectangle(cornerRadius: 6))

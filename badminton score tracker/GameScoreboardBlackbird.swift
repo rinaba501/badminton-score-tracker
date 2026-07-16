@@ -24,9 +24,10 @@ struct BlackbirdScoreboard: View {
 
     private func serveMarker(isServing: Bool) -> some View {
         Image(systemName: "play.fill")
-            .font(.system(size: 11, weight: .bold))
+            .font(.system(size: 16, weight: .bold))
             .foregroundStyle(isServing ? theme.color.blended(toward: .white, by: 0.35) : .clear)
-            .frame(width: 16)
+            .shadow(color: isServing ? theme.color.opacity(0.8) : .clear, radius: 5)
+            .frame(width: 20)
     }
 
     private func nameRow(_ data: ScoreSideData) -> some View {
@@ -111,9 +112,9 @@ struct BlackbirdScoreboard: View {
     private var statusStrip: some View {
         HStack(spacing: 14) {
             Text("game.games")
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: 11, weight: .bold))
                 .tracking(1.6)
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.white.opacity(0.7))
             if header.isTimeModeEnabled {
                 HStack(spacing: 5) {
                     Image(systemName: "timer").font(.caption2)
