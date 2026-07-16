@@ -27,7 +27,7 @@ class WatchAppDelegate: NSObject, WKApplicationDelegate {
 
     func didFailToRegisterForRemoteNotificationsWithError(_ error: Error) {}
 
-    func didReceiveRemoteNotification(_ userInfo: [AnyHashable: Any]) async -> WKBackgroundFetchResult {
+    nonisolated func didReceiveRemoteNotification(_ userInfo: sending [AnyHashable: Any]) async -> WKBackgroundFetchResult {
         guard let requests = try? await CloudKitSyncManager.shared.fetchMyFriendRequests() else { return .failed }
         await AppStore.shared.saveFriendRequests(requests)
         return .newData
