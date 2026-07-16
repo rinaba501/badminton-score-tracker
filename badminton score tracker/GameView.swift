@@ -384,10 +384,19 @@ struct ScoreView: View {
     private var partnerIsMe: Bool { data.partnerIsMe }
 
     /// A light, low-saturation tint of the active theme color, used for the
-    /// "won last game" glow and serve indicator instead of hardcoded yellow —
-    /// mirrors mockup A's "every accent derived from the theme hue" intent.
+    /// "won last game" glow instead of hardcoded yellow — mirrors mockup A's
+    /// "every accent derived from the theme hue" intent. NOT used for the
+    /// serve signal: on a theme-tinted glass tile the tint is nearly
+    /// indistinguishable from the idle white border, so serving is signaled
+    /// in solid white instead (#219).
     private var themeTint: Color {
         theme.color.blended(toward: .white, by: 0.55)
+    }
+
+    /// Dark tone of the theme hue — legible on the white serve-court chip
+    /// for every CourtTheme (black theme blends to plain black).
+    private var courtChipTextColor: Color {
+        theme.color.blended(toward: .black, by: 0.5)
     }
 
     /// Same "me" marker ClubDetailView uses — a tile's name isn't always
@@ -423,17 +432,17 @@ struct ScoreView: View {
     }
 
     private var borderColor: Color {
-        isWinner ? themeTint : (isServing ? themeTint.opacity(0.8) : Color.white.opacity(0.5))
+        isWinner ? themeTint : (isServing ? Color.white : Color.white.opacity(0.35))
     }
 
     private var borderWidth: CGFloat {
-        isWinner ? 3 : (isServing ? 2.5 : 1.5)
+        isWinner ? 3 : (isServing ? 3 : 1.5)
     }
 
     private func nameRow(_ label: String, showDot: Bool, isMeLabel: Bool = false) -> some View {
         HStack(spacing: 6) {
             if showDot {
-                Image(systemName: "circle.fill").font(.system(size: 10)).foregroundStyle(themeTint)
+                Image(systemName: "circle.fill").font(.system(size: 10)).foregroundStyle(.white)
             }
             Text(label)
                 .font(.title3.weight(.medium))
@@ -474,8 +483,11 @@ struct ScoreView: View {
                 leadingContent
                 if isServing {
                     Text(serveRight ? "game.right_court" : "game.left_court")
-                        .font(.caption)
-                        .foregroundStyle(themeTint.opacity(0.9))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(courtChipTextColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color.white.opacity(0.92)))
                 }
             }
             Spacer()
@@ -503,7 +515,8 @@ struct ScoreView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 20).stroke(borderColor, lineWidth: borderWidth)
             )
-            .shadow(color: .black.opacity(0.25), radius: 16, y: 8)
+            .shadow(color: isServing ? .white.opacity(0.45) : .black.opacity(0.25),
+                    radius: 16, y: isServing ? 0 : 8)
             .scaleEffect(isWinner ? 1.03 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isWinner)
             .contentShape(Rectangle())
