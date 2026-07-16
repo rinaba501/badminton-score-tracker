@@ -95,15 +95,32 @@ struct SettingsView: View {
         roster.first(where: { $0.name == myName }) ?? Player(id: appStore.localPlayerId, name: myName, colorIndex: 0)
     }
 
+    /// Capsule badge showing the current plan next to the Pro row — the row
+    /// stays visible after purchase so the badge can flip from Free to Pro.
+    private var planBadge: some View {
+        let isPro = storeManager.entitlements.isPro
+        return Text(LocalizedStringKey(isPro ? "paywall.plan_pro" : "paywall.plan_free"))
+            .font(.caption2.weight(.bold))
+            .textCase(.uppercase)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background((isPro ? Color.yellow : Color.secondary).opacity(0.2))
+            .foregroundStyle(isPro ? .yellow : .secondary)
+            .clipShape(Capsule())
+    }
+
     var body: some View {
         List {
-            if !storeManager.entitlements.isPro {
-                Section {
-                    Button(action: { showPaywall = true }) {
+            Section {
+                Button(action: { showPaywall = true }) {
+                    HStack {
                         Label(LocalizedStringKey("paywall.title"), systemImage: "crown.fill")
                             .foregroundColor(.yellow)
+                        Spacer()
+                        planBadge
                     }
                 }
+                .accessibilityElement(children: .combine)
             }
 
             Section(header: Text("settings.game_mode")) {

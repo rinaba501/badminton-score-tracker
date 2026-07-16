@@ -195,13 +195,15 @@
 "common.done" = "Selesai";
 
 // Monetization (paywall & lock badges)
-"paywall.title" = "Badminton Pro";
+"paywall.title" = "Featherkeep Pro";
 "paywall.pro_features" = "Pro menghapus iklan di iPhone dan membuka statistik lanjutan serta semua tema lapangan, avatar, dan ikon — sekali beli untuk semua perangkat.";
 "paywall.restore" = "Pulihkan Pembelian";
 "paywall.owned" = "Sudah Dibeli";
 "paywall.unavailable" = "App Store tidak tersedia saat ini. Coba lagi nanti.";
 "paywall.locked" = "Terkunci";
-"stats.unlock_pro" = "Buka dengan Badminton Pro";
+"paywall.plan_pro" = "Pro";
+"paywall.plan_free" = "Gratis";
+"stats.unlock_pro" = "Buka dengan Featherkeep Pro";
 "paywall.feature_no_ads" = "Tanpa iklan banner";
 "paywall.feature_stats" = "Statistik lanjutan: head-to-head & rentetan kemenangan";
 "paywall.feature_cosmetics" = "Semua tema lapangan, avatar & ikon";

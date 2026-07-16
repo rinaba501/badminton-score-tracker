@@ -195,13 +195,15 @@
 "common.done" = "Done";
 
 // Monetization (paywall & lock badges)
-"paywall.title" = "Badminton Pro";
+"paywall.title" = "Featherkeep Pro";
 "paywall.pro_features" = "Pro removes ads on iPhone and unlocks advanced stats plus every court theme, avatar, and icon — one purchase, all your devices.";
 "paywall.restore" = "Restore Purchases";
 "paywall.owned" = "Purchased";
 "paywall.unavailable" = "The App Store is unavailable right now. Try again later.";
 "paywall.locked" = "Locked";
-"stats.unlock_pro" = "Unlock with Badminton Pro";
+"paywall.plan_pro" = "Pro";
+"paywall.plan_free" = "Free";
+"stats.unlock_pro" = "Unlock with Featherkeep Pro";
 "paywall.feature_no_ads" = "No banner ads";
 "paywall.feature_stats" = "Advanced stats: head-to-head & streaks";
 "paywall.feature_cosmetics" = "All court themes, avatars & icons";
