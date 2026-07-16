@@ -234,11 +234,13 @@ struct GameView: View {
         if viewModel.match.isTied {
             MatchOverOverlay(title: NSLocalizedString("game.tie", comment: ""), games: gamesScoreText,
                              actionTitle: NSLocalizedString("game.rematch", comment: ""), action: viewModel.newMatch,
-                             isMatchOver: true, completedGames: viewModel.match.completedGames)
+                             isMatchOver: true, completedGames: viewModel.match.completedGames,
+                             doneTitle: NSLocalizedString("game.done", comment: ""), onDone: onExit)
         } else if let winner = viewModel.match.matchWinner ?? viewModel.timeModeWinner {
             MatchOverOverlay(title: winsMatchText(winner), games: gamesScoreText,
                              actionTitle: NSLocalizedString("game.rematch", comment: ""), action: viewModel.newMatch,
-                             isMatchOver: true, completedGames: viewModel.match.completedGames)
+                             isMatchOver: true, completedGames: viewModel.match.completedGames,
+                             doneTitle: NSLocalizedString("game.done", comment: ""), onDone: onExit)
         } else if let gameWinner = viewModel.match.gameWinner {
             MatchOverOverlay(title: winsGameText(gameWinner), games: gamesScoreText,
                              actionTitle: NSLocalizedString("game.next_game", comment: ""), action: viewModel.startNextGame)
@@ -294,7 +296,11 @@ struct GameView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("game.menu") {
+                    // "End" while play is live (tapping asks to discard),
+                    // "Done" once there's nothing left to lose — the old
+                    // static "Menu" label promised navigation but delivered
+                    // a destructive alert (#235).
+                    Button(NSLocalizedString(matchInProgress ? "game.end" : "game.done", comment: "")) {
                         if matchInProgress { viewModel.showDiscardAlert = true } else { onExit() }
                     }
                     // Minimal's near-white background makes a plain white
@@ -540,6 +546,10 @@ struct MatchOverOverlay: View {
     let action: () -> Void
     var isMatchOver = false
     var completedGames: [GameScore] = []
+    // Explicit exit for the match-over state; when set it becomes the
+    // primary button and demotes `action` (Rematch) to secondary (#235).
+    var doneTitle: String?
+    var onDone: (() -> Void)?
 
     @State private var shimmer = false
 
@@ -566,9 +576,19 @@ struct MatchOverOverlay: View {
                     .foregroundStyle(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
             }
-            Button(actionTitle, action: action)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+            if let doneTitle, let onDone {
+                Button(doneTitle, action: onDone)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                Button(actionTitle, action: action)
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .tint(.white)
+            } else {
+                Button(actionTitle, action: action)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+            }
         }
         .padding(28)
         .background(Color.black.opacity(0.85))

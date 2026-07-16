@@ -83,7 +83,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "नया मैच";
 "prematch.back" = "वापस";
-"game.menu" = "मेनू";
+"game.end" = "समाप्त";
+"game.done" = "पूर्ण";
 "game.games" = "गेम्स";
 "game.split_serve" = "सर्व";
 "game.timer_label" = "टाइमर";

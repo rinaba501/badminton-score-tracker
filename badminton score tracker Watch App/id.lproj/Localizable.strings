@@ -11,7 +11,8 @@
 "prematch.back" = "Kembali";
 
 // Game
-"game.menu" = "Menu";
+"game.end" = "Akhiri";
+"game.done" = "Selesai";
 "game.games" = "Game";
 "game.right_court" = "Kotak kanan";
 "game.left_court" = "Kotak kiri";

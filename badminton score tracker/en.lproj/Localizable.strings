@@ -83,7 +83,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "New Match";
 "prematch.back" = "Back";
-"game.menu" = "Menu";
+"game.end" = "End";
+"game.done" = "Done";
 "game.games" = "Games";
 "game.split_serve" = "Serve";
 "game.timer_label" = "Timer";
@@ -94,8 +95,8 @@
 "game.game_point" = "Game Point!";
 "game.match_point" = "Match Point!";
 "game.next_game" = "Next Game";
-"game.wins_game" = "%@ wins the game!";
-"game.wins_match" = "%@ wins the match!";
+"game.wins_game" = "Game to %@!";
+"game.wins_match" = "Match to %@!";
 "game.games_score" = "Games %@";
 "settings.mode" = "Mode";
 "speech.wins_match" = "%@ wins the match!";

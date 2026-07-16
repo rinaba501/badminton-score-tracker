@@ -11,7 +11,8 @@
 "prematch.back" = "뒤로";
 
 // Game
-"game.menu" = "메뉴";
+"game.end" = "종료";
+"game.done" = "완료";
 "game.games" = "게임";
 "game.right_court" = "오른쪽 코트";
 "game.left_court" = "왼쪽 코트";

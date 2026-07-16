@@ -83,7 +83,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "新しい試合";
 "prematch.back" = "戻る";
-"game.menu" = "メニュー";
+"game.end" = "終了";
+"game.done" = "完了";
 "game.games" = "ゲーム";
 "game.split_serve" = "サーブ";
 "game.timer_label" = "タイマー";

@@ -83,7 +83,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "Pertandingan Baru";
 "prematch.back" = "Kembali";
-"game.menu" = "Menu";
+"game.end" = "Akhiri";
+"game.done" = "Selesai";
 "game.games" = "Game";
 "game.split_serve" = "Servis";
 "game.timer_label" = "Timer";

@@ -11,7 +11,8 @@
 "prematch.back" = "वापस";
 
 // Game
-"game.menu" = "मेनू";
+"game.end" = "समाप्त";
+"game.done" = "पूर्ण";
 "game.games" = "गेम्स";
 "game.right_court" = "दायाँ कोर्ट";
 "game.left_court" = "बायाँ कोर्ट";

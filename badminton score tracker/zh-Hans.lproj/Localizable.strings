@@ -83,7 +83,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "新比赛";
 "prematch.back" = "返回";
-"game.menu" = "菜单";
+"game.end" = "结束";
+"game.done" = "完成";
 "game.games" = "局数";
 "game.split_serve" = "发球";
 "game.timer_label" = "计时";
