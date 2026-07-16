@@ -83,7 +83,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "새 경기";
 "prematch.back" = "뒤로";
-"game.menu" = "메뉴";
+"game.end" = "종료";
+"game.done" = "완료";
 "game.games" = "게임";
 "game.split_serve" = "서브";
 "game.timer_label" = "타이머";

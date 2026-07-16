@@ -11,7 +11,8 @@
 "prematch.back" = "Back";
 
 // Game
-"game.menu" = "Menu";
+"game.end" = "End";
+"game.done" = "Done";
 "game.games" = "Games";
 "game.right_court" = "Right court";
 "game.left_court" = "Left court";
@@ -19,8 +20,8 @@
 "game.match_point" = "Match Point!";
 "game.next_game" = "Next Game";
 "game.new_match" = "New Match";
-"game.wins_game" = "%@ wins the game!";
-"game.wins_match" = "%@ wins the match!";
+"game.wins_game" = "Game to %@!";
+"game.wins_match" = "Match to %@!";
 "game.games_score" = "Games %@";
 "game.team_names_format" = "%1$@ & %2$@";
 

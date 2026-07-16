@@ -11,7 +11,8 @@
 "prematch.back" = "戻る";
 
 // Game
-"game.menu" = "メニュー";
+"game.end" = "終了";
+"game.done" = "完了";
 "game.games" = "ゲーム";
 "game.right_court" = "右コート";
 "game.left_court" = "左コート";

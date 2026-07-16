@@ -11,7 +11,8 @@
 "prematch.back" = "返回";
 
 // Game
-"game.menu" = "菜单";
+"game.end" = "结束";
+"game.done" = "完成";
 "game.games" = "局数";
 "game.right_court" = "右场";
 "game.left_court" = "左场";
