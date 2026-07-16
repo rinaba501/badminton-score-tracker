@@ -14,7 +14,7 @@ jobs:
     name: SwiftLint
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install SwiftLint
         run: brew install swiftlint
@@ -26,7 +26,7 @@ jobs:
     name: BadmintonCore Tests
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select newest installed Xcode
         run: |
@@ -50,7 +50,7 @@ jobs:
     name: Localization Sync
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check Localizable.strings key parity
         run: |
@@ -82,7 +82,7 @@ jobs:
       PROJECT: "badminton score tracker.xcodeproj"
       SCHEME: "badminton score tracker Watch App"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select newest installed Xcode
         run: |
@@ -113,7 +113,7 @@ jobs:
       PROJECT: "badminton score tracker.xcodeproj"
       SCHEME: "badminton score tracker ComplicationExtension"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select newest installed Xcode
         run: |
@@ -138,7 +138,7 @@ jobs:
       PROJECT: "badminton score tracker.xcodeproj"
       SCHEME: "badminton score tracker"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select newest installed Xcode
         run: |
@@ -163,7 +163,7 @@ jobs:
     name: iOS Localization Sync
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check Localizable.strings key parity
         run: |
