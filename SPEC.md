@@ -247,7 +247,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
-| 221 | iOS Stats screen: balanced stat grid (avg duration as its own full-width card, no orphan cell), locked cards show a redacted placeholder value instead of an empty lock, unlock row uses a solid-tint pill for contrast | #TBD |
+| 221 | iOS Stats screen: balanced stat grid (avg duration as its own full-width card, no orphan cell), locked cards show a redacted placeholder value instead of an empty lock, unlock row uses a solid-tint pill for contrast | #228 |
 | 220 | iOS pre-match player list: primary-color names with the accent reserved for the pinned "you" row; guest avatars use a bird glyph, not locale-derived initials | #227 |
 | 109 | Migrate history sync to CloudKit private database (Roadmap Phase 4) — CloudKit is now the only sync path, KV store retired | #129, #130, #141, #183 |
 | 41 | iPhone companion app — history, stats, roster, share, and live scoring (Roadmap Phase 6) | #133, #135, #136, #137, #138, #139 |
