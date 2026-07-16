@@ -42,6 +42,7 @@
 "history.filter_all_types" = "全部";
 "history.sort_newest" = "最新";
 "history.sort_oldest" = "最早";
+"history.sort_label" = "排序";
 "history.opponent_fallback" = "对手";
 "settings.singles" = "单打";
 "settings.doubles" = "双打";
@@ -228,7 +229,6 @@
 "friends.your_friends" = "好友";
 "friends.no_friends_yet" = "暂无好友";
 "friends.share_history_toggle" = "与好友分享我的记录";
-"friends.share_history_footer" = "开启后，你的个人名单和比赛记录将对所有已接受的好友可见。";
 "friends.share_section_header" = "与好友共享";
 "friends.share_name_always_visible_footer" = "已接受的好友始终可以看到你的名字。开启上方任一选项可共享更多信息。";
 "friends.share_avatar_toggle" = "共享我的头像";

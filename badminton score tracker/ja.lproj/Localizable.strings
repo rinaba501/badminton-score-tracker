@@ -42,6 +42,7 @@
 "history.filter_all_types" = "すべて";
 "history.sort_newest" = "新しい順";
 "history.sort_oldest" = "古い順";
+"history.sort_label" = "並べ替え";
 "history.opponent_fallback" = "対戦相手";
 "settings.singles" = "シングルス";
 "settings.doubles" = "ダブルス";
@@ -228,7 +229,6 @@
 "friends.your_friends" = "フレンド";
 "friends.no_friends_yet" = "フレンドはまだいません";
 "friends.share_history_toggle" = "フレンドに履歴を共有";
-"friends.share_history_footer" = "オンにすると、あなたの個人プレイヤーリストと試合履歴が承認済みのフレンド全員に表示されます。";
 "friends.share_section_header" = "フレンドと共有";
 "friends.share_name_always_visible_footer" = "承認済みのフレンドには名前が常に表示されます。上のいずれかをオンにするとさらに共有されます。";
 "friends.share_avatar_toggle" = "アバターを共有";

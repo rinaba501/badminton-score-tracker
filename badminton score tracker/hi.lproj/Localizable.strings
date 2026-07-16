@@ -42,6 +42,7 @@
 "history.filter_all_types" = "सभी";
 "history.sort_newest" = "नवीनतम";
 "history.sort_oldest" = "सबसे पुराना";
+"history.sort_label" = "क्रमित करें";
 "history.opponent_fallback" = "प्रतिद्वंद्वी";
 "settings.singles" = "सिंगल्स";
 "settings.doubles" = "डबल्स";
@@ -228,7 +229,6 @@
 "friends.your_friends" = "मित्र";
 "friends.no_friends_yet" = "अभी कोई मित्र नहीं";
 "friends.share_history_toggle" = "मित्रों के साथ अपना इतिहास साझा करें";
-"friends.share_history_footer" = "चालू करने पर, आपकी व्यक्तिगत सूची और मैच इतिहास हर स्वीकृत मित्र को दिखाई देगा।";
 "friends.share_section_header" = "मित्रों के साथ साझा करें";
 "friends.share_name_always_visible_footer" = "स्वीकृत मित्रों को आपका नाम हमेशा दिखाई देता है। अधिक साझा करने के लिए ऊपर दिए गए किसी भी विकल्प को चालू करें।";
 "friends.share_avatar_toggle" = "मेरा अवतार साझा करें";

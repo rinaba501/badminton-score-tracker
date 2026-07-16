@@ -42,6 +42,7 @@
 "history.filter_all_types" = "Semua";
 "history.sort_newest" = "Terbaru";
 "history.sort_oldest" = "Terlama";
+"history.sort_label" = "Urutkan";
 "history.opponent_fallback" = "Lawan";
 "settings.singles" = "Tunggal";
 "settings.doubles" = "Ganda";
@@ -228,7 +229,6 @@
 "friends.your_friends" = "Teman";
 "friends.no_friends_yet" = "Belum ada teman";
 "friends.share_history_toggle" = "Bagikan Riwayat Saya ke Teman";
-"friends.share_history_footer" = "Jika aktif, daftar pemain pribadi dan riwayat pertandingan Anda akan terlihat oleh semua teman yang diterima.";
 "friends.share_section_header" = "Bagikan ke Teman";
 "friends.share_name_always_visible_footer" = "Nama Anda selalu terlihat oleh teman yang diterima. Aktifkan salah satu di atas untuk berbagi lebih banyak.";
 "friends.share_avatar_toggle" = "Bagikan Avatar Saya";

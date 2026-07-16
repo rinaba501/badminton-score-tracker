@@ -247,6 +247,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 223 | iOS Match History: sort order moved to a toolbar menu and the share-with-friends toggle merged into the filter section with its footer dropped, so the first match row sits higher on tall screens | #230 |
 | 222 | iOS home screen: stat strip cells (Matches/Win rate/Players) now navigate to History/Stats/Players; a "last match" card (reusing MatchHistoryRow) fills the dead space below the menu when history isn't empty | #229 |
 | 221 | iOS Stats screen: balanced stat grid (avg duration as its own full-width card, no orphan cell), locked cards show a redacted placeholder value instead of an empty lock, unlock row uses a solid-tint pill for contrast | #228 |
 | 220 | iOS pre-match player list: primary-color names with the accent reserved for the pinned "you" row; guest avatars use a bird glyph, not locale-derived initials | #227 |
