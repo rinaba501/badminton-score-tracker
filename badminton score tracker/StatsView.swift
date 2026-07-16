@@ -177,20 +177,44 @@ struct StatsView: View {
         }
     }
 
-    /// Stand-ins for Pro-gated stats: tapping opens the paywall.
+    /// Stand-ins for Pro-gated stats: tapping opens the paywall. Solid tint
+    /// background (not plain colored text) keeps this legible against any
+    /// CourtTheme accent, including lighter ones.
     private var lockedProRow: some View {
         Button(action: { showPaywall = true }) {
-            Label("stats.unlock_pro", systemImage: "lock.fill")
-                .foregroundStyle(.secondary)
+            HStack {
+                Label("stats.unlock_pro", systemImage: "lock.fill")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10))
         }
+        .buttonStyle(.plain)
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+        .listRowBackground(Color.clear)
     }
 
     private func lockedStatCard(labelKey: LocalizedStringKey) -> some View {
         VStack(spacing: 4) {
-            Image(systemName: "lock.fill")
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .accessibilityLabel(Text("paywall.locked"))
+            ZStack {
+                Text(verbatim: "12")
+                    .font(.system(.title3, design: .rounded).weight(.bold))
+                    .monospacedDigit()
+                    .redacted(reason: .placeholder)
+                Image(systemName: "lock.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.white)
+                    .padding(5)
+                    .background(Color.accentColor, in: Circle())
+                    .offset(x: 22, y: -14)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("paywall.locked"))
             Text(labelKey)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -272,15 +296,20 @@ struct StatsView: View {
 
     // MARK: - Stat cards
 
+    // Always exactly 4 cells (2x2) so nothing orphans onto its own row;
+    // avg duration renders as a separate full-width card below instead of
+    // competing for a 5th grid slot.
     private var statGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-            statCard(value: "\(wins)", labelKey: "stats.wins")
-            statCard(value: "\(losses)", labelKey: "stats.losses")
-            statCard(value: String(format: "%.1f", avgPointsScored), labelKey: "stats.avg_points")
-            if storeManager.entitlements.hasAdvancedStats {
-                statCard(value: "\(longestStreak)", labelKey: "stats.best_streak")
-            } else {
-                lockedStatCard(labelKey: "stats.best_streak")
+        VStack(spacing: 12) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                statCard(value: "\(wins)", labelKey: "stats.wins")
+                statCard(value: "\(losses)", labelKey: "stats.losses")
+                statCard(value: String(format: "%.1f", avgPointsScored), labelKey: "stats.avg_points")
+                if storeManager.entitlements.hasAdvancedStats {
+                    statCard(value: "\(longestStreak)", labelKey: "stats.best_streak")
+                } else {
+                    lockedStatCard(labelKey: "stats.best_streak")
+                }
             }
             if avgMatchDuration > 0 {
                 statCard(value: StatsCalculator.durationString(avgMatchDuration), labelKey: "stats.avg_duration")
