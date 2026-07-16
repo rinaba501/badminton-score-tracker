@@ -42,6 +42,7 @@
 "history.filter_all_types" = "전체";
 "history.sort_newest" = "최신순";
 "history.sort_oldest" = "오래된순";
+"history.sort_label" = "정렬";
 "history.opponent_fallback" = "상대";
 "settings.singles" = "단식";
 "settings.doubles" = "복식";
@@ -228,7 +229,6 @@
 "friends.your_friends" = "친구";
 "friends.no_friends_yet" = "아직 친구가 없습니다";
 "friends.share_history_toggle" = "친구에게 내 기록 공유하기";
-"friends.share_history_footer" = "켜면 내 개인 명단과 경기 기록이 수락된 모든 친구에게 표시됩니다.";
 "friends.share_section_header" = "친구와 공유";
 "friends.share_name_always_visible_footer" = "수락된 친구에게는 이름이 항상 표시됩니다. 위 항목을 켜면 더 많은 정보를 공유할 수 있습니다.";
 "friends.share_avatar_toggle" = "아바타 공유";

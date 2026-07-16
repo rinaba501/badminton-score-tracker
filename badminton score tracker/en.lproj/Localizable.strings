@@ -42,6 +42,7 @@
 "history.filter_all_types" = "All";
 "history.sort_newest" = "Newest";
 "history.sort_oldest" = "Oldest";
+"history.sort_label" = "Sort";
 "history.opponent_fallback" = "Opponent";
 "settings.singles" = "Singles";
 "settings.doubles" = "Doubles";
@@ -228,7 +229,6 @@
 "friends.your_friends" = "Friends";
 "friends.no_friends_yet" = "No friends yet";
 "friends.share_history_toggle" = "Share My History with Friends";
-"friends.share_history_footer" = "When on, your personal roster and match history are visible to every accepted friend.";
 "friends.share_section_header" = "Share With Friends";
 "friends.share_name_always_visible_footer" = "Your name is always visible to accepted friends. Turn on any field above to share more.";
 "friends.share_avatar_toggle" = "Share My Avatar";

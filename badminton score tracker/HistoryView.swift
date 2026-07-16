@@ -14,6 +14,10 @@
 //  gets a more deliberate control) — same discoverability fix as ProfileView,
 //  applied to a screen with no natural per-field home. toggleShareHistory-
 //  WithFriends here is a deliberate duplicate of FriendSharingSettingsView's.
+//  Lives inline atop the filter Section with no footer (the explainer text
+//  lives in FriendSharingSettingsView already) and sort order lives in the
+//  toolbar, not a third segmented control — both trim chrome above the first
+//  match row on tall screens (#223).
 //
 
 import SwiftUI
@@ -101,9 +105,6 @@ struct HistoryView: View {
                 emptyState(key: "history.empty")
             } else {
                 List {
-                    if selectedClubId == nil {
-                        historySharingSection
-                    }
                     filterSection
                     if filteredHistory.isEmpty {
                         Section { centeredMessage("history.empty") }
@@ -138,6 +139,7 @@ struct HistoryView: View {
             }
             if !history.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) { playerFilterMenu }
+                ToolbarItem(placement: .topBarTrailing) { sortMenu }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(role: .destructive) {
                         showingClearConfirmation = true
@@ -168,15 +170,13 @@ struct HistoryView: View {
         }
     }
 
-    @ViewBuilder private var historySharingSection: some View {
-        Section(footer: Text("friends.share_history_footer")) {
-            Toggle("friends.share_history_toggle", isOn: $shareHistoryWithFriends)
-                .onChange(of: shareHistoryWithFriends) { _, isOn in toggleShareHistoryWithFriends(isOn) }
-        }
-    }
-
     @ViewBuilder private var filterSection: some View {
         Section {
+            if selectedClubId == nil {
+                Toggle("friends.share_history_toggle", isOn: $shareHistoryWithFriends)
+                    .onChange(of: shareHistoryWithFriends) { _, isOn in toggleShareHistoryWithFriends(isOn) }
+            }
+
             Picker("history.filter_all", selection: $dateRange) {
                 ForEach(DateRange.allCases, id: \.self) { range in
                     Text(range.labelKey).tag(range)
@@ -192,12 +192,6 @@ struct HistoryView: View {
                 }
                 .pickerStyle(.segmented)
             }
-
-            Picker("history.sort_newest", selection: $newestFirst) {
-                Text("history.sort_newest").tag(true)
-                Text("history.sort_oldest").tag(false)
-            }
-            .pickerStyle(.segmented)
         }
     }
 
@@ -259,6 +253,32 @@ struct HistoryView: View {
             }
             .accessibilityLabel(Text("history.filter_player"))
         }
+    }
+
+    @ViewBuilder private var sortMenu: some View {
+        Menu {
+            Button {
+                newestFirst = true
+            } label: {
+                if newestFirst {
+                    Label("history.sort_newest", systemImage: "checkmark")
+                } else {
+                    Text("history.sort_newest")
+                }
+            }
+            Button {
+                newestFirst = false
+            } label: {
+                if !newestFirst {
+                    Label("history.sort_oldest", systemImage: "checkmark")
+                } else {
+                    Text("history.sort_oldest")
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+        }
+        .accessibilityLabel(Text("history.sort_label"))
     }
 
     @ViewBuilder private func shareButton(for record: MatchRecord) -> some View {
