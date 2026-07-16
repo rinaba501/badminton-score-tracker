@@ -254,7 +254,8 @@ struct PreMatchView: View {
                 if let defaultLabel, !defaultLabel.isEmpty {
                     Button { onSelect(defaultLabel) } label: {
                         HStack(spacing: 10) {
-                            playerRow(name: defaultLabel, color: defaultColor, icon: avatarIcon(for: defaultLabel))
+                            playerRow(name: defaultLabel, color: defaultColor,
+                                      icon: avatarIcon(for: defaultLabel), emphasized: true)
                             youBadge
                         }
                     }
@@ -265,6 +266,7 @@ struct PreMatchView: View {
                         Text(Player.guestButtonLabel)
                         Spacer()
                     }
+                    .foregroundStyle(.primary)
                 }
             }
 
@@ -338,14 +340,21 @@ struct PreMatchView: View {
     private var youBadge: some View {
         Image(systemName: "checkmark.seal.fill")
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.tint)
             .accessibilityLabel("clubs.you")
     }
 
-    private func playerRow(name: String, color: Color, icon: String?) -> some View {
+    /// Every row is a `Button`, so its label would otherwise inherit the
+    /// accent tint and the whole list would read as links with nothing
+    /// standing out. Names render in the primary label color; the accent is
+    /// reserved for the pinned "you" row (`emphasized`), whose name is
+    /// tinted alongside its `youBadge`.
+    private func playerRow(name: String, color: Color, icon: String?, emphasized: Bool = false) -> some View {
         HStack(spacing: 10) {
             AvatarView(name: name, color: color, size: 28, iconName: icon)
             Text(name)
+                .fontWeight(emphasized ? .semibold : .regular)
+                .foregroundStyle(emphasized ? AnyShapeStyle(.tint) : AnyShapeStyle(HierarchicalShapeStyle.primary))
             Spacer()
         }
     }

@@ -217,7 +217,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 
 Supported languages: English, Japanese (ja), Chinese Simplified (zh-Hans), Indonesian (id), Korean (ko), Hindi (hi)
 
-The default local-player name ("Me") and the guest labels offered during player selection are fully localized. Guests are randomly assigned one of 6 bird names (e.g. "Guest Falcon"), drawn without replacement per match so up to 4 guest slots (near/far solo + partner) never collide; a picker's guest button shows a generic "Guest" label until the specific name is drawn at tap time. These strings double as identity markers (a guest selection must never be saved to the roster, and never becomes a selectable filter/head-to-head subject in History or Stats), so every screen reads them from a single shared source (`Player.defaultMyName`/`Player.guestTokens`/`Player.displayName(for:)`) rather than each hardcoding its own copy — otherwise a guest chosen in one locale's label could fail the "is this a guest" check.
+The default local-player name ("Me") and the guest labels offered during player selection are fully localized. Guests are randomly assigned one of 6 bird names (e.g. "Guest Falcon"), drawn without replacement per match so up to 4 guest slots (near/far solo + partner) never collide; a picker's guest button shows a generic "Guest" label until the specific name is drawn at tap time. These strings double as identity markers (a guest selection must never be saved to the roster, and never becomes a selectable filter/head-to-head subject in History or Stats), so every screen reads them from a single shared source (`Player.defaultMyName`/`Player.guestTokens`/`Player.displayName(for:)`) rather than each hardcoding its own copy — otherwise a guest chosen in one locale's label could fail the "is this a guest" check. For the same reason a guest's avatar is a fixed bird glyph rather than initials derived from their label (which would read as "GF" in English and differently in every other locale); their per-token color is what tells two guests apart.
 
 ---
 
@@ -247,6 +247,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 220 | iOS pre-match player list: primary-color names with the accent reserved for the pinned "you" row; guest avatars use a bird glyph, not locale-derived initials | #227 |
 | 109 | Migrate history sync to CloudKit private database (Roadmap Phase 4) — CloudKit is now the only sync path, KV store retired | #129, #130, #141, #183 |
 | 41 | iPhone companion app — history, stats, roster, share, and live scoring (Roadmap Phase 6) | #133, #135, #136, #137, #138, #139 |
 | 13 | Share match result as an image/summary card (iPhone) | #138 |
