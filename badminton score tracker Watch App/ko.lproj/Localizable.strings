@@ -212,13 +212,15 @@
 "playeredit.club_personal" = "개인";
 
 // Monetization (paywall & lock badges)
-"paywall.title" = "Badminton Pro";
+"paywall.title" = "Featherkeep Pro";
 "paywall.pro_features" = "Pro는 iPhone의 광고를 제거하고 고급 통계와 모든 코트 테마·아바타·아이콘을 잠금 해제합니다. 한 번 구매하면 모든 기기에서 사용할 수 있습니다.";
 "paywall.restore" = "구입 항목 복원";
 "paywall.owned" = "구입함";
 "paywall.unavailable" = "지금은 App Store에 연결할 수 없습니다. 나중에 다시 시도해 주세요.";
 "paywall.locked" = "잠김";
-"stats.unlock_pro" = "Badminton Pro로 잠금 해제";
+"paywall.plan_pro" = "Pro";
+"paywall.plan_free" = "무료";
+"stats.unlock_pro" = "Featherkeep Pro로 잠금 해제";
 
 // Roadmap Phase 7e: Friends UI
 "settings.friends" = "친구";

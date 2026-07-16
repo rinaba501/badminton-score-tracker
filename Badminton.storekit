@@ -11,12 +11,12 @@
       "localizations" : [
         {
           "description" : "Remove ads, advanced stats, all themes and avatars.",
-          "displayName" : "Badminton Pro",
+          "displayName" : "Featherkeep Pro",
           "locale" : "en_US"
         }
       ],
       "productID" : "ritsuma.badminton.pro",
-      "referenceName" : "Badminton Pro",
+      "referenceName" : "Featherkeep Pro",
       "type" : "NonConsumable"
     },
     {

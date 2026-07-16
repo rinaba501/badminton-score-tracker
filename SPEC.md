@@ -110,7 +110,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 
 | Product | ID | Grants |
 |---|---|---|
-| Badminton Pro | `ritsuma.badminton.pro` | Removes ads + everything below |
+| Featherkeep Pro | `ritsuma.badminton.pro` | Removes ads + everything below |
 | Court Theme Pack | `ritsuma.badminton.pack.themes` | Premium court themes |
 | Avatar Pack | `ritsuma.badminton.pack.avatars` | Premium avatar images/icons |
 
@@ -121,7 +121,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 - **Premium avatars (Pro or Avatar Pack):** all but 11 avatar images and 7 sport icons. Editor grids show lock badges → paywall; the Watch's pre-match quick-add simply offers the free subset. Already-assigned premium avatars keep rendering regardless
 - **Banner ads (iOS only, removed by Pro):** a 320×50 AdMob banner at the bottom of the iPhone menu, Match History, and Stats screens — never during live scoring, never on the Watch. First display runs the Google UMP consent flow, then the App Tracking Transparency prompt (denial = non-personalized ads). Shipping TODO: Info.plist `GADApplicationIdentifier` and the ad-unit ID in `AdBannerView.swift` are Google's public test ids until real AdMob ids exist
 
-**Paywall:** reachable from Settings on both platforms (row hidden once Pro is owned) and from every lock badge. Lists the three products with live App Store prices and a Restore Purchases button. `Badminton.storekit` at the repo root enables local purchase testing in Xcode (select it under Scheme → Run → Options → StoreKit Configuration).
+**Paywall:** reachable from Settings on both platforms and from every lock badge. The Settings row is always visible and carries a plan capsule badge — yellow "Pro" once Pro is owned, gray "Free" otherwise — so the current plan is checkable at a glance. Lists the three products with live App Store prices and a Restore Purchases button. `Badminton.storekit` at the repo root enables local purchase testing in Xcode (select it under Scheme → Run → Options → StoreKit Configuration).
 
 **App Store Connect TODO before release:** Paid Apps agreement, create the three IAPs with the exact product IDs above, localized product names/descriptions, price tiers; AdMob account + real app/ad-unit ids; privacy nutrition labels updated for ads/tracking.
 
