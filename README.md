@@ -29,7 +29,7 @@ See [`SPEC.md`](SPEC.md) for the full feature spec, and the [Open Issues](SPEC.m
 
 ## Requirements
 
-- Xcode (CI currently builds against Xcode 26.3; watchOS + iOS Simulators)
+- Xcode (CI selects the newest Xcode installed on the runner — currently 26.6; watchOS + iOS Simulators)
 - watchOS 11.4+ deployment target (Watch App)
 - iOS 17+ deployment target, iPhone-only (companion app)
 
