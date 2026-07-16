@@ -98,12 +98,22 @@ struct AvatarView: View {
         return result.isEmpty ? "?" : result
     }
 
+    /// Guests are sentinel identities with no roster row, so they'd otherwise
+    /// fall through to initials derived from their *localized* label ("Guest
+    /// Falcon" → "GF", and something different in every other locale). A fixed
+    /// glyph keeps them locale-independent; the per-token guest color
+    /// (`Player.guestAvatarColor(for:)`) is what tells two guests apart.
+    private var resolvedIconName: String? {
+        if iconName == nil && Player.isGuestName(name) { return "bird.fill" }
+        return iconName
+    }
+
     var body: some View {
         ZStack {
             Circle()
                 .fill(color)
                 .frame(width: size, height: size)
-            if let icon = iconName {
+            if let icon = resolvedIconName {
                 if Player.avatarImageNames.contains(icon) {
                     Image(icon)
                         .resizable()
