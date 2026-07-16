@@ -28,18 +28,22 @@ struct MatchstickScoreboard: View {
     private func ledDigit(_ score: Int) -> some View {
         ZStack {
             Text("88")
-                .foregroundStyle(.white.opacity(0.05))
+                .foregroundStyle(.white.opacity(0.09))
             Text("\(score)")
                 .foregroundStyle(glowColor)
-                .shadow(color: glowColor.opacity(0.8), radius: 10)
-                .shadow(color: glowColor.opacity(0.5), radius: 20)
+                .shadow(color: glowColor.opacity(0.9), radius: 3)
+                .shadow(color: glowColor.opacity(0.4), radius: 9)
         }
         .font(.system(size: 72, weight: .heavy, design: .monospaced))
         .monospacedDigit()
     }
 
+    private func serveLampGlow(lit: Bool, opacity: Double) -> Color {
+        lit ? glowColor.opacity(opacity) : .clear
+    }
+
     private func serveLamp(lit: Bool) -> some View {
-        Text("game.split_serve")
+        let capsule: some View = Text("game.split_serve")
             .font(.system(size: 10, weight: .heavy))
             .tracking(1.4)
             .foregroundStyle(lit ? Color.black : Color.white.opacity(0.25))
@@ -47,7 +51,10 @@ struct MatchstickScoreboard: View {
             .padding(.vertical, 3)
             .background(lit ? AnyShapeStyle(glowColor) : AnyShapeStyle(Color.white.opacity(0.06)))
             .clipShape(Capsule())
-            .shadow(color: lit ? glowColor.opacity(0.7) : .clear, radius: 6)
+            .overlay(Capsule().stroke(.white.opacity(lit ? 0.65 : 0), lineWidth: 1))
+        return capsule
+            .shadow(color: serveLampGlow(lit: lit, opacity: 0.95), radius: 4)
+            .shadow(color: serveLampGlow(lit: lit, opacity: 0.55), radius: 11)
     }
 
     private func gameLamps(_ games: Int) -> some View {

@@ -100,7 +100,7 @@ struct BirdsEyeScoreboard: View {
     private func nameLabel(_ data: ScoreSideData) -> some View {
         HStack(spacing: 6) {
             Text(data.name)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 19, weight: .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             if data.isMe {
@@ -109,7 +109,7 @@ struct BirdsEyeScoreboard: View {
             }
             if let partnerName = data.partnerName {
                 Text("· \(partnerName)")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 19, weight: .bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 if data.partnerIsMe {

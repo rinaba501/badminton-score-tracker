@@ -112,9 +112,11 @@ struct MinimalScoreboard: View {
             }
             Spacer()
             Text("\(data.score)")
-                .font(.system(size: 88, weight: isLeader ? .medium : .light, design: .default))
+                .font(.system(size: 150, weight: isLeader ? .medium : .light, design: .default))
                 .foregroundStyle(ink)
                 .monospacedDigit()
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
         }
         .padding(.vertical, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -135,9 +137,9 @@ struct MinimalScoreboard: View {
             row(top, showDivider: false, isLeader: top.score > bottom.score)
             row(bottom, showDivider: true, isLeader: bottom.score > top.score)
             Text("game.tap_hint")
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 12, weight: .semibold))
                 .tracking(1.0)
-                .foregroundStyle(inkTertiary)
+                .foregroundStyle(inkSecondary)
                 .padding(.top, 18)
         }
         .padding(.horizontal, 22)
