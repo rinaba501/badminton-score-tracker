@@ -3,9 +3,12 @@
 //  badminton score tracker (iOS)
 //
 //  Root menu, dashboard-style: a quick-stats strip (live from the iCloud-synced
-//  history), a prominent New Match button (modal scoring flow), and
-//  Settings-style icon rows into Profile / History / Stats / Players. iOS
-//  uses NavigationStack-based navigation (per ROADMAP Phase 6). Also owns the
+//  history) whose three cells navigate to History/Stats/Players, a prominent
+//  New Match button (modal scoring flow), Settings-style icon rows into
+//  Profile / History / Stats / Players, and — when at least one match
+//  exists — a trailing "last match" card (MatchHistoryRow, reused verbatim
+//  from HistoryView.swift) so the screen doesn't end in empty space below
+//  the menu. iOS uses NavigationStack-based navigation (per ROADMAP Phase 6). Also owns the
 //  first-launch "what should we call you?" prompt (shown once, skippable —
 //  see AppStorageKeys.didPromptForName), so a new user's name doesn't sit at
 //  the "Me" placeholder by the time Friends/Clubs are ever touched.
@@ -44,6 +47,10 @@ struct ContentView: View {
 
     private var myWinRate: Double {
         StatsCalculator.winRate(player: myName, playerHistory: myHistory)
+    }
+
+    private var latestMatch: MatchRecord? {
+        store.history.max(by: { $0.date < $1.date })
     }
 
     /// Same cached-`UserDefaults` lookup `AppStore.friends` uses — the menu
@@ -107,6 +114,16 @@ struct ContentView: View {
                         menuRow("settings.title", systemImage: "gearshape.fill", color: .gray)
                     }
                 }
+
+                if let latestMatch {
+                    Section(header: Text("history.title")) {
+                        NavigationLink {
+                            HistoryView()
+                        } label: {
+                            MatchHistoryRow(record: latestMatch)
+                        }
+                    }
+                }
             }
             .navigationTitle(Text("ios.title"))
             .onAppear {
@@ -142,13 +159,30 @@ struct ContentView: View {
 
     // MARK: - Pieces
 
+    // Each cell is a real NavigationLink (not just card-styled text) so the
+    // strip's tappable appearance matches its behavior.
     private var statsStrip: some View {
         HStack(spacing: 0) {
-            statBlock(value: "\(store.history.count)", labelKey: "stats.matches")
+            NavigationLink {
+                HistoryView()
+            } label: {
+                statBlock(value: "\(store.history.count)", labelKey: "stats.matches")
+            }
+            .buttonStyle(.plain)
             divider
-            statBlock(value: String(format: "%.0f%%", myWinRate), labelKey: "stats.win_rate")
+            NavigationLink {
+                StatsView()
+            } label: {
+                statBlock(value: String(format: "%.0f%%", myWinRate), labelKey: "stats.win_rate")
+            }
+            .buttonStyle(.plain)
             divider
-            statBlock(value: "\(store.roster.count)", labelKey: "settings.players")
+            NavigationLink {
+                RosterView()
+            } label: {
+                statBlock(value: "\(store.roster.count)", labelKey: "settings.players")
+            }
+            .buttonStyle(.plain)
         }
     }
 
