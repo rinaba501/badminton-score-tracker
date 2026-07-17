@@ -307,6 +307,7 @@ struct ClubDetailView: View {
                                     Text(player.name).foregroundStyle(.primary)
                                 }
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                     Button {
