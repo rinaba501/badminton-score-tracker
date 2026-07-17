@@ -28,6 +28,17 @@ struct ContentView: View {
     @State private var showNamePrompt = false
     @State private var pendingName = ""
     @State private var pendingFriendInvite: PendingFriendInvite?
+    @State private var stripDestination: StripDestination?
+
+    /// Three co-located `NavigationLink`s sharing one `List` row (the stats
+    /// strip's HStack) mis-route taps — SwiftUI resolves the wrong sibling's
+    /// destination (tapping cell N pushes cell N+1's view). Driving the push
+    /// through a single `.navigationDestination(item:)` instead sidesteps it.
+    private enum StripDestination: Identifiable {
+        case history, stats, roster
+
+        var id: Self { self }
+    }
 
     /// Identifiable wrapper so a parsed `badminton://addfriend` link can
     /// drive `.sheet(item:)` — a fresh id per link open means re-tapping the
@@ -126,6 +137,13 @@ struct ContentView: View {
                 }
             }
             .navigationTitle(Text("ios.title"))
+            .navigationDestination(item: $stripDestination) { destination in
+                switch destination {
+                case .history: HistoryView()
+                case .stats: StatsView()
+                case .roster: RosterView()
+                }
+            }
             .onAppear {
                 if !didPromptForName && needsName {
                     pendingName = ""
@@ -159,26 +177,28 @@ struct ContentView: View {
 
     // MARK: - Pieces
 
-    // Each cell is a real NavigationLink (not just card-styled text) so the
-    // strip's tappable appearance matches its behavior.
+    // Each cell is a real tap target (not just card-styled text) so the
+    // strip's tappable appearance matches its behavior. Pushes go through
+    // stripDestination/.navigationDestination(item:) rather than a
+    // NavigationLink per cell — see StripDestination's doc comment.
     private var statsStrip: some View {
         HStack(spacing: 0) {
-            NavigationLink {
-                HistoryView()
+            Button {
+                stripDestination = .history
             } label: {
                 statBlock(value: "\(store.history.count)", labelKey: "stats.matches")
             }
             .buttonStyle(.plain)
             divider
-            NavigationLink {
-                StatsView()
+            Button {
+                stripDestination = .stats
             } label: {
                 statBlock(value: String(format: "%.0f%%", myWinRate), labelKey: "stats.win_rate")
             }
             .buttonStyle(.plain)
             divider
-            NavigationLink {
-                RosterView()
+            Button {
+                stripDestination = .roster
             } label: {
                 statBlock(value: "\(store.roster.count)", labelKey: "settings.players")
             }
