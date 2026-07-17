@@ -201,7 +201,7 @@ struct PreMatchView: View {
             .padding(.vertical, 8)
             .background(.bar)
         }
-        .foregroundStyle(.primary)
+        .buttonStyle(.plain)
     }
 
     // MARK: - Reusable picker
@@ -259,6 +259,7 @@ struct PreMatchView: View {
                             youBadge
                         }
                     }
+                    .buttonStyle(.plain)
                 }
                 Button { onSelect(guestToken) } label: {
                     HStack(spacing: 10) {
@@ -268,6 +269,7 @@ struct PreMatchView: View {
                     }
                     .foregroundStyle(.primary)
                 }
+                .buttonStyle(.plain)
             }
 
             if !filteredRoster.isEmpty {
@@ -291,6 +293,7 @@ struct PreMatchView: View {
                                 }
                             }
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -309,6 +312,7 @@ struct PreMatchView: View {
                                 }
                             }
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }

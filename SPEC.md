@@ -248,6 +248,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 236 | iOS player-row Buttons (Players, New Match, Club roster) now use `.buttonStyle(.plain)` so the default automatic button style stops overriding each row's explicit primary-color name text with the accent tint | #245 |
 | 235 | Game screen exit flow: toolbar button reads "End" during play / "Done" after; match-over overlay gains a primary Done exit with Rematch demoted to secondary; English winner banners recast as "Game/Match to X!" for team grammar (both targets) | #241 |
 | 223 | iOS Match History: sort order moved to a toolbar menu and the share-with-friends toggle merged into the filter section with its footer dropped, so the first match row sits higher on tall screens | #230 |
 | 222 | iOS home screen: stat strip cells (Matches/Win rate/Players) now navigate to History/Stats/Players; a "last match" card (reusing MatchHistoryRow) fills the dead space below the menu when history isn't empty | #229 |

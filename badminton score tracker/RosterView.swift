@@ -88,6 +88,7 @@ struct RosterView: View {
                         } label: {
                             playerRow(name: player.name, color: player.avatarColor, iconName: player.iconName)
                         }
+                        .buttonStyle(.plain)
                     }
                     .onDelete(perform: deletePlayers)
                 }
