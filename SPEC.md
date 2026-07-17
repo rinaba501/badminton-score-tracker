@@ -248,6 +248,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 249 | iOS home screen: stats strip's three co-located NavigationLinks (Matches/Win rate/Players) mis-routed taps to the wrong sibling's destination; replaced with Buttons driving a single `.navigationDestination(item:)` | #250 |
 | 238 | iOS Stats screen: grid's Wins/Losses cards (duplicated the header's W-L headline) replaced with Current Streak and a Singles/Doubles split; Avg Duration folded into the header instead of an odd 5th full-width card; Head-to-Head paywall CTA restyled from a full-width accent button to the gold/crown Pro identity Settings already uses | #248 |
 | 240 | iOS polish: Friends/Club-detail empty sections use `ContentUnavailableView`; dropped duplicate title+header labels (Players, Friends, home screen's "Match History" row vs. now-"Latest Match" card header); About Me gets a bordered card + placeholder, club-name field a rounded border, "Require Match Confirmation" a footer | #247 |
 | 237 | iOS History screen: sort + clear-all folded into one trailing "…" menu (down from 4 icon-only toolbar buttons) so the "Match History" title has room; MatchHistoryRow team-name Text now wraps to 2 lines instead of truncating doubles pairings | #246 |
