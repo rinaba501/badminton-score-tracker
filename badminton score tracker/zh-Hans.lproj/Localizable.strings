@@ -43,6 +43,7 @@
 "history.sort_newest" = "最新";
 "history.sort_oldest" = "最早";
 "history.sort_label" = "排序";
+"history.more_options" = "更多";
 "history.opponent_fallback" = "对手";
 "settings.singles" = "单打";
 "settings.doubles" = "双打";

@@ -43,6 +43,7 @@
 "history.sort_newest" = "최신순";
 "history.sort_oldest" = "오래된순";
 "history.sort_label" = "정렬";
+"history.more_options" = "더보기";
 "history.opponent_fallback" = "상대";
 "settings.singles" = "단식";
 "settings.doubles" = "복식";

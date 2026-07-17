@@ -139,15 +139,7 @@ struct HistoryView: View {
             }
             if !history.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) { playerFilterMenu }
-                ToolbarItem(placement: .topBarTrailing) { sortMenu }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(role: .destructive) {
-                        showingClearConfirmation = true
-                    } label: {
-                        Image(systemName: "trash")
-                    }
-                    .accessibilityLabel(Text("history.clear_title"))
-                }
+                ToolbarItem(placement: .topBarTrailing) { moreMenu }
             }
         }
         .alert(Text("history.clear_title"), isPresented: $showingClearConfirmation) {
@@ -255,30 +247,44 @@ struct HistoryView: View {
         }
     }
 
-    @ViewBuilder private var sortMenu: some View {
+    /// Folds sort (a nested Menu) and clear-all (a destructive Button, still
+    /// gated by the confirmation alert below) into one trailing "…" menu —
+    /// keeps the toolbar to at most 3 items so the "History" title has room
+    /// to show (#237).
+    @ViewBuilder private var moreMenu: some View {
         Menu {
-            Button {
-                newestFirst = true
-            } label: {
-                if newestFirst {
-                    Label("history.sort_newest", systemImage: "checkmark")
-                } else {
-                    Text("history.sort_newest")
+            Menu {
+                Button {
+                    newestFirst = true
+                } label: {
+                    if newestFirst {
+                        Label("history.sort_newest", systemImage: "checkmark")
+                    } else {
+                        Text("history.sort_newest")
+                    }
                 }
+                Button {
+                    newestFirst = false
+                } label: {
+                    if !newestFirst {
+                        Label("history.sort_oldest", systemImage: "checkmark")
+                    } else {
+                        Text("history.sort_oldest")
+                    }
+                }
+            } label: {
+                Label("history.sort_label", systemImage: "arrow.up.arrow.down")
             }
-            Button {
-                newestFirst = false
+            Divider()
+            Button(role: .destructive) {
+                showingClearConfirmation = true
             } label: {
-                if !newestFirst {
-                    Label("history.sort_oldest", systemImage: "checkmark")
-                } else {
-                    Text("history.sort_oldest")
-                }
+                Label("history.clear_title", systemImage: "trash")
             }
         } label: {
-            Image(systemName: "arrow.up.arrow.down")
+            Image(systemName: "ellipsis.circle")
         }
-        .accessibilityLabel(Text("history.sort_label"))
+        .accessibilityLabel(Text("history.more_options"))
     }
 
     @ViewBuilder private func shareButton(for record: MatchRecord) -> some View {
@@ -403,7 +409,7 @@ struct MatchHistoryRow: View {
             teamAvatars(rawName: rawName, fallbackLabel: label, rawPartner: rawPartner)
             Text(label)
                 .fontWeight(won ? .semibold : .regular)
-                .lineLimit(1)
+                .lineLimit(2)
             if rawName == myName { youBadge }
             Spacer()
             Text("\(games)")

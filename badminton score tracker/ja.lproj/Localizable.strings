@@ -43,6 +43,7 @@
 "history.sort_newest" = "新しい順";
 "history.sort_oldest" = "古い順";
 "history.sort_label" = "並べ替え";
+"history.more_options" = "その他";
 "history.opponent_fallback" = "対戦相手";
 "settings.singles" = "シングルス";
 "settings.doubles" = "ダブルス";
