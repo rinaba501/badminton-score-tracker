@@ -53,10 +53,10 @@
 "stats.player" = "Player";
 "stats.no_matches" = "No matches yet";
 "stats.matches" = "Matches";
-"stats.wins" = "Wins";
-"stats.losses" = "Losses";
 "stats.win_rate" = "Win rate";
 "stats.avg_points" = "Avg pts/game";
+"stats.current_streak" = "Current streak";
+"stats.singles_doubles_split" = "Singles · Doubles";
 "stats.best_streak" = "Best streak";
 "stats.avg_duration" = "Avg duration";
 "stats.head_to_head" = "Head-to-Head";

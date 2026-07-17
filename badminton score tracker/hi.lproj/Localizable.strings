@@ -53,10 +53,10 @@
 "stats.player" = "खिलाड़ी";
 "stats.no_matches" = "अभी तक कोई मैच नहीं";
 "stats.matches" = "मैच";
-"stats.wins" = "जीत";
-"stats.losses" = "हार";
 "stats.win_rate" = "जीत दर";
 "stats.avg_points" = "औसत अंक/गेम";
+"stats.current_streak" = "मौजूदा स्ट्रीक";
+"stats.singles_doubles_split" = "एकल · युगल";
 "stats.best_streak" = "सर्वश्रेष्ठ स्ट्रीक";
 "stats.avg_duration" = "औसत अवधि";
 "stats.head_to_head" = "आमने-सामने";

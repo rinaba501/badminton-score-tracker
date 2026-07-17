@@ -53,10 +53,10 @@
 "stats.player" = "プレイヤー";
 "stats.no_matches" = "まだ試合がありません";
 "stats.matches" = "試合数";
-"stats.wins" = "勝ち";
-"stats.losses" = "負け";
 "stats.win_rate" = "勝率";
 "stats.avg_points" = "平均得点";
+"stats.current_streak" = "現在の連勝";
+"stats.singles_doubles_split" = "シングルス · ダブルス";
 "stats.best_streak" = "最多連勝";
 "stats.avg_duration" = "平均時間";
 "stats.head_to_head" = "対戦成績";

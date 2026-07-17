@@ -53,10 +53,10 @@
 "stats.player" = "Pemain";
 "stats.no_matches" = "Belum ada pertandingan";
 "stats.matches" = "Pertandingan";
-"stats.wins" = "Menang";
-"stats.losses" = "Kalah";
 "stats.win_rate" = "Rasio menang";
 "stats.avg_points" = "Rata-rata poin/game";
+"stats.current_streak" = "Rentetan saat ini";
+"stats.singles_doubles_split" = "Tunggal · Ganda";
 "stats.best_streak" = "Rentetan terbaik";
 "stats.avg_duration" = "Durasi rata-rata";
 "stats.head_to_head" = "Rekor Pertemuan";
