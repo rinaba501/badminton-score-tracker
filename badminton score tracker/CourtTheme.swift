@@ -38,3 +38,52 @@ enum CourtTheme: String, Codable, CaseIterable {
         }
     }
 }
+
+// MARK: - Picker (#239)
+
+// Same UIMenu-flattening limitation as GameScreenStylePickerView's doc
+// comment describes — a plain List/Form Picker discards the color-swatch
+// label, so this is a pushed screen with fully custom rows instead.
+struct CourtThemePickerView: View {
+    @Binding var selection: CourtTheme
+    let hasAllThemes: Bool
+    let onLockedSelection: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List(CourtTheme.allCases, id: \.self) { theme in
+            let locked = theme.isPremium && !hasAllThemes
+            Button {
+                if locked {
+                    onLockedSelection()
+                } else {
+                    selection = theme
+                    dismiss()
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    Circle()
+                        .fill(theme.color)
+                        .frame(width: 26, height: 26)
+                        .overlay(Circle().stroke(Color.secondary.opacity(0.25), lineWidth: 1))
+                    Text(NSLocalizedString("theme.\(theme.rawValue.lowercased())", comment: ""))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if locked {
+                        Image(systemName: "lock.fill")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel(Text("paywall.locked"))
+                    } else if theme == selection {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(.tint)
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .navigationTitle(Text("settings.court_theme"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
