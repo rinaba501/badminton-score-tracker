@@ -24,10 +24,6 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
     @EnvironmentObject private var storeManager: StoreManager
     @State private var showPaywall = false
-    /// Where the theme picker snaps back to when a premium theme is tapped
-    /// without the entitlement (tracks the last free selection; the paywall
-    /// opens instead).
-    @State private var lastFreeTheme: CourtTheme = .green
 
     /// Capsule badge showing the current plan next to the Pro row — the row
     /// stays visible after purchase so the badge can flip from Free to Pro.
@@ -70,40 +66,33 @@ struct SettingsView: View {
             }
 
             Section(header: Text("settings.court_theme")) {
-                Picker("settings.theme", selection: $courtTheme) {
-                    ForEach(CourtTheme.allCases, id: \.self) { theme in
-                        HStack {
-                            Circle()
-                                .fill(theme.color)
-                                .frame(width: 12, height: 12)
-                            Text(NSLocalizedString("theme.\(theme.rawValue.lowercased())", comment: ""))
-                            if theme.isPremium && !storeManager.entitlements.hasAllThemes {
-                                Spacer()
-                                Image(systemName: "lock.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .accessibilityLabel(Text("paywall.locked"))
-                            }
-                        }
-                        .tag(theme)
-                    }
-                }
-                // Picking a locked theme opens the paywall instead of
-                // sticking: snap back to the last free selection.
-                .onChange(of: courtTheme) { newTheme in
-                    if newTheme.isPremium && !storeManager.entitlements.hasAllThemes {
-                        courtTheme = lastFreeTheme
-                        showPaywall = true
-                    } else if !newTheme.isPremium {
-                        lastFreeTheme = newTheme
+                NavigationLink {
+                    CourtThemePickerView(
+                        selection: $courtTheme,
+                        hasAllThemes: storeManager.entitlements.hasAllThemes,
+                        onLockedSelection: { showPaywall = true }
+                    )
+                } label: {
+                    HStack {
+                        Text("settings.theme")
+                        Spacer()
+                        Circle()
+                            .fill(courtTheme.color)
+                            .frame(width: 16, height: 16)
+                        Text(NSLocalizedString("theme.\(courtTheme.rawValue.lowercased())", comment: ""))
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
 
             Section(header: Text("ios.game_screen_style")) {
-                Picker("ios.game_screen_style", selection: $gameScreenStyle) {
-                    ForEach(GameScreenStyle.allCases, id: \.self) { style in
-                        Text(style.labelKey).tag(style)
+                NavigationLink {
+                    GameScreenStylePickerView(selection: $gameScreenStyle, courtTheme: courtTheme)
+                } label: {
+                    HStack {
+                        Text("ios.game_screen_style")
+                        Spacer()
+                        GameScreenStyleThumbnail(style: gameScreenStyle, accentColor: courtTheme.color)
                     }
                 }
             }
@@ -155,9 +144,6 @@ struct SettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPaywall) {
             PaywallView()
-        }
-        .onAppear {
-            if !courtTheme.isPremium { lastFreeTheme = courtTheme }
         }
     }
 }
