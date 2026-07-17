@@ -12,11 +12,12 @@
 //
 //  Same layout contract as Blackbird: each half is one full-bleed tap target
 //  (a `tapLayer` under an `allowsHitTesting(false)` visual layer) that
-//  flashes on tap; the center column carries only the clock and undo. Each
-//  point swings the score card down off its top hinge like a hand flipping
-//  the next card over — skipped under Reduce Motion, where the digit just
-//  crossfades. Serve is a lamp on the serving side's name plate: brightness
-//  + position, never color alone.
+//  flashes on tap; the center column carries only the clock and undo. The
+//  score card's flip mirrors a real one: the resting number never moves —
+//  only a separate flap swings down from the top hinge to cover it, tipped
+//  up out of view at the start (ScoreboardPanel.incomingScore) — skipped
+//  under Reduce Motion, where the digit just crossfades. Serve is a lamp on
+//  the serving side's name plate: brightness + position, never color alone.
 //
 
 import SwiftUI
@@ -29,6 +30,12 @@ private struct FlipCard: View {
     let digitSize: CGFloat
     let ringSize: CGFloat
     let glow: Color?
+    /// False while this card is rotated past edge-on, i.e. showing its back
+    /// to the viewer. `rotation3DEffect` doesn't cull back faces on its
+    /// own — without this the digit stays legible (mirrored) straight
+    /// through the "back" of the flap, which reads as seeing through the
+    /// card. A blank back keeps it looking solid.
+    var showsValue = true
 
     private var face: some View {
         RoundedRectangle(cornerRadius: 10)
@@ -59,15 +66,64 @@ private struct FlipCard: View {
     }
 
     var body: some View {
-        Text("\(value)")
-            .font(.system(size: digitSize, weight: .heavy))
-            .monospacedDigit()
-            .minimumScaleFactor(0.4)
-            .foregroundStyle(.white)
-            .contentTransition(.numericText())
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(face)
-            .overlay(alignment: .top) { rings }
+        ZStack {
+            if showsValue {
+                Text("\(value)")
+                    .font(.system(size: digitSize, weight: .heavy))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.4)
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(face)
+        .overlay(alignment: .top) { rings }
+    }
+}
+
+/// The incoming flap, as an `Animatable` view rather than a plain one with a
+/// `.rotation3DEffect` bolted on. That distinction matters: SwiftUI only
+/// interpolates the *rotation* itself frame-by-frame — a computed property
+/// that reads the same `@State` angle to decide "am I facing the viewer
+/// yet?" sees the animation's FINAL value the instant `withAnimation` runs,
+/// not the in-flight one, so the digit and the shading would both snap
+/// instantly instead of tracking the visible rotation. Conforming to
+/// `Animatable` makes `body` re-run with the true interpolated angle every
+/// frame, so both the front/back swap and the shading stay in lockstep with
+/// what's actually on screen.
+private struct FlippingFlap: View, Animatable {
+    var angle: Double
+    let value: Int
+    let digitSize: CGFloat
+    let ringSize: CGFloat
+    let glow: Color?
+
+    var animatableData: Double {
+        get { angle }
+        set { angle = newValue }
+    }
+
+    /// A card's printed face is visible whenever it's turned within 90° of
+    /// facing the viewer; beyond that we're looking at its back.
+    private var facesViewer: Bool {
+        cos(angle * .pi / 180) >= 0
+    }
+
+    /// Darkest at edge-on (90°/270°), clear when lying flat either way
+    /// (0°/180°) — real cards catch the least light exactly when turned
+    /// sideways, which is what sells the rotation as a physical flip.
+    private var shading: some View {
+        Color.black
+            .opacity((1 - abs(cos(angle * .pi / 180))) * 0.55)
+            .allowsHitTesting(false)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    var body: some View {
+        FlipCard(value: value, digitSize: digitSize, ringSize: ringSize, glow: glow, showsValue: facesViewer)
+            .rotation3DEffect(.degrees(angle), axis: (x: 1, y: 0, z: 0), anchor: .top, perspective: 0.35)
+            .overlay(shading)
     }
 }
 
@@ -80,7 +136,23 @@ private struct ScoreboardPanel: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var flash = false
-    @State private var flipAngle: Double = 0
+    /// The resting face underneath — this one is NEVER rotated. A real flip
+    /// card doesn't move the old number at all; a separate flap swings down
+    /// from the hinge to cover it, and only that flap moves.
+    @State private var displayedScore: Int
+    /// Non-nil only while a flap is mid-flight. Its own rotation angle
+    /// starts at +90 (squashed to a sliver right at the top hinge, as if
+    /// tipped up and out of view) and animates down to 0 (flat, landed,
+    /// covering `displayedScore` underneath).
+    @State private var incomingScore: Int?
+    @State private var flipAngle: Double = 90
+
+    init(data: ScoreSideData, games: Int, theme: CourtTheme) {
+        self.data = data
+        self.games = games
+        self.theme = theme
+        _displayedScore = State(initialValue: data.score)
+    }
 
     private var winnerGlow: Color? {
         data.isWinner ? theme.color.blended(toward: .white, by: 0.4) : nil
@@ -127,21 +199,41 @@ private struct ScoreboardPanel: View {
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(.white.opacity(0.15), lineWidth: 1))
     }
 
+    /// Only the incoming flap moves: it appears already tipped up over the
+    /// hinge (angle +90, squashed to nothing) and swings down to flat,
+    /// landing on top of the untouched resting face. Once it lands, it
+    /// simply becomes the new resting face rather than a separate layer
+    /// that has to be timed to disappear invisibly.
+    private func triggerFlip(to newValue: Int) {
+        var noAnim = Transaction()
+        noAnim.disablesAnimations = true
+        withTransaction(noAnim) {
+            incomingScore = newValue
+            flipAngle = 220
+        }
+        withAnimation(.spring(response: 0.50, dampingFraction: 0.85)) {
+            flipAngle = 0
+        } completion: {
+            displayedScore = newValue
+            incomingScore = nil
+        }
+    }
+
     private var scoreCard: some View {
-        FlipCard(value: data.score, digitSize: 130, ringSize: 12, glow: winnerGlow)
-            .rotation3DEffect(
-                .degrees(flipAngle),
-                axis: (x: 1, y: 0, z: 0),
-                anchor: .top,
-                perspective: 0.35
-            )
-            .onChange(of: data.score) { _, _ in
-                guard !reduceMotion else { return }
-                var instant = Transaction()
-                instant.disablesAnimations = true
-                withTransaction(instant) { flipAngle = -80 }
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) { flipAngle = 0 }
+        ZStack(alignment: .top) {
+            FlipCard(value: displayedScore, digitSize: 130, ringSize: 12, glow: winnerGlow)
+
+            if let incomingScore {
+                FlippingFlap(angle: flipAngle, value: incomingScore, digitSize: 130, ringSize: 12, glow: winnerGlow)
             }
+        }
+        .onChange(of: data.score) { _, newValue in
+            guard !reduceMotion else {
+                displayedScore = newValue
+                return
+            }
+            triggerFlip(to: newValue)
+        }
     }
 
     /// Small side card for games won — real manual boards keep a separate
