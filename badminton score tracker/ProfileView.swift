@@ -74,7 +74,7 @@ struct ProfileView: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .buttonStyle(.plain)
@@ -138,12 +138,24 @@ struct ProfileView: View {
                             onChange: toggleIdentityField
                         )
                     }
-                    TextEditor(text: $introduction)
-                        .frame(minHeight: 80)
-                        .onChange(of: introduction) { _, newValue in
-                            introduction = String(newValue.prefix(Self.introductionCharacterLimit))
-                            writeIntroduction(introduction)
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: $introduction)
+                            .frame(minHeight: 80)
+                            .onChange(of: introduction) { _, newValue in
+                                introduction = String(newValue.prefix(Self.introductionCharacterLimit))
+                                writeIntroduction(introduction)
+                            }
+                        if introduction.isEmpty {
+                            Text("profile.introduction_placeholder")
+                                .foregroundStyle(.tertiary)
+                                .padding(.top, 8)
+                                .padding(.leading, 5)
+                                .allowsHitTesting(false)
                         }
+                    }
+                    .padding(6)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
 

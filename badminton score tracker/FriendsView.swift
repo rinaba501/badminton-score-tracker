@@ -116,11 +116,9 @@ struct FriendsView: View {
                 }
             }
 
-            Section("friends.your_friends") {
+            Section {
                 if store.friends.isEmpty {
-                    Text("friends.no_friends_yet")
-                        .foregroundStyle(.secondary)
-                        .font(.callout)
+                    ContentUnavailableView("friends.no_friends_yet", systemImage: "person.2.slash")
                 } else {
                     ForEach(store.friends, id: \.participantId) { friend in
                         HStack(spacing: 8) {

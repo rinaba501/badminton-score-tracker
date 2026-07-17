@@ -1,5 +1,6 @@
 // iOS companion app
 "ios.title" = "Featherkeep";
+"ios.latest_match_header" = "最近比赛";
 "ios.profile" = "个人资料";
 "settings.title" = "设置";
 "settings.game_mode" = "比赛模式";
@@ -161,6 +162,7 @@
 "a11y.club_friend_badge" = "好友";
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
+"clubs.require_confirmation_footer" = "其他成员记录的比赛在你确认之前将保持待定状态，避免错误影响排名。";
 "clubs.pending_confirmation" = "待确认";
 "clubs.activity" = "动态";
 "clubs.reactions" = "表情回应";
@@ -230,7 +232,6 @@
 "settings.friends" = "好友";
 "friends.pending_received" = "收到的申请";
 "friends.pending_sent" = "发出的申请";
-"friends.your_friends" = "好友";
 "friends.no_friends_yet" = "暂无好友";
 "friends.share_history_toggle" = "与好友分享我的记录";
 "friends.share_section_header" = "与好友共享";

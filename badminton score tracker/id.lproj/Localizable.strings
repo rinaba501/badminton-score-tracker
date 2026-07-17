@@ -1,5 +1,6 @@
 // iOS companion app
 "ios.title" = "Featherkeep";
+"ios.latest_match_header" = "Pertandingan Terbaru";
 "ios.profile" = "Profil";
 "settings.title" = "Pengaturan";
 "settings.game_mode" = "Mode Permainan";
@@ -161,6 +162,7 @@
 "a11y.club_friend_badge" = "Teman";
 "clubs.standings" = "Klasemen";
 "clubs.require_confirmation" = "Wajib Konfirmasi Pertandingan";
+"clubs.require_confirmation_footer" = "Pertandingan yang dicatat anggota lain akan tertunda sampai Anda mengonfirmasinya di sini, sehingga kesalahan tidak memengaruhi klasemen.";
 "clubs.pending_confirmation" = "Menunggu Konfirmasi";
 "clubs.activity" = "Aktivitas";
 "clubs.reactions" = "Reaksi";
@@ -230,7 +232,6 @@
 "settings.friends" = "Teman";
 "friends.pending_received" = "Permintaan Masuk";
 "friends.pending_sent" = "Permintaan Terkirim";
-"friends.your_friends" = "Teman";
 "friends.no_friends_yet" = "Belum ada teman";
 "friends.share_history_toggle" = "Bagikan Riwayat Saya ke Teman";
 "friends.share_section_header" = "Bagikan ke Teman";
