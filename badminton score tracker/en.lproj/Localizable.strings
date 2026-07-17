@@ -43,6 +43,7 @@
 "history.sort_newest" = "Newest";
 "history.sort_oldest" = "Oldest";
 "history.sort_label" = "Sort";
+"history.more_options" = "More";
 "history.opponent_fallback" = "Opponent";
 "settings.singles" = "Singles";
 "settings.doubles" = "Doubles";
