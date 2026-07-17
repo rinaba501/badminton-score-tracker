@@ -38,6 +38,7 @@ enum GameScreenStyle: String, Codable, CaseIterable {
     case matchstick = "Matchstick"
     case birdsEye   = "BirdsEye"
     case tug        = "Tug"
+    case scoreboard = "Scoreboard"
 
     var labelKey: LocalizedStringKey {
         switch self {
@@ -48,7 +49,16 @@ enum GameScreenStyle: String, Codable, CaseIterable {
         case .matchstick: "ios.game_screen_style_matchstick"
         case .birdsEye:   "ios.game_screen_style_birdseye"
         case .tug:        "ios.game_screen_style_tug"
+        case .scoreboard: "ios.game_screen_style_scoreboard"
         }
+    }
+
+    /// Scoreboard is the one landscape-native style: GameView flips the
+    /// app-wide orientation lock (AppDelegate.setOrientation) to landscape
+    /// while it's on screen and back to portrait on exit — every other
+    /// screen in the app stays portrait-only.
+    var isLandscape: Bool {
+        self == .scoreboard
     }
 }
 
@@ -72,8 +82,15 @@ struct GameScreenStylePickerView: View {
             } label: {
                 HStack(spacing: 14) {
                     GameScreenStyleThumbnail(style: style, accentColor: courtTheme.color)
-                    Text(style.labelKey)
-                        .foregroundStyle(.primary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(style.labelKey)
+                            .foregroundStyle(.primary)
+                        if style.isLandscape {
+                            Label("ios.game_screen_style_landscape_hint", systemImage: "rectangle.landscape.rotate")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                     Spacer()
                     if style == selection {
                         Image(systemName: "checkmark")
@@ -120,6 +137,7 @@ struct GameScreenStyleThumbnail: View {
         case .matchstick: matchstickContent
         case .birdsEye: birdsEyeContent
         case .tug: tugContent
+        case .scoreboard: scoreboardContent
         }
     }
 
@@ -191,6 +209,28 @@ struct GameScreenStyleThumbnail: View {
             accentColor
                 .frame(width: Self.size.width * 0.62)
             Color(.systemGray5)
+        }
+    }
+
+    /// Two flip cards with hinge seams over a theme-colored base rail —
+    /// miniature of ClassicScoreboard's manual courtside flip scoreboard.
+    private var scoreboardContent: some View {
+        ZStack {
+            Color(white: 0.12)
+            VStack(spacing: 3) {
+                HStack(spacing: 5) {
+                    ForEach(0..<2, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color(white: 0.03))
+                            .overlay(Rectangle().fill(.white.opacity(0.35)).frame(height: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 3).stroke(.white.opacity(0.4), lineWidth: 1))
+                    }
+                }
+                .padding(.horizontal, 9)
+                .padding(.top, 7)
+                Capsule().fill(accentColor).frame(height: 4).padding(.horizontal, 6)
+                    .padding(.bottom, 5)
+            }
         }
     }
 }

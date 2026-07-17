@@ -148,6 +148,8 @@
 "ios.game_screen_style_matchstick" = "매치스틱";
 "ios.game_screen_style_birdseye" = "버즈아이";
 "ios.game_screen_style_tug" = "줄다리기";
+"ios.game_screen_style_scoreboard" = "스코어보드";
+"ios.game_screen_style_landscape_hint" = "가로 방향";
 "ios.change_player" = "변경";
 
 // Roadmap Phase 5d: club management UI

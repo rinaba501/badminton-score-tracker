@@ -148,6 +148,8 @@
 "ios.game_screen_style_matchstick" = "Matchstick";
 "ios.game_screen_style_birdseye" = "Birds-Eye";
 "ios.game_screen_style_tug" = "Tarik Tambang";
+"ios.game_screen_style_scoreboard" = "Papan Skor";
+"ios.game_screen_style_landscape_hint" = "Lanskap";
 "ios.change_player" = "Ubah";
 
 // Roadmap Phase 5d: club management UI
