@@ -55,6 +55,8 @@ struct StatsView: View {
     private var avgPointsScored: Double { StatsCalculator.avgPointsScored(player: activePlayer, playerHistory: playerHistory) }
     private var avgMatchDuration: TimeInterval { StatsCalculator.avgMatchDuration(playerHistory: playerHistory) }
     private var longestStreak: Int { StatsCalculator.longestStreak(player: activePlayer, playerHistory: playerHistory) }
+    private var currentStreak: Int { StatsCalculator.currentStreak(player: activePlayer, playerHistory: playerHistory) }
+    private var matchTypeSplit: (singles: Int, doubles: Int) { StatsCalculator.matchTypeSplit(playerHistory: playerHistory) }
 
     private func rosterPlayer(_ name: String) -> Player? {
         roster.first(where: { $0.name == name })
@@ -177,26 +179,23 @@ struct StatsView: View {
         }
     }
 
-    /// Stand-ins for Pro-gated stats: tapping opens the paywall. Solid tint
-    /// background (not plain colored text) keeps this legible against any
-    /// CourtTheme accent, including lighter ones.
+    /// Stand-in for Pro-gated stats: tapping opens the paywall. Styled after
+    /// the gold/crown Pro identity SettingsView's "Featherkeep Pro" row
+    /// already establishes, rather than a full-width accent-colored button —
+    /// that read as this screen's primary action instead of a paywall (#238).
     private var lockedProRow: some View {
         Button(action: { showPaywall = true }) {
             HStack {
-                Label("stats.unlock_pro", systemImage: "lock.fill")
+                Label("stats.unlock_pro", systemImage: "crown.fill")
+                    .foregroundStyle(.yellow)
                     .font(.subheadline.weight(.semibold))
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                Image(systemName: "lock.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .foregroundStyle(.white)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 14)
-            .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-        .listRowBackground(Color.clear)
     }
 
     private func lockedStatCard(labelKey: LocalizedStringKey) -> some View {
@@ -239,6 +238,16 @@ struct StatsView: View {
                 HStack(spacing: 4) {
                     Text("stats.matches")
                     Text(verbatim: "\(totalMatches)").monospacedDigit()
+                    if avgMatchDuration > 0 {
+                        Text(verbatim: "·")
+                        HStack(spacing: 2) {
+                            Image(systemName: "clock")
+                            Text(StatsCalculator.durationString(avgMatchDuration)).monospacedDigit()
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(Text("stats.avg_duration"))
+                        .accessibilityValue(Text(StatsCalculator.durationString(avgMatchDuration)))
+                    }
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -296,23 +305,19 @@ struct StatsView: View {
 
     // MARK: - Stat cards
 
-    // Always exactly 4 cells (2x2) so nothing orphans onto its own row;
-    // avg duration renders as a separate full-width card below instead of
-    // competing for a 5th grid slot.
+    // Always exactly 4 cells (2x2), each adding information the header's
+    // ring/W-L headline doesn't already say — Wins/Losses used to duplicate
+    // that headline outright, and avg duration used to spill into an odd 5th,
+    // full-width card; it now lives inline in the header instead (#238).
     private var statGrid: some View {
-        VStack(spacing: 12) {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                statCard(value: "\(wins)", labelKey: "stats.wins")
-                statCard(value: "\(losses)", labelKey: "stats.losses")
-                statCard(value: String(format: "%.1f", avgPointsScored), labelKey: "stats.avg_points")
-                if storeManager.entitlements.hasAdvancedStats {
-                    statCard(value: "\(longestStreak)", labelKey: "stats.best_streak")
-                } else {
-                    lockedStatCard(labelKey: "stats.best_streak")
-                }
-            }
-            if avgMatchDuration > 0 {
-                statCard(value: StatsCalculator.durationString(avgMatchDuration), labelKey: "stats.avg_duration")
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+            statCard(value: "\(currentStreak)", labelKey: "stats.current_streak")
+            statCard(value: String(format: "%.1f", avgPointsScored), labelKey: "stats.avg_points")
+            statCard(value: "\(matchTypeSplit.singles) · \(matchTypeSplit.doubles)", labelKey: "stats.singles_doubles_split")
+            if storeManager.entitlements.hasAdvancedStats {
+                statCard(value: "\(longestStreak)", labelKey: "stats.best_streak")
+            } else {
+                lockedStatCard(labelKey: "stats.best_streak")
             }
         }
     }

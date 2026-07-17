@@ -106,6 +106,37 @@ struct StatsCalculatorTests {
         #expect(StatsCalculator.longestStreak(player: "Alice", playerHistory: history) == 2)
     }
 
+    @Test func currentStreakCountsBackFromTheMostRecentRecord() {
+        let history = [
+            record(my: "Alice", opp: "Bob", winner: "Bob"),
+            record(my: "Alice", opp: "Bob", winner: "Alice"),
+            record(my: "Alice", opp: "Bob", winner: "Alice")
+        ]
+        #expect(StatsCalculator.currentStreak(player: "Alice", playerHistory: history) == 2)
+    }
+
+    @Test func currentStreakIsZeroWhenTheMostRecentRecordIsALoss() {
+        let history = [
+            record(my: "Alice", opp: "Bob", winner: "Alice"),
+            record(my: "Alice", opp: "Bob", winner: "Bob")
+        ]
+        #expect(StatsCalculator.currentStreak(player: "Alice", playerHistory: history) == 0)
+        #expect(StatsCalculator.currentStreak(player: "Alice", playerHistory: []) == 0)
+    }
+
+    @Test func matchTypeSplitCountsSinglesAndDoubles() {
+        var doublesRecord = record(my: "Alice", opp: "Bob", winner: "Alice")
+        doublesRecord.myPartnerName = "Cara"
+        let history = [
+            record(my: "Alice", opp: "Bob", winner: "Alice"),
+            record(my: "Alice", opp: "Bob", winner: "Bob"),
+            doublesRecord
+        ]
+        let split = StatsCalculator.matchTypeSplit(playerHistory: history)
+        #expect(split.singles == 2)
+        #expect(split.doubles == 1)
+    }
+
     @Test func avgPointsScoredUsesThePlayersSideOfEachRecord() {
         let history = [
             record(my: "Alice", opp: "Bob", winner: "Alice", games: [(21, 10)]),

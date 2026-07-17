@@ -53,10 +53,10 @@
 "stats.player" = "플레이어";
 "stats.no_matches" = "아직 경기가 없습니다";
 "stats.matches" = "경기";
-"stats.wins" = "승";
-"stats.losses" = "패";
 "stats.win_rate" = "승률";
 "stats.avg_points" = "게임당 평균 점수";
+"stats.current_streak" = "현재 연승";
+"stats.singles_doubles_split" = "단식 · 복식";
 "stats.best_streak" = "최다 연승";
 "stats.avg_duration" = "평균 시간";
 "stats.head_to_head" = "상대 전적";

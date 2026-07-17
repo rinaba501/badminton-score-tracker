@@ -202,6 +202,24 @@ public enum StatsCalculator {
         return best
     }
 
+    /// Consecutive wins counting back from the most recent record; 0 once the
+    /// most recent record is a loss (or there's no history). Complements
+    /// `longestStreak` (career-best) with "am I hot right now."
+    public static func currentStreak(player: String, playerHistory: [MatchRecord]) -> Int {
+        var streak = 0
+        for record in playerHistory.reversed() {
+            guard teamWon(record, player: player) else { break }
+            streak += 1
+        }
+        return streak
+    }
+
+    /// Count of `playerHistory` broken down by Singles vs. Doubles.
+    public static func matchTypeSplit(playerHistory: [MatchRecord]) -> (singles: Int, doubles: Int) {
+        let doubles = playerHistory.filter { $0.isDoubles }.count
+        return (singles: playerHistory.count - doubles, doubles: doubles)
+    }
+
     // MARK: - Standings
 
     /// One player's aggregate record within a given (already scoped) slice

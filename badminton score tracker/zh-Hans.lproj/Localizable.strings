@@ -53,10 +53,10 @@
 "stats.player" = "球员";
 "stats.no_matches" = "暂无比赛";
 "stats.matches" = "比赛";
-"stats.wins" = "胜";
-"stats.losses" = "负";
 "stats.win_rate" = "胜率";
 "stats.avg_points" = "场均得分";
+"stats.current_streak" = "当前连胜";
+"stats.singles_doubles_split" = "单打 · 双打";
 "stats.best_streak" = "最长连胜";
 "stats.avg_duration" = "平均时长";
 "stats.head_to_head" = "交锋记录";
