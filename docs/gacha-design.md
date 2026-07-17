@@ -2,7 +2,8 @@
 
 Initiative: an in-app cosmetic gacha (ガチャ) with an earned soft currency ("Feathers")
 and real-money paid pulls. Design discussed and confirmed 2026-07-17; this document is
-the reference for the implementation phases (Phase 8 in [ROADMAP.md](../ROADMAP.md)).
+the reference for the implementation phases (Phase 8 in [ROADMAP.md](../ROADMAP.md),
+tracked by [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244)).
 
 **Status: design only — no code exists yet.**
 
