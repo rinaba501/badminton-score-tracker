@@ -148,6 +148,8 @@
 "ios.game_screen_style_matchstick" = "मैचस्टिक";
 "ios.game_screen_style_birdseye" = "बर्ड्स-आई";
 "ios.game_screen_style_tug" = "टग";
+"ios.game_screen_style_scoreboard" = "स्कोरबोर्ड";
+"ios.game_screen_style_landscape_hint" = "लैंडस्केप";
 "ios.change_player" = "बदलें";
 
 // Roadmap Phase 5d: club management UI

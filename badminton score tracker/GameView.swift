@@ -283,6 +283,11 @@ struct GameView: View {
                 top: sideData(for: .opponent), bottom: sideData(for: .me),
                 header: headerData, theme: effectiveTheme
             )
+        case .scoreboard:
+            ClassicScoreboard(
+                left: sideData(for: .me), right: sideData(for: .opponent),
+                header: headerData, theme: effectiveTheme
+            )
         }
     }
 
@@ -315,7 +320,17 @@ struct GameView: View {
                 Text("game.discard_message")
             }
             .onReceive(ticker) { _ in viewModel.tickTimer() }
-            .onAppear { viewModel.onAppear() }
+            .onAppear {
+                viewModel.onAppear()
+                // Scoreboard is the one landscape style; every other screen
+                // stays portrait (see AppDelegate.orientationLock).
+                if gameScreenStyle.isLandscape {
+                    AppDelegate.setOrientation(.landscape)
+                }
+            }
+            // Unconditional: cheap when already portrait, and guarantees the
+            // rest of the app never inherits a stuck landscape lock.
+            .onDisappear { AppDelegate.setOrientation(.portrait) }
         }
     }
 

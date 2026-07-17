@@ -41,9 +41,14 @@
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<!-- Landscape is declared here but gated at runtime: AppDelegate's
+	     supportedInterfaceOrientationsFor keeps the whole app portrait except
+	     while the landscape-native Scoreboard game style is on screen. -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>CKSharingSupported</key>
 	<true/>
