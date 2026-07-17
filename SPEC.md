@@ -248,6 +248,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 240 | iOS polish: Friends/Club-detail empty sections use `ContentUnavailableView`; dropped duplicate title+header labels (Players, Friends, home screen's "Match History" row vs. now-"Latest Match" card header); About Me gets a bordered card + placeholder, club-name field a rounded border, "Require Match Confirmation" a footer | #247 |
 | 237 | iOS History screen: sort + clear-all folded into one trailing "…" menu (down from 4 icon-only toolbar buttons) so the "Match History" title has room; MatchHistoryRow team-name Text now wraps to 2 lines instead of truncating doubles pairings | #246 |
 | 236 | iOS player-row Buttons (Players, New Match, Club roster) now use `.buttonStyle(.plain)` so the default automatic button style stops overriding each row's explicit primary-color name text with the accent tint | #245 |
 | 235 | Game screen exit flow: toolbar button reads "End" during play / "Done" after; match-over overlay gains a primary Done exit with Rematch demoted to secondary; English winner banners recast as "Game/Match to X!" for team grammar (both targets) | #241 |

@@ -1,5 +1,6 @@
 // iOS companion app
 "ios.title" = "Featherkeep";
+"ios.latest_match_header" = "नवीनतम मैच";
 "ios.profile" = "प्रोफ़ाइल";
 "settings.title" = "सेटिंग्स";
 "settings.game_mode" = "गेम मोड";
@@ -161,6 +162,7 @@
 "a11y.club_friend_badge" = "मित्र";
 "clubs.standings" = "स्टैंडिंग्स";
 "clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
+"clubs.require_confirmation_footer" = "अन्य सदस्यों द्वारा दर्ज किए गए मैच तब तक लंबित रहते हैं जब तक आप उन्हें यहां पुष्टि नहीं करते, ताकि गलतियाँ रैंकिंग को प्रभावित न करें।";
 "clubs.pending_confirmation" = "पुष्टि लंबित";
 "clubs.activity" = "गतिविधि";
 "clubs.reactions" = "रिएक्शन";
@@ -230,7 +232,6 @@
 "settings.friends" = "मित्र";
 "friends.pending_received" = "प्राप्त अनुरोध";
 "friends.pending_sent" = "भेजे गए अनुरोध";
-"friends.your_friends" = "मित्र";
 "friends.no_friends_yet" = "अभी कोई मित्र नहीं";
 "friends.share_history_toggle" = "मित्रों के साथ अपना इतिहास साझा करें";
 "friends.share_section_header" = "मित्रों के साथ साझा करें";

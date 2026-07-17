@@ -171,6 +171,7 @@ struct ClubDetailView: View {
             if let club {
                 Section {
                     TextField("clubs.name", text: $name)
+                        .textFieldStyle(.roundedBorder)
                         .onSubmit { rename(to: name, currentName: club.name) }
                     if isOwned {
                         Toggle("clubs.require_confirmation", isOn: Binding(
@@ -180,6 +181,10 @@ struct ClubDetailView: View {
                     }
                 } header: {
                     Text("clubs.name")
+                } footer: {
+                    if isOwned {
+                        Text("clubs.require_confirmation_footer")
+                    }
                 }
 
                 if !pendingMatches.isEmpty {
@@ -218,9 +223,7 @@ struct ClubDetailView: View {
 
                 Section {
                     if activityFeed.isEmpty {
-                        Text("stats.no_matches")
-                            .foregroundStyle(.secondary)
-                            .font(.callout)
+                        ContentUnavailableView("stats.no_matches", systemImage: "clock.arrow.circlepath")
                     } else {
                         ForEach(activityFeed) { entry in
                             activityRow(entry)
@@ -271,9 +274,7 @@ struct ClubDetailView: View {
 
                 Section {
                     if standings.isEmpty {
-                        Text("stats.no_matches")
-                            .foregroundStyle(.secondary)
-                            .font(.callout)
+                        ContentUnavailableView("stats.no_matches", systemImage: "trophy")
                     } else {
                         ForEach(standings) { entry in
                             HStack {

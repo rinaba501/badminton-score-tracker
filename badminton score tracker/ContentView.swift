@@ -116,7 +116,7 @@ struct ContentView: View {
                 }
 
                 if let latestMatch {
-                    Section(header: Text("history.title")) {
+                    Section(header: Text("ios.latest_match_header")) {
                         NavigationLink {
                             HistoryView()
                         } label: {

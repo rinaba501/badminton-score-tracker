@@ -68,7 +68,7 @@ struct RosterView: View {
 
     var body: some View {
         List {
-            Section(header: Text("settings.players")) {
+            Section {
                 Picker("settings.sort_order", selection: $playerSortOrder) {
                     Text("settings.sort_name").tag(Player.SortOrder.name)
                     Text("settings.sort_most_played").tag(Player.SortOrder.mostPlayed)

@@ -1,5 +1,6 @@
 // iOS companion app
 "ios.title" = "Featherkeep";
+"ios.latest_match_header" = "Latest Match";
 "ios.profile" = "Profile";
 "settings.title" = "Settings";
 "settings.game_mode" = "Game Mode";
@@ -161,6 +162,7 @@
 "a11y.club_friend_badge" = "Friend";
 "clubs.standings" = "Standings";
 "clubs.require_confirmation" = "Require Match Confirmation";
+"clubs.require_confirmation_footer" = "Matches other members record stay pending until you confirm them here, so mistakes don't affect standings.";
 "clubs.pending_confirmation" = "Pending Confirmation";
 "clubs.activity" = "Activity";
 "clubs.reactions" = "Reactions";
@@ -230,7 +232,6 @@
 "settings.friends" = "Friends";
 "friends.pending_received" = "Pending Requests";
 "friends.pending_sent" = "Sent Requests";
-"friends.your_friends" = "Friends";
 "friends.no_friends_yet" = "No friends yet";
 "friends.share_history_toggle" = "Share My History with Friends";
 "friends.share_section_header" = "Share With Friends";
