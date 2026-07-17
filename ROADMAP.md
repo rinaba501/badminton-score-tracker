@@ -126,6 +126,16 @@ Known open risk carried into 7b: a `FriendProfile` display name is public-DB UGC
 
 Explicitly out of Phase 5's scope (confirmed with the user 2026-07-06), but wanted eventually: a public, discoverable leaderboard beyond private clubs. Would use CloudKit's *public* database — a separate mechanism, schema, and access model from the `CKShare` private-sharing path Phase 5 builds — so it doesn't block or get blocked by Phase 5. Real added cost vs. private sharing: Apple's App Store Guideline 1.2 requires report/block/moderation tooling for any public user-generated content before Apple will approve it (not optional polish), plus anti-cheat/score-validation work since a public leaderboard invites manipulation in a way a trusted private club doesn't. CloudKit's own cost stays low (pricing scales with app users and is free at this app's likely volume) — the cost is almost entirely the moderation + integrity engineering. File a concrete issue and design discussion when ready to scope it; no code exists for this yet.
 
+### Phase 8 — Feathers & Gacha (design complete, not yet implemented)
+
+An earned soft currency ("Feathers") + cosmetic gacha with real-money paid pulls.
+Economy model deliberately avoids stored paid value (paid pulls are consumables that
+execute immediately) to stay clear of Japan's prepaid-instrument law and refund/sync
+hazards; prize pool is new code-drawable cosmetics, disjoint from the existing
+Pro/pack IAPs, so `Entitlements.swift` is untouched. Full design — economy, odds,
+ledger data model, StoreKit redemption, phase slicing 8a–8f — in
+[docs/gacha-design.md](docs/gacha-design.md) (confirmed with the user 2026-07-17).
+
 ### Guardrails track (#110) — do anytime
 
 Cheap, independent CI hardening: a localization key-sync check across the 6 locales, code-coverage reporting on the test job, a build job for the Complication target, deployment-target alignment (Complication 26.5 vs app 11.4), and eventually a lightweight release process (semver tags + changelog).
@@ -143,6 +153,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 5 — Cross-person sharing | design in [#93](https://github.com/rinaba501/badminton-score-tracker/issues/93); enables [#13](https://github.com/rinaba501/badminton-score-tracker/issues/13) | 5a (orientation-neutral MatchRecord), 5b (Club/clubId data model), 5c (CKShare zone-sharing mechanics), 5d (club management UI, [#148](https://github.com/rinaba501/badminton-score-tracker/issues/148)), 5e (invite UI, [#155](https://github.com/rinaba501/badminton-score-tracker/issues/155)), and 5f (multi-club polish, [#157](https://github.com/rinaba501/badminton-score-tracker/issues/157)) done — Phase 5 complete except the future social-features backlog |
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
+| 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.
