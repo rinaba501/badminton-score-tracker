@@ -23,6 +23,7 @@
 "settings.games_1" = "1게임";
 "settings.games_3" = "3게임제";
 "settings.games_5" = "5게임제";
+"settings.court_changes" = "코트 체인지 알림";
 "settings.timer" = "경기 타이머";
 "settings.timer_enable" = "사용";
 "settings.minutes" = "%d분";
@@ -115,6 +116,9 @@
 "game.discard_message" = "현재 점수가 사라집니다.";
 "game.discard_confirm" = "포기";
 "game.discard_cancel" = "계속하기";
+"game.court_change_title" = "코트 체인지";
+"game.court_change_message" = "선수들에게 코트를 바꾸도록 안내하세요.";
+"game.court_change_ok" = "확인";
 "a11y.score_tile" = "%1$@, %2$d점";
 "a11y.score_tile_serving_suffix" = "%1$@, %2$@에서 서브";
 "a11y.score_hint" = "두 번 탭하여 득점";

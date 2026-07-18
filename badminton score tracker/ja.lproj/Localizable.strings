@@ -23,6 +23,7 @@
 "settings.games_1" = "1ゲーム";
 "settings.games_3" = "3ゲーム制";
 "settings.games_5" = "5ゲーム制";
+"settings.court_changes" = "コートチェンジ通知";
 "settings.timer" = "試合タイマー";
 "settings.timer_enable" = "有効";
 "settings.minutes" = "%d分";
@@ -115,6 +116,9 @@
 "game.discard_message" = "現在のスコアは失われます。";
 "game.discard_confirm" = "終了する";
 "game.discard_cancel" = "続ける";
+"game.court_change_title" = "コートチェンジ";
+"game.court_change_message" = "選手にコートのサイドを交代してもらいましょう。";
+"game.court_change_ok" = "了解";
 "a11y.score_tile" = "%1$@、%2$d点";
 "a11y.score_tile_serving_suffix" = "%1$@、%2$@からサーブ";
 "a11y.score_hint" = "ダブルタップで得点を追加";

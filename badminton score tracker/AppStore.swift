@@ -353,6 +353,7 @@ final class AppStore: ObservableObject {
         defaults.set(snapshot.enableCrownScoring, forKey: AppStorageKeys.enableCrownScoring)
         defaults.set(snapshot.timeModeEnabled, forKey: AppStorageKeys.timeModeEnabled)
         defaults.set(snapshot.timeLimitMinutes, forKey: AppStorageKeys.timeLimitMinutes)
+        defaults.set(snapshot.courtChangeRemindersEnabled, forKey: AppStorageKeys.courtChangeRemindersEnabled)
         defaults.set(snapshot.accountLinked, forKey: AppStorageKeys.accountLinked)
         defaults.set(snapshot.gameScreenStyle, forKey: AppStorageKeys.gameScreenStyle)
         defaults.set(snapshot.shareHistoryWithFriends, forKey: AppStorageKeys.shareHistoryWithFriends)

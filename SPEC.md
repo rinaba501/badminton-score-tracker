@@ -91,6 +91,7 @@ Two-step flow in Singles mode, four-step in Doubles mode on the Watch (see Setti
 - **Game Mode** — Singles / Doubles; Doubles switches Pre-Match to the 4-player flow, the Game screen to two-name team tiles, and Match History rows to "Name & Partner" per team
 - **Match Format** — Points to win (11 / 15 / 21), Games in match (1 / 3 / 5)
 - **Match Timer** — toggle on/off; when enabled, duration stepper (±1 min, ±5 min buttons; min 1, max 99, default 10)
+- **Court Change Reminders** — toggle on/off (default off). When on, alerts the scorekeeper at real badminton end-change moments (end of each game, and mid-way through the deciding game — see Scoring Rules) and flips which side renders first on the Game screen to match. Purely a display/reminder — never changes who's "me" vs "opponent"
 - **Court Theme** — Green / Blue / Red / Purple / Black
 - **Score Screen Style** — Depth / Split / Minimal / Blackbird / Matchstick / Birds-Eye / Tug / Scoreboard (see Game Screen above; Scoreboard is landscape-only). **iOS-only** — no equivalent on Watch
 - **Digital Crown** — toggle crown scoring on/off (default on); off prevents accidental scoring from wrist movement. **Watch-only** — no Digital Crown on iPhone, so this row doesn't exist on iOS
@@ -146,6 +147,12 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
   - Tied on games → leader by current game score wins the match
   - Fully tied → **Sudden Death**: next point wins the match
 - If a player wins the required games before the timer runs out, the match ends normally
+
+### Court Change Reminders mode
+- Opt-in (Settings, default off) — models BWF Law 12.1's real end-of-court changes
+- Fires at the start of every game after the first (players just finished a game)
+- Also fires once in the *deciding* game of a multi-game match (game 3 of a best-of-3, game 5 of a best-of-5 — never in a single-game match), the instant either side's score first reaches half of `pointsToWin` rounded up (e.g. 11 of 21, 8 of 15, 6 of 11)
+- Each firing shows a "Change Ends" alert and flips which side renders first on the Game screen — the tap tiles *and* the games-won tally stay paired (top/bottom on Watch; top/bottom or left/right depending on Score Screen Style on iOS) — a display-only flip that never changes match-format, serve, or history identity
 
 ---
 

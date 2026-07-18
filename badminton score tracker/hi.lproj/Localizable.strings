@@ -23,6 +23,7 @@
 "settings.games_1" = "1 गेम";
 "settings.games_3" = "बेस्ट ऑफ 3";
 "settings.games_5" = "बेस्ट ऑफ 5";
+"settings.court_changes" = "कोर्ट चेंज रिमाइंडर";
 "settings.timer" = "मैच टाइमर";
 "settings.timer_enable" = "सक्षम करें";
 "settings.minutes" = "%d मिनट";
@@ -115,6 +116,9 @@
 "game.discard_message" = "आपका वर्तमान स्कोर खो जाएगा।";
 "game.discard_confirm" = "छोड़ें";
 "game.discard_cancel" = "जारी रखें";
+"game.court_change_title" = "कोर्ट बदलें";
+"game.court_change_message" = "खिलाड़ियों से कोर्ट की साइड बदलने को कहें।";
+"game.court_change_ok" = "ठीक है";
 "a11y.score_tile" = "%1$@, %2$d अंक";
 "a11y.score_tile_serving_suffix" = "%1$@, %2$@ से सर्व";
 "a11y.score_hint" = "अंक जोड़ने के लिए डबल टैप करें";

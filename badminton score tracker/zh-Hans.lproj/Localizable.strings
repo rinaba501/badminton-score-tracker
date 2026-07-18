@@ -23,6 +23,7 @@
 "settings.games_1" = "1局";
 "settings.games_3" = "三局两胜";
 "settings.games_5" = "五局三胜";
+"settings.court_changes" = "换场提醒";
 "settings.timer" = "比赛计时器";
 "settings.timer_enable" = "启用";
 "settings.minutes" = "%d分钟";
@@ -115,6 +116,9 @@
 "game.discard_message" = "当前比分将会丢失。";
 "game.discard_confirm" = "放弃";
 "game.discard_cancel" = "继续比赛";
+"game.court_change_title" = "换场";
+"game.court_change_message" = "请让选手交换场地。";
+"game.court_change_ok" = "知道了";
 "a11y.score_tile" = "%1$@，%2$d分";
 "a11y.score_tile_serving_suffix" = "%1$@，从%2$@发球";
 "a11y.score_hint" = "双击加一分";

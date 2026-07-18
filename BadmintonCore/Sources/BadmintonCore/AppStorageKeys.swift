@@ -58,6 +58,13 @@ public enum AppStorageKeys {
     public static let enableCrownScoring = "enableCrownScoring"
     public static let timeModeEnabled = "timeModeEnabled"
     public static let timeLimitMinutes = "timeLimitMinutes"
+    // Opt-in reminder for real badminton end-changes (BWF Law 12.1): alerts
+    // the scorekeeper and flips which side renders first on the Game screen
+    // after each game, and mid-way through the deciding game once the
+    // leading score crosses BadmintonMatch.isCourtChangeThreshold. Purely a
+    // display/reminder toggle — never touches Side.me/.opponent scoring
+    // identity. Bool, defaults false like timeModeEnabled.
+    public static let courtChangeRemindersEnabled = "courtChangeRemindersEnabled"
     public static let gameMode = "gameMode"
     public static let localPlayerId = "localPlayerId"
     // #161 activity feed: "last viewed" timestamp per club (JSON dictionary,

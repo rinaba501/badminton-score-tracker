@@ -58,6 +58,7 @@
 "settings.games_1" = "1 game";
 "settings.games_3" = "Terbaik dari 3";
 "settings.games_5" = "Terbaik dari 5";
+"settings.court_changes" = "Pengingat Ganti Sisi Lapangan";
 
 // History
 "history.title" = "Riwayat Pertandingan";
@@ -83,6 +84,9 @@
 "game.discard_message" = "Skor pertandingan saat ini akan hilang.";
 "game.discard_confirm" = "Batalkan";
 "game.discard_cancel" = "Lanjutkan";
+"game.court_change_title" = "Ganti Sisi";
+"game.court_change_message" = "Minta pemain bertukar sisi lapangan.";
+"game.court_change_ok" = "Mengerti";
 "onboarding.title" = "Kontrol";
 "onboarding.hint_tap" = "Ketuk atas/bawah untuk skor";
 "onboarding.hint_undo" = "Tombol undo batalkan poin terakhir";

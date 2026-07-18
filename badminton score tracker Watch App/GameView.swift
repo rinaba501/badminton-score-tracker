@@ -160,12 +160,21 @@ struct GameView: View {
              !viewModel.match.completedGames.isEmpty)
     }
 
+    /// GamesWonHeader always renders "opponentGames – myGames" (opponent
+    /// first, matching opponentTile's baseline top position) — so after a
+    /// court change swaps opponentTile/myTile order, the values fed into
+    /// those two slots must swap too, or the tally stops matching whichever
+    /// tile is actually drawn on top.
+    private func gamesWon(by side: Side) -> Int {
+        side == .me ? viewModel.match.myGamesWon : viewModel.match.opponentGamesWon
+    }
+
     private var gamesHeader: some View {
         GamesWonHeader(
             myName: viewModel.effectiveMyName,
             opponentName: viewModel.effectiveOpponentName,
-            myGames: viewModel.match.myGamesWon,
-            opponentGames: viewModel.match.opponentGamesWon,
+            myGames: gamesWon(by: viewModel.courtSidesSwapped ? .opponent : .me),
+            opponentGames: gamesWon(by: viewModel.courtSidesSwapped ? .me : .opponent),
             canUndo: !viewModel.undoStack.isEmpty &&
                 viewModel.match.gameWinner == nil &&
                 viewModel.match.matchWinner == nil &&
@@ -214,8 +223,13 @@ struct GameView: View {
         VStack(spacing: 6) {
             timerBadge
             gamesHeader
-            opponentTile
-            myTile
+            if viewModel.courtSidesSwapped {
+                myTile
+                opponentTile
+            } else {
+                opponentTile
+                myTile
+            }
         }
         .padding(.horizontal, 10)
     }
@@ -299,6 +313,11 @@ struct GameView: View {
             Button(NSLocalizedString("game.discard_cancel", comment: ""), role: .cancel) {}
         } message: {
             Text("game.discard_message")
+        }
+        .alert(NSLocalizedString("game.court_change_title", comment: ""), isPresented: $viewModel.showCourtChangeAlert) {
+            Button(NSLocalizedString("game.court_change_ok", comment: "")) {}
+        } message: {
+            Text("game.court_change_message")
         }
         .focusable()
         .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)

@@ -28,6 +28,9 @@ public struct SettingsSnapshot: Codable, Equatable {
     public var enableCrownScoring: Bool
     public var timeModeEnabled: Bool
     public var timeLimitMinutes: Int
+    /// Opt-in court-change reminder toggle (see AppStorageKeys.courtChangeRemindersEnabled).
+    /// Blind-overwritten on apply, like the other plain Bools.
+    public var courtChangeRemindersEnabled: Bool
     /// Per-club "last viewed activity" timestamps (club id string -> date)
     /// backing the unread dot on ClubsView. Merged (per-club max), never
     /// overwritten, on apply — see AppStore.applyRemoteSettings.
@@ -77,6 +80,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         enableCrownScoring: Bool,
         timeModeEnabled: Bool,
         timeLimitMinutes: Int,
+        courtChangeRemindersEnabled: Bool = false,
         clubLastViewedActivity: [String: Date] = [:],
         accountLinked: Bool = false,
         gameScreenStyle: String = "Depth",
@@ -100,6 +104,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         self.enableCrownScoring = enableCrownScoring
         self.timeModeEnabled = timeModeEnabled
         self.timeLimitMinutes = timeLimitMinutes
+        self.courtChangeRemindersEnabled = courtChangeRemindersEnabled
         self.clubLastViewedActivity = clubLastViewedActivity
         self.accountLinked = accountLinked
         self.gameScreenStyle = gameScreenStyle
@@ -117,7 +122,7 @@ public struct SettingsSnapshot: Codable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case myName, localPlayerId, pointsToWin, gamesInMatch, courtTheme
         case announceScore, enableSounds, enableCrownScoring, timeModeEnabled
-        case timeLimitMinutes, clubLastViewedActivity
+        case timeLimitMinutes, courtChangeRemindersEnabled, clubLastViewedActivity
         case accountLinked, gameScreenStyle, shareHistoryWithFriends
         case shareAvatarWithFriends, shareGenderWithFriends, shareBirthdayWithFriends
         case shareIntroductionWithFriends, shareStatsWithFriends
@@ -137,6 +142,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         timeModeEnabled = try container.decode(Bool.self, forKey: .timeModeEnabled)
         timeLimitMinutes = try container.decode(Int.self, forKey: .timeLimitMinutes)
         // Added after the first Settings records shipped — tolerate absence.
+        courtChangeRemindersEnabled = try container.decodeIfPresent(Bool.self, forKey: .courtChangeRemindersEnabled) ?? false
         clubLastViewedActivity = try container.decodeIfPresent([String: Date].self, forKey: .clubLastViewedActivity) ?? [:]
         accountLinked = try container.decodeIfPresent(Bool.self, forKey: .accountLinked) ?? false
         gameScreenStyle = try container.decodeIfPresent(String.self, forKey: .gameScreenStyle) ?? "Depth"
@@ -163,6 +169,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         try container.encode(enableCrownScoring, forKey: .enableCrownScoring)
         try container.encode(timeModeEnabled, forKey: .timeModeEnabled)
         try container.encode(timeLimitMinutes, forKey: .timeLimitMinutes)
+        try container.encode(courtChangeRemindersEnabled, forKey: .courtChangeRemindersEnabled)
         try container.encode(clubLastViewedActivity, forKey: .clubLastViewedActivity)
         try container.encode(accountLinked, forKey: .accountLinked)
         try container.encode(gameScreenStyle, forKey: .gameScreenStyle)

@@ -175,6 +175,20 @@ public struct BadmintonMatch: Codable, Equatable {
         return matchWinner == nil && totalPlayed >= (gamesToWin * 2 - 1) && myGamesWon == opponentGamesWon
     }
 
+    /// True for exactly the one rally where the leading score first reaches
+    /// the BWF mid-game end-change threshold (half of `pointsToWin`, rounded
+    /// up) in the deciding game of a multi-game match (Law 12.1c) — e.g. 11
+    /// of 21. Always false in a single-game match (`gamesToWin == 1`, which
+    /// has no "deciding game" distinct from its only game) or any game
+    /// before the last. Callers must check this edge-triggered, right after
+    /// scoring the point that reaches it — scores only increase within a
+    /// game, so each value is visited at most once.
+    public var isCourtChangeThreshold: Bool {
+        guard gamesToWin > 1, completedGames.count == gamesToWin * 2 - 2 else { return false }
+        let threshold = (pointsToWin + 1) / 2
+        return myScore == threshold || opponentScore == threshold
+    }
+
     // MARK: - Helpers
 
     private func pointWouldEndGame(_ side: Side) -> Bool {
