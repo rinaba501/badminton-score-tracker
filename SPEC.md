@@ -103,6 +103,8 @@ Two-step flow in Singles mode, four-step in Doubles mode on the Watch (see Setti
 
 iOS Settings mirrors all of the above except Digital Crown and Controls (both scoring-input hints tied to Watch hardware), and additionally includes the iOS-only Score Screen Style picker (no Watch equivalent). Roster, Clubs, and Friends management live as their own rows on iOS's main menu instead of nesting under Settings, since iOS navigation is push-based rather than Settings-as-hub.
 
+**Danger Zone — Erase All My Data (#264)**: a Settings entry (both targets) that permanently deletes every local AND CloudKit-synced record the account owns — roster, match history, clubs, all scalar settings, and the Friends graph (public-database FriendProfile/FriendRequest records plus the FriendsHistory share) — leaving the app in a fresh-install state (`myName`/the first-launch name prompt reset too). Gated behind a type-to-confirm text field (the user must type the fixed keyword `DELETE`) since this is the one action whose blast radius can reach other people's shared data, not just the user's own. Any club the user owns is listed by name and deleted outright as part of the erase — real club-ownership *transfer* isn't supported (CloudKit ties a private-database zone's owner permanently to its creating account); a club owner who wants to keep a club alive for its members must transfer it manually before erasing (no in-app transfer flow exists yet — see Open Issues).
+
 ---
 
 ## Monetization
@@ -253,6 +255,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 |---|---------|
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 165 | Push notifications for async club interactions — Roadmap Phase 5 backlog |
+| 268 | Club ownership transfer — deferred out of #264's Erase All My Data (delete-or-cancel only for owned clubs); needs a new zone under the new owner, full record copy, re-share, old zone teardown |
 
 ---
 
@@ -260,6 +263,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 264 | Erase All My Data: a Settings "Danger Zone" entry (both targets) that deletes every local + CloudKit-synced record the account owns (roster, history, clubs, settings, Friends graph), gated behind a type-to-confirm keyword; owned clubs are deleted outright with a warning, since real club-ownership transfer isn't supported yet | #269 |
 | 263 | Bulk delete: select mode for History and Roster (both targets) — multi-select rows, Select All/Deselect All scoped to the currently filtered/visible list, one confirmation deletes everything selected | #266 |
 | 260 | In-match settings: a Game Screen toolbar gear button opens a compact sheet for the settings already read live mid-match (Sound Effects, Score Announcement, Court Theme, Watch-only Digital Crown); Match Format/Timer/Court Change Reminders stay full-Settings-only | #262 |
 | 163 | Club seasons: time-boxed standings resets — Roadmap Phase 5 backlog | #256 |

@@ -86,6 +86,14 @@
 "settings.deselect_all_players" = "चयन हटाएं";
 "settings.delete_selected_players" = "हटाएं (%d)";
 "settings.delete_selected_players_confirm" = "%d खिलाड़ियों को हटाएं? पिछले मैचों में ये नाम बने रहेंगे, लेकिन इन्हें आपकी सूची से हटा दिया जाएगा।";
+"settings.danger_zone" = "खतरा क्षेत्र";
+"settings.erase_all_data" = "मेरा सारा डेटा मिटाएं";
+"settings.erase_all_data_warning" = "यह आपके सहेजे गए खिलाड़ियों, मैच इतिहास, क्लबों, सेटिंग्स और मित्र कनेक्शनों को इस डिवाइस और iCloud दोनों से स्थायी रूप से मिटा देगा। इसे पूर्ववत नहीं किया जा सकता।";
+"settings.erase_owned_clubs_warning" = "आपके स्वामित्व वाले क्लब निम्नलिखित हैं। अपना डेटा मिटाने से ये क्लब हर सदस्य के लिए भी मिट जाएंगे:";
+"settings.erase_confirm_prompt" = "पुष्टि करने के लिए %@ टाइप करें।";
+"settings.erase_confirm_button" = "सब कुछ मिटाएं";
+"settings.erase_success" = "आपका डेटा मिटा दिया गया है।";
+"settings.erase_done" = "हो गया";
 "playeredit.name" = "नाम";
 "playeredit.name_taken" = "नाम पहले से मौजूद है";
 "playeredit.color" = "रंग";

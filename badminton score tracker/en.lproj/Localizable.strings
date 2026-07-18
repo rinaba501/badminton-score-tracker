@@ -86,6 +86,14 @@
 "settings.deselect_all_players" = "Deselect All";
 "settings.delete_selected_players" = "Delete (%d)";
 "settings.delete_selected_players_confirm" = "Delete %d players? Their past matches will keep these names, but they'll be removed from your roster.";
+"settings.danger_zone" = "Danger Zone";
+"settings.erase_all_data" = "Erase All My Data";
+"settings.erase_all_data_warning" = "This permanently deletes your saved players, match history, clubs, settings, and Friends connections — from this device and iCloud. This cannot be undone.";
+"settings.erase_owned_clubs_warning" = "You own the following club(s). Erasing your data will also delete them for every member:";
+"settings.erase_confirm_prompt" = "Type %@ to confirm.";
+"settings.erase_confirm_button" = "Erase Everything";
+"settings.erase_success" = "Your data has been erased.";
+"settings.erase_done" = "Done";
 "playeredit.name" = "Name";
 "playeredit.name_taken" = "Name already taken";
 "playeredit.color" = "Color";

@@ -160,6 +160,14 @@
 "settings.deselect_all_players" = "選択解除";
 "settings.delete_selected_players" = "削除 (%d)";
 "settings.delete_selected_players_confirm" = "%d人のプレイヤーを削除しますか？過去の試合にはこれらの名前が残りますが、名簿からは削除されます。";
+"settings.danger_zone" = "危険ゾーン";
+"settings.erase_all_data" = "すべてのデータを消去";
+"settings.erase_all_data_warning" = "これにより、保存されているプレイヤー、試合履歴、クラブ、設定、フレンド接続が、このデバイスとiCloudの両方から完全に削除されます。この操作は取り消せません。";
+"settings.erase_owned_clubs_warning" = "あなたが所有しているクラブは以下の通りです。データを消去すると、これらのクラブも全メンバーごと削除されます：";
+"settings.erase_confirm_prompt" = "確認するには %@ と入力してください。";
+"settings.erase_confirm_button" = "すべて消去";
+"settings.erase_success" = "データが消去されました。";
+"settings.erase_done" = "完了";
 "prematch.near_side" = "手前側";
 "prematch.far_side" = "奥側";
 "prematch.near_partner" = "手前側パートナー";

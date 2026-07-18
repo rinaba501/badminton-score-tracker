@@ -675,6 +675,17 @@ final class CloudKitSyncManager {
         _ = try? await privateDatabase.save(share)
     }
 
+    /// Erase All My Data (#264): tears down the "FriendsHistory" zone (and
+    /// everything in it — the mirrored roster/history records plus the fixed
+    /// FriendIdentity/FriendStats records) entirely, rather than just
+    /// revoking participants like `revokeFriendsHistoryAccess()` does.
+    /// Deleting a zone also revokes every CKShare participant rooted in it
+    /// automatically, so no separate participant-removal call is needed.
+    func deleteFriendsHistoryZone() async {
+        guard let privateSyncEngine else { return }
+        privateSyncEngine.state.add(pendingDatabaseChanges: [.deleteZone(friendsHistoryZoneID())])
+    }
+
     /// Resolves participantIds to `CKShare.Participant`s via an identity
     /// lookup (not an email/phone lookup — participantId is already a
     /// `CKRecord.ID.recordName` from `resolveMyParticipantId`/
@@ -845,6 +856,26 @@ final class CloudKitSyncManager {
         guard let payload = PersistenceStore.encodeFriendRequest(updated) else { return }
         record[Self.payloadField] = payload as CKRecordValue
         _ = try await publicDatabase.save(record)
+    }
+
+    /// Erase All My Data (#264): deletes the public-database `FriendProfile`
+    /// record for this Apple ID, so this device is no longer discoverable by
+    /// an invite link/code. Best-effort — a partial CloudKit failure here
+    /// shouldn't block the rest of the erase flow.
+    func deleteMyFriendProfile() async {
+        guard let participantId = try? await resolveMyParticipantId() else { return }
+        _ = try? await publicDatabase.deleteRecord(withID: CKRecord.ID(recordName: participantId))
+    }
+
+    /// Erase All My Data (#264): deletes every public-database `FriendRequest`
+    /// this account is party to, on either side (mirrors `fetchMyFriendRequests`'s
+    /// bidirectional query). Best-effort per record, same convention as
+    /// `deleteMyFriendProfile()`.
+    func deleteAllMyFriendRequests() async {
+        guard let requests = try? await fetchMyFriendRequests() else { return }
+        for request in requests {
+            _ = try? await publicDatabase.deleteRecord(withID: CKRecord.ID(recordName: request.id.uuidString))
+        }
     }
 }
 

@@ -205,6 +205,47 @@ final class AppStore: ObservableObject {
         }
     }
 
+    /// Erase All My Data (#264): wipes every local + CloudKit-synced record
+    /// this account owns — roster, history, clubs (deletes owned clubs
+    /// outright, leaves joined clubs via the existing `saveClubs` diffing),
+    /// challenges, reactions, the Friends graph (public-DB FriendRequest/
+    /// FriendProfile records plus the FriendsHistory share zone), and every
+    /// scalar setting (`AppStorageKeys.eraseAllDataResetKeys`) — so the app
+    /// reads back as a fresh install. Deliberately leaves CloudKit-transport
+    /// bookkeeping (ckSyncEngineState/ckRecordMetadata/etc.) untouched:
+    /// deletions flow through the already-running CKSyncEngine instances
+    /// exactly like any other delete, so there's no need to tear down or
+    /// rebuild them.
+    func eraseAllData() async {
+        // Reset the share*WithFriends/shareStatsWithFriends toggles (part of
+        // eraseAllDataResetKeys) BEFORE calling saveRoster/clearHistory below:
+        // those methods re-enqueue a FriendStats/FriendIdentity save into the
+        // FriendsHistory zone whenever sharing is on, which would otherwise
+        // race the deleteFriendsHistoryZone() call just below it — the save
+        // and the zone delete would both be pending on the same sync engine
+        // with no guaranteed ordering, risking a save "winning" and leaving
+        // the zone non-empty. Resetting the toggles first makes
+        // isSharingHistoryWithFriends/isSharingStatsWithFriends read false,
+        // so saveRoster/clearHistory never re-enqueue anything into the zone
+        // this method is about to tear down.
+        for key in AppStorageKeys.eraseAllDataResetKeys {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+
+        saveRoster([])
+        clearHistory()
+        saveClubs([])
+        saveChallenges([])
+        saveReactions([])
+
+        await CloudKitSyncManager.shared.deleteAllMyFriendRequests()
+        saveFriendRequests([])
+        await CloudKitSyncManager.shared.deleteMyFriendProfile()
+        await CloudKitSyncManager.shared.deleteFriendsHistoryZone()
+
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+    }
+
     private var isSharingHistoryWithFriends: Bool {
         UserDefaults.standard.bool(forKey: AppStorageKeys.shareHistoryWithFriends)
     }
