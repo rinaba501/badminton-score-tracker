@@ -256,6 +256,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 | 93 | Product/multi-user strategy epic — concretized by ROADMAP.md |
 | 165 | Push notifications for async club interactions — Roadmap Phase 5 backlog |
 | 268 | Club ownership transfer — deferred out of #264's Erase All My Data (delete-or-cancel only for owned clubs); needs a new zone under the new owner, full record copy, re-share, old zone teardown |
+| 270 | Whole-blob JSON re-encode on every History/Roster save — `AppStore.saveHistory`/`saveRoster` re-serialize the entire array to `UserDefaults` on every save, not incrementally; found while investigating #265 (closed as not-currently-justified — this is a persistence-cost problem, distinct from that issue's rendering concern), no current evidence it's a real problem |
 
 ---
 
