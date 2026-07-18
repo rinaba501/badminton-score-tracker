@@ -117,14 +117,24 @@ struct GameView: View {
 
     // MARK: - Sub-views
 
+    /// Every GameScreenStyle pairs `header.myGames` with whichever tile it
+    /// draws in the bottom/left baseline slot, and `header.opponentGames`
+    /// with the top/right slot (confirmed across all 8 style files) — so
+    /// feeding these two the count for `bottomSide`/`topSide` (rather than
+    /// always `.me`/`.opponent`) keeps the tally in sync with the tiles
+    /// after a court change swaps which identity renders in which slot.
+    private func gamesWon(by side: Side) -> Int {
+        side == .me ? viewModel.match.myGamesWon : viewModel.match.opponentGamesWon
+    }
+
     /// Shared games/timer/undo state, built once and consumed by whichever
     /// GameScreenStyle is active — Depth renders it via timerBadge/
     /// gamesHeader below, Split/Minimal build their own layout from the same
     /// data so none of the three re-derive it from viewModel separately.
     private var headerData: GameHeaderData {
         GameHeaderData(
-            myGames: viewModel.match.myGamesWon,
-            opponentGames: viewModel.match.opponentGamesWon,
+            myGames: gamesWon(by: bottomSide),
+            opponentGames: gamesWon(by: topSide),
             canUndo: !viewModel.undoStack.isEmpty &&
                 viewModel.match.gameWinner == nil &&
                 viewModel.match.matchWinner == nil &&
@@ -156,8 +166,8 @@ struct GameView: View {
 
     private var gamesHeader: some View {
         GamesWonHeader(
-            myGames: viewModel.match.myGamesWon,
-            opponentGames: viewModel.match.opponentGamesWon,
+            myGames: gamesWon(by: bottomSide),
+            opponentGames: gamesWon(by: topSide),
             canUndo: !viewModel.undoStack.isEmpty &&
                 viewModel.match.gameWinner == nil &&
                 viewModel.match.matchWinner == nil &&

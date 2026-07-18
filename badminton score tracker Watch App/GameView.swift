@@ -160,12 +160,21 @@ struct GameView: View {
              !viewModel.match.completedGames.isEmpty)
     }
 
+    /// GamesWonHeader always renders "opponentGames – myGames" (opponent
+    /// first, matching opponentTile's baseline top position) — so after a
+    /// court change swaps opponentTile/myTile order, the values fed into
+    /// those two slots must swap too, or the tally stops matching whichever
+    /// tile is actually drawn on top.
+    private func gamesWon(by side: Side) -> Int {
+        side == .me ? viewModel.match.myGamesWon : viewModel.match.opponentGamesWon
+    }
+
     private var gamesHeader: some View {
         GamesWonHeader(
             myName: viewModel.effectiveMyName,
             opponentName: viewModel.effectiveOpponentName,
-            myGames: viewModel.match.myGamesWon,
-            opponentGames: viewModel.match.opponentGamesWon,
+            myGames: gamesWon(by: viewModel.courtSidesSwapped ? .opponent : .me),
+            opponentGames: gamesWon(by: viewModel.courtSidesSwapped ? .me : .opponent),
             canUndo: !viewModel.undoStack.isEmpty &&
                 viewModel.match.gameWinner == nil &&
                 viewModel.match.matchWinner == nil &&

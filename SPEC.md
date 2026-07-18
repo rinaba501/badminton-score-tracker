@@ -152,7 +152,7 @@ Hybrid model: free app + banner ads (iOS only) + one-time StoreKit 2 in-app purc
 - Opt-in (Settings, default off) — models BWF Law 12.1's real end-of-court changes
 - Fires at the start of every game after the first (players just finished a game)
 - Also fires once in the *deciding* game of a multi-game match (game 3 of a best-of-3, game 5 of a best-of-5 — never in a single-game match), the instant either side's score first reaches half of `pointsToWin` rounded up (e.g. 11 of 21, 8 of 15, 6 of 11)
-- Each firing shows a "Change Ends" alert and flips which side renders first on the Game screen (top/bottom on Watch; top/bottom or left/right depending on Score Screen Style on iOS) — a display-only flip that never changes match-format, serve, or history identity
+- Each firing shows a "Change Ends" alert and flips which side renders first on the Game screen — the tap tiles *and* the games-won tally stay paired (top/bottom on Watch; top/bottom or left/right depending on Score Screen Style on iOS) — a display-only flip that never changes match-format, serve, or history identity
 
 ---
 
