@@ -71,6 +71,11 @@
 "history.cancel" = "취소";
 "history.clear" = "삭제";
 "history.delete_match_confirm" = "이 경기를 삭제하시겠습니까? 되돌릴 수 없습니다.";
+"history.select" = "선택";
+"history.select_all" = "전체 선택";
+"history.deselect_all" = "선택 해제";
+"history.delete_selected" = "삭제 (%d)";
+"history.delete_selected_confirm" = "%d개의 경기를 삭제하시겠습니까? 되돌릴 수 없습니다.";
 
 // Court Themes
 "theme.green" = "초록";
@@ -148,6 +153,12 @@
 "settings.minutes" = "%d분";
 "settings.delete" = "삭제";
 "settings.delete_player_confirm" = "이 선수를 삭제하시겠습니까? 지난 경기 기록에는 이름이 남지만 명단에서는 제거됩니다.";
+"settings.select_players" = "선택";
+"settings.cancel_select" = "취소";
+"settings.select_all_players" = "전체 선택";
+"settings.deselect_all_players" = "선택 해제";
+"settings.delete_selected_players" = "삭제 (%d)";
+"settings.delete_selected_players_confirm" = "%d명의 선수를 삭제하시겠습니까? 지난 경기 기록에는 이 이름들이 남지만 명단에서는 제거됩니다.";
 "prematch.near_side" = "근거리";
 "prematch.far_side" = "원거리";
 "prematch.near_partner" = "근거리 파트너";

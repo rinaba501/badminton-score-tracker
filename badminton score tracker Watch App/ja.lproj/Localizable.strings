@@ -72,6 +72,11 @@
 "history.cancel" = "キャンセル";
 "history.clear" = "削除";
 "history.delete_match_confirm" = "この試合を削除しますか？元に戻せません。";
+"history.select" = "選択";
+"history.select_all" = "全て選択";
+"history.deselect_all" = "選択解除";
+"history.delete_selected" = "削除 (%d)";
+"history.delete_selected_confirm" = "%d件の試合を削除しますか？元に戻せません。";
 
 // Court Themes
 "theme.green" = "グリーン";
@@ -149,6 +154,12 @@
 "settings.minutes" = "%d分";
 "settings.delete" = "削除";
 "settings.delete_player_confirm" = "このプレイヤーを削除しますか？過去の試合にはこの名前が残りますが、名簿からは削除されます。";
+"settings.select_players" = "選択";
+"settings.cancel_select" = "キャンセル";
+"settings.select_all_players" = "全て選択";
+"settings.deselect_all_players" = "選択解除";
+"settings.delete_selected_players" = "削除 (%d)";
+"settings.delete_selected_players_confirm" = "%d人のプレイヤーを削除しますか？過去の試合にはこれらの名前が残りますが、名簿からは削除されます。";
 "prematch.near_side" = "手前側";
 "prematch.far_side" = "奥側";
 "prematch.near_partner" = "手前側パートナー";
