@@ -61,6 +61,7 @@ struct GameView: View {
     @StateObject private var viewModel = GameViewModel()
     @State private var crownValue: Double = 0
     @State private var lastCrownScore: Double = 0
+    @State private var showInMatchSettings = false
     private let crownThreshold: Double = 1.0
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -304,6 +305,16 @@ struct GameView: View {
                     }
                 }
             }
+            ToolbarItem(placement: .confirmationAction) {
+                Button {
+                    showInMatchSettings = true
+                } label: {
+                    Label("settings.title", systemImage: "gear")
+                }
+            }
+        }
+        .sheet(isPresented: $showInMatchSettings) {
+            InMatchSettingsView()
         }
         .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $viewModel.showDiscardAlert) {
             Button(NSLocalizedString("game.discard_confirm", comment: ""), role: .destructive) {

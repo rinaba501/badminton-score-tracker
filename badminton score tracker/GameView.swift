@@ -54,6 +54,7 @@ struct GameView: View {
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @StateObject private var viewModel = GameViewModel()
+    @State private var showInMatchSettings = false
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     /// Read-site theme gate: a premium theme renders only while entitled
@@ -329,6 +330,17 @@ struct GameView: View {
                     // tint invisible — everything else keeps the original.
                     .tint(gameScreenStyle == .minimal ? Color.black.opacity(0.7) : Color.white)
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showInMatchSettings = true
+                    } label: {
+                        Label("settings.title", systemImage: "gearshape.fill")
+                    }
+                    .tint(gameScreenStyle == .minimal ? Color.black.opacity(0.7) : Color.white)
+                }
+            }
+            .sheet(isPresented: $showInMatchSettings) {
+                InMatchSettingsView()
             }
             .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $viewModel.showDiscardAlert) {
                 Button(NSLocalizedString("game.discard_confirm", comment: ""), role: .destructive) { onExit() }
