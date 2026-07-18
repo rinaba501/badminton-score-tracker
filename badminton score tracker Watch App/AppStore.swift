@@ -213,6 +213,21 @@ final class AppStore: ObservableObject {
     /// exactly like any other delete, so there's no need to tear down or
     /// rebuild them.
     func eraseAllData() async {
+        // Reset the share*WithFriends/shareStatsWithFriends toggles (part of
+        // eraseAllDataResetKeys) BEFORE calling saveRoster/clearHistory below:
+        // those methods re-enqueue a FriendStats/FriendIdentity save into the
+        // FriendsHistory zone whenever sharing is on, which would otherwise
+        // race the deleteFriendsHistoryZone() call just below it — the save
+        // and the zone delete would both be pending on the same sync engine
+        // with no guaranteed ordering, risking a save "winning" and leaving
+        // the zone non-empty. Resetting the toggles first makes
+        // isSharingHistoryWithFriends/isSharingStatsWithFriends read false,
+        // so saveRoster/clearHistory never re-enqueue anything into the zone
+        // this method is about to tear down.
+        for key in AppStorageKeys.eraseAllDataResetKeys {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+
         saveRoster([])
         clearHistory()
         saveClubs([])
@@ -224,9 +239,6 @@ final class AppStore: ObservableObject {
         await CloudKitSyncManager.shared.deleteMyFriendProfile()
         await CloudKitSyncManager.shared.deleteFriendsHistoryZone()
 
-        for key in AppStorageKeys.eraseAllDataResetKeys {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
         CloudKitSyncManager.shared.enqueueSettingsChange()
     }
 

@@ -29,6 +29,13 @@ struct EraseDataView: View {
     /// irreversible, cross-user action.
     private static let confirmationKeyword = "DELETE"
 
+    /// Pre-formatted once (not a bare Text(LocalizedStringKey) lookup) so
+    /// both the visible instruction and its VoiceOver accessibilityLabel
+    /// read "Type DELETE to confirm." rather than the raw "%@" template.
+    private static let confirmPrompt = String(
+        format: NSLocalizedString("settings.erase_confirm_prompt", comment: ""), confirmationKeyword
+    )
+
     private var ownedClubs: [Club] {
         appStore.clubs.filter { $0.ownerRecordName == nil }
     }
@@ -56,10 +63,10 @@ struct EraseDataView: View {
             }
 
             Section {
-                Text(String(format: NSLocalizedString("settings.erase_confirm_prompt", comment: ""), Self.confirmationKeyword))
+                Text(Self.confirmPrompt)
                     .font(.caption)
                 TextField(Self.confirmationKeyword, text: $confirmationText)
-                    .accessibilityLabel(Text("settings.erase_confirm_prompt"))
+                    .accessibilityLabel(Text(Self.confirmPrompt))
             }
 
             Section {
