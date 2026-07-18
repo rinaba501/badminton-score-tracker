@@ -24,6 +24,10 @@ public enum AppStorageKeys {
     // PreMatchView's club picker (#169); UUID string, "" = Personal. Same
     // per-device match-config exclusion as matchMyName et al. — never synced.
     public static let matchClubId = "matchClubId"
+    // PreMatchView's Official/Practice toggle, shown alongside matchClubId
+    // when a club is selected and tracks standings. Bool, defaults true
+    // (Official). Same per-device, never-synced convention as matchClubId.
+    public static let matchIsOfficial = "matchIsOfficial"
     public static let playerRoster = "playerRoster"
     public static let matchHistory = "matchHistory"
     public static let clubs = "clubs"

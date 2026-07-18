@@ -85,6 +85,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "Pertandingan Baru";
 "prematch.back" = "Kembali";
+"prematch.official_match" = "Pertandingan Resmi";
+"prematch.official_match_footer" = "Pertandingan resmi dihitung dalam Klasemen. Matikan untuk pertandingan latihan yang tetap muncul di Aktivitas tetapi tidak memengaruhi klasemen atau konfirmasi.";
 "game.end" = "Akhiri";
 "game.done" = "Selesai";
 "game.games" = "Game";
@@ -161,10 +163,13 @@
 "clubs.name" = "Nama";
 "clubs.members" = "Anggota";
 "clubs.you" = "Anda";
+"clubs.practice_badge" = "Latihan";
 "a11y.club_friend_badge" = "Teman";
 "clubs.standings" = "Klasemen";
 "clubs.require_confirmation" = "Wajib Konfirmasi Pertandingan";
 "clubs.require_confirmation_footer" = "Pertandingan yang dicatat anggota lain akan tertunda sampai Anda mengonfirmasinya di sini, sehingga kesalahan tidak memengaruhi klasemen.";
+"clubs.track_standings" = "Lacak Klasemen";
+"clubs.track_standings_footer" = "Matikan untuk menggunakan klub ini murni untuk pencatatan skor dan riwayat, tanpa papan peringkat atau tekanan kompetitif. Menyembunyikan Klasemen dan Musim.";
 "clubs.season" = "Musim";
 "clubs.season_enabled" = "Klasemen Musim";
 "clubs.season_start" = "Awal Musim";

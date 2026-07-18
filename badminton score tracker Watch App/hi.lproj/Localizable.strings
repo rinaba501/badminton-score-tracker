@@ -9,6 +9,7 @@
 "prematch.title" = "नया मैच";
 "prematch.who_serves" = "पहले सर्व कौन करेगा?";
 "prematch.back" = "वापस";
+"prematch.official_match" = "आधिकारिक मैच";
 
 // Game
 "game.end" = "समाप्त";
@@ -181,9 +182,11 @@
 "clubs.name" = "नाम";
 "clubs.members" = "सदस्य";
 "clubs.you" = "आप";
+"clubs.practice_badge" = "अभ्यास";
 "a11y.club_friend_badge" = "मित्र";
 "clubs.standings" = "स्टैंडिंग्स";
 "clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
+"clubs.track_standings" = "स्टैंडिंग्स ट्रैक करें";
 "clubs.season_open_format" = "सीज़न: %@ – वर्तमान";
 "clubs.season_range_format" = "सीज़न: %@ – %@";
 "clubs.pending_confirmation" = "पुष्टि लंबित";

@@ -271,9 +271,13 @@ public enum StatsCalculator {
         /// HistoryView's gameLine formats, so an activity row can show the
         /// exact score instead of just the games-won tally.
         public let games: [GameScore]
+        /// Mirrors `MatchRecord.isOfficial` — a practice match still appears
+        /// in the feed (unlike Standings, which filters it out at the call
+        /// site), so the row can render a "Practice" tag.
+        public let isOfficial: Bool
 
         public init(id: UUID, myName: String, opponentName: String, myGamesWon: Int,
-                    opponentGamesWon: Int, winner: RecordSide, date: Date, games: [GameScore]) {
+                    opponentGamesWon: Int, winner: RecordSide, date: Date, games: [GameScore], isOfficial: Bool) {
             self.id = id
             self.myName = myName
             self.opponentName = opponentName
@@ -282,6 +286,7 @@ public enum StatsCalculator {
             self.winner = winner
             self.date = date
             self.games = games
+            self.isOfficial = isOfficial
         }
     }
 
@@ -293,7 +298,8 @@ public enum StatsCalculator {
         history.reversed().map { record in
             ActivityFeedEntry(id: record.id, myName: record.myName, opponentName: record.opponentName,
                               myGamesWon: record.myGamesWon, opponentGamesWon: record.opponentGamesWon,
-                              winner: record.winner, date: record.date, games: record.games)
+                              winner: record.winner, date: record.date, games: record.games,
+                              isOfficial: record.isOfficial)
         }
     }
 

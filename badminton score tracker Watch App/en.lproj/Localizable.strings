@@ -9,6 +9,7 @@
 "prematch.title" = "New Match";
 "prematch.who_serves" = "Who serves first?";
 "prematch.back" = "Back";
+"prematch.official_match" = "Official Match";
 
 // Game
 "game.end" = "End";
@@ -181,9 +182,11 @@
 "clubs.name" = "Name";
 "clubs.members" = "Members";
 "clubs.you" = "You";
+"clubs.practice_badge" = "Practice";
 "a11y.club_friend_badge" = "Friend";
 "clubs.standings" = "Standings";
 "clubs.require_confirmation" = "Require Match Confirmation";
+"clubs.track_standings" = "Track Standings";
 "clubs.season_open_format" = "Season: %@ – present";
 "clubs.season_range_format" = "Season: %@ – %@";
 "clubs.pending_confirmation" = "Pending Confirmation";

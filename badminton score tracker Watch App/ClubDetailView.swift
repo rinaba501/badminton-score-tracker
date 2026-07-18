@@ -73,6 +73,7 @@ struct ClubDetailView: View {
     }
 
     private var requireMatchConfirmation: Bool { club?.requireMatchConfirmation ?? false }
+    private var trackStandings: Bool { club?.trackStandings ?? true }
 
     // Backstop for anyone who skipped the first-launch prompt (ContentView) —
     // passive nudge only, doesn't block viewing/using the club.
@@ -123,12 +124,12 @@ struct ClubDetailView: View {
     }
 
     private var pendingMatches: [MatchRecord] {
-        requireMatchConfirmation ? clubMatches.filter { !$0.isConfirmed } : []
+        requireMatchConfirmation ? clubMatches.filter { !$0.isConfirmed && $0.isOfficial } : []
     }
 
     private var standings: [StatsCalculator.StandingsEntry] {
         StatsCalculator.standings(history: clubMatches.filter {
-            ($0.isConfirmed || !requireMatchConfirmation) && (club?.isDateInSeason($0.date) ?? true)
+            $0.isOfficial && ($0.isConfirmed || !requireMatchConfirmation) && (club?.isDateInSeason($0.date) ?? true)
         })
     }
 
@@ -186,6 +187,11 @@ struct ClubDetailView: View {
                         Toggle("clubs.require_confirmation", isOn: Binding(
                             get: { requireMatchConfirmation },
                             set: { setRequireMatchConfirmation($0) }
+                        ))
+                        .font(.caption)
+                        Toggle("clubs.track_standings", isOn: Binding(
+                            get: { trackStandings },
+                            set: { setTrackStandings($0) }
                         ))
                         .font(.caption)
                     }
@@ -261,31 +267,33 @@ struct ClubDetailView: View {
                     }
                 }
 
-                Section(
-                    header: Text("clubs.standings"),
-                    footer: Group {
-                        if let seasonLabel {
-                            Text(seasonLabel)
-                                .font(.caption2)
+                if trackStandings {
+                    Section(
+                        header: Text("clubs.standings"),
+                        footer: Group {
+                            if let seasonLabel {
+                                Text(seasonLabel)
+                                    .font(.caption2)
+                            }
                         }
-                    }
-                ) {
-                    if standings.isEmpty {
-                        Text("stats.no_matches")
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                    } else {
-                        ForEach(standings) { entry in
-                            HStack {
-                                AvatarView(name: entry.name, color: avatarColor(for: entry.name), size: 24, iconName: avatarIcon(for: entry.name))
-                                Text(entry.name).font(.caption)
-                                if entry.name == myName {
-                                    youBadge
+                    ) {
+                        if standings.isEmpty {
+                            Text("stats.no_matches")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        } else {
+                            ForEach(standings) { entry in
+                                HStack {
+                                    AvatarView(name: entry.name, color: avatarColor(for: entry.name), size: 24, iconName: avatarIcon(for: entry.name))
+                                    Text(entry.name).font(.caption)
+                                    if entry.name == myName {
+                                        youBadge
+                                    }
+                                    Spacer()
+                                    Text("\(entry.wins)-\(entry.losses)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
-                                Spacer()
-                                Text("\(entry.wins)-\(entry.losses)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
                             }
                         }
                     }
@@ -451,6 +459,11 @@ struct ClubDetailView: View {
                 Text(entry.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", "))
                     .font(.caption2)
                     .foregroundColor(.secondary)
+                if !entry.isOfficial {
+                    Text("clubs.practice_badge")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
                 if !summary.isEmpty {
                     Text(summary)
                         .font(.caption2)
@@ -509,6 +522,13 @@ struct ClubDetailView: View {
         var updated = appStore.clubs
         guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
         updated[idx].requireMatchConfirmation = newValue
+        appStore.saveClubs(updated)
+    }
+
+    private func setTrackStandings(_ newValue: Bool) {
+        var updated = appStore.clubs
+        guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
+        updated[idx].trackStandings = newValue
         appStore.saveClubs(updated)
     }
 

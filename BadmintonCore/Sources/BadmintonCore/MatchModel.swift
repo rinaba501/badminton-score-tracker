@@ -240,6 +240,15 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
     /// about the club's toggle, same as `clubId` stays agnostic about
     /// club-scoping logic).
     public var isConfirmed: Bool = true
+    /// Practice-match tag: true (default) means Official — this match counts
+    /// toward Standings/the Pending Confirmation queue like every match did
+    /// before this field existed. `false` means Practice: it still appears
+    /// in the club Activity Feed (full chronological log) but is filtered
+    /// out of Standings and never enters Pending Confirmation regardless of
+    /// `Club.requireMatchConfirmation`, since a match that never counts
+    /// toward standings has nothing to gate. Defaults true so legacy history
+    /// with no key on disk keeps counting toward standings unchanged.
+    public var isOfficial: Bool = true
 
     /// True when either partner field is populated — the single home of the
     /// "is this record a Doubles match" check (see the comment above).
@@ -261,7 +270,8 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
                 myPartnerPlayerId: UUID? = nil,
                 opponentPartnerPlayerId: UUID? = nil,
                 clubId: UUID? = nil,
-                isConfirmed: Bool = true) {
+                isConfirmed: Bool = true,
+                isOfficial: Bool = true) {
         self.id = id
         self.games = games
         self.myGamesWon = myGamesWon
@@ -279,12 +289,13 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         self.opponentPartnerPlayerId = opponentPartnerPlayerId
         self.clubId = clubId
         self.isConfirmed = isConfirmed
+        self.isOfficial = isOfficial
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, games, myGamesWon, opponentGamesWon, winner, myName, opponentName, date, duration,
              myPlayerId, opponentPlayerId, myPartnerName, opponentPartnerName, myPartnerPlayerId, opponentPartnerPlayerId,
-             clubId, isConfirmed
+             clubId, isConfirmed, isOfficial
     }
 
     /// Self-migrating: reads the current `RecordSide` shape, or — for records
@@ -311,6 +322,7 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         opponentPartnerPlayerId = try container.decodeIfPresent(UUID.self, forKey: .opponentPartnerPlayerId)
         clubId = try container.decodeIfPresent(UUID.self, forKey: .clubId)
         isConfirmed = try container.decodeIfPresent(Bool.self, forKey: .isConfirmed) ?? true
+        isOfficial = try container.decodeIfPresent(Bool.self, forKey: .isOfficial) ?? true
 
         if let side = try? container.decode(RecordSide.self, forKey: .winner) {
             winner = side
@@ -339,5 +351,6 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         try container.encodeIfPresent(opponentPartnerPlayerId, forKey: .opponentPartnerPlayerId)
         try container.encodeIfPresent(clubId, forKey: .clubId)
         try container.encode(isConfirmed, forKey: .isConfirmed)
+        try container.encode(isOfficial, forKey: .isOfficial)
     }
 }

@@ -85,6 +85,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "新比赛";
 "prematch.back" = "返回";
+"prematch.official_match" = "正式比赛";
+"prematch.official_match_footer" = "正式比赛计入排名。关闭后为练习比赛，仍会显示在动态中，但不影响排名或确认。";
 "game.end" = "结束";
 "game.done" = "完成";
 "game.games" = "局数";
@@ -161,10 +163,13 @@
 "clubs.name" = "名称";
 "clubs.members" = "成员";
 "clubs.you" = "你";
+"clubs.practice_badge" = "练习";
 "a11y.club_friend_badge" = "好友";
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
 "clubs.require_confirmation_footer" = "其他成员记录的比赛在你确认之前将保持待定状态，避免错误影响排名。";
+"clubs.track_standings" = "记录排名";
+"clubs.track_standings_footer" = "关闭后，该俱乐部仅用于记录比分和历史，没有排行榜或竞争压力。将隐藏排名和赛季。";
 "clubs.season" = "赛季";
 "clubs.season_enabled" = "赛季排名";
 "clubs.season_start" = "赛季开始日期";

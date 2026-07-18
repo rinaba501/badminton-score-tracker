@@ -153,4 +153,30 @@ struct ClubTests {
         #expect(!club.isDateInSeason(Date(timeIntervalSince1970: 999)))
         #expect(!club.isDateInSeason(Date(timeIntervalSince1970: 2_001)))
     }
+
+    // MARK: - trackStandings
+
+    @Test func clubWithoutTrackStandingsKeyDecodesWithNil() throws {
+        // Shaped like a pre-trackStandings club entry — no trackStandings key present.
+        let json = """
+        [{"id":"\(UUID().uuidString)","name":"Alice's Club","createdDate":0}]
+        """
+        let clubs = PersistenceStore.decodeClubs(Data(json.utf8))
+        #expect(clubs.count == 1)
+        #expect(clubs.first?.trackStandings == nil)
+    }
+
+    @Test func clubRoundTripsTrackStandingsFalse() throws {
+        let club = Club(id: UUID(), name: "League Club", trackStandings: false)
+        let encoded = try #require(PersistenceStore.encodeClub(club))
+        let decoded = try #require(PersistenceStore.decodeClub(encoded))
+        #expect(decoded.trackStandings == false)
+    }
+
+    @Test func clubRoundTripsTrackStandingsTrue() throws {
+        let club = Club(id: UUID(), name: "League Club", trackStandings: true)
+        let encoded = try #require(PersistenceStore.encodeClub(club))
+        let decoded = try #require(PersistenceStore.decodeClub(encoded))
+        #expect(decoded.trackStandings == true)
+    }
 }

@@ -85,6 +85,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "新しい試合";
 "prematch.back" = "戻る";
+"prematch.official_match" = "公式試合";
+"prematch.official_match_footer" = "公式試合は順位表に反映されます。オフにすると練習試合になり、アクティビティには表示されますが、順位や承認には影響しません。";
 "game.end" = "終了";
 "game.done" = "完了";
 "game.games" = "ゲーム";
@@ -161,10 +163,13 @@
 "clubs.name" = "名前";
 "clubs.members" = "メンバー";
 "clubs.you" = "自分";
+"clubs.practice_badge" = "練習";
 "a11y.club_friend_badge" = "フレンド";
 "clubs.standings" = "順位表";
 "clubs.require_confirmation" = "試合の承認を必須にする";
 "clubs.require_confirmation_footer" = "他のメンバーが記録した試合は、ここで承認するまで保留となり、間違いが順位表に影響しません。";
+"clubs.track_standings" = "順位表を記録する";
+"clubs.track_standings_footer" = "オフにすると、このクラブを順位や競争のプレッシャーなしに、純粋にスコア記録・履歴用として使えます。順位表とシーズンが非表示になります。";
 "clubs.season" = "シーズン";
 "clubs.season_enabled" = "シーズン順位表";
 "clubs.season_start" = "シーズン開始日";

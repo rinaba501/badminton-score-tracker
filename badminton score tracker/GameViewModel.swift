@@ -47,6 +47,7 @@ final class GameViewModel: ObservableObject {
     @AppStorage(AppStorageKeys.matchMyPartnerName) private var matchMyPartnerName = ""
     @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
     @AppStorage(AppStorageKeys.matchClubId) private var matchClubId = ""
+    @AppStorage(AppStorageKeys.matchIsOfficial) private var matchIsOfficial = true
     @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
     @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
     @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
@@ -211,7 +212,8 @@ final class GameViewModel: ObservableObject {
             opponentPartnerName: effectiveOpponentPartnerName,
             myPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveMyPartnerName, roster: currentRoster),
             opponentPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveOpponentPartnerName, roster: currentRoster),
-            clubId: UUID(uuidString: matchClubId)
+            clubId: UUID(uuidString: matchClubId),
+            isOfficial: matchIsOfficial
         ))
         appStore.saveHistory(newHistory)
     }

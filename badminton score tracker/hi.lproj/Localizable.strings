@@ -85,6 +85,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "नया मैच";
 "prematch.back" = "वापस";
+"prematch.official_match" = "आधिकारिक मैच";
+"prematch.official_match_footer" = "आधिकारिक मैच स्टैंडिंग्स में गिने जाते हैं। अभ्यास मैच के लिए इसे बंद करें — यह एक्टिविटी में दिखेगा लेकिन स्टैंडिंग्स या पुष्टि को प्रभावित नहीं करेगा।";
 "game.end" = "समाप्त";
 "game.done" = "पूर्ण";
 "game.games" = "गेम्स";
@@ -161,10 +163,13 @@
 "clubs.name" = "नाम";
 "clubs.members" = "सदस्य";
 "clubs.you" = "आप";
+"clubs.practice_badge" = "अभ्यास";
 "a11y.club_friend_badge" = "मित्र";
 "clubs.standings" = "स्टैंडिंग्स";
 "clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
 "clubs.require_confirmation_footer" = "अन्य सदस्यों द्वारा दर्ज किए गए मैच तब तक लंबित रहते हैं जब तक आप उन्हें यहां पुष्टि नहीं करते, ताकि गलतियाँ रैंकिंग को प्रभावित न करें।";
+"clubs.track_standings" = "स्टैंडिंग्स ट्रैक करें";
+"clubs.track_standings_footer" = "इसे बंद करने पर यह क्लब केवल स्कोर-ट्रैकिंग और इतिहास के लिए उपयोग होगा, बिना किसी लीडरबोर्ड या प्रतिस्पर्धी दबाव के। स्टैंडिंग्स और सीज़न छिप जाएंगे।";
 "clubs.season" = "सीज़न";
 "clubs.season_enabled" = "सीज़न स्टैंडिंग्स";
 "clubs.season_start" = "सीज़न प्रारंभ तिथि";
