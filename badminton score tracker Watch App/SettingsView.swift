@@ -232,6 +232,8 @@ struct SettingsView: View {
                                         .foregroundColor(.secondary)
                                 }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
                         .accessibilityAddTraits(isSelectingPlayers && selectedPlayerIds.contains(player.id) ? .isSelected : [])
                         .contextMenu {
