@@ -3,13 +3,18 @@
 //  badminton score tracker (iOS)
 //
 //  "Matchstick" GameScreenStyle: a skeuomorphic nod to the physical LED
-//  scoreboards bolted to gym walls. True 7-segment glyph paths aren't worth
-//  the complexity here, so the "unlit ghost segment" look is approximated by
-//  drawing each digit twice — a faint full-opacity white duplicate behind a
-//  bright theme-colored glowing digit in front, mimicking the dim housing
-//  segments visible behind a lit LED number. Serve is a dedicated lamp per
-//  side rather than a color field, and games-won render as a row of lamp
-//  dots instead of plain text.
+//  scoreboards bolted to gym walls. Score digits render in DSEG7 Classic
+//  Bold (SIL OFL licensed, see Fonts/DSEG-LICENSE.txt at repo root and
+//  UIAppFonts in Info.plist) — a real 7-segment display font, so the
+//  "unlit ghost segment" look (a faint "8" behind a bright theme-colored
+//  glowing digit) actually reads as dim housing segments behind a lit LED
+//  number, not two unrelated numeral shapes stacked. Each of the two digit
+//  positions renders as its own fixed slot (ledDigit) rather than as one
+//  string, since a system font's space glyph isn't guaranteed — and DSEG7's
+//  measurably isn't — as wide as a digit glyph, which would misalign a
+//  single-digit score against the two-slot ghost. Serve is a dedicated lamp
+//  per side rather than a color field, and games-won render as a row of
+//  lamp dots instead of plain text.
 //
 
 import SwiftUI
@@ -25,17 +30,31 @@ struct MatchstickScoreboard: View {
 
     private var glowColor: Color { theme.color.blended(toward: .white, by: 0.25) }
 
-    private func ledDigit(_ score: Int) -> some View {
+    private let ledFont = Font.custom("DSEG7Classic-Bold", size: 72)
+
+    private func ledDigitSlot(_ digit: Character?) -> some View {
         ZStack {
-            Text("88")
+            Text("8")
                 .foregroundStyle(.white.opacity(0.09))
-            Text("\(score)")
-                .foregroundStyle(glowColor)
-                .shadow(color: glowColor.opacity(0.9), radius: 3)
-                .shadow(color: glowColor.opacity(0.4), radius: 9)
+            if let digit {
+                Text(String(digit))
+                    .foregroundStyle(glowColor)
+                    .shadow(color: glowColor.opacity(0.9), radius: 3)
+                    .shadow(color: glowColor.opacity(0.4), radius: 9)
+            }
         }
-        .font(.system(size: 72, weight: .heavy, design: .monospaced))
-        .monospacedDigit()
+        .font(ledFont)
+    }
+
+    private func ledDigit(_ score: Int) -> some View {
+        let clamped = min(max(score, 0), 99)
+        let digits = Array(String(clamped))
+        let tens: Character? = digits.count > 1 ? digits[0] : nil
+        let ones = digits.last!
+        return HStack(spacing: 2) {
+            ledDigitSlot(tens)
+            ledDigitSlot(ones)
+        }
     }
 
     private func serveLampGlow(lit: Bool, opacity: Double) -> Color {
