@@ -52,6 +52,14 @@
 	</array>
 	<key>CKSharingSupported</key>
 	<true/>
+	<!-- DSEG7 Classic Bold (SIL OFL licensed, see Fonts/DSEG-LICENSE.txt at repo
+	     root) — the 7-segment LED font used by the Matchstick GameScreenStyle's
+	     ledDigit so the ghost "unlit segment" overlay reads as a real digital
+	     scoreboard glyph, not two unrelated numeral shapes stacked. -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>DSEG7Classic-Bold.ttf</string>
+	</array>
 	<!-- AdMob (banner ads for non-Pro users, iOS only). This is Google's
 	     public TEST application ID — replace with the real AdMob app ID
 	     (and the ad-unit ID in AdBannerView.swift) before release. -->
