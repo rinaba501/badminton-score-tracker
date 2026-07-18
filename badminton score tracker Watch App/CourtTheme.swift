@@ -36,3 +36,47 @@ enum CourtTheme: String, Codable, CaseIterable {
         }
     }
 }
+
+/// The Court Theme picker Section, shared by SettingsView's full settings
+/// list and InMatchSettingsView's compact in-match sheet (#260). Picking a
+/// locked theme snaps back to the last free selection and opens the paywall
+/// instead of sticking.
+struct CourtThemeSection: View {
+    @Binding var courtTheme: CourtTheme
+    @Binding var lastFreeTheme: CourtTheme
+    @Binding var showPaywall: Bool
+    @EnvironmentObject private var storeManager: StoreManager
+
+    var body: some View {
+        Section(header: Text("settings.court_theme")) {
+            Picker("settings.theme", selection: $courtTheme) {
+                ForEach(CourtTheme.allCases, id: \.self) { theme in
+                    HStack {
+                        Circle()
+                            .fill(theme.color)
+                            .frame(width: 12, height: 12)
+                        Text(NSLocalizedString("theme.\(theme.rawValue.lowercased())", comment: ""))
+                        if theme.isPremium && !storeManager.entitlements.hasAllThemes {
+                            Spacer()
+                            Image(systemName: "lock.fill")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .accessibilityLabel(Text("paywall.locked"))
+                        }
+                    }
+                    .tag(theme)
+                }
+            }
+            // Picking a locked theme opens the paywall instead of
+            // sticking: snap back to the last free selection.
+            .onChange(of: courtTheme) { newTheme in
+                if newTheme.isPremium && !storeManager.entitlements.hasAllThemes {
+                    courtTheme = lastFreeTheme
+                    showPaywall = true
+                } else if !newTheme.isPremium {
+                    lastFreeTheme = newTheme
+                }
+            }
+        }
+    }
+}

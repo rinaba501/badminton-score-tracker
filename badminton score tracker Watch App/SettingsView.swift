@@ -212,36 +212,7 @@ struct SettingsView: View {
                 Toggle("settings.announce_score", isOn: $announceScore)
             }
 
-            Section(header: Text("settings.court_theme")) {
-                Picker("settings.theme", selection: $courtTheme) {
-                    ForEach(CourtTheme.allCases, id: \.self) { theme in
-                        HStack {
-                            Circle()
-                                .fill(theme.color)
-                                .frame(width: 12, height: 12)
-                            Text(NSLocalizedString("theme.\(theme.rawValue.lowercased())", comment: ""))
-                            if theme.isPremium && !storeManager.entitlements.hasAllThemes {
-                                Spacer()
-                                Image(systemName: "lock.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .accessibilityLabel(Text("paywall.locked"))
-                            }
-                        }
-                        .tag(theme)
-                    }
-                }
-                // Picking a locked theme opens the paywall instead of
-                // sticking: snap back to the last free selection.
-                .onChange(of: courtTheme) { newTheme in
-                    if newTheme.isPremium && !storeManager.entitlements.hasAllThemes {
-                        courtTheme = lastFreeTheme
-                        showPaywall = true
-                    } else if !newTheme.isPremium {
-                        lastFreeTheme = newTheme
-                    }
-                }
-            }
+            CourtThemeSection(courtTheme: $courtTheme, lastFreeTheme: $lastFreeTheme, showPaywall: $showPaywall)
 
             Section(header: Text("settings.match_format")) {
                 Picker("settings.points_to_win", selection: $pointsToWin) {
