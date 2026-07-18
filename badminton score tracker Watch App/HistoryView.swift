@@ -13,6 +13,7 @@ struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
     @State private var showingClearConfirmation = false
+    @State private var showingMoreActions = false
     @State private var pendingDeleteIds: Set<MatchRecord.ID>?
     @State private var isSelecting = false
     @State private var selectedIds: Set<MatchRecord.ID> = []
@@ -321,16 +322,7 @@ struct HistoryView: View {
                         }
                         .disabled(selectedIds.isEmpty)
                     } else {
-                        Menu {
-                            Button(action: { isSelecting = true }) {
-                                Label("history.select", systemImage: "checkmark.circle")
-                            }
-                            Button(role: .destructive) {
-                                showingClearConfirmation = true
-                            } label: {
-                                Label("history.clear_title", systemImage: "trash")
-                            }
-                        } label: {
+                        Button(action: { showingMoreActions = true }) {
                             Image(systemName: "ellipsis.circle")
                         }
                     }
@@ -397,6 +389,10 @@ struct HistoryView: View {
             Button("history.clear", role: .destructive) { appStore.clearHistory() }
         } message: {
             Text("history.clear_confirm")
+        }
+        .confirmationDialog("", isPresented: $showingMoreActions, titleVisibility: .hidden) {
+            Button("history.select") { isSelecting = true }
+            Button("history.clear_title", role: .destructive) { showingClearConfirmation = true }
         }
         .confirmationDialog(
             deleteConfirmTitle,
