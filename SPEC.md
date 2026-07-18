@@ -248,7 +248,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
-| 163 | Club seasons: time-boxed standings resets — Roadmap Phase 5 backlog | #PLACEHOLDER |
+| 163 | Club seasons: time-boxed standings resets — Roadmap Phase 5 backlog | #256 |
 | 252 | New "Scoreboard" Score Screen Style (8th): manual courtside flip-card scoreboard — hinge-seam cards on binder rings, games mini-card, card-flip on each point (Reduce Motion aware) — and the app's first landscape screen, via an app-wide orientation lock GameView flips on entry/exit (AppDelegate.setOrientation) | #253 |
 | 239 | iOS Settings: Court Theme and Score Screen Style pickers were plain `Picker`s, which flatten custom label views (color swatches, thumbnails) into text-only UIMenu rows on iOS; replaced with pushed `CourtThemePickerView`/`GameScreenStylePickerView` screens showing a color swatch per theme and a small static mockup per one of the 7 score-screen styles, with existing lock/paywall gating preserved | #251 |
 | 249 | iOS home screen: stats strip's three co-located NavigationLinks (Matches/Win rate/Players) mis-routed taps to the wrong sibling's destination; replaced with Buttons driving a single `.navigationDestination(item:)` | #250 |
