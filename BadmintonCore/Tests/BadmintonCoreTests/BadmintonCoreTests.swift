@@ -202,6 +202,22 @@ struct BadmintonMatchTests {
         }
         #expect(match.opponentScore == 12)  // sanity: the loop really did carry opponent through 11 (tying) and beyond
     }
+
+    /// Same re-fire regression as above, but at a non-default `pointsToWin`
+    /// (15, one of the three values users can actually pick in Settings) —
+    /// makes sure the fix generalizes and isn't only correct for 21.
+    @Test func courtChangeThresholdDoesNotReFireWithScaledPointsToWin() {
+        var match = BadmintonMatch(pointsToWin: 15, pointCap: 24)
+        score(&match, .me, 15); match.startNextGame()
+        score(&match, .opponent, 15); match.startNextGame()  // deciding game
+        score(&match, .me, 8)
+        #expect(match.isCourtChangeThreshold(after: .me))   // 8 of 15 is the scaled threshold — fires
+        for _ in 0..<9 {
+            match.score(.opponent)
+            #expect(!match.isCourtChangeThreshold(after: .opponent))  // opponent catching up to, then past, 8 — never re-fires
+        }
+        #expect(match.opponentScore == 9)
+    }
 }
 
 struct DoublesServeRotationTests {
