@@ -165,6 +165,14 @@
 "clubs.standings" = "स्टैंडिंग्स";
 "clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
 "clubs.require_confirmation_footer" = "अन्य सदस्यों द्वारा दर्ज किए गए मैच तब तक लंबित रहते हैं जब तक आप उन्हें यहां पुष्टि नहीं करते, ताकि गलतियाँ रैंकिंग को प्रभावित न करें।";
+"clubs.season" = "सीज़न";
+"clubs.season_enabled" = "सीज़न स्टैंडिंग्स";
+"clubs.season_start" = "सीज़न प्रारंभ तिथि";
+"clubs.season_has_end" = "सीज़न की समाप्ति तिथि है";
+"clubs.season_end" = "सीज़न समाप्ति तिथि";
+"clubs.season_footer" = "सेट करने पर, स्टैंडिंग्स केवल इस अवधि के दौरान दर्ज किए गए मैचों को गिनेंगी। एक्टिविटी फ़ीड प्रभावित नहीं होती।";
+"clubs.season_open_format" = "सीज़न: %@ – वर्तमान";
+"clubs.season_range_format" = "सीज़न: %@ – %@";
 "clubs.pending_confirmation" = "पुष्टि लंबित";
 "clubs.activity" = "गतिविधि";
 "clubs.reactions" = "रिएक्शन";

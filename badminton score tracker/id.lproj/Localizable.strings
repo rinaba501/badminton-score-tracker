@@ -165,6 +165,14 @@
 "clubs.standings" = "Klasemen";
 "clubs.require_confirmation" = "Wajib Konfirmasi Pertandingan";
 "clubs.require_confirmation_footer" = "Pertandingan yang dicatat anggota lain akan tertunda sampai Anda mengonfirmasinya di sini, sehingga kesalahan tidak memengaruhi klasemen.";
+"clubs.season" = "Musim";
+"clubs.season_enabled" = "Klasemen Musim";
+"clubs.season_start" = "Awal Musim";
+"clubs.season_has_end" = "Musim Memiliki Tanggal Akhir";
+"clubs.season_end" = "Akhir Musim";
+"clubs.season_footer" = "Jika diatur, Klasemen hanya menghitung pertandingan yang dicatat dalam periode ini. Aktivitas tidak terpengaruh.";
+"clubs.season_open_format" = "Musim: %@ – sekarang";
+"clubs.season_range_format" = "Musim: %@ – %@";
 "clubs.pending_confirmation" = "Menunggu Konfirmasi";
 "clubs.activity" = "Aktivitas";
 "clubs.reactions" = "Reaksi";

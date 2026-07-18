@@ -165,6 +165,14 @@
 "clubs.standings" = "Standings";
 "clubs.require_confirmation" = "Require Match Confirmation";
 "clubs.require_confirmation_footer" = "Matches other members record stay pending until you confirm them here, so mistakes don't affect standings.";
+"clubs.season" = "Season";
+"clubs.season_enabled" = "Season Standings";
+"clubs.season_start" = "Season Start";
+"clubs.season_has_end" = "Season Has an End Date";
+"clubs.season_end" = "Season End";
+"clubs.season_footer" = "When set, Standings only count matches played during this window. The Activity feed is unaffected.";
+"clubs.season_open_format" = "Season: %@ – present";
+"clubs.season_range_format" = "Season: %@ – %@";
 "clubs.pending_confirmation" = "Pending Confirmation";
 "clubs.activity" = "Activity";
 "clubs.reactions" = "Reactions";

@@ -106,4 +106,51 @@ struct ClubTests {
         let decoded = try #require(PersistenceStore.decodeClub(encoded))
         #expect(decoded.requireMatchConfirmation == true)
     }
+
+    // MARK: - Club seasons (issue #163)
+
+    @Test func clubWithoutSeasonKeysDecodesWithNilDates() throws {
+        // Shaped like a pre-#163 club entry — no season keys present.
+        let json = """
+        [{"id":"\(UUID().uuidString)","name":"Alice's Club","createdDate":0}]
+        """
+        let clubs = PersistenceStore.decodeClubs(Data(json.utf8))
+        #expect(clubs.count == 1)
+        #expect(clubs.first?.seasonStartDate == nil)
+        #expect(clubs.first?.seasonEndDate == nil)
+    }
+
+    @Test func clubRoundTripsSeasonDates() throws {
+        let start = Date(timeIntervalSince1970: 1_000)
+        let end = Date(timeIntervalSince1970: 2_000)
+        let club = Club(id: UUID(), name: "League Club", seasonStartDate: start, seasonEndDate: end)
+        let encoded = try #require(PersistenceStore.encodeClub(club))
+        let decoded = try #require(PersistenceStore.decodeClub(encoded))
+        #expect(decoded.seasonStartDate == start)
+        #expect(decoded.seasonEndDate == end)
+    }
+
+    @Test func isDateInSeasonTrueWhenNoSeasonSet() {
+        let club = Club(name: "No Season")
+        #expect(club.isDateInSeason(Date(timeIntervalSince1970: 0)))
+        #expect(club.isDateInSeason(Date()))
+    }
+
+    @Test func isDateInSeasonRespectsStartAndOpenEnd() {
+        let start = Date(timeIntervalSince1970: 1_000)
+        let club = Club(name: "Open", seasonStartDate: start)
+        #expect(!club.isDateInSeason(Date(timeIntervalSince1970: 500)))
+        #expect(club.isDateInSeason(start))
+        #expect(club.isDateInSeason(Date(timeIntervalSince1970: 1_000_000)))
+    }
+
+    @Test func isDateInSeasonRespectsInclusiveEnd() {
+        let start = Date(timeIntervalSince1970: 1_000)
+        let end = Date(timeIntervalSince1970: 2_000)
+        let club = Club(name: "Bounded", seasonStartDate: start, seasonEndDate: end)
+        #expect(club.isDateInSeason(start))
+        #expect(club.isDateInSeason(end))
+        #expect(!club.isDateInSeason(Date(timeIntervalSince1970: 999)))
+        #expect(!club.isDateInSeason(Date(timeIntervalSince1970: 2_001)))
+    }
 }
