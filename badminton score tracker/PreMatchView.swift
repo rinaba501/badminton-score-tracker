@@ -28,6 +28,7 @@ struct PreMatchView: View {
     @AppStorage(AppStorageKeys.matchMyPartnerName) private var matchMyPartnerName = ""
     @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
     @AppStorage(AppStorageKeys.matchClubId) private var matchClubId = ""
+    @AppStorage(AppStorageKeys.matchIsOfficial) private var matchIsOfficial = true
     @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
 
@@ -45,6 +46,15 @@ struct PreMatchView: View {
             get: { UUID(uuidString: matchClubId) },
             set: { matchClubId = $0?.uuidString ?? "" }
         )
+    }
+
+    /// False when no club is selected (Personal has no official/practice
+    /// distinction) or the selected club has Standings tracking off (the
+    /// distinction is moot with nothing to count toward) — gates whether
+    /// the Official Match toggle shows at all.
+    private var selectedClubTracksStandings: Bool {
+        guard let id = clubSelection.wrappedValue else { return false }
+        return appStore.clubs.first(where: { $0.id == id })?.trackStandings ?? true
     }
 
     private var history: [MatchRecord] { appStore.history }
@@ -89,6 +99,9 @@ struct PreMatchView: View {
                     matchOpponentPartnerName = ""
                     if let id = UUID(uuidString: matchClubId), !appStore.clubs.contains(where: { $0.id == id }) {
                         matchClubId = ""
+                    }
+                    if !selectedClubTracksStandings {
+                        matchIsOfficial = true
                     }
                 }
         }
@@ -246,6 +259,13 @@ struct PreMatchView: View {
                         ForEach(appStore.clubs) { club in
                             Text(club.name).tag(UUID?.some(club.id))
                         }
+                    }
+                    if selectedClubTracksStandings {
+                        Toggle("prematch.official_match", isOn: $matchIsOfficial)
+                    }
+                } footer: {
+                    if selectedClubTracksStandings {
+                        Text("prematch.official_match_footer")
                     }
                 }
             }

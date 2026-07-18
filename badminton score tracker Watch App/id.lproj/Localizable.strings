@@ -9,6 +9,7 @@
 "prematch.title" = "Pertandingan Baru";
 "prematch.who_serves" = "Siapa yang servis pertama?";
 "prematch.back" = "Kembali";
+"prematch.official_match" = "Pertandingan Resmi";
 
 // Game
 "game.end" = "Akhiri";
@@ -181,9 +182,11 @@
 "clubs.name" = "Nama";
 "clubs.members" = "Anggota";
 "clubs.you" = "Anda";
+"clubs.practice_badge" = "Latihan";
 "a11y.club_friend_badge" = "Teman";
 "clubs.standings" = "Klasemen";
 "clubs.require_confirmation" = "Wajib Konfirmasi Pertandingan";
+"clubs.track_standings" = "Lacak Klasemen";
 "clubs.season_open_format" = "Musim: %@ – sekarang";
 "clubs.season_range_format" = "Musim: %@ – %@";
 "clubs.pending_confirmation" = "Menunggu Konfirmasi";

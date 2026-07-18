@@ -85,6 +85,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "새 경기";
 "prematch.back" = "뒤로";
+"prematch.official_match" = "공식 경기";
+"prematch.official_match_footer" = "공식 경기는 순위표에 반영됩니다. 끄면 연습 경기가 되어 활동에는 표시되지만 순위나 확인에는 영향을 주지 않습니다.";
 "game.end" = "종료";
 "game.done" = "완료";
 "game.games" = "게임";
@@ -161,10 +163,13 @@
 "clubs.name" = "이름";
 "clubs.members" = "멤버";
 "clubs.you" = "나";
+"clubs.practice_badge" = "연습";
 "a11y.club_friend_badge" = "친구";
 "clubs.standings" = "순위표";
 "clubs.require_confirmation" = "경기 확인 필요";
 "clubs.require_confirmation_footer" = "다른 회원이 기록한 경기는 여기서 확인하기 전까지 보류 상태로 유지되어, 실수가 순위에 영향을 주지 않습니다.";
+"clubs.track_standings" = "순위 기록";
+"clubs.track_standings_footer" = "끄면 이 클럽을 순위나 경쟁 부담 없이 순수하게 점수 기록과 기록용으로 사용할 수 있습니다. 순위표와 시즌이 숨겨집니다.";
 "clubs.season" = "시즌";
 "clubs.season_enabled" = "시즌 순위표";
 "clubs.season_start" = "시즌 시작일";

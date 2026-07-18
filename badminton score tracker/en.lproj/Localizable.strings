@@ -85,6 +85,8 @@
 // Live scoring (shared keys with the Watch)
 "prematch.title" = "New Match";
 "prematch.back" = "Back";
+"prematch.official_match" = "Official Match";
+"prematch.official_match_footer" = "Official matches count toward Standings. Turn off for a practice match that still shows in Activity but never affects standings or confirmation.";
 "game.end" = "End";
 "game.done" = "Done";
 "game.games" = "Games";
@@ -161,10 +163,13 @@
 "clubs.name" = "Name";
 "clubs.members" = "Members";
 "clubs.you" = "You";
+"clubs.practice_badge" = "Practice";
 "a11y.club_friend_badge" = "Friend";
 "clubs.standings" = "Standings";
 "clubs.require_confirmation" = "Require Match Confirmation";
 "clubs.require_confirmation_footer" = "Matches other members record stay pending until you confirm them here, so mistakes don't affect standings.";
+"clubs.track_standings" = "Track Standings";
+"clubs.track_standings_footer" = "Turn this off to use the club purely for score-tracking and history, with no leaderboard or competitive pressure. Hides Standings and Season.";
 "clubs.season" = "Season";
 "clubs.season_enabled" = "Season Standings";
 "clubs.season_start" = "Season Start";

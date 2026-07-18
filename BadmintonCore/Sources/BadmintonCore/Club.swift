@@ -35,6 +35,14 @@ public struct Club: Identifiable, Codable, Equatable {
     /// reason as `requireMatchConfirmation` above.
     public var seasonStartDate: Date?
     public var seasonEndDate: Date?
+    /// Turn Standings tracking off for this club entirely (and, since Season
+    /// only exists to feed Standings, hides the Season section too) — for
+    /// clubs used purely for score-tracking/history with no competitive
+    /// pressure. INVERTED nil-semantics vs. every other Optional Bool above:
+    /// here `nil` means ON (true) — existing clubs must keep showing
+    /// Standings unchanged, so absent/default resolves to "tracking", not
+    /// "off". `false` is the only way to actually turn it off.
+    public var trackStandings: Bool?
 
     public init(
         id: UUID = UUID(),
@@ -43,7 +51,8 @@ public struct Club: Identifiable, Codable, Equatable {
         ownerRecordName: String? = nil,
         requireMatchConfirmation: Bool? = nil,
         seasonStartDate: Date? = nil,
-        seasonEndDate: Date? = nil
+        seasonEndDate: Date? = nil,
+        trackStandings: Bool? = nil
     ) {
         self.id = id
         self.name = name
@@ -52,6 +61,7 @@ public struct Club: Identifiable, Codable, Equatable {
         self.requireMatchConfirmation = requireMatchConfirmation
         self.seasonStartDate = seasonStartDate
         self.seasonEndDate = seasonEndDate
+        self.trackStandings = trackStandings
     }
 }
 

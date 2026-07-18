@@ -83,6 +83,7 @@ struct ClubDetailView: View {
     }
 
     private var requireMatchConfirmation: Bool { club?.requireMatchConfirmation ?? false }
+    private var trackStandings: Bool { club?.trackStandings ?? true }
 
     // Backstop for anyone who skipped the first-launch prompt (ContentView) —
     // passive nudge only, doesn't block viewing/using the club.
@@ -133,12 +134,12 @@ struct ClubDetailView: View {
     }
 
     private var pendingMatches: [MatchRecord] {
-        requireMatchConfirmation ? clubMatches.filter { !$0.isConfirmed } : []
+        requireMatchConfirmation ? clubMatches.filter { !$0.isConfirmed && $0.isOfficial } : []
     }
 
     private var standings: [StatsCalculator.StandingsEntry] {
         StatsCalculator.standings(history: clubMatches.filter {
-            ($0.isConfirmed || !requireMatchConfirmation) && (club?.isDateInSeason($0.date) ?? true)
+            $0.isOfficial && ($0.isConfirmed || !requireMatchConfirmation) && (club?.isDateInSeason($0.date) ?? true)
         })
     }
 
@@ -198,12 +199,17 @@ struct ClubDetailView: View {
                             get: { requireMatchConfirmation },
                             set: { setRequireMatchConfirmation($0) }
                         ))
+                        Toggle("clubs.track_standings", isOn: Binding(
+                            get: { trackStandings },
+                            set: { setTrackStandings($0) }
+                        ))
                     }
                 } header: {
                     Text("clubs.name")
                 } footer: {
                     if isOwned {
                         Text("clubs.require_confirmation_footer")
+                        Text("clubs.track_standings_footer")
                     }
                 }
 
@@ -292,68 +298,70 @@ struct ClubDetailView: View {
                     Text("clubs.members")
                 }
 
-                if isOwned {
-                    Section {
-                        Toggle("clubs.season_enabled", isOn: Binding(
-                            get: { hasSeason },
-                            set: { newValue in
-                                hasSeason = newValue
-                                if newValue {
-                                    setSeasonDates(start: seasonStart, end: hasSeasonEnd ? seasonEnd : nil)
-                                } else {
-                                    hasSeasonEnd = false
-                                    setSeasonDates(start: nil, end: nil)
-                                }
-                            }
-                        ))
-                        if hasSeason {
-                            DatePicker("clubs.season_start", selection: $seasonStart, displayedComponents: .date)
-                                .onChange(of: seasonStart) { _, newValue in
-                                    setSeasonDates(start: newValue, end: hasSeasonEnd ? seasonEnd : nil)
-                                }
-                            Toggle("clubs.season_has_end", isOn: Binding(
-                                get: { hasSeasonEnd },
+                if trackStandings {
+                    if isOwned {
+                        Section {
+                            Toggle("clubs.season_enabled", isOn: Binding(
+                                get: { hasSeason },
                                 set: { newValue in
-                                    hasSeasonEnd = newValue
-                                    setSeasonDates(start: seasonStart, end: newValue ? seasonEnd : nil)
+                                    hasSeason = newValue
+                                    if newValue {
+                                        setSeasonDates(start: seasonStart, end: hasSeasonEnd ? seasonEnd : nil)
+                                    } else {
+                                        hasSeasonEnd = false
+                                        setSeasonDates(start: nil, end: nil)
+                                    }
                                 }
                             ))
-                            if hasSeasonEnd {
-                                DatePicker("clubs.season_end", selection: $seasonEnd, displayedComponents: .date)
-                                    .onChange(of: seasonEnd) { _, newValue in
-                                        setSeasonDates(start: seasonStart, end: newValue)
+                            if hasSeason {
+                                DatePicker("clubs.season_start", selection: $seasonStart, displayedComponents: .date)
+                                    .onChange(of: seasonStart) { _, newValue in
+                                        setSeasonDates(start: newValue, end: hasSeasonEnd ? seasonEnd : nil)
                                     }
+                                Toggle("clubs.season_has_end", isOn: Binding(
+                                    get: { hasSeasonEnd },
+                                    set: { newValue in
+                                        hasSeasonEnd = newValue
+                                        setSeasonDates(start: seasonStart, end: newValue ? seasonEnd : nil)
+                                    }
+                                ))
+                                if hasSeasonEnd {
+                                    DatePicker("clubs.season_end", selection: $seasonEnd, displayedComponents: .date)
+                                        .onChange(of: seasonEnd) { _, newValue in
+                                            setSeasonDates(start: seasonStart, end: newValue)
+                                        }
+                                }
+                            }
+                        } header: {
+                            Text("clubs.season")
+                        } footer: {
+                            Text("clubs.season_footer")
+                        }
+                    }
+
+                    Section {
+                        if standings.isEmpty {
+                            ContentUnavailableView("stats.no_matches", systemImage: "trophy")
+                        } else {
+                            ForEach(standings) { entry in
+                                HStack {
+                                    AvatarView(name: entry.name, color: avatarColor(for: entry.name), size: 24, iconName: avatarIcon(for: entry.name))
+                                    Text(entry.name)
+                                    if entry.name == myName {
+                                        youBadge
+                                    }
+                                    Spacer()
+                                    Text("\(entry.wins)-\(entry.losses)")
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
                     } header: {
-                        Text("clubs.season")
+                        Text("clubs.standings")
                     } footer: {
-                        Text("clubs.season_footer")
-                    }
-                }
-
-                Section {
-                    if standings.isEmpty {
-                        ContentUnavailableView("stats.no_matches", systemImage: "trophy")
-                    } else {
-                        ForEach(standings) { entry in
-                            HStack {
-                                AvatarView(name: entry.name, color: avatarColor(for: entry.name), size: 24, iconName: avatarIcon(for: entry.name))
-                                Text(entry.name)
-                                if entry.name == myName {
-                                    youBadge
-                                }
-                                Spacer()
-                                Text("\(entry.wins)-\(entry.losses)")
-                                    .foregroundStyle(.secondary)
-                            }
+                        if let seasonLabel {
+                            Text(seasonLabel)
                         }
-                    }
-                } header: {
-                    Text("clubs.standings")
-                } footer: {
-                    if let seasonLabel {
-                        Text(seasonLabel)
                     }
                 }
 
@@ -542,6 +550,14 @@ struct ClubDetailView: View {
             Text(entry.games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", "))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if !entry.isOfficial {
+                Text("clubs.practice_badge")
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.secondary.opacity(0.15), in: Capsule())
+                    .foregroundStyle(.secondary)
+            }
             HStack(spacing: 12) {
                 ForEach(MatchReactionsView.emojiOptions, id: \.self) { emoji in
                     ReactionEmojiButton(
@@ -643,6 +659,13 @@ struct ClubDetailView: View {
         guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
         updated[idx].seasonStartDate = start
         updated[idx].seasonEndDate = end
+        store.saveClubs(updated)
+    }
+
+    private func setTrackStandings(_ newValue: Bool) {
+        var updated = store.clubs
+        guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
+        updated[idx].trackStandings = newValue
         store.saveClubs(updated)
     }
 

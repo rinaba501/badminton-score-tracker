@@ -9,6 +9,7 @@
 "prematch.title" = "新しい試合";
 "prematch.who_serves" = "最初にサーブするのは？";
 "prematch.back" = "戻る";
+"prematch.official_match" = "公式試合";
 
 // Game
 "game.end" = "終了";
@@ -182,9 +183,11 @@
 "clubs.name" = "名前";
 "clubs.members" = "メンバー";
 "clubs.you" = "自分";
+"clubs.practice_badge" = "練習";
 "a11y.club_friend_badge" = "フレンド";
 "clubs.standings" = "順位表";
 "clubs.require_confirmation" = "試合の承認を必須にする";
+"clubs.track_standings" = "順位表を記録する";
 "clubs.season_open_format" = "シーズン: %@ – 現在";
 "clubs.season_range_format" = "シーズン: %@ – %@";
 "clubs.pending_confirmation" = "承認待ち";

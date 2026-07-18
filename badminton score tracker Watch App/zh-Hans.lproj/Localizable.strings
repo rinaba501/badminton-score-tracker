@@ -9,6 +9,7 @@
 "prematch.title" = "新比赛";
 "prematch.who_serves" = "谁先发球？";
 "prematch.back" = "返回";
+"prematch.official_match" = "正式比赛";
 
 // Game
 "game.end" = "结束";
@@ -181,9 +182,11 @@
 "clubs.name" = "名称";
 "clubs.members" = "成员";
 "clubs.you" = "你";
+"clubs.practice_badge" = "练习";
 "a11y.club_friend_badge" = "好友";
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
+"clubs.track_standings" = "记录排名";
 "clubs.season_open_format" = "赛季：%@ – 至今";
 "clubs.season_range_format" = "赛季：%@ – %@";
 "clubs.pending_confirmation" = "待确认";

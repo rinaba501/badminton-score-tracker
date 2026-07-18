@@ -277,6 +277,15 @@ struct StatsCalculatorTests {
     @Test func activityFeedIsEmptyForEmptyHistory() {
         #expect(StatsCalculator.activityFeed(history: []).isEmpty)
     }
+
+    @Test func activityFeedThreadsIsOfficialThrough() {
+        let official = record(my: "Alice", opp: "Bob", winner: "Alice", date: Date(timeIntervalSince1970: 1_000))
+        let practice = MatchRecord(games: [GameScore(my: 21, opponent: 15)], myGamesWon: 1, opponentGamesWon: 0,
+                                    winner: .near, myName: "Alice", opponentName: "Cara",
+                                    date: Date(timeIntervalSince1970: 2_000), isOfficial: false)
+        let feed = StatsCalculator.activityFeed(history: [official, practice])
+        #expect(feed.map(\.isOfficial) == [false, true])
+    }
 }
 
 /// Doubles records mixed with singles-shaped ones (partner fields nil) —
