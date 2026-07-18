@@ -258,6 +258,7 @@ struct PreMatchView: View {
                                       icon: avatarIcon(for: defaultLabel), emphasized: true)
                             youBadge
                         }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -268,6 +269,7 @@ struct PreMatchView: View {
                         Spacer()
                     }
                     .foregroundStyle(.primary)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -292,6 +294,7 @@ struct PreMatchView: View {
                                         .foregroundStyle(.secondary)
                                 }
                             }
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -311,6 +314,7 @@ struct PreMatchView: View {
                                         .foregroundStyle(.secondary)
                                 }
                             }
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
