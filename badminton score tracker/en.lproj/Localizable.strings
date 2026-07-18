@@ -23,6 +23,7 @@
 "settings.games_1" = "1 game";
 "settings.games_3" = "Best of 3";
 "settings.games_5" = "Best of 5";
+"settings.court_changes" = "Court Change Reminders";
 "settings.timer" = "Match Timer";
 "settings.timer_enable" = "Enable";
 "settings.minutes" = "%d min";
@@ -115,6 +116,9 @@
 "game.discard_message" = "Your current match score will be lost.";
 "game.discard_confirm" = "Discard";
 "game.discard_cancel" = "Keep Playing";
+"game.court_change_title" = "Change Ends";
+"game.court_change_message" = "Have players switch sides of the court.";
+"game.court_change_ok" = "Got It";
 "a11y.score_tile" = "%1$@, %2$d points";
 "a11y.score_tile_serving_suffix" = "%1$@, serving from %2$@";
 "a11y.score_hint" = "Double tap to add a point";

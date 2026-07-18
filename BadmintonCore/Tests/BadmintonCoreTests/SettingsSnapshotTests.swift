@@ -22,6 +22,7 @@ struct SettingsSnapshotTests {
         enableCrownScoring: Bool = true,
         timeModeEnabled: Bool = false,
         timeLimitMinutes: Int = 10,
+        courtChangeRemindersEnabled: Bool = false,
         clubLastViewedActivity: [String: Date] = [:],
         accountLinked: Bool = false,
         gameScreenStyle: String = "Depth",
@@ -41,6 +42,7 @@ struct SettingsSnapshotTests {
             courtTheme: courtTheme, announceScore: announceScore,
             enableSounds: enableSounds, enableCrownScoring: enableCrownScoring,
             timeModeEnabled: timeModeEnabled, timeLimitMinutes: timeLimitMinutes,
+            courtChangeRemindersEnabled: courtChangeRemindersEnabled,
             clubLastViewedActivity: clubLastViewedActivity,
             accountLinked: accountLinked,
             gameScreenStyle: gameScreenStyle,
@@ -68,6 +70,13 @@ struct SettingsSnapshotTests {
         let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
         let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
         #expect(decoded.localPlayerId == "")
+    }
+
+    @Test func courtChangeRemindersEnabledRoundTrips() throws {
+        let snapshot = makeSnapshot(courtChangeRemindersEnabled: true)
+        let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
+        let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
+        #expect(decoded.courtChangeRemindersEnabled == true)
     }
 
     @Test func accountLinkedRoundTrips() throws {
@@ -158,6 +167,7 @@ struct SettingsSnapshotTests {
         )
         #expect(decoded.myName == "Sam")
         #expect(decoded.pointsToWin == 15)
+        #expect(decoded.courtChangeRemindersEnabled == false)
         #expect(decoded.clubLastViewedActivity == [:])
         #expect(decoded.accountLinked == false)
         #expect(decoded.gameScreenStyle == "Depth")

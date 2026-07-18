@@ -189,12 +189,19 @@ struct GameView: View {
         ScoreView(data: sideData(for: side), theme: effectiveTheme)
     }
 
+    /// Which side renders first (top / left) vs second (bottom / right) —
+    /// swapped by `viewModel.courtSidesSwapped` at real badminton end-change
+    /// moments (see GameViewModel.triggerCourtChange). A display-only
+    /// ordering; never affects Side.me/.opponent scoring identity.
+    private var topSide: Side { viewModel.courtSidesSwapped ? .me : .opponent }
+    private var bottomSide: Side { viewModel.courtSidesSwapped ? .opponent : .me }
+
     private var scoreboard: some View {
         VStack(spacing: 10) {
             timerBadge
             gamesHeader
-            tile(for: .opponent)
-            tile(for: .me)
+            tile(for: topSide)
+            tile(for: bottomSide)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -255,37 +262,37 @@ struct GameView: View {
             scoreboard
         case .split:
             SplitScoreboard(
-                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )
         case .minimal:
             MinimalScoreboard(
-                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )
         case .blackbird:
             BlackbirdScoreboard(
-                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )
         case .matchstick:
             MatchstickScoreboard(
-                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )
         case .birdsEye:
             BirdsEyeScoreboard(
-                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )
         case .tug:
             TugScoreboard(
-                top: sideData(for: .opponent), bottom: sideData(for: .me),
+                top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )
         case .scoreboard:
             ClassicScoreboard(
-                left: sideData(for: .me), right: sideData(for: .opponent),
+                left: sideData(for: bottomSide), right: sideData(for: topSide),
                 header: headerData, theme: effectiveTheme
             )
         }
@@ -318,6 +325,11 @@ struct GameView: View {
                 Button(NSLocalizedString("game.discard_cancel", comment: ""), role: .cancel) {}
             } message: {
                 Text("game.discard_message")
+            }
+            .alert(NSLocalizedString("game.court_change_title", comment: ""), isPresented: $viewModel.showCourtChangeAlert) {
+                Button(NSLocalizedString("game.court_change_ok", comment: "")) {}
+            } message: {
+                Text("game.court_change_message")
             }
             .onReceive(ticker) { _ in viewModel.tickTimer() }
             .onAppear {

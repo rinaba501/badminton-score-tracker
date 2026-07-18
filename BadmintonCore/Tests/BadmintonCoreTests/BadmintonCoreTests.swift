@@ -134,6 +134,53 @@ struct BadmintonMatchTests {
         #expect(match.isGamePoint)
         #expect(!match.isMatchPoint)            // only 1 game won would still need another
     }
+
+    @Test func courtChangeThresholdNeverFiresInEarlierGames() {
+        var match = BadmintonMatch()
+        score(&match, .me, 11)                  // game 1 of a best-of-3, not the deciding game
+        #expect(!match.isCourtChangeThreshold)
+        match = BadmintonMatch()
+        score(&match, .me, 21); match.startNextGame()   // 1-0
+        score(&match, .opponent, 11)             // game 2, still not deciding (best-of-3 needs a 1-1 split first)
+        #expect(!match.isCourtChangeThreshold)
+    }
+
+    @Test func courtChangeThresholdFiresOnceInDecidingGame() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21); match.startNextGame()        // 1-0
+        score(&match, .opponent, 21); match.startNextGame()  // 1-1 — game 3 is deciding
+        score(&match, .me, 10)
+        #expect(!match.isCourtChangeThreshold)  // 10 of 21 — not yet
+        match.score(.me)
+        #expect(match.isCourtChangeThreshold)   // 11 of 21 — threshold reached
+        match.score(.me)
+        #expect(!match.isCourtChangeThreshold)  // 12 of 21 — already past it
+    }
+
+    @Test func courtChangeThresholdFiresForTheTrailingSideToo() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21); match.startNextGame()
+        score(&match, .opponent, 21); match.startNextGame()  // deciding game
+        score(&match, .me, 15)
+        score(&match, .opponent, 11)
+        #expect(match.isCourtChangeThreshold)   // opponent trails but still crossed 11
+    }
+
+    @Test func courtChangeThresholdNeverFiresInASingleGameMatch() {
+        var match = BadmintonMatch(gamesToWin: 1)
+        score(&match, .me, 11)
+        #expect(!match.isCourtChangeThreshold)  // no game before it, so no "deciding game" distinction
+    }
+
+    @Test func courtChangeThresholdScalesWithPointsToWin() {
+        var match = BadmintonMatch(pointsToWin: 11, pointCap: 20)
+        score(&match, .me, 11); match.startNextGame()
+        score(&match, .opponent, 11); match.startNextGame()  // deciding game
+        score(&match, .me, 5)
+        #expect(!match.isCourtChangeThreshold)
+        match.score(.me)
+        #expect(match.isCourtChangeThreshold)   // 6 of 11 is the scaled threshold
+    }
 }
 
 struct DoublesServeRotationTests {

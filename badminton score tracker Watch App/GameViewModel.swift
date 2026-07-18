@@ -24,6 +24,8 @@ final class GameViewModel: ObservableObject {
     @Published private(set) var timeRemaining: TimeInterval = 0
     @Published private(set) var timeModeWinner: Side? = nil
     @Published private(set) var suddenDeath = false
+    @Published private(set) var courtSidesSwapped = false
+    @Published var showCourtChangeAlert = false
 
     // MARK: - AppStorage (match config — drives newMatch / saveMatch)
 
@@ -41,6 +43,7 @@ final class GameViewModel: ObservableObject {
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
     @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
+    @AppStorage(AppStorageKeys.courtChangeRemindersEnabled) private var courtChangeRemindersEnabled = false
 
     // MARK: - Dependencies
 
@@ -111,6 +114,10 @@ final class GameViewModel: ObservableObject {
         let wasGamePoint = match.isGamePoint
         match.score(side)
 
+        if courtChangeRemindersEnabled && match.isCourtChangeThreshold {
+            triggerCourtChange()
+        }
+
         let announcementDelay: Double
         if match.matchWinner != nil {
             hapticsProvider.play(.success)
@@ -157,6 +164,9 @@ final class GameViewModel: ObservableObject {
         undoStack.removeAll()
         suddenDeath = false
         match.startNextGame()
+        if courtChangeRemindersEnabled {
+            triggerCourtChange()
+        }
         hapticsProvider.play(.start)
     }
 
@@ -170,6 +180,8 @@ final class GameViewModel: ObservableObject {
         savedCurrentMatch = false
         timeModeWinner = nil
         suddenDeath = false
+        courtSidesSwapped = false
+        showCourtChangeAlert = false
         timeRemaining = TimeInterval(timeLimitMinutes * 60)
         matchStartDate = Date()
     }
@@ -261,6 +273,17 @@ final class GameViewModel: ObservableObject {
     }
 
     // MARK: - Private helpers
+
+    /// Flips which side renders first on the Game screen and surfaces the
+    /// "switch ends" alert — called at the two real badminton end-change
+    /// moments (BadmintonMatch.isCourtChangeThreshold and the start of every
+    /// game after the first). Purely a display toggle; never touches
+    /// Side.me/.opponent scoring identity.
+    private func triggerCourtChange() {
+        courtSidesSwapped.toggle()
+        showCourtChangeAlert = true
+        hapticsProvider.play(.notification)
+    }
 
     private func resolveAfterGame() {
         if let winner = match.matchWinner {

@@ -337,6 +337,7 @@ final class CloudKitSyncManager {
             enableCrownScoring: defaults.object(forKey: AppStorageKeys.enableCrownScoring) as? Bool ?? true,
             timeModeEnabled: defaults.object(forKey: AppStorageKeys.timeModeEnabled) as? Bool ?? false,
             timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10,
+            courtChangeRemindersEnabled: defaults.object(forKey: AppStorageKeys.courtChangeRemindersEnabled) as? Bool ?? false,
             clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
             accountLinked: defaults.object(forKey: AppStorageKeys.accountLinked) as? Bool ?? false,
             gameScreenStyle: defaults.string(forKey: AppStorageKeys.gameScreenStyle) ?? "Depth",

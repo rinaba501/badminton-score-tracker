@@ -22,6 +22,7 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
     @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
+    @AppStorage(AppStorageKeys.courtChangeRemindersEnabled) private var courtChangeRemindersEnabled = false
     @EnvironmentObject private var storeManager: StoreManager
     @State private var showPaywall = false
 
@@ -108,11 +109,15 @@ struct SettingsView: View {
                     Text("settings.games_3").tag(3)
                     Text("settings.games_5").tag(5)
                 }
+                Toggle("settings.court_changes", isOn: $courtChangeRemindersEnabled)
             }
             .onChange(of: pointsToWin) { _ in
                 CloudKitSyncManager.shared.enqueueSettingsChange()
             }
             .onChange(of: gamesInMatch) { _ in
+                CloudKitSyncManager.shared.enqueueSettingsChange()
+            }
+            .onChange(of: courtChangeRemindersEnabled) { _ in
                 CloudKitSyncManager.shared.enqueueSettingsChange()
             }
 

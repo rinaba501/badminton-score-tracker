@@ -214,8 +214,13 @@ struct GameView: View {
         VStack(spacing: 6) {
             timerBadge
             gamesHeader
-            opponentTile
-            myTile
+            if viewModel.courtSidesSwapped {
+                myTile
+                opponentTile
+            } else {
+                opponentTile
+                myTile
+            }
         }
         .padding(.horizontal, 10)
     }
@@ -299,6 +304,11 @@ struct GameView: View {
             Button(NSLocalizedString("game.discard_cancel", comment: ""), role: .cancel) {}
         } message: {
             Text("game.discard_message")
+        }
+        .alert(NSLocalizedString("game.court_change_title", comment: ""), isPresented: $viewModel.showCourtChangeAlert) {
+            Button(NSLocalizedString("game.court_change_ok", comment: "")) {}
+        } message: {
+            Text("game.court_change_message")
         }
         .focusable()
         .digitalCrownRotation($crownValue, from: -1000, through: 1000, sensitivity: .low, isContinuous: true)

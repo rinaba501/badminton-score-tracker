@@ -23,6 +23,7 @@
 "settings.games_1" = "1 game";
 "settings.games_3" = "Terbaik dari 3";
 "settings.games_5" = "Terbaik dari 5";
+"settings.court_changes" = "Pengingat Ganti Sisi Lapangan";
 "settings.timer" = "Timer Pertandingan";
 "settings.timer_enable" = "Aktifkan";
 "settings.minutes" = "%d mnt";
@@ -115,6 +116,9 @@
 "game.discard_message" = "Skor pertandingan saat ini akan hilang.";
 "game.discard_confirm" = "Batalkan";
 "game.discard_cancel" = "Lanjutkan";
+"game.court_change_title" = "Ganti Sisi";
+"game.court_change_message" = "Minta pemain bertukar sisi lapangan.";
+"game.court_change_ok" = "Mengerti";
 "a11y.score_tile" = "%1$@, %2$d poin";
 "a11y.score_tile_serving_suffix" = "%1$@, servis dari %2$@";
 "a11y.score_hint" = "Ketuk dua kali untuk menambah poin";

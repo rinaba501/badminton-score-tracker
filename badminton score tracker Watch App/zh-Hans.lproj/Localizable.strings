@@ -58,6 +58,7 @@
 "settings.games_1" = "1局";
 "settings.games_3" = "三局两胜";
 "settings.games_5" = "五局三胜";
+"settings.court_changes" = "换场提醒";
 
 // History
 "history.title" = "比赛记录";
@@ -83,6 +84,9 @@
 "game.discard_message" = "当前比分将会丢失。";
 "game.discard_confirm" = "放弃";
 "game.discard_cancel" = "继续比赛";
+"game.court_change_title" = "换场";
+"game.court_change_message" = "请让选手交换场地。";
+"game.court_change_ok" = "知道了";
 "onboarding.title" = "操作说明";
 "onboarding.hint_tap" = "点击上方或下方得分";
 "onboarding.hint_undo" = "撤销按钮取消上一分";

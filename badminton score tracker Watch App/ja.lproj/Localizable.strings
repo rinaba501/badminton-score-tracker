@@ -59,6 +59,7 @@
 "settings.games_1" = "1ゲーム";
 "settings.games_3" = "3ゲーム制";
 "settings.games_5" = "5ゲーム制";
+"settings.court_changes" = "コートチェンジ通知";
 
 // History
 "history.title" = "試合履歴";
@@ -84,6 +85,9 @@
 "game.discard_message" = "現在のスコアは失われます。";
 "game.discard_confirm" = "終了する";
 "game.discard_cancel" = "続ける";
+"game.court_change_title" = "コートチェンジ";
+"game.court_change_message" = "選手にコートのサイドを交代してもらいましょう。";
+"game.court_change_ok" = "了解";
 "onboarding.title" = "操作方法";
 "onboarding.hint_tap" = "上下をタップで得点";
 "onboarding.hint_undo" = "元に戻すボタンで直前の点を取り消し";
