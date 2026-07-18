@@ -260,6 +260,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 263 | Bulk delete: select mode for History and Roster (both targets) — multi-select rows, Select All/Deselect All scoped to the currently filtered/visible list, one confirmation deletes everything selected | #266 |
 | 260 | In-match settings: a Game Screen toolbar gear button opens a compact sheet for the settings already read live mid-match (Sound Effects, Score Announcement, Court Theme, Watch-only Digital Crown); Match Format/Timer/Court Change Reminders stay full-Settings-only | #262 |
 | 163 | Club seasons: time-boxed standings resets — Roadmap Phase 5 backlog | #256 |
 | 252 | New "Scoreboard" Score Screen Style (8th): manual courtside flip-card scoreboard — hinge-seam cards on binder rings, games mini-card, card-flip on each point (Reduce Motion aware) — and the app's first landscape screen, via an app-wide orientation lock GameView flips on entry/exit (AppDelegate.setOrientation) | #253 |
