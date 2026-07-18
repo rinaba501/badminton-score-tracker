@@ -138,11 +138,11 @@ struct BadmintonMatchTests {
     @Test func courtChangeThresholdNeverFiresInEarlierGames() {
         var match = BadmintonMatch()
         score(&match, .me, 11)                  // game 1 of a best-of-3, not the deciding game
-        #expect(!match.isCourtChangeThreshold)
+        #expect(!match.isCourtChangeThreshold(after: .me))
         match = BadmintonMatch()
         score(&match, .me, 21); match.startNextGame()   // 1-0
         score(&match, .opponent, 11)             // game 2, still not deciding (best-of-3 needs a 1-1 split first)
-        #expect(!match.isCourtChangeThreshold)
+        #expect(!match.isCourtChangeThreshold(after: .opponent))
     }
 
     @Test func courtChangeThresholdFiresOnceInDecidingGame() {
@@ -150,26 +150,34 @@ struct BadmintonMatchTests {
         score(&match, .me, 21); match.startNextGame()        // 1-0
         score(&match, .opponent, 21); match.startNextGame()  // 1-1 — game 3 is deciding
         score(&match, .me, 10)
-        #expect(!match.isCourtChangeThreshold)  // 10 of 21 — not yet
+        #expect(!match.isCourtChangeThreshold(after: .me))  // 10 of 21 — not yet
         match.score(.me)
-        #expect(match.isCourtChangeThreshold)   // 11 of 21 — threshold reached
+        #expect(match.isCourtChangeThreshold(after: .me))   // 11 of 21 — threshold reached
         match.score(.me)
-        #expect(!match.isCourtChangeThreshold)  // 12 of 21 — already past it
+        #expect(!match.isCourtChangeThreshold(after: .me))  // 12 of 21 — already past it
     }
 
-    @Test func courtChangeThresholdFiresForTheTrailingSideToo() {
+    @Test func courtChangeThresholdFiresForWhicheverSideReachesItFirst() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21); match.startNextGame()
+        score(&match, .opponent, 21); match.startNextGame()  // deciding game
+        score(&match, .opponent, 11)             // opponent is the one leading this time
+        #expect(match.isCourtChangeThreshold(after: .opponent))   // my score (0) is still under threshold — first crossing
+    }
+
+    @Test func courtChangeThresholdDoesNotFireAgainWhenTrailingSideLaterReachesIt() {
         var match = BadmintonMatch()
         score(&match, .me, 21); match.startNextGame()
         score(&match, .opponent, 21); match.startNextGame()  // deciding game
         score(&match, .me, 15)
         score(&match, .opponent, 11)
-        #expect(match.isCourtChangeThreshold)   // opponent trails but still crossed 11
+        #expect(!match.isCourtChangeThreshold(after: .opponent))  // I already crossed 11 earlier — don't re-fire
     }
 
     @Test func courtChangeThresholdNeverFiresInASingleGameMatch() {
         var match = BadmintonMatch(gamesToWin: 1)
         score(&match, .me, 11)
-        #expect(!match.isCourtChangeThreshold)  // no game before it, so no "deciding game" distinction
+        #expect(!match.isCourtChangeThreshold(after: .me))  // no game before it, so no "deciding game" distinction
     }
 
     @Test func courtChangeThresholdScalesWithPointsToWin() {
@@ -177,9 +185,38 @@ struct BadmintonMatchTests {
         score(&match, .me, 11); match.startNextGame()
         score(&match, .opponent, 11); match.startNextGame()  // deciding game
         score(&match, .me, 5)
-        #expect(!match.isCourtChangeThreshold)
+        #expect(!match.isCourtChangeThreshold(after: .me))
         match.score(.me)
-        #expect(match.isCourtChangeThreshold)   // 6 of 11 is the scaled threshold
+        #expect(match.isCourtChangeThreshold(after: .me))   // 6 of 11 is the scaled threshold
+    }
+
+    @Test func courtChangeThresholdDoesNotReFireWhileOtherSideCatchesUp() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21); match.startNextGame()
+        score(&match, .opponent, 21); match.startNextGame()  // deciding game
+        score(&match, .me, 11)
+        #expect(match.isCourtChangeThreshold(after: .me))   // my score just reached 11 — fires
+        for _ in 0..<12 {
+            match.score(.opponent)
+            #expect(!match.isCourtChangeThreshold(after: .opponent))  // opponent catching all the way up to, then past, 11 — never re-fires
+        }
+        #expect(match.opponentScore == 12)  // sanity: the loop really did carry opponent through 11 (tying) and beyond
+    }
+
+    /// Same re-fire regression as above, but at a non-default `pointsToWin`
+    /// (15, one of the three values users can actually pick in Settings) —
+    /// makes sure the fix generalizes and isn't only correct for 21.
+    @Test func courtChangeThresholdDoesNotReFireWithScaledPointsToWin() {
+        var match = BadmintonMatch(pointsToWin: 15, pointCap: 24)
+        score(&match, .me, 15); match.startNextGame()
+        score(&match, .opponent, 15); match.startNextGame()  // deciding game
+        score(&match, .me, 8)
+        #expect(match.isCourtChangeThreshold(after: .me))   // 8 of 15 is the scaled threshold — fires
+        for _ in 0..<9 {
+            match.score(.opponent)
+            #expect(!match.isCourtChangeThreshold(after: .opponent))  // opponent catching up to, then past, 8 — never re-fires
+        }
+        #expect(match.opponentScore == 9)
     }
 }
 

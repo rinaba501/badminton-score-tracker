@@ -123,7 +123,7 @@ final class GameViewModel: ObservableObject {
         let wasGamePoint = match.isGamePoint
         match.score(side)
 
-        if courtChangeRemindersEnabled && match.isCourtChangeThreshold {
+        if courtChangeRemindersEnabled && match.isCourtChangeThreshold(after: side) {
             triggerCourtChange()
         }
 
