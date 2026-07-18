@@ -28,7 +28,9 @@ struct HistoryView: View {
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
     @State private var showingClearConfirmation = false
-    @State private var pendingDeleteRecord: MatchRecord?
+    @State private var pendingDeleteIds: Set<MatchRecord.ID>?
+    @State private var isSelecting = false
+    @State private var selectedIds: Set<MatchRecord.ID> = []
     /// Every name here must have participated (on either team) for a record
     /// to pass the filter — see StatsCalculator.filteredHistory.
     @State private var selectedPlayers: Set<String> = []
@@ -85,10 +87,39 @@ struct HistoryView: View {
                                                newestFirst: newestFirst, matchType: matchType)
     }
 
-    private func delete(_ record: MatchRecord) {
-        var records = history
-        records.removeAll { $0.id == record.id }
-        store.saveHistory(records)
+    private func deleteRecords(withIds ids: Set<MatchRecord.ID>) {
+        store.saveHistory(history.filter { !ids.contains($0.id) })
+    }
+
+    private func exitSelection() {
+        isSelecting = false
+        selectedIds = []
+    }
+
+    private func toggleSelection(_ id: MatchRecord.ID) {
+        if selectedIds.contains(id) {
+            selectedIds.remove(id)
+        } else {
+            selectedIds.insert(id)
+        }
+    }
+
+    private var allFilteredSelected: Bool {
+        !filteredHistory.isEmpty && Set(filteredHistory.map(\.id)).isSubset(of: selectedIds)
+    }
+
+    private func toggleSelectAll() {
+        if allFilteredSelected {
+            selectedIds.subtract(filteredHistory.map(\.id))
+        } else {
+            selectedIds.formUnion(filteredHistory.map(\.id))
+        }
+    }
+
+    private var deleteConfirmTitle: String {
+        let count = pendingDeleteIds?.count ?? 0
+        guard count > 1 else { return NSLocalizedString("history.delete_match_confirm", comment: "") }
+        return String(format: NSLocalizedString("history.delete_selected_confirm", comment: ""), count)
     }
 
     private func togglePlayer(_ name: String) {
@@ -110,16 +141,36 @@ struct HistoryView: View {
                         Section { centeredMessage("history.empty") }
                     } else {
                         Section {
+                            if isSelecting {
+                                Button(action: toggleSelectAll) {
+                                    Text(allFilteredSelected ? "history.deselect_all" : "history.select_all")
+                                }
+                            }
                             ForEach(filteredHistory) { record in
-                                MatchHistoryRow(record: record)
-                                    .swipeActions(edge: .trailing) {
+                                HStack(spacing: 8) {
+                                    if isSelecting {
+                                        Image(systemName: selectedIds.contains(record.id) ? "checkmark.circle.fill" : "circle")
+                                            .foregroundStyle(selectedIds.contains(record.id) ? Color.accentColor : Color.secondary)
+                                    }
+                                    MatchHistoryRow(record: record)
+                                }
+                                .contentShape(Rectangle())
+                                .accessibilityAddTraits(isSelecting && selectedIds.contains(record.id) ? .isSelected : [])
+                                .onTapGesture {
+                                    if isSelecting { toggleSelection(record.id) }
+                                }
+                                .swipeActions(edge: .trailing) {
+                                    if !isSelecting {
                                         Button(role: .destructive) {
-                                            pendingDeleteRecord = record
+                                            pendingDeleteIds = [record.id]
                                         } label: {
                                             Label("history.clear", systemImage: "trash")
                                         }
                                     }
-                                    .contextMenu { shareButton(for: record) }
+                                }
+                                .contextMenu {
+                                    if !isSelecting { shareButton(for: record) }
+                                }
                             }
                         }
                     }
@@ -134,12 +185,30 @@ struct HistoryView: View {
             }
         }
         .toolbar {
-            if !store.clubs.isEmpty {
-                ToolbarItem(placement: .topBarTrailing) { clubFilterMenu }
-            }
-            if !history.isEmpty {
-                ToolbarItem(placement: .topBarTrailing) { playerFilterMenu }
-                ToolbarItem(placement: .topBarTrailing) { moreMenu }
+            if isSelecting {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("history.cancel") { exitSelection() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(role: .destructive) {
+                        pendingDeleteIds = selectedIds.intersection(Set(filteredHistory.map(\.id)))
+                    } label: {
+                        Text(String(format: NSLocalizedString("history.delete_selected", comment: ""),
+                                    selectedIds.intersection(Set(filteredHistory.map(\.id))).count))
+                    }
+                    .disabled(selectedIds.isEmpty)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(allFilteredSelected ? "history.deselect_all" : "history.select_all") { toggleSelectAll() }
+                }
+            } else {
+                if !store.clubs.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) { clubFilterMenu }
+                }
+                if !history.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) { playerFilterMenu }
+                    ToolbarItem(placement: .topBarTrailing) { moreMenu }
+                }
             }
         }
         .alert(Text("history.clear_title"), isPresented: $showingClearConfirmation) {
@@ -149,15 +218,18 @@ struct HistoryView: View {
             Text("history.clear_confirm")
         }
         .confirmationDialog(
-            "history.delete_match_confirm",
+            deleteConfirmTitle,
             isPresented: Binding(
-                get: { pendingDeleteRecord != nil },
-                set: { if !$0 { pendingDeleteRecord = nil } }
+                get: { pendingDeleteIds != nil },
+                set: { if !$0 { pendingDeleteIds = nil } }
             ),
             titleVisibility: .visible
         ) {
             Button("history.clear", role: .destructive) {
-                if let pendingDeleteRecord { delete(pendingDeleteRecord) }
+                if let pendingDeleteIds {
+                    deleteRecords(withIds: pendingDeleteIds)
+                    exitSelection()
+                }
             }
         }
     }
@@ -276,6 +348,11 @@ struct HistoryView: View {
                 Label("history.sort_label", systemImage: "arrow.up.arrow.down")
             }
             Divider()
+            Button {
+                isSelecting = true
+            } label: {
+                Label("history.select", systemImage: "checkmark.circle")
+            }
             Button(role: .destructive) {
                 showingClearConfirmation = true
             } label: {

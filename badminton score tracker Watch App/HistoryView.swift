@@ -13,7 +13,10 @@ struct HistoryView: View {
     @Binding var currentView: ContentView.AppView
     @EnvironmentObject private var appStore: AppStore
     @State private var showingClearConfirmation = false
-    @State private var pendingDeleteRecord: MatchRecord?
+    @State private var showingMoreActions = false
+    @State private var pendingDeleteIds: Set<MatchRecord.ID>?
+    @State private var isSelecting = false
+    @State private var selectedIds: Set<MatchRecord.ID> = []
     @State private var showingFilters = false
     @State private var showingClubFilter = false
     /// Every name here must have participated (on either team) for a record
@@ -96,10 +99,39 @@ struct HistoryView: View {
         appStore.saveHistory(records)
     }
 
-    private func delete(_ record: MatchRecord) {
-        var records = history
-        records.removeAll { $0.id == record.id }
-        save(records)
+    private func deleteRecords(withIds ids: Set<MatchRecord.ID>) {
+        save(history.filter { !ids.contains($0.id) })
+    }
+
+    private func exitSelection() {
+        isSelecting = false
+        selectedIds = []
+    }
+
+    private func toggleSelection(_ id: MatchRecord.ID) {
+        if selectedIds.contains(id) {
+            selectedIds.remove(id)
+        } else {
+            selectedIds.insert(id)
+        }
+    }
+
+    private var allFilteredSelected: Bool {
+        !filteredHistory.isEmpty && Set(filteredHistory.map(\.id)).isSubset(of: selectedIds)
+    }
+
+    private func toggleSelectAll() {
+        if allFilteredSelected {
+            selectedIds.subtract(filteredHistory.map(\.id))
+        } else {
+            selectedIds.formUnion(filteredHistory.map(\.id))
+        }
+    }
+
+    private var deleteConfirmTitle: String {
+        let count = pendingDeleteIds?.count ?? 0
+        guard count > 1 else { return NSLocalizedString("history.delete_match_confirm", comment: "") }
+        return String(format: NSLocalizedString("history.delete_selected_confirm", comment: ""), count)
     }
 
     private var clubMenu: some View {
@@ -238,15 +270,34 @@ struct HistoryView: View {
                     .listSectionSpacing(0)
                 } else {
                     Section {
+                        if isSelecting {
+                            Button(action: toggleSelectAll) {
+                                Text(allFilteredSelected ? "history.deselect_all" : "history.select_all")
+                                    .font(.caption)
+                            }
+                        }
                         ForEach(filteredHistory) { record in
-                            MatchHistoryRow(record: record)
-                                .swipeActions(edge: .trailing) {
+                            HStack(spacing: 6) {
+                                if isSelecting {
+                                    Image(systemName: selectedIds.contains(record.id) ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(selectedIds.contains(record.id) ? .yellow : .secondary)
+                                }
+                                MatchHistoryRow(record: record)
+                            }
+                            .contentShape(Rectangle())
+                            .accessibilityAddTraits(isSelecting && selectedIds.contains(record.id) ? .isSelected : [])
+                            .onTapGesture {
+                                if isSelecting { toggleSelection(record.id) }
+                            }
+                            .swipeActions(edge: .trailing) {
+                                if !isSelecting {
                                     Button(role: .destructive) {
-                                        pendingDeleteRecord = record
+                                        pendingDeleteIds = [record.id]
                                     } label: {
                                         Label("history.clear", systemImage: "trash")
                                     }
                                 }
+                            }
                         }
                     }
                 }
@@ -255,12 +306,25 @@ struct HistoryView: View {
         .navigationTitle("history.title")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("history.back") { currentView = .menu }
+                if isSelecting {
+                    Button("history.cancel") { exitSelection() }
+                } else {
+                    Button("history.back") { currentView = .menu }
+                }
             }
             if !history.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showingClearConfirmation = true }) {
-                        Image(systemName: "trash").foregroundColor(.red)
+                    if isSelecting {
+                        Button(action: {
+                            pendingDeleteIds = selectedIds.intersection(Set(filteredHistory.map(\.id)))
+                        }) {
+                            Image(systemName: "trash").foregroundColor(.red)
+                        }
+                        .disabled(selectedIds.isEmpty)
+                    } else {
+                        Button(action: { showingMoreActions = true }) {
+                            Image(systemName: "ellipsis.circle")
+                        }
                     }
                 }
             }
@@ -326,16 +390,23 @@ struct HistoryView: View {
         } message: {
             Text("history.clear_confirm")
         }
+        .confirmationDialog("", isPresented: $showingMoreActions, titleVisibility: .hidden) {
+            Button("history.select") { isSelecting = true }
+            Button("history.clear_title", role: .destructive) { showingClearConfirmation = true }
+        }
         .confirmationDialog(
-            "history.delete_match_confirm",
+            deleteConfirmTitle,
             isPresented: Binding(
-                get: { pendingDeleteRecord != nil },
-                set: { if !$0 { pendingDeleteRecord = nil } }
+                get: { pendingDeleteIds != nil },
+                set: { if !$0 { pendingDeleteIds = nil } }
             ),
             titleVisibility: .visible
         ) {
             Button("history.clear", role: .destructive) {
-                if let pendingDeleteRecord { delete(pendingDeleteRecord) }
+                if let pendingDeleteIds {
+                    deleteRecords(withIds: pendingDeleteIds)
+                    exitSelection()
+                }
             }
         }
     }

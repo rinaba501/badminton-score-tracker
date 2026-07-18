@@ -19,6 +19,8 @@ struct RosterView: View {
 
     @State private var editingPlayer: Player?
     @State private var pendingPlayerIdsToDelete: Set<Player.ID>?
+    @State private var isSelecting = false
+    @State private var selectedIds: Set<Player.ID> = []
 
     private var roster: [Player] { store.roster }
 
@@ -34,6 +36,38 @@ struct RosterView: View {
         guard let pendingPlayerIdsToDelete else { return }
         store.saveRoster(roster.filter { !pendingPlayerIdsToDelete.contains($0.id) })
         self.pendingPlayerIdsToDelete = nil
+        exitSelection()
+    }
+
+    private func exitSelection() {
+        isSelecting = false
+        selectedIds = []
+    }
+
+    private func toggleSelection(_ id: Player.ID) {
+        if selectedIds.contains(id) {
+            selectedIds.remove(id)
+        } else {
+            selectedIds.insert(id)
+        }
+    }
+
+    private var allSelected: Bool {
+        !opponents.isEmpty && Set(opponents.map(\.id)).isSubset(of: selectedIds)
+    }
+
+    private func toggleSelectAll() {
+        if allSelected {
+            selectedIds.subtract(opponents.map(\.id))
+        } else {
+            selectedIds.formUnion(opponents.map(\.id))
+        }
+    }
+
+    private var deleteConfirmTitle: String {
+        let count = pendingPlayerIdsToDelete?.count ?? 0
+        guard count > 1 else { return NSLocalizedString("settings.delete_player_confirm", comment: "") }
+        return String(format: NSLocalizedString("settings.delete_selected_players_confirm", comment: ""), count)
     }
 
     private func savePlayerEdit(_ updated: Player) {
@@ -84,25 +118,56 @@ struct RosterView: View {
                 } else {
                     ForEach(opponents) { player in
                         Button {
-                            editingPlayer = player
+                            if isSelecting {
+                                toggleSelection(player.id)
+                            } else {
+                                editingPlayer = player
+                            }
                         } label: {
-                            playerRow(name: player.name, color: player.avatarColor, iconName: player.iconName)
+                            playerRow(name: player.name, color: player.avatarColor, iconName: player.iconName,
+                                      selected: isSelecting ? selectedIds.contains(player.id) : nil)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityAddTraits(isSelecting && selectedIds.contains(player.id) ? .isSelected : [])
                     }
-                    .onDelete(perform: deletePlayers)
+                    .onDelete(perform: isSelecting ? nil : deletePlayers)
                 }
 
-                Button {
-                    let appearance = Player.randomDefaultAppearance()
-                    editingPlayer = Player(name: "", colorIndex: appearance.colorIndex, iconName: appearance.iconName)
-                } label: {
-                    Label("settings.add_player", systemImage: "plus")
+                if !isSelecting {
+                    Button {
+                        let appearance = Player.randomDefaultAppearance()
+                        editingPlayer = Player(name: "", colorIndex: appearance.colorIndex, iconName: appearance.iconName)
+                    } label: {
+                        Label("settings.add_player", systemImage: "plus")
+                    }
                 }
             }
         }
         .navigationTitle("settings.players")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if isSelecting {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("settings.cancel_select") { exitSelection() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(role: .destructive) {
+                        pendingPlayerIdsToDelete = selectedIds.intersection(Set(opponents.map(\.id)))
+                    } label: {
+                        Text(String(format: NSLocalizedString("settings.delete_selected_players", comment: ""),
+                                    selectedIds.intersection(Set(opponents.map(\.id))).count))
+                    }
+                    .disabled(selectedIds.isEmpty)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(allSelected ? "settings.deselect_all_players" : "settings.select_all_players") { toggleSelectAll() }
+                }
+            } else if !opponents.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("settings.select_players") { isSelecting = true }
+                }
+            }
+        }
         .sheet(item: $editingPlayer) { player in
             PlayerEditView(initialPlayer: player,
                            existingNames: roster.filter { $0.id != player.id }.map(\.name),
@@ -110,7 +175,7 @@ struct RosterView: View {
                            onSave: savePlayerEdit)
         }
         .confirmationDialog(
-            "settings.delete_player_confirm",
+            deleteConfirmTitle,
             isPresented: Binding(
                 get: { pendingPlayerIdsToDelete != nil },
                 set: { if !$0 { pendingPlayerIdsToDelete = nil } }
@@ -121,14 +186,20 @@ struct RosterView: View {
         }
     }
 
-    private func playerRow(name: String, color: Color, iconName: String?) -> some View {
+    private func playerRow(name: String, color: Color, iconName: String?, selected: Bool?) -> some View {
         HStack(spacing: 10) {
+            if let selected {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(selected ? Color.accentColor : Color.secondary)
+            }
             AvatarView(name: name, color: color, size: 30, iconName: iconName)
             Text(name).foregroundStyle(.primary)
             Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            if selected == nil {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 }

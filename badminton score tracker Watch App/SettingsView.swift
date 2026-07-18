@@ -34,6 +34,8 @@ struct SettingsView: View {
     /// opens instead).
     @State private var lastFreeTheme: CourtTheme = .green
     @State private var pendingPlayerIdsToDelete: Set<Player.ID>?
+    @State private var isSelectingPlayers = false
+    @State private var selectedPlayerIds: Set<Player.ID> = []
 
     enum GameMode: String, Codable, CaseIterable {
         case singles = "Singles"
@@ -54,6 +56,38 @@ struct SettingsView: View {
         guard let pendingPlayerIdsToDelete else { return }
         appStore.saveRoster(roster.filter { !pendingPlayerIdsToDelete.contains($0.id) })
         self.pendingPlayerIdsToDelete = nil
+        exitPlayerSelection()
+    }
+
+    private func exitPlayerSelection() {
+        isSelectingPlayers = false
+        selectedPlayerIds = []
+    }
+
+    private func togglePlayerSelection(_ id: Player.ID) {
+        if selectedPlayerIds.contains(id) {
+            selectedPlayerIds.remove(id)
+        } else {
+            selectedPlayerIds.insert(id)
+        }
+    }
+
+    private var allPlayersSelected: Bool {
+        !opponents.isEmpty && Set(opponents.map(\.id)).isSubset(of: selectedPlayerIds)
+    }
+
+    private func togglePlayerSelectAll() {
+        if allPlayersSelected {
+            selectedPlayerIds.subtract(opponents.map(\.id))
+        } else {
+            selectedPlayerIds.formUnion(opponents.map(\.id))
+        }
+    }
+
+    private var deletePlayersConfirmTitle: String {
+        let count = pendingPlayerIdsToDelete?.count ?? 0
+        guard count > 1 else { return NSLocalizedString("settings.delete_player_confirm", comment: "") }
+        return String(format: NSLocalizedString("settings.delete_selected_players_confirm", comment: ""), count)
     }
 
     private func savePlayerEdit(_ updated: Player) {
@@ -160,34 +194,76 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .font(.caption)
                 } else {
+                    HStack {
+                        Button(isSelectingPlayers ? "settings.cancel_select" : "settings.select_players") {
+                            isSelectingPlayers.toggle()
+                            if !isSelectingPlayers { selectedPlayerIds = [] }
+                        }
+                        .font(.caption)
+                        if isSelectingPlayers {
+                            Spacer()
+                            Button(allPlayersSelected ? "settings.deselect_all_players" : "settings.select_all_players") {
+                                togglePlayerSelectAll()
+                            }
+                            .font(.caption)
+                        }
+                    }
+
                     ForEach(opponents) { player in
-                        Button(action: { editingPlayer = player }) {
+                        Button(action: {
+                            if isSelectingPlayers {
+                                togglePlayerSelection(player.id)
+                            } else {
+                                editingPlayer = player
+                            }
+                        }) {
                             HStack(spacing: 8) {
+                                if isSelectingPlayers {
+                                    Image(systemName: selectedPlayerIds.contains(player.id) ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(selectedPlayerIds.contains(player.id) ? .yellow : .secondary)
+                                }
                                 AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
                                 Text(player.name)
                                     .font(.caption)
                                 Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                if !isSelectingPlayers {
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
+                        .accessibilityAddTraits(isSelectingPlayers && selectedPlayerIds.contains(player.id) ? .isSelected : [])
                         .contextMenu {
-                            Button(role: .destructive) {
-                                pendingPlayerIdsToDelete = [player.id]
-                            } label: {
-                                Label("settings.delete", systemImage: "trash")
+                            if !isSelectingPlayers {
+                                Button(role: .destructive) {
+                                    pendingPlayerIdsToDelete = [player.id]
+                                } label: {
+                                    Label("settings.delete", systemImage: "trash")
+                                }
                             }
                         }
                     }
-                    .onDelete(perform: deletePlayers)
+                    .onDelete(perform: isSelectingPlayers ? nil : deletePlayers)
+
+                    if isSelectingPlayers {
+                        Button(role: .destructive) {
+                            pendingPlayerIdsToDelete = selectedPlayerIds.intersection(Set(opponents.map(\.id)))
+                        } label: {
+                            Text(String(format: NSLocalizedString("settings.delete_selected_players", comment: ""),
+                                        selectedPlayerIds.intersection(Set(opponents.map(\.id))).count))
+                        }
+                        .disabled(selectedPlayerIds.isEmpty)
+                    }
                 }
 
-                Button(action: {
-                    let appearance = Player.randomDefaultAppearance()
-                    editingPlayer = Player(name: "", colorIndex: appearance.colorIndex, iconName: appearance.iconName)
-                }) {
-                    Label("settings.add_player", systemImage: "plus")
+                if !isSelectingPlayers {
+                    Button(action: {
+                        let appearance = Player.randomDefaultAppearance()
+                        editingPlayer = Player(name: "", colorIndex: appearance.colorIndex, iconName: appearance.iconName)
+                    }) {
+                        Label("settings.add_player", systemImage: "plus")
+                    }
                 }
             }
 
@@ -282,7 +358,7 @@ struct SettingsView: View {
             PaywallView()
         }
         .confirmationDialog(
-            "settings.delete_player_confirm",
+            deletePlayersConfirmTitle,
             isPresented: Binding(
                 get: { pendingPlayerIdsToDelete != nil },
                 set: { if !$0 { pendingPlayerIdsToDelete = nil } }

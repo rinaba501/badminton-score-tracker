@@ -71,6 +71,11 @@
 "history.cancel" = "रद्द करें";
 "history.clear" = "साफ़ करें";
 "history.delete_match_confirm" = "इस मैच को हटाएं? यह वापस नहीं किया जा सकता।";
+"history.select" = "चुनें";
+"history.select_all" = "सभी चुनें";
+"history.deselect_all" = "चयन हटाएं";
+"history.delete_selected" = "हटाएं (%d)";
+"history.delete_selected_confirm" = "%d मैच हटाएं? यह वापस नहीं किया जा सकता।";
 
 // Court Themes
 "theme.green" = "हरा";
@@ -148,6 +153,12 @@
 "settings.minutes" = "%d मिनट";
 "settings.delete" = "हटाएं";
 "settings.delete_player_confirm" = "इस खिलाड़ी को हटाएं? पिछले मैचों में यह नाम बना रहेगा, लेकिन इसे आपकी सूची से हटा दिया जाएगा।";
+"settings.select_players" = "चुनें";
+"settings.cancel_select" = "रद्द करें";
+"settings.select_all_players" = "सभी चुनें";
+"settings.deselect_all_players" = "चयन हटाएं";
+"settings.delete_selected_players" = "हटाएं (%d)";
+"settings.delete_selected_players_confirm" = "%d खिलाड़ियों को हटाएं? पिछले मैचों में ये नाम बने रहेंगे, लेकिन इन्हें आपकी सूची से हटा दिया जाएगा।";
 "prematch.near_side" = "नज़दीकी ओर";
 "prematch.far_side" = "दूर की ओर";
 "prematch.near_partner" = "नज़दीकी साथी";

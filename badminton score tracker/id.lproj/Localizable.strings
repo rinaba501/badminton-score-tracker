@@ -36,6 +36,11 @@
 "history.cancel" = "Batal";
 "history.clear" = "Hapus";
 "history.delete_match_confirm" = "Hapus pertandingan ini? Tindakan ini tidak dapat dibatalkan.";
+"history.select" = "Pilih";
+"history.select_all" = "Pilih Semua";
+"history.deselect_all" = "Batalkan Semua";
+"history.delete_selected" = "Hapus (%d)";
+"history.delete_selected_confirm" = "Hapus %d pertandingan? Tindakan ini tidak dapat dibatalkan.";
 "history.filter_player" = "Pemain";
 "history.filter_all_players" = "Semua Pemain";
 "history.filter_all" = "Semua Waktu";
@@ -75,6 +80,12 @@
 "settings.sort_recently_used" = "Baru-baru ini dipakai";
 "settings.delete" = "Hapus";
 "settings.delete_player_confirm" = "Hapus pemain ini? Nama ini akan tetap ada di pertandingan sebelumnya, tetapi akan dihapus dari daftar pemain.";
+"settings.select_players" = "Pilih";
+"settings.cancel_select" = "Batal";
+"settings.select_all_players" = "Pilih Semua";
+"settings.deselect_all_players" = "Batalkan Semua";
+"settings.delete_selected_players" = "Hapus (%d)";
+"settings.delete_selected_players_confirm" = "Hapus %d pemain? Nama-nama ini akan tetap ada di pertandingan sebelumnya, tetapi akan dihapus dari daftar pemain.";
 "playeredit.name" = "Nama";
 "playeredit.name_taken" = "Nama sudah dipakai";
 "playeredit.color" = "Warna";

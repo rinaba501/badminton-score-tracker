@@ -36,6 +36,11 @@
 "history.cancel" = "Cancel";
 "history.clear" = "Clear";
 "history.delete_match_confirm" = "Delete this match? This cannot be undone.";
+"history.select" = "Select";
+"history.select_all" = "Select All";
+"history.deselect_all" = "Deselect All";
+"history.delete_selected" = "Delete (%d)";
+"history.delete_selected_confirm" = "Delete %d matches? This cannot be undone.";
 "history.filter_player" = "Player";
 "history.filter_all_players" = "All Players";
 "history.filter_all" = "All Time";
@@ -75,6 +80,12 @@
 "settings.sort_recently_used" = "Recently used";
 "settings.delete" = "Delete";
 "settings.delete_player_confirm" = "Delete this player? Their past matches will keep this name, but they'll be removed from your roster.";
+"settings.select_players" = "Select";
+"settings.cancel_select" = "Cancel";
+"settings.select_all_players" = "Select All";
+"settings.deselect_all_players" = "Deselect All";
+"settings.delete_selected_players" = "Delete (%d)";
+"settings.delete_selected_players_confirm" = "Delete %d players? Their past matches will keep these names, but they'll be removed from your roster.";
 "playeredit.name" = "Name";
 "playeredit.name_taken" = "Name already taken";
 "playeredit.color" = "Color";

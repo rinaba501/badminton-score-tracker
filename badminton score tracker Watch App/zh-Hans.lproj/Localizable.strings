@@ -71,6 +71,11 @@
 "history.cancel" = "取消";
 "history.clear" = "清除";
 "history.delete_match_confirm" = "删除这场比赛？此操作无法撤销。";
+"history.select" = "选择";
+"history.select_all" = "全选";
+"history.deselect_all" = "取消全选";
+"history.delete_selected" = "删除 (%d)";
+"history.delete_selected_confirm" = "删除 %d 场比赛？此操作无法撤销。";
 
 // Court Themes
 "theme.green" = "绿色";
@@ -148,6 +153,12 @@
 "settings.minutes" = "%d分钟";
 "settings.delete" = "删除";
 "settings.delete_player_confirm" = "删除这位选手？他们过去的比赛记录会保留此姓名，但会从名单中移除。";
+"settings.select_players" = "选择";
+"settings.cancel_select" = "取消";
+"settings.select_all_players" = "全选";
+"settings.deselect_all_players" = "取消全选";
+"settings.delete_selected_players" = "删除 (%d)";
+"settings.delete_selected_players_confirm" = "删除 %d 位选手？他们过去的比赛记录会保留这些姓名，但会从名单中移除。";
 "prematch.near_side" = "近侧";
 "prematch.far_side" = "远侧";
 "prematch.near_partner" = "近侧搭档";
