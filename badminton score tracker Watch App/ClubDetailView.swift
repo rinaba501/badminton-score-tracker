@@ -127,7 +127,23 @@ struct ClubDetailView: View {
     }
 
     private var standings: [StatsCalculator.StandingsEntry] {
-        StatsCalculator.standings(history: clubMatches.filter { $0.isConfirmed || !requireMatchConfirmation })
+        StatsCalculator.standings(history: clubMatches.filter {
+            ($0.isConfirmed || !requireMatchConfirmation) && (club?.isDateInSeason($0.date) ?? true)
+        })
+    }
+
+    /// Read-only "Season: <start> – <end/present>" label shown in the
+    /// Standings footer (#163) — nil when no season is set. No editing UI on
+    /// Watch (no DatePicker precedent anywhere in this target); season dates
+    /// are set from the iOS companion app only.
+    private var seasonLabel: String? {
+        guard let start = club?.seasonStartDate else { return nil }
+        let startText = start.formatted(date: .abbreviated, time: .omitted)
+        guard let end = club?.seasonEndDate else {
+            return String(format: NSLocalizedString("clubs.season_open_format", comment: ""), startText)
+        }
+        let endText = end.formatted(date: .abbreviated, time: .omitted)
+        return String(format: NSLocalizedString("clubs.season_range_format", comment: ""), startText, endText)
     }
 
     private var activityFeed: [StatsCalculator.ActivityFeedEntry] {
@@ -245,7 +261,15 @@ struct ClubDetailView: View {
                     }
                 }
 
-                Section(header: Text("clubs.standings")) {
+                Section(
+                    header: Text("clubs.standings"),
+                    footer: Group {
+                        if let seasonLabel {
+                            Text(seasonLabel)
+                                .font(.caption2)
+                        }
+                    }
+                ) {
                     if standings.isEmpty {
                         Text("stats.no_matches")
                             .foregroundColor(.secondary)

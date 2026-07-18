@@ -184,6 +184,8 @@
 "a11y.club_friend_badge" = "好友";
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
+"clubs.season_open_format" = "赛季：%@ – 至今";
+"clubs.season_range_format" = "赛季：%@ – %@";
 "clubs.pending_confirmation" = "待确认";
 "clubs.activity" = "动态";
 "clubs.reactions" = "表情回应";

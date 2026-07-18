@@ -184,6 +184,8 @@
 "a11y.club_friend_badge" = "मित्र";
 "clubs.standings" = "स्टैंडिंग्स";
 "clubs.require_confirmation" = "मैच पुष्टि आवश्यक";
+"clubs.season_open_format" = "सीज़न: %@ – वर्तमान";
+"clubs.season_range_format" = "सीज़न: %@ – %@";
 "clubs.pending_confirmation" = "पुष्टि लंबित";
 "clubs.activity" = "गतिविधि";
 "clubs.reactions" = "रिएक्शन";

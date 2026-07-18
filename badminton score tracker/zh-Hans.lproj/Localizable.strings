@@ -165,6 +165,14 @@
 "clubs.standings" = "排名";
 "clubs.require_confirmation" = "需要比赛确认";
 "clubs.require_confirmation_footer" = "其他成员记录的比赛在你确认之前将保持待定状态，避免错误影响排名。";
+"clubs.season" = "赛季";
+"clubs.season_enabled" = "赛季排名";
+"clubs.season_start" = "赛季开始日期";
+"clubs.season_has_end" = "设置赛季结束日期";
+"clubs.season_end" = "赛季结束日期";
+"clubs.season_footer" = "设置后，排名仅统计该时间段内记录的比赛。动态不受影响。";
+"clubs.season_open_format" = "赛季：%@ – 至今";
+"clubs.season_range_format" = "赛季：%@ – %@";
 "clubs.pending_confirmation" = "待确认";
 "clubs.activity" = "动态";
 "clubs.reactions" = "表情回应";

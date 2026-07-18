@@ -26,18 +26,44 @@ public struct Club: Identifiable, Codable, Equatable {
     /// `Optional` is what lets pre-existing persisted Club JSON keep
     /// decoding unchanged. `nil` means off, same as `false`.
     public var requireMatchConfirmation: Bool?
+    /// Roadmap Phase 5 backlog (#163): an optional time-boxed window that
+    /// restricts Standings (only) to matches played within it — the
+    /// Activity Feed stays a full chronological log regardless. `nil`
+    /// `seasonStartDate` means "no season set" (today's all-time behavior,
+    /// unchanged); `seasonEndDate` is independently optional, so a season
+    /// can be open-ended. Both `Optional` for the same synthesized-Codable
+    /// reason as `requireMatchConfirmation` above.
+    public var seasonStartDate: Date?
+    public var seasonEndDate: Date?
 
     public init(
         id: UUID = UUID(),
         name: String,
         createdDate: Date = Date(),
         ownerRecordName: String? = nil,
-        requireMatchConfirmation: Bool? = nil
+        requireMatchConfirmation: Bool? = nil,
+        seasonStartDate: Date? = nil,
+        seasonEndDate: Date? = nil
     ) {
         self.id = id
         self.name = name
         self.createdDate = createdDate
         self.ownerRecordName = ownerRecordName
         self.requireMatchConfirmation = requireMatchConfirmation
+        self.seasonStartDate = seasonStartDate
+        self.seasonEndDate = seasonEndDate
+    }
+}
+
+extension Club {
+    /// True when `date` falls within this club's season window. Always true
+    /// when no season is set. Both bounds are inclusive; a nil end date
+    /// means open-ended. Filters Standings only — the Activity Feed
+    /// intentionally ignores this (#163).
+    public func isDateInSeason(_ date: Date) -> Bool {
+        guard let seasonStartDate else { return true }
+        if date < seasonStartDate { return false }
+        if let seasonEndDate, date > seasonEndDate { return false }
+        return true
     }
 }

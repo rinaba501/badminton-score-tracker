@@ -185,6 +185,8 @@
 "a11y.club_friend_badge" = "フレンド";
 "clubs.standings" = "順位表";
 "clubs.require_confirmation" = "試合の承認を必須にする";
+"clubs.season_open_format" = "シーズン: %@ – 現在";
+"clubs.season_range_format" = "シーズン: %@ – %@";
 "clubs.pending_confirmation" = "承認待ち";
 "clubs.activity" = "アクティビティ";
 "clubs.reactions" = "リアクション";

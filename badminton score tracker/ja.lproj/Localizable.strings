@@ -165,6 +165,14 @@
 "clubs.standings" = "順位表";
 "clubs.require_confirmation" = "試合の承認を必須にする";
 "clubs.require_confirmation_footer" = "他のメンバーが記録した試合は、ここで承認するまで保留となり、間違いが順位表に影響しません。";
+"clubs.season" = "シーズン";
+"clubs.season_enabled" = "シーズン順位表";
+"clubs.season_start" = "シーズン開始日";
+"clubs.season_has_end" = "シーズン終了日を設定する";
+"clubs.season_end" = "シーズン終了日";
+"clubs.season_footer" = "設定すると、この期間内に記録された試合のみが順位表に反映されます。アクティビティには影響しません。";
+"clubs.season_open_format" = "シーズン: %@ – 現在";
+"clubs.season_range_format" = "シーズン: %@ – %@";
 "clubs.pending_confirmation" = "承認待ち";
 "clubs.activity" = "アクティビティ";
 "clubs.reactions" = "リアクション";

@@ -184,6 +184,8 @@
 "a11y.club_friend_badge" = "Teman";
 "clubs.standings" = "Klasemen";
 "clubs.require_confirmation" = "Wajib Konfirmasi Pertandingan";
+"clubs.season_open_format" = "Musim: %@ – sekarang";
+"clubs.season_range_format" = "Musim: %@ – %@";
 "clubs.pending_confirmation" = "Menunggu Konfirmasi";
 "clubs.activity" = "Aktivitas";
 "clubs.reactions" = "Reaksi";

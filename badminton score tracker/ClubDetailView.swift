@@ -70,6 +70,10 @@ struct ClubDetailView: View {
     @State private var shareErrorMessage: String?
     @State private var promptingForName = false
     @State private var pendingName = ""
+    @State private var hasSeason = false
+    @State private var seasonStart = Date()
+    @State private var hasSeasonEnd = false
+    @State private var seasonEnd = Date()
 
     private var club: Club? { store.clubs.first { $0.id == clubId } }
     private var isOwned: Bool { club?.ownerRecordName == nil }
@@ -133,7 +137,23 @@ struct ClubDetailView: View {
     }
 
     private var standings: [StatsCalculator.StandingsEntry] {
-        StatsCalculator.standings(history: clubMatches.filter { $0.isConfirmed || !requireMatchConfirmation })
+        StatsCalculator.standings(history: clubMatches.filter {
+            ($0.isConfirmed || !requireMatchConfirmation) && (club?.isDateInSeason($0.date) ?? true)
+        })
+    }
+
+    /// Read-only "Season: <start> – <end/present>" label shown in the
+    /// Standings footer for both owner and non-owner (#163) — nil when no
+    /// season is set, so the footer disappears entirely for the unchanged
+    /// all-time default.
+    private var seasonLabel: String? {
+        guard let start = club?.seasonStartDate else { return nil }
+        let startText = start.formatted(date: .abbreviated, time: .omitted)
+        guard let end = club?.seasonEndDate else {
+            return String(format: NSLocalizedString("clubs.season_open_format", comment: ""), startText)
+        }
+        let endText = end.formatted(date: .abbreviated, time: .omitted)
+        return String(format: NSLocalizedString("clubs.season_range_format", comment: ""), startText, endText)
     }
 
     private var activityFeed: [StatsCalculator.ActivityFeedEntry] {
@@ -272,6 +292,46 @@ struct ClubDetailView: View {
                     Text("clubs.members")
                 }
 
+                if isOwned {
+                    Section {
+                        Toggle("clubs.season_enabled", isOn: Binding(
+                            get: { hasSeason },
+                            set: { newValue in
+                                hasSeason = newValue
+                                if newValue {
+                                    setSeasonDates(start: seasonStart, end: hasSeasonEnd ? seasonEnd : nil)
+                                } else {
+                                    hasSeasonEnd = false
+                                    setSeasonDates(start: nil, end: nil)
+                                }
+                            }
+                        ))
+                        if hasSeason {
+                            DatePicker("clubs.season_start", selection: $seasonStart, displayedComponents: .date)
+                                .onChange(of: seasonStart) { _, newValue in
+                                    setSeasonDates(start: newValue, end: hasSeasonEnd ? seasonEnd : nil)
+                                }
+                            Toggle("clubs.season_has_end", isOn: Binding(
+                                get: { hasSeasonEnd },
+                                set: { newValue in
+                                    hasSeasonEnd = newValue
+                                    setSeasonDates(start: seasonStart, end: newValue ? seasonEnd : nil)
+                                }
+                            ))
+                            if hasSeasonEnd {
+                                DatePicker("clubs.season_end", selection: $seasonEnd, displayedComponents: .date)
+                                    .onChange(of: seasonEnd) { _, newValue in
+                                        setSeasonDates(start: seasonStart, end: newValue)
+                                    }
+                            }
+                        }
+                    } header: {
+                        Text("clubs.season")
+                    } footer: {
+                        Text("clubs.season_footer")
+                    }
+                }
+
                 Section {
                     if standings.isEmpty {
                         ContentUnavailableView("stats.no_matches", systemImage: "trophy")
@@ -291,6 +351,10 @@ struct ClubDetailView: View {
                     }
                 } header: {
                     Text("clubs.standings")
+                } footer: {
+                    if let seasonLabel {
+                        Text(seasonLabel)
+                    }
                 }
 
                 Section {
@@ -338,7 +402,13 @@ struct ClubDetailView: View {
         .navigationTitle(club?.name ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            if let club { name = club.name }
+            if let club {
+                name = club.name
+                hasSeason = club.seasonStartDate != nil
+                seasonStart = club.seasonStartDate ?? Date()
+                hasSeasonEnd = club.seasonEndDate != nil
+                seasonEnd = club.seasonEndDate ?? Date()
+            }
             loadParticipants()
             markActivityViewed()
             if needsName {
@@ -565,6 +635,14 @@ struct ClubDetailView: View {
         var updated = store.clubs
         guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
         updated[idx].requireMatchConfirmation = newValue
+        store.saveClubs(updated)
+    }
+
+    private func setSeasonDates(start: Date?, end: Date?) {
+        var updated = store.clubs
+        guard let idx = updated.firstIndex(where: { $0.id == clubId }) else { return }
+        updated[idx].seasonStartDate = start
+        updated[idx].seasonEndDate = end
         store.saveClubs(updated)
     }
 
