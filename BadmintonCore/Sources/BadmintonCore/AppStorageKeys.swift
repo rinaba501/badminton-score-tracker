@@ -141,6 +141,32 @@ public enum AppStorageKeys {
     // CKQuerySubscription was last registered for, so re-registering isn't a
     // network call on every launch. Local device state, never synced.
     public static let friendRequestSubscriptionParticipantId = "friendRequestSubscriptionParticipantId"
+
+    // Erase All My Data (#264): every scalar setting key that should reset to
+    // its fresh-install default when the user erases their data, so the app
+    // reads back exactly as it would on first launch. Deliberately excludes:
+    // content-array keys (playerRoster/matchHistory/clubs/challenges/
+    // reactions/friendRequests/friendActivity/friendIdentities/friendStats —
+    // erased through their own AppStore.save* diffing instead, not raw key
+    // removal), CloudKit-transport bookkeeping (ckSyncEngineState/
+    // ckSharedSyncEngineState/didMigrateToCloudKit/ckRecordMetadata —
+    // resetting these while a CKSyncEngine instance is still running risks
+    // corrupting its live state), myParticipantId/
+    // friendRequestSubscriptionParticipantId (device identity/subscription
+    // cache, not user data), and ownedProductIds (a StoreKit purchase cache
+    // tied to the Apple ID, never app data).
+    public static let eraseAllDataResetKeys: [String] = [
+        myName, matchMyName, matchOpponentName, matchMyPartnerName, matchOpponentPartnerName,
+        matchClubId, matchIsOfficial, playerSortOrder,
+        pointsToWin, gamesInMatch, courtTheme, gameScreenStyle,
+        announceScore, enableSounds, enableCrownScoring, timeModeEnabled, timeLimitMinutes,
+        courtChangeRemindersEnabled, gameMode, localPlayerId, clubLastViewedActivity,
+        accountLinked,
+        shareHistoryWithFriends, shareAvatarWithFriends, shareGenderWithFriends,
+        shareBirthdayWithFriends, shareIntroductionWithFriends, shareStatsWithFriends,
+        gender, birthday, introduction,
+        didPromptForName
+    ]
 }
 
 /// Codec for `AppStorageKeys.clubLastViewedActivity`'s `Data`-backed

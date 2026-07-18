@@ -159,6 +159,14 @@
 "settings.deselect_all_players" = "Batalkan Semua";
 "settings.delete_selected_players" = "Hapus (%d)";
 "settings.delete_selected_players_confirm" = "Hapus %d pemain? Nama-nama ini akan tetap ada di pertandingan sebelumnya, tetapi akan dihapus dari daftar pemain.";
+"settings.danger_zone" = "Zona Berbahaya";
+"settings.erase_all_data" = "Hapus Semua Data Saya";
+"settings.erase_all_data_warning" = "Tindakan ini akan menghapus permanen pemain, riwayat pertandingan, klub, pengaturan, dan koneksi Teman yang tersimpan — dari perangkat ini dan iCloud. Tindakan ini tidak dapat dibatalkan.";
+"settings.erase_owned_clubs_warning" = "Anda memiliki klub berikut. Menghapus data Anda juga akan menghapus klub ini untuk semua anggota:";
+"settings.erase_confirm_prompt" = "Ketik %@ untuk konfirmasi.";
+"settings.erase_confirm_button" = "Hapus Semuanya";
+"settings.erase_success" = "Data Anda telah dihapus.";
+"settings.erase_done" = "Selesai";
 "prematch.near_side" = "Sisi Dekat";
 "prematch.far_side" = "Sisi Jauh";
 "prematch.near_partner" = "Pasangan Sisi Dekat";

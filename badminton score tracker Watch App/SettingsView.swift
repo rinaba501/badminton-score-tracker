@@ -344,6 +344,13 @@ struct SettingsView: View {
                     Label(LocalizedStringKey("onboarding.title"), systemImage: "hand.raised")
                 }
             }
+
+            Section(header: Text("settings.danger_zone")) {
+                NavigationLink(destination: EraseDataView(currentView: $currentView)) {
+                    Label(LocalizedStringKey("settings.erase_all_data"), systemImage: "trash.fill")
+                        .foregroundColor(.red)
+                }
+            }
         }
         .navigationTitle("settings.title")
         .navigationBarTitleDisplayMode(.inline)

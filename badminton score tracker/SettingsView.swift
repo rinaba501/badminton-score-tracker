@@ -144,6 +144,15 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                 }
             }
+
+            Section(header: Text("settings.danger_zone")) {
+                NavigationLink {
+                    EraseDataView()
+                } label: {
+                    Label("settings.erase_all_data", systemImage: "trash.fill")
+                        .foregroundStyle(.red)
+                }
+            }
         }
         .navigationTitle("settings.title")
         .navigationBarTitleDisplayMode(.inline)

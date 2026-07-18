@@ -201,6 +201,35 @@ final class AppStore: ObservableObject {
         }
     }
 
+    /// Erase All My Data (#264): wipes every local + CloudKit-synced record
+    /// this account owns — roster, history, clubs (deletes owned clubs
+    /// outright, leaves joined clubs via the existing `saveClubs` diffing),
+    /// challenges, reactions, the Friends graph (public-DB FriendRequest/
+    /// FriendProfile records plus the FriendsHistory share zone), and every
+    /// scalar setting (`AppStorageKeys.eraseAllDataResetKeys`) — so the app
+    /// reads back as a fresh install. Deliberately leaves CloudKit-transport
+    /// bookkeeping (ckSyncEngineState/ckRecordMetadata/etc.) untouched:
+    /// deletions flow through the already-running CKSyncEngine instances
+    /// exactly like any other delete, so there's no need to tear down or
+    /// rebuild them.
+    func eraseAllData() async {
+        saveRoster([])
+        clearHistory()
+        saveClubs([])
+        saveChallenges([])
+        saveReactions([])
+
+        await CloudKitSyncManager.shared.deleteAllMyFriendRequests()
+        saveFriendRequests([])
+        await CloudKitSyncManager.shared.deleteMyFriendProfile()
+        await CloudKitSyncManager.shared.deleteFriendsHistoryZone()
+
+        for key in AppStorageKeys.eraseAllDataResetKeys {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        CloudKitSyncManager.shared.enqueueSettingsChange()
+    }
+
     private var isSharingHistoryWithFriends: Bool {
         UserDefaults.standard.bool(forKey: AppStorageKeys.shareHistoryWithFriends)
     }
