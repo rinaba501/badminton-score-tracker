@@ -175,22 +175,25 @@ public struct BadmintonMatch: Codable, Equatable {
         return matchWinner == nil && totalPlayed >= (gamesToWin * 2 - 1) && myGamesWon == opponentGamesWon
     }
 
-    /// True for exactly the one rally where `side`'s score first reaches the
-    /// BWF mid-game end-change threshold (half of `pointsToWin`, rounded up)
-    /// in the deciding game of a multi-game match (Law 12.1c) — e.g. 11 of
-    /// 21. Always false in a single-game match (`gamesToWin == 1`, which has
-    /// no "deciding game" distinct from its only game) or any game before
-    /// the last. `side` must be the side that *just* scored the rally being
-    /// checked — checking against both sides' current scores (rather than
-    /// only the one that just moved) would keep returning true on every
-    /// later rally for as long as the other side's score sat at the
-    /// threshold value, re-firing the reminder long after the real
-    /// end-change moment.
+    /// True for exactly the one rally, across the whole deciding game, where
+    /// a score first reaches the BWF mid-game end-change threshold (half of
+    /// `pointsToWin`, rounded up) in the deciding game of a multi-game match
+    /// (Law 12.1c) — e.g. 11 of 21. Always false in a single-game match
+    /// (`gamesToWin == 1`, which has no "deciding game" distinct from its
+    /// only game) or any game before the last. `side` must be the side that
+    /// *just* scored the rally being checked.
+    ///
+    /// Requires the other side's score to still be under the threshold, not
+    /// just that `side`'s score equals it — otherwise this fires a second
+    /// time whenever the trailing side later catches up to (or ties) the
+    /// threshold value the leader already crossed, long after the real
+    /// end-change moment already happened.
     public func isCourtChangeThreshold(after side: Side) -> Bool {
         guard gamesToWin > 1, completedGames.count == gamesToWin * 2 - 2 else { return false }
         let threshold = (pointsToWin + 1) / 2
-        let score = side == .me ? myScore : opponentScore
-        return score == threshold
+        let ownScore = side == .me ? myScore : opponentScore
+        let otherScore = side == .me ? opponentScore : myScore
+        return ownScore == threshold && otherScore < threshold
     }
 
     // MARK: - Helpers

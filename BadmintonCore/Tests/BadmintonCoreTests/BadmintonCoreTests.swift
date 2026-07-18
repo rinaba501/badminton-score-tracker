@@ -157,13 +157,21 @@ struct BadmintonMatchTests {
         #expect(!match.isCourtChangeThreshold(after: .me))  // 12 of 21 — already past it
     }
 
-    @Test func courtChangeThresholdFiresForTheTrailingSideToo() {
+    @Test func courtChangeThresholdFiresForWhicheverSideReachesItFirst() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21); match.startNextGame()
+        score(&match, .opponent, 21); match.startNextGame()  // deciding game
+        score(&match, .opponent, 11)             // opponent is the one leading this time
+        #expect(match.isCourtChangeThreshold(after: .opponent))   // my score (0) is still under threshold — first crossing
+    }
+
+    @Test func courtChangeThresholdDoesNotFireAgainWhenTrailingSideLaterReachesIt() {
         var match = BadmintonMatch()
         score(&match, .me, 21); match.startNextGame()
         score(&match, .opponent, 21); match.startNextGame()  // deciding game
         score(&match, .me, 15)
         score(&match, .opponent, 11)
-        #expect(match.isCourtChangeThreshold(after: .opponent))   // opponent trails but still crossed 11
+        #expect(!match.isCourtChangeThreshold(after: .opponent))  // I already crossed 11 earlier — don't re-fire
     }
 
     @Test func courtChangeThresholdNeverFiresInASingleGameMatch() {
@@ -188,10 +196,11 @@ struct BadmintonMatchTests {
         score(&match, .opponent, 21); match.startNextGame()  // deciding game
         score(&match, .me, 11)
         #expect(match.isCourtChangeThreshold(after: .me))   // my score just reached 11 — fires
-        for _ in 0..<5 {
+        for _ in 0..<12 {
             match.score(.opponent)
-            #expect(!match.isCourtChangeThreshold(after: .opponent))  // opponent scoring; my score sits at 11 but didn't just change
+            #expect(!match.isCourtChangeThreshold(after: .opponent))  // opponent catching all the way up to, then past, 11 — never re-fires
         }
+        #expect(match.opponentScore == 12)  // sanity: the loop really did carry opponent through 11 (tying) and beyond
     }
 }
 
