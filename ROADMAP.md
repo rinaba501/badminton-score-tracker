@@ -136,6 +136,48 @@ Pro/pack IAPs, so `Entitlements.swift` is untouched. Full design — economy, od
 ledger data model, StoreKit redemption, phase slicing 8a–8f — in
 [docs/gacha-design.md](docs/gacha-design.md) (confirmed with the user 2026-07-17).
 
+### Phase 9 — Backend migration to Supabase/Postgres (design complete, 9a not yet started)
+
+Full cutover: eventually replace CloudKit with a Postgres backend (Supabase:
+Postgres + Auth + Realtime) on every platform, including the existing Watch/iOS
+app — not a permanent dual-backend, and not a separate non-syncing backend for
+a future non-Apple client. Decided shape (confirmed with the user 2026-07-19),
+motivated by keeping the door open to Android/web clients that share real data
+with the existing app rather than forking the product. Builds on `CloudSyncSpike`
+(merged, DEBUG-only — see `CLAUDE.md`), which validated the two hardest unknowns:
+Google OAuth → Supabase → Postgres identity works end-to-end, and a watchOS app
+with no browser can adopt a session relayed from the paired iPhone over
+`WCSession` and make independent, RLS-scoped Postgres calls afterward. Full
+design — target schema, identity model, sub-phase slicing 9a–9f, open risks —
+in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md).
+
+Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
+
+- **9a — Foundation**: production Postgres schema + RLS policies. No app code.
+- **9b — `SyncEngine` abstraction**: a protocol capturing `AppStore`'s current
+  direct calls into `CloudKitSyncManager`, which conforms to it unchanged — a
+  pure, behavior-preserving refactor that creates the seam later slices swap
+  behind.
+- **9c — Personal data cutover**: Settings + personal (`clubId == nil`)
+  Player/MatchRecord move to a new `SupabaseSyncManager`; real Google Sign-In +
+  `WCSession` relay promoted from the spike; opt-in, CloudKit stays default for
+  everyone else per the local-first invariant.
+- **9d — Clubs cutover**: an explicit `club_members`/`club_invites` model
+  replaces CKShare's implicit "share = membership" zone-sharing.
+- **9e — Friends graph cutover**: FriendProfile/FriendRequest move off
+  CloudKit's public database; the FriendsHistory identity-shared zone becomes
+  RLS scoped by friendship edges; push moves off `CKQuerySubscription`.
+- **9f — Dual-run validation & cutover**: both backends live for opted-in users
+  during a validation window, then flip the default and retire CloudKit —
+  the point a non-Apple client becomes buildable against the same backend.
+
+9a–9f get concrete GitHub issues once the prior slice lands, same convention as
+#133–#139 and Phase 5b–5f. RLS bugs mean cross-user data leaks — a strictly
+higher-stakes failure mode than a CKShare bug — so every slice from 9c onward
+needs real multi-account verification before merge, not just green CI, sharper
+than Phase 4/5's two-device gate. Per CLAUDE.md, any slice touching
+`AppStore`/the sync layer goes through plan mode first.
+
 ### Guardrails track (#110) — do anytime
 
 Cheap, independent CI hardening: a localization key-sync check across the 6 locales, code-coverage reporting on the test job, a build job for the Complication target, deployment-target alignment (Complication 26.5 vs app 11.4), and eventually a lightweight release process (semver tags + changelog).
@@ -154,10 +196,11 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design complete ([docs/supabase-migration-plan.md](docs/supabase-migration-plan.md)); 9a–9f not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.
 
 ## Maintaining this document
 
-Update the Issue map when a phase's issue closes, and revisit the phase ordering if a decision changes (e.g. abandoning CloudKit for a custom backend). Per the repo convention, structural changes made while executing a phase must update CLAUDE.md in the same PR.
+Update the Issue map when a phase's issue closes, and revisit the phase ordering if a decision changes. Per the repo convention, structural changes made while executing a phase must update CLAUDE.md in the same PR.
