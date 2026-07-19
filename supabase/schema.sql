@@ -91,6 +91,15 @@ create table public.match_records (
     updated_at timestamptz not null default now()
 );
 
+-- Phase 9c-5: Realtime subscriptions filter DELETE events by owner_id, but
+-- Postgres's default REPLICA IDENTITY only logs primary-key columns (id) in
+-- a DELETE's old-row image — owner_id isn't part of the primary key on
+-- either table, so without FULL, delete events would silently fail to match
+-- the filter and never reach subscribers. (settings needs no such statement
+-- since owner_id already is its primary key.)
+alter table public.players replica identity full;
+alter table public.match_records replica identity full;
+
 create table public.settings (
     owner_id uuid primary key references auth.users (id) on delete cascade,
     payload jsonb not null,
