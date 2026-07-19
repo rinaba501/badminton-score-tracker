@@ -21,6 +21,24 @@ import AuthenticationServices
 ///
 /// Only covers the Phase 9c tier (settings + personal players/match_records)
 /// — clubs/challenges/reactions/friends-* CRUD arrives with 9d/9e.
+///
+/// A `players`/`match_records` row awaiting upsert — a named type rather
+/// than a 4-element tuple so SwiftLint's large_tuple rule (max 2 members)
+/// doesn't fire at every call site building a batch.
+public struct PendingRecord: Sendable {
+    public let id: UUID
+    public let ownerId: UUID
+    public let clubId: UUID?
+    public let payload: Data
+
+    public init(id: UUID, ownerId: UUID, clubId: UUID?, payload: Data) {
+        self.id = id
+        self.ownerId = ownerId
+        self.clubId = clubId
+        self.payload = payload
+    }
+}
+
 @MainActor
 public final class SupabaseSyncManager: ObservableObject {
     public static let shared = SupabaseSyncManager()
@@ -105,27 +123,48 @@ public final class SupabaseSyncManager: ObservableObject {
     // MARK: - Personal data CRUD (players / match_records / settings)
 
     public func upsertPlayer(id: UUID, ownerId: UUID, clubId: UUID?, payload: Data) async {
-        guard let row = PayloadRow(id: id, ownerId: ownerId, clubId: clubId, payloadData: payload) else {
-            appendLog("Upsert players failed: payload did not decode as JSON")
-            return
-        }
-        await upsertRow(table: "players", row: row)
+        await upsertPlayers([PendingRecord(id: id, ownerId: ownerId, clubId: clubId, payload: payload)])
     }
 
     public func deletePlayer(id: UUID) async {
-        await deleteRow(table: "players", id: id)
+        await deletePlayers(ids: [id])
+    }
+
+    /// Batched upsert — a single request for N rows rather than N requests,
+    /// used both by a normal multi-record save and by migration-on-signin's
+    /// one-time upload of a user's full existing roster.
+    public func upsertPlayers(_ items: [PendingRecord]) async {
+        let rows = items.compactMap { PayloadRow(id: $0.id, ownerId: $0.ownerId, clubId: $0.clubId, payloadData: $0.payload) }
+        guard rows.count == items.count else {
+            appendLog("Upsert players failed: a payload did not decode as JSON")
+            return
+        }
+        await upsertRows(table: "players", rows: rows)
+    }
+
+    public func deletePlayers(ids: [UUID]) async {
+        await deleteRows(table: "players", ids: ids)
     }
 
     public func upsertMatchRecord(id: UUID, ownerId: UUID, clubId: UUID?, payload: Data) async {
-        guard let row = PayloadRow(id: id, ownerId: ownerId, clubId: clubId, payloadData: payload) else {
-            appendLog("Upsert match_records failed: payload did not decode as JSON")
-            return
-        }
-        await upsertRow(table: "match_records", row: row)
+        await upsertMatchRecords([PendingRecord(id: id, ownerId: ownerId, clubId: clubId, payload: payload)])
     }
 
     public func deleteMatchRecord(id: UUID) async {
-        await deleteRow(table: "match_records", id: id)
+        await deleteMatchRecords(ids: [id])
+    }
+
+    public func upsertMatchRecords(_ items: [PendingRecord]) async {
+        let rows = items.compactMap { PayloadRow(id: $0.id, ownerId: $0.ownerId, clubId: $0.clubId, payloadData: $0.payload) }
+        guard rows.count == items.count else {
+            appendLog("Upsert match_records failed: a payload did not decode as JSON")
+            return
+        }
+        await upsertRows(table: "match_records", rows: rows)
+    }
+
+    public func deleteMatchRecords(ids: [UUID]) async {
+        await deleteRows(table: "match_records", ids: ids)
     }
 
     /// `settings` has no `id` column — one row per user, keyed by `owner_id`.
@@ -134,22 +173,23 @@ public final class SupabaseSyncManager: ObservableObject {
             appendLog("Upsert settings failed: payload did not decode as JSON")
             return
         }
-        await upsertRow(table: "settings", row: row, onConflict: "owner_id")
+        await upsertRows(table: "settings", rows: [row], onConflict: "owner_id")
     }
 
-    private func upsertRow(table: String, row: some Encodable, onConflict: String? = nil) async {
+    private func upsertRows(table: String, rows: some Encodable, onConflict: String? = nil) async {
         do {
-            try await client.from(table).upsert(row, onConflict: onConflict).execute()
-            appendLog("Upserted \(table) row")
+            try await client.from(table).upsert(rows, onConflict: onConflict).execute()
+            appendLog("Upserted \(table) row(s)")
         } catch {
             appendLog("Upsert \(table) failed: \(error.localizedDescription)")
         }
     }
 
-    private func deleteRow(table: String, id: UUID) async {
+    private func deleteRows(table: String, ids: [UUID]) async {
+        guard !ids.isEmpty else { return }
         do {
-            try await client.from(table).delete().eq("id", value: id).execute()
-            appendLog("Deleted \(table) row")
+            try await client.from(table).delete().in("id", values: ids.map { $0 as any PostgrestFilterValue }).execute()
+            appendLog("Deleted \(ids.count) \(table) row(s)")
         } catch {
             appendLog("Delete \(table) failed: \(error.localizedDescription)")
         }

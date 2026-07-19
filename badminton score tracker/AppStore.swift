@@ -12,10 +12,18 @@
 import Foundation
 import SwiftUI
 import BadmintonCore
+import CloudSyncSpike
 
 @MainActor
 final class AppStore: ObservableObject {
-    static let shared = AppStore(syncEngine: CloudKitSyncManager.shared)
+    /// Reads whichever backend was active last session, so a relaunch after
+    /// activateSupabaseSync() stays on Supabase rather than silently
+    /// reverting to CloudKit (can't use @AppStorage in a static initializer).
+    static let shared = AppStore(
+        syncEngine: UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked)
+            ? SupabaseSyncEngine.shared
+            : CloudKitSyncManager.shared
+    )
 
     @Published private(set) var roster: [Player]
     @Published private(set) var history: [MatchRecord]
@@ -71,9 +79,11 @@ final class AppStore: ObservableObject {
     @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
 
     /// Every outbound sync call goes through this seam rather than a
-    /// hardcoded `CloudKitSyncManager.shared` reference (see SyncEngine.swift)
-    /// — Phase 9's future SupabaseSyncManager conforms to the same protocol.
-    private let syncEngine: SyncEngine
+    /// hardcoded `CloudKitSyncManager.shared` reference (see SyncEngine.swift).
+    /// Mutable (Roadmap Phase 9c) — activateSupabaseSync()/
+    /// deactivateSupabaseSync() swap it at runtime; only this file may
+    /// assign it, so no other call site can bypass those methods' guards.
+    private(set) var syncEngine: SyncEngine
 
     /// A stable identity for the local user, independent of their display
     /// name (which can be renamed) and independent of the roster ("me" is
@@ -127,6 +137,66 @@ final class AppStore: ObservableObject {
            let migrated = PersistenceStore.migratedHistoryData(from: data) {
             UserDefaults.standard.set(migrated, forKey: AppStorageKeys.matchHistory)
         }
+    }
+
+    // MARK: - Supabase backend switch (Roadmap Phase 9c)
+
+    /// Called once `SupabaseSyncManager.shared.isSignedIn` is true (9c-3's
+    /// UI drives the actual sign-in) — no-ops otherwise, so this can't flip
+    /// `syncEngine` to a backend with no live session. Uploads the device's
+    /// current personal data as a one-time migration (reusing the same
+    /// enqueue* methods a normal save already uses, seeded with every
+    /// existing id, now batched — see SupabaseSyncEngine), then makes
+    /// Supabase the active backend for the personal-data tier. CloudKit
+    /// itself is untouched by this — only future writes are redirected.
+    /// Does not set `AppStorageKeys.supabaseAccountLinked` itself; the
+    /// caller (a `@AppStorage`-bound Settings toggle) owns that write, same
+    /// pattern as `accountLinked`'s existing `linkAccount()`/`unlinkAccount()`.
+    func activateSupabaseSync() {
+        guard SupabaseSyncManager.shared.isSignedIn else { return }
+        syncEngine = SupabaseSyncEngine.shared
+        syncEngine.enqueueRosterChanges(upsertedIds: roster.map(\.id), deletedIds: [:])
+        syncEngine.enqueueHistoryChanges(upsertedIds: history.map(\.id), deletedIds: [:])
+        syncEngine.enqueueSettingsChange()
+    }
+
+    /// Reverts to CloudKit. No remote Supabase delete — safe/reversible
+    /// since CloudKit was never touched while Supabase-linked.
+    func deactivateSupabaseSync() {
+        syncEngine = CloudKitSyncManager.shared
+    }
+
+    /// Settings live as scattered `@AppStorage` scalars, not in AppStore's
+    /// own arrays — shared by both sync engines (CloudKitSyncManager and
+    /// SupabaseSyncEngine both call this) so the snapshot shape only has one
+    /// source of truth per target instead of one copy per engine.
+    func currentSettingsSnapshot() -> SettingsSnapshot {
+        let defaults = UserDefaults.standard
+        return SettingsSnapshot(
+            myName: defaults.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName,
+            localPlayerId: localPlayerId.uuidString,
+            pointsToWin: defaults.object(forKey: AppStorageKeys.pointsToWin) as? Int ?? 21,
+            gamesInMatch: defaults.object(forKey: AppStorageKeys.gamesInMatch) as? Int ?? 3,
+            courtTheme: defaults.string(forKey: AppStorageKeys.courtTheme) ?? "Green",
+            announceScore: defaults.object(forKey: AppStorageKeys.announceScore) as? Bool ?? true,
+            enableSounds: defaults.object(forKey: AppStorageKeys.enableSounds) as? Bool ?? true,
+            enableCrownScoring: defaults.object(forKey: AppStorageKeys.enableCrownScoring) as? Bool ?? true,
+            timeModeEnabled: defaults.object(forKey: AppStorageKeys.timeModeEnabled) as? Bool ?? false,
+            timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10,
+            courtChangeRemindersEnabled: defaults.object(forKey: AppStorageKeys.courtChangeRemindersEnabled) as? Bool ?? false,
+            clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
+            accountLinked: defaults.object(forKey: AppStorageKeys.accountLinked) as? Bool ?? false,
+            gameScreenStyle: defaults.string(forKey: AppStorageKeys.gameScreenStyle) ?? "Depth",
+            shareHistoryWithFriends: defaults.object(forKey: AppStorageKeys.shareHistoryWithFriends) as? Bool ?? false,
+            shareAvatarWithFriends: defaults.object(forKey: AppStorageKeys.shareAvatarWithFriends) as? Bool ?? false,
+            shareGenderWithFriends: defaults.object(forKey: AppStorageKeys.shareGenderWithFriends) as? Bool ?? false,
+            shareBirthdayWithFriends: defaults.object(forKey: AppStorageKeys.shareBirthdayWithFriends) as? Bool ?? false,
+            shareIntroductionWithFriends: defaults.object(forKey: AppStorageKeys.shareIntroductionWithFriends) as? Bool ?? false,
+            shareStatsWithFriends: defaults.object(forKey: AppStorageKeys.shareStatsWithFriends) as? Bool ?? false,
+            gender: defaults.string(forKey: AppStorageKeys.gender),
+            birthday: defaults.object(forKey: AppStorageKeys.birthday) as? Date,
+            introduction: defaults.string(forKey: AppStorageKeys.introduction)
+        )
     }
 
     // Each save updates the local cache + UserDefaults, then enqueues precise

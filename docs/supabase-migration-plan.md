@@ -5,17 +5,19 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9b done, 9c in progress (9c-1 done)** — schema + RLS applied and
-verified against the Supabase project
+**Status: 9a-9b done, 9c in progress (9c-1/9c-2 done)** — schema + RLS applied
+and verified against the Supabase project
 ([supabase/schema.sql](../supabase/schema.sql), all 10 tables present with
 `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
 sits between `AppStore` and `CloudKitSyncManager` on both targets, a pure
 refactor with no behavior change; `CloudSyncSpike`'s spike client is now a
 real production `SupabaseSyncManager` + per-target `SupabaseSyncEngine`
-adapters (9c-1), not yet wired into `AppStore` or reachable from any UI —
-the DEBUG-only spike UI that proved the OAuth/WCSession-relay approach was
-removed as part of 9c-1 rather than kept alongside the real thing.**
+adapters (9c-1) — the DEBUG-only spike UI that proved the OAuth/WCSession-
+relay approach was removed rather than kept alongside the real thing.
+`AppStore.syncEngine` is now swappable and `activateSupabaseSync()`/
+`deactivateSupabaseSync()` exist (9c-2), but nothing calls them yet —
+still not reachable from any UI (that's 9c-3).**
 
 ---
 
@@ -157,27 +159,29 @@ and its own tracking issue, filed once the prior slice lands.
     reachable from any UI (that's 9c-3). The stale DEBUG-only
     `CloudSyncSpikeView`/Settings row (targeting the old spike schema, would
     no longer compile) were removed as part of this slice.
-  - **9c-2 — `AppStore` backend-switch plumbing.** `syncEngine` becomes
-    swappable; a local-only opt-in flag; migration-on-signin upload logic.
-    **Three things `/code-review` flagged on 9c-1 that become live here** (no
-    impact in 9c-1 itself since nothing calls `SupabaseSyncEngine` yet):
-    (1) `enqueueRosterChanges`/`enqueueHistoryChanges` each spawn an
-    independent unstructured `Task` — two calls in quick succession race with
-    no ordering guarantee, so an older write's response can land after a
-    newer one and silently overwrite it remotely; decide whether to serialize
-    writes or explicitly accept last-network-response-wins (CloudKit's own
-    conflict resolution is already just last-writer-wins, so this may be an
-    acceptable parallel, but it should be a conscious choice);
-    (2) those same methods upsert/delete one record at a time in a loop —
-    fine for a normal 1-2-record save, but migration-on-signin will upload a
-    user's entire existing history/roster at once, so batch those into
-    supabase-swift's array-`upsert(_:)` rather than looping;
-    (3) `currentSettingsSnapshot()` is now duplicated 4 ways (2 targets ×
-    `CloudKitSyncManager` + `SupabaseSyncEngine`) — a future new Settings
-    field is easy to add to the `CloudKitSyncManager` copies and forget on
-    the `SupabaseSyncEngine` ones, silently shipping an incomplete Settings
-    payload on Supabase-linked devices; worth extracting to one shared helper
-    once this is actually wired up.
+  - **9c-2 — `AppStore` backend-switch plumbing.** ✅ done. `syncEngine` is
+    now `private(set) var` (was `let`); `static let shared` reads
+    `AppStorageKeys.supabaseAccountLinked` from `UserDefaults` directly
+    (can't use `@AppStorage` in a static initializer) so a relaunch after
+    activation stays on Supabase instead of reverting to CloudKit. New
+    `AppStore.activateSupabaseSync()` (no-ops unless
+    `SupabaseSyncManager.shared.isSignedIn`, then swaps `syncEngine` and
+    re-enqueues every existing roster/history/settings id — migration-on-
+    signin is just that reuse, no bespoke upload code) and
+    `deactivateSupabaseSync()` (swaps back to CloudKit, no remote delete).
+    Neither touches the `supabaseAccountLinked` flag itself — the caller (a
+    `@AppStorage`-bound Settings toggle, 9c-3) owns that write, same pattern
+    as `accountLinked`'s existing `linkAccount()`/`unlinkAccount()`.
+    Also closed all three things 9c-1's `/code-review` flagged as becoming
+    live here: `SupabaseSyncEngine` now chains every `enqueue*` through a
+    private serial `Task` (writes apply in call order, no more races between
+    quick successive saves); `SupabaseSyncManager` gained batched
+    `upsertPlayers`/`upsertMatchRecords`/`deletePlayers`/`deleteMatchRecords`
+    (one request for N rows, not N requests) built around a new
+    `PendingRecord` type — a plain tuple tripped SwiftLint's `large_tuple`
+    rule at 4 members; and `currentSettingsSnapshot()` moved onto `AppStore`
+    itself, so `CloudKitSyncManager` and `SupabaseSyncEngine` share one copy
+    per target instead of one each (4 copies → 2).
   - **9c-3 — Production UI.** Real "Supabase Account" Settings section
     reusing the `accountLinked` link/unlink UX pattern.
   - **9c-4 — Fix the View-bypass gap flagged in 9b's `/code-review`.** ~32

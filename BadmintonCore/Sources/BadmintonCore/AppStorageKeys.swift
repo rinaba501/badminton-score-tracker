@@ -127,6 +127,18 @@ public enum AppStorageKeys {
     public static let ckSyncEngineState = "ckSyncEngineState"
     public static let ckSharedSyncEngineState = "ckSharedSyncEngineState"
     public static let didMigrateToCloudKit = "didMigrateToCloudKit"
+    // Supabase sync (Roadmap Phase 9c). Local device state for the Supabase
+    // transport: whether this device has opted into Supabase as its
+    // personal-data (settings + personal players/match_records) sync
+    // backend instead of CloudKit — see AppStore.activateSupabaseSync()/
+    // deactivateSupabaseSync() and SupabaseSyncEngine.swift. Deliberately
+    // excluded from eraseAllDataResetKeys, same reasoning as
+    // didMigrateToCloudKit above — blindly resetting this while
+    // SupabaseSyncEngine is the live AppStore.syncEngine would desync the
+    // flag from AppStore's actual in-memory state. Not synced via
+    // SettingsSnapshot — this decides *which transport* runs on this
+    // device, unlike accountLinked (informational only).
+    public static let supabaseAccountLinked = "supabaseAccountLinked"
     // Whether the first-launch "what should we call you?" prompt has been
     // shown (skip or save both count) — device-local, never synced, so a
     // fresh device always gets asked once regardless of other devices'
