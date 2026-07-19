@@ -44,9 +44,6 @@ tasks/
 # Environment
 .env
 
-# CloudSyncSpike local secrets (see SupabaseSpikeSecrets.swift.example)
-CloudSyncSpike/Sources/CloudSyncSpike/SupabaseSpikeSecrets.swift
-
 # JetBrains
 .idea
 .vscode
