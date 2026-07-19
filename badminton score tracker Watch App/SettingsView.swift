@@ -9,6 +9,7 @@
 
 import SwiftUI
 import BadmintonCore
+import CloudSyncSpike
 
 struct SettingsView: View {
     @Binding var currentView: ContentView.AppView
@@ -24,11 +25,14 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.courtChangeRemindersEnabled) private var courtChangeRemindersEnabled = false
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
+    @ObservedObject private var supabaseManager = SupabaseSyncManager.shared
     @EnvironmentObject private var appStore: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @State private var editingPlayer: Player? = nil
     @State private var showAddPlayer = false
     @State private var showPaywall = false
+    @State private var showSupabaseSwitchBackConfirm = false
     /// Where the theme picker snaps back to when a premium theme is tapped
     /// without the entitlement (tracks the last free selection; the paywall
     /// opens instead).
@@ -345,6 +349,27 @@ struct SettingsView: View {
                 }
             }
 
+            Section(header: Text("settings.supabase_section_header"), footer: Text("settings.supabase_section_footer")) {
+                if supabaseAccountLinked {
+                    Label("settings.supabase_synced", systemImage: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Button("settings.supabase_switch_back", role: .destructive) {
+                        showSupabaseSwitchBackConfirm = true
+                    }
+                } else if supabaseManager.isSignedIn {
+                    Button {
+                        AppStore.shared.activateSupabaseSync()
+                        supabaseAccountLinked = true
+                    } label: {
+                        Label("settings.supabase_sign_in", systemImage: "person.badge.key.fill")
+                    }
+                } else {
+                    Text("settings.supabase_sign_in_on_phone")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section(header: Text("settings.danger_zone")) {
                 NavigationLink(destination: EraseDataView(currentView: $currentView)) {
                     Label(LocalizedStringKey("settings.erase_all_data"), systemImage: "trash.fill")
@@ -377,8 +402,22 @@ struct SettingsView: View {
         ) {
             Button("settings.delete", role: .destructive) { confirmPendingPlayerDeletion() }
         }
+        .confirmationDialog(
+            "settings.supabase_switch_back_confirm",
+            isPresented: $showSupabaseSwitchBackConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("settings.supabase_switch_back", role: .destructive) { deactivateSupabaseSync() }
+        }
         .onAppear {
             if !courtTheme.isPremium { lastFreeTheme = courtTheme }
         }
+    }
+
+    // MARK: - Supabase sync backend (Roadmap Phase 9c)
+
+    private func deactivateSupabaseSync() {
+        AppStore.shared.deactivateSupabaseSync()
+        supabaseAccountLinked = false
     }
 }

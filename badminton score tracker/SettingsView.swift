@@ -10,7 +10,9 @@
 //
 
 import SwiftUI
+import AuthenticationServices
 import BadmintonCore
+import CloudSyncSpike
 
 struct SettingsView: View {
     @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
@@ -23,8 +25,12 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false
     @AppStorage(AppStorageKeys.timeLimitMinutes) private var timeLimitMinutes = 10
     @AppStorage(AppStorageKeys.courtChangeRemindersEnabled) private var courtChangeRemindersEnabled = false
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
+    @ObservedObject private var supabaseManager = SupabaseSyncManager.shared
     @EnvironmentObject private var storeManager: StoreManager
     @State private var showPaywall = false
+    @State private var isSigningIntoSupabase = false
+    @State private var showSupabaseSwitchBackConfirm = false
 
     /// Capsule badge showing the current plan next to the Pro row — the row
     /// stays visible after purchase so the badge can flip from Free to Pro.
@@ -145,6 +151,32 @@ struct SettingsView: View {
                 }
             }
 
+            Section(header: Text("settings.supabase_section_header"), footer: Text("settings.supabase_section_footer")) {
+                if supabaseAccountLinked {
+                    Label("settings.supabase_synced", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Button("settings.supabase_switch_back", role: .destructive) {
+                        showSupabaseSwitchBackConfirm = true
+                    }
+                } else {
+                    Button {
+                        Task { await signInWithSupabase() }
+                    } label: {
+                        if isSigningIntoSupabase {
+                            ProgressView()
+                        } else {
+                            Label("settings.supabase_sign_in", systemImage: "person.badge.key.fill")
+                        }
+                    }
+                    .disabled(isSigningIntoSupabase)
+                    if supabaseManager.statusMessage.localizedCaseInsensitiveContains("failed") {
+                        Text(supabaseManager.statusMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             Section(header: Text("settings.danger_zone")) {
                 NavigationLink {
                     EraseDataView()
@@ -157,8 +189,42 @@ struct SettingsView: View {
         }
         .navigationTitle("settings.title")
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            "settings.supabase_switch_back_confirm",
+            isPresented: $showSupabaseSwitchBackConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("settings.supabase_switch_back", role: .destructive) { deactivateSupabaseSync() }
+        }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
+    }
+
+    // MARK: - Supabase sync backend (Roadmap Phase 9c)
+
+    private func signInWithSupabase() async {
+        guard let anchor = keyWindowAnchor() else { return }
+        isSigningIntoSupabase = true
+        defer { isSigningIntoSupabase = false }
+        await supabaseManager.signInWithGoogle(presentationAnchor: anchor)
+        guard supabaseManager.isSignedIn else { return }
+        if let tokens = await supabaseManager.relayableSessionTokens() {
+            AppDelegate.relaySessionToWatch(tokens: tokens)
+        }
+        AppStore.shared.activateSupabaseSync()
+        supabaseAccountLinked = true
+    }
+
+    private func deactivateSupabaseSync() {
+        AppStore.shared.deactivateSupabaseSync()
+        supabaseAccountLinked = false
+    }
+
+    private func keyWindowAnchor() -> ASPresentationAnchor? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }
     }
 }
