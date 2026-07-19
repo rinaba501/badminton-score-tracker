@@ -136,7 +136,7 @@ Pro/pack IAPs, so `Entitlements.swift` is untouched. Full design — economy, od
 ledger data model, StoreKit redemption, phase slicing 8a–8f — in
 [docs/gacha-design.md](docs/gacha-design.md) (confirmed with the user 2026-07-17).
 
-### Phase 9 — Backend migration to Supabase/Postgres (9a-9b done, 9c not yet started)
+### Phase 9 — Backend migration to Supabase/Postgres (9a-9b done, 9c in progress: 9c-1 done)
 
 Full cutover: eventually replace CloudKit with a Postgres backend (Supabase:
 Postgres + Auth + Realtime) on every platform, including the existing Watch/iOS
@@ -168,9 +168,26 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
   (`applyRemote*` callbacks) stays outside the protocol; `AppStore` is still a
   concrete singleton any backend calls into directly.
 - **9c — Personal data cutover**: Settings + personal (`clubId == nil`)
-  Player/MatchRecord move to a new `SupabaseSyncManager`; real Google Sign-In +
-  `WCSession` relay promoted from the spike; opt-in, CloudKit stays default for
-  everyone else per the local-first invariant.
+  Player/MatchRecord move to Supabase; real Google Sign-In + `WCSession`
+  relay promoted from the spike; opt-in, CloudKit stays default for everyone
+  else per the local-first invariant. Sliced further (own PRs each):
+  - **9c-1** ✅ done: `CloudSyncSpike`'s spike client promoted to production —
+    `SupabaseConfig` (hardcoded real project URL/anon key, replacing the
+    env-var/placeholder pattern) and `SupabaseSyncManager` (auth methods kept,
+    stale test-record CRUD replaced with real `players`/`match_records`/
+    `settings` CRUD against the Phase 9a schema). Since a shared package can't
+    import `AppStore`, each target gained its own thin `SupabaseSyncEngine.swift`
+    adapter that actually conforms to `SyncEngine` — mirrors how
+    `CloudKitSyncManager` itself is duplicated per target rather than shared.
+    The stale `CloudSyncSpikeView`/DEBUG Settings row (targeting the old spike
+    schema) were removed as part of this slice rather than left broken.
+  - **9c-2**: `AppStore.syncEngine` becomes swappable; opt-in flag; migration-
+    on-signin upload of existing local data.
+  - **9c-3**: real "Supabase Account" Settings UI (reusing the `accountLinked`
+    link/unlink pattern).
+  - **9c-4**: route the ~32 View-level `enqueueSettingsChange()` direct calls
+    (flagged in 9b's `/code-review`) through `AppStore` instead of
+    `CloudKitSyncManager.shared`.
 - **9d — Clubs cutover**: an explicit `club_members`/`club_invites` model
   replaces CKShare's implicit "share = membership" zone-sharing.
 - **9e — Friends graph cutover**: FriendProfile/FriendRequest move off
@@ -205,7 +222,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
-| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c–9f not started |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c-1 done (production SupabaseSyncManager), 9c-2–9f not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.
