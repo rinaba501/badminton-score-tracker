@@ -344,3 +344,14 @@ create policy friend_requests_update on public.friend_requests
     using (from_participant_id = auth.uid() or to_participant_id = auth.uid());
 create policy friend_requests_delete on public.friend_requests
     for delete to authenticated using (from_participant_id = auth.uid());
+
+-- ---------------------------------------------------------------------
+-- Realtime (Phase 9c-6): enable logical replication for the personal
+-- tier so SupabaseSyncManager.startRealtimeSync (9c-5) actually receives
+-- INSERT/UPDATE/DELETE events. Without this, a table's changes never
+-- enter the replication stream that Postgres Changes reads from, no
+-- matter how a client subscribes or filters. clubs/challenges/reactions
+-- join this list in 9d once their push/pull sync is wired up.
+-- ---------------------------------------------------------------------
+
+alter publication supabase_realtime add table public.players, public.match_records, public.settings;
