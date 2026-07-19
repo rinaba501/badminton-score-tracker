@@ -12,7 +12,7 @@ import BadmintonCore
 
 @MainActor
 final class AppStore: ObservableObject {
-    static let shared = AppStore()
+    static let shared = AppStore(syncEngine: CloudKitSyncManager.shared)
 
     @Published private(set) var roster: [Player]
     @Published private(set) var history: [MatchRecord]
@@ -67,6 +67,11 @@ final class AppStore: ObservableObject {
 
     @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
 
+    /// Every outbound sync call goes through this seam rather than a
+    /// hardcoded `CloudKitSyncManager.shared` reference (see SyncEngine.swift)
+    /// — Phase 9's future SupabaseSyncManager conforms to the same protocol.
+    private let syncEngine: SyncEngine
+
     /// A stable identity for the local user, independent of their display
     /// name (which can be renamed) and independent of the roster ("me" is
     /// deliberately never added there — see `Player.shouldBeStoredAsSavedPlayer`).
@@ -78,7 +83,8 @@ final class AppStore: ObservableObject {
         return new
     }
 
-    private init() {
+    private init(syncEngine: SyncEngine) {
+        self.syncEngine = syncEngine
         Self.runMigrations()
         let r = UserDefaults.standard.data(forKey: AppStorageKeys.playerRoster) ?? Data()
         let h = UserDefaults.standard.data(forKey: AppStorageKeys.matchHistory) ?? Data()
@@ -131,15 +137,15 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.playerRoster)
         roster = players
-        CloudKitSyncManager.shared.enqueueRosterChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        syncEngine.enqueueRosterChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
+        syncEngine.enqueueSettingsChange()
 
         if isSharingHistoryWithFriends {
             let newClubIds = Dictionary(players.map { ($0.id, $0.clubId) }, uniquingKeysWith: { first, _ in first })
             let personalUpserts = personalIds(among: diff.upsertedIds, clubIds: newClubIds)
             let personalDeletes = personalIds(among: diff.deletedIds, clubIds: deletedClubIds)
             if !personalUpserts.isEmpty || !personalDeletes.isEmpty {
-                CloudKitSyncManager.shared.enqueueFriendsRosterChanges(upsertedIds: personalUpserts, deletedIds: personalDeletes)
+                syncEngine.enqueueFriendsRosterChanges(upsertedIds: personalUpserts, deletedIds: personalDeletes)
             }
         }
         // Avatar is the one identity sub-field stored on the roster (the "Me"
@@ -149,7 +155,7 @@ final class AppStore: ObservableObject {
             refreshMyIdentitySnapshotIfSharing()
         }
         if isSharingStatsWithFriends {
-            CloudKitSyncManager.shared.enqueueFriendStatsChange()
+            syncEngine.enqueueFriendStatsChange()
         }
     }
 
@@ -164,19 +170,19 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.matchHistory)
         history = records
-        CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        syncEngine.enqueueHistoryChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubIds)
+        syncEngine.enqueueSettingsChange()
 
         if isSharingHistoryWithFriends {
             let newClubIds = Dictionary(records.map { ($0.id, $0.clubId) }, uniquingKeysWith: { first, _ in first })
             let personalUpserts = personalIds(among: diff.upsertedIds, clubIds: newClubIds)
             let personalDeletes = personalIds(among: diff.deletedIds, clubIds: deletedClubIds)
             if !personalUpserts.isEmpty || !personalDeletes.isEmpty {
-                CloudKitSyncManager.shared.enqueueFriendsHistoryChanges(upsertedIds: personalUpserts, deletedIds: personalDeletes)
+                syncEngine.enqueueFriendsHistoryChanges(upsertedIds: personalUpserts, deletedIds: personalDeletes)
             }
         }
         if isSharingStatsWithFriends {
-            CloudKitSyncManager.shared.enqueueFriendStatsChange()
+            syncEngine.enqueueFriendStatsChange()
         }
     }
 
@@ -187,17 +193,17 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(Data(), forKey: AppStorageKeys.matchHistory)
         history = []
-        CloudKitSyncManager.shared.enqueueHistoryChanges(upsertedIds: [], deletedIds: deletedClubIds)
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        syncEngine.enqueueHistoryChanges(upsertedIds: [], deletedIds: deletedClubIds)
+        syncEngine.enqueueSettingsChange()
 
         if isSharingHistoryWithFriends {
             let personalDeletes = personalIds(among: Array(deletedClubIds.keys), clubIds: deletedClubIds)
             if !personalDeletes.isEmpty {
-                CloudKitSyncManager.shared.enqueueFriendsHistoryChanges(upsertedIds: [], deletedIds: personalDeletes)
+                syncEngine.enqueueFriendsHistoryChanges(upsertedIds: [], deletedIds: personalDeletes)
             }
         }
         if isSharingStatsWithFriends {
-            CloudKitSyncManager.shared.enqueueFriendStatsChange()
+            syncEngine.enqueueFriendStatsChange()
         }
     }
 
@@ -234,12 +240,12 @@ final class AppStore: ObservableObject {
         saveChallenges([])
         saveReactions([])
 
-        await CloudKitSyncManager.shared.deleteAllMyFriendRequests()
+        await syncEngine.deleteAllMyFriendRequests()
         saveFriendRequests([])
-        await CloudKitSyncManager.shared.deleteMyFriendProfile()
-        await CloudKitSyncManager.shared.deleteFriendsHistoryZone()
+        await syncEngine.deleteMyFriendProfile()
+        await syncEngine.deleteFriendsHistoryZone()
 
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        syncEngine.enqueueSettingsChange()
     }
 
     private var isSharingHistoryWithFriends: Bool {
@@ -275,9 +281,9 @@ final class AppStore: ObservableObject {
     /// logic at every call site.
     func refreshMyIdentitySnapshotIfSharing() {
         if isSharingAnyFriendIdentityField {
-            CloudKitSyncManager.shared.enqueueFriendIdentityChange()
+            syncEngine.enqueueFriendIdentityChange()
         } else {
-            CloudKitSyncManager.shared.removeFriendIdentityRecord()
+            syncEngine.removeFriendIdentityRecord()
         }
     }
 
@@ -300,7 +306,7 @@ final class AppStore: ObservableObject {
                 .map { ($0.id, $0.ownerRecordName) },
             uniquingKeysWith: { first, _ in first }
         )
-        CloudKitSyncManager.shared.enqueueClubChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubs)
+        syncEngine.enqueueClubChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedClubs)
     }
 
     // Roadmap Phase 5 backlog (#162): challenges only exist as a CloudKit
@@ -316,7 +322,7 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.challenges)
         self.challenges = challenges
-        CloudKitSyncManager.shared.enqueueChallengeChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedChallengeClubIds)
+        syncEngine.enqueueChallengeChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedChallengeClubIds)
     }
 
     // Roadmap Phase 5 backlog (#164): reactions follow saveChallenges'
@@ -330,7 +336,7 @@ final class AppStore: ObservableObject {
         )
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.reactions)
         self.reactions = reactions
-        CloudKitSyncManager.shared.enqueueReactionChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedReactionClubIds)
+        syncEngine.enqueueReactionChanges(upsertedIds: diff.upsertedIds, deletedIds: deletedReactionClubIds)
     }
 
     // Friends v1 (#7c): unlike every other save* method here, this does NOT

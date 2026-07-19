@@ -5,10 +5,14 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a done — schema + RLS applied and verified against the Supabase
+**Status: 9a-9b done — schema + RLS applied and verified against the Supabase
 project ([supabase/schema.sql](../supabase/schema.sql), all 10 tables present
-with `rowsecurity = true`). 9b not yet started. `CloudSyncSpike/` (merged,
-DEBUG-only) is the completed feasibility precursor this design builds on.**
+with `rowsecurity = true`); the `SyncEngine` protocol
+([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
+now sits between `AppStore` and `CloudKitSyncManager` on both targets, a pure
+refactor with no behavior change. 9c not yet started. `CloudSyncSpike/`
+(merged, DEBUG-only) is the completed feasibility precursor this design
+builds on.**
 
 ---
 
@@ -108,12 +112,21 @@ and its own tracking issue, filed once the prior slice lands.
   (all 10 tables present, RLS enabled on every one) — see §4. No app code
   changes — the schema is designed and reviewed before any Swift is written
   against it.
-- **9b — `SyncEngine` abstraction.** Extract a `SyncEngine` protocol capturing
-  what `AppStore` currently calls directly on `CloudKitSyncManager` today
-  (`enqueue*`/`applyRemote*`/the `eraseAllData()` teardown methods).
-  `CloudKitSyncManager` conforms to it with no behavior change — a pure
-  refactor, reviewable and shippable entirely on its own, that creates the
-  seam later sub-phases swap behind instead of forking `AppStore` in place.
+- **9b — `SyncEngine` abstraction.** ✅ done. `SyncEngine` protocol
+  ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
+  capturing the 14 methods `AppStore` calls to push local changes out
+  (`enqueue*` plus the three `eraseAllData()` teardown methods).
+  `CloudKitSyncManager` (both targets) conforms to it with no behavior
+  change; `AppStore` now holds an injected `syncEngine: SyncEngine`, set to
+  `CloudKitSyncManager.shared` at `static let shared` (not a default
+  parameter — a defaulted `@MainActor`-isolated static property triggers a
+  Swift 6 nonisolated-context warning at the call site) instead of 20
+  hardcoded call sites — a pure
+  refactor that creates the seam 9c swaps behind instead of forking
+  `AppStore` in place. The reverse direction (`applyRemote*` callbacks) stays
+  outside the protocol on purpose — `AppStore` remains a concrete singleton
+  any backend calls into directly, only the outbound direction needed
+  polymorphism.
 - **9c — Personal data cutover.** New `SupabaseSyncManager` conforming to
   `SyncEngine`, covering only the small/isolated tier: `settings` + personal
   (`clubId == nil`) `players`/`match_records`. Real (non-DEBUG) Google
