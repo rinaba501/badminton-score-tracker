@@ -21,11 +21,28 @@ Sign-In and relays the session to the Watch, the Watch offers its own
 explicit activation once a relayed session lands — and every View-level
 call site that used to bypass `AppStore` and write settings straight to
 CloudKit now routes through `AppStore.enqueueSettingsChange()` instead
-(9c-4), so a Supabase-active device's settings writes actually land on
-Supabase. **A real-account, two-device verification pass is still owed**
-(not yet exercised — same not-CI-provable gate CloudKit sync correctness
-already has) before 9c is considered fully verified, not just fully built.
-9d (Clubs cutover) is next.
+(9c-4). While researching 9d it turned out 9c-4 didn't actually finish 9c:
+`SupabaseSyncEngine` was push-only, with no mechanism at all to bring
+remote changes back into `AppStore` — even two of one's own devices on
+Supabase wouldn't have synced with each other. 9c-5 added the pull
+transport (`SupabaseSyncManager.startRealtimeSync`/`stopRealtimeSync`,
+Postgres Changes via `RealtimeChannelV2`, plus `fetchAllRows`/
+`fetchSettings` for a one-time catch-up read) and its own `/code-review`
+caught a real correctness bug before merge: the `owner_id` Realtime filter
+would have silently dropped every DELETE event on `players`/`match_records`
+under Postgres's default `REPLICA IDENTITY` (only primary-key columns are
+logged for a delete's old-row image), fixed by adding `REPLICA IDENTITY
+FULL` for both tables. 9c-6 wired the transport in — `startIfActive()`
+(called after migration-on-signin on activation, and unconditionally but
+cheaply at every app launch) does the catch-up pull then opens the Realtime
+subscription, decoding each change via `PersistenceStore` and applying it
+through the same `AppStore.applyRemote*` methods CloudKit already uses; a
+device receiving its own push back as a self-echo is expected and harmless
+since those applies merge by id. **Phase 9c (personal data cutover) is now
+genuinely complete — push and pull are both real.** A real-account,
+two-device verification pass is still owed (not yet exercised — same
+not-CI-provable gate CloudKit sync correctness already has) before 9c is
+considered fully verified, not just fully built. 9d (Clubs cutover) is next.
 
 ---
 
@@ -219,7 +236,60 @@ and its own tracking issue, filed once the prior slice lands.
     statement with no other CloudKit-specific logic attached, confirmed by
     inspecting each call site before the swap, so this was a mechanical
     find-and-replace plus the one new passthrough method — no redesign
-    needed. **Phase 9c (personal data cutover) is now fully complete.**
+    needed. (This slice's claim of "Phase 9c is now fully complete" turned
+    out to be premature — see 9c-5/9c-6 below, discovered while researching
+    9d: `SupabaseSyncEngine` was push-only, so nothing actually completed
+    9c until the pull side existed too.)
+  - **9c-5 — Supabase pull-side sync transport.** ✅ done. Added to
+    `SupabaseSyncManager` (`CloudSyncSpike`): `RemoteChange` (a normalized
+    upsert/delete shape), `startRealtimeSync`/`stopRealtimeSync` (Postgres
+    Changes via `RealtimeChannelV2`, one channel scoped to the signed-in
+    user's own rows via an `owner_id` filter, subscribing on `players`/
+    `match_records`/`settings`), and `fetchAllRows`/`fetchSettings` (a
+    one-time catch-up read for rows that existed remotely before this
+    device ever subscribed). Package-level only, no `AppStore` dependency —
+    same risk tier as 9c-1's scaffold, no wiring yet. `/code-review` found
+    a real bug before merge: the `owner_id` filter would have silently
+    dropped every DELETE event on `players`/`match_records`, since
+    Postgres's default `REPLICA IDENTITY` only logs primary-key columns
+    (`id`) in a delete's old-row image, and `owner_id` isn't the primary
+    key on either table (it is on `settings`, so that one was unaffected).
+    Fixed by adding `alter table ... replica identity full` for both
+    tables in `supabase/schema.sql`.
+  - **9c-6 — Wire pull-side sync into `AppStore` + lifecycle.** ✅ done.
+    `SupabaseSyncEngine.startIfActive()` (both targets) does the 9c-5
+    catch-up pull then opens the Realtime subscription, routed through the
+    same serial `enqueueWork` chain the push methods use so a fresh
+    activation's migration-on-signin upload finishes before the catch-up
+    pull runs rather than racing it. `handleRemoteChange` decodes each
+    change via `PersistenceStore` and applies it through
+    `AppStore.applyRemoteUpsert`/`applyRemoteDeletions`/`applyRemoteSettings`
+    — the same methods `CloudKitSyncManager` already calls, so a Realtime
+    event and a CKSyncEngine fetch land through one shared apply path.
+    Deliberately does NOT gate on `SupabaseSyncManager.isSignedIn` (that
+    flag is only set by an explicit `signInWithGoogle`/`adoptRelayedSession`
+    call, so it's still `false` on a cold relaunch even though the SDK
+    auto-restores a persisted session from Keychain on demand) — instead
+    every downstream call independently no-ops if `currentUserId()` comes
+    back nil, so `startIfActive()` is safe to call unconditionally,
+    including at every app launch (guarded there by
+    `AppStorageKeys.supabaseAccountLinked` purely to skip the async work
+    for the common CloudKit-only device, not for correctness).
+    `deactivateSupabaseSync()` now calls `stopRealtimeSync()` before
+    swapping back to CloudKit. Self-echoes (a device receiving its own push
+    back through the subscription) are expected and harmless — the apply
+    methods merge by id, so re-applying an unchanged row is a no-op write,
+    the same tolerance CloudKit's own local-echo path already relies on.
+    `supabase/schema.sql` also gained `alter publication supabase_realtime
+    add table public.players, public.match_records, public.settings` —
+    without this, a table's changes never enter the replication stream at
+    all, independent of any client-side subscription or filter — which the
+    user needs to run in the Supabase SQL editor alongside 9c-5's `REPLICA
+    IDENTITY FULL` statements, the same manual-SQL handoff 9a used.
+    **Phase 9c (personal data cutover) is genuinely complete now — push
+    and pull both real.** Still owed: a real-account, two-device
+    verification pass (not CI-provable, same gate CloudKit sync
+    correctness already has).
 - **9d — Clubs cutover.** `club_members`/`club_invites` replace CKShare
   zone-sharing; migrates `Club` plus club-scoped `players`/`match_records`/
   `challenges`/`reactions`.

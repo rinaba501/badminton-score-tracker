@@ -10,6 +10,7 @@
 //
 
 import SwiftUI
+import BadmintonCore
 
 @main
 struct BadmintonScoreTrackerApp: App {
@@ -21,6 +22,13 @@ struct BadmintonScoreTrackerApp: App {
         CloudKitSyncManager.shared.start()
         Task { @MainActor in
             StoreManager.shared.start()
+            // Phase 9c-6: reconnect this device's Realtime subscription +
+            // catch-up pull if it was left Supabase-linked from a prior
+            // session — the CloudKit-only common case (the flag is false)
+            // skips this entirely.
+            if UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked) {
+                SupabaseSyncEngine.shared.startIfActive()
+            }
         }
     }
 

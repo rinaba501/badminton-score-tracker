@@ -154,11 +154,18 @@ final class AppStore: ObservableObject {
         syncEngine.enqueueRosterChanges(upsertedIds: roster.map(\.id), deletedIds: [:])
         syncEngine.enqueueHistoryChanges(upsertedIds: history.map(\.id), deletedIds: [:])
         syncEngine.enqueueSettingsChange()
+        // Queued after the three pushes above (Phase 9c-6) — a fresh
+        // activation's migration-on-signin upload finishes before the
+        // catch-up pull runs, so a second device signing into an account
+        // that already has Supabase data gets it too, not just what this
+        // device just uploaded.
+        SupabaseSyncEngine.shared.startIfActive()
     }
 
     /// Reverts to CloudKit. No remote Supabase delete — safe/reversible
     /// since CloudKit was never touched while Supabase-linked.
     func deactivateSupabaseSync() {
+        SupabaseSyncEngine.shared.stopRealtimeSync()
         syncEngine = CloudKitSyncManager.shared
     }
 
