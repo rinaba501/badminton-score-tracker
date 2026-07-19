@@ -351,6 +351,14 @@ struct SettingsView: View {
                         .foregroundColor(.red)
                 }
             }
+
+            #if DEBUG
+            Section {
+                NavigationLink(destination: CloudSyncSpikeView()) {
+                    Label("Cloud Sync Spike", systemImage: "server.rack")
+                }
+            }
+            #endif
         }
         .navigationTitle("settings.title")
         .navigationBarTitleDisplayMode(.inline)

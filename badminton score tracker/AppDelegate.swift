@@ -6,12 +6,54 @@
 //  enabling CloudKit share acceptance callbacks. Roadmap Phase 7f adds
 //  best-effort remote-push registration for the Friends FriendRequest
 //  subscription — never required for Friends to work since FriendsView
-//  still polls on appear/pull-to-refresh regardless.
+//  still polls on appear/pull-to-refresh regardless. Also activates
+//  WCSession to relay a signed-in Supabase session to the paired watch for
+//  the CloudSyncSpike feasibility experiment (CLAUDE.md) — the phone always
+//  performs the actual Google OAuth handshake; the watch only ever adopts a
+//  relayed session, since watchOS has no in-app browser.
 //
 
 import UIKit
+import WatchConnectivity
+import CloudSyncSpike
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, WCSessionDelegate {
+    /// Relays over two paths: `transferUserInfo` (queued, delivered whenever
+    /// the watch next becomes reachable — may take a while) and, when the
+    /// watch is reachable right now, `sendMessage` too. Spike testing found
+    /// `transferUserInfo` alone didn't reliably deliver Simulator-to-
+    /// Simulator, while `sendMessage` did; keeping both covers real hardware
+    /// whichever way its reliability differs.
+    static func relaySessionToWatch(tokens: [String: Any]) {
+        let session = WCSession.default
+        let activated = session.activationState == .activated
+        logToSpike(
+            "WCSession: supported=\(WCSession.isSupported()) activated=\(activated) "
+            + "paired=\(session.isPaired) watchAppInstalled=\(session.isWatchAppInstalled) reachable=\(session.isReachable)"
+        )
+        guard WCSession.isSupported(), activated else { return }
+
+        session.transferUserInfo(tokens)
+        logToSpike("transferUserInfo queued")
+
+        guard session.isReachable else { return }
+        session.sendMessage(tokens, replyHandler: { _ in
+            logToSpike("sendMessage: watch replied")
+        }, errorHandler: { error in
+            logToSpike("sendMessage failed: \(error.localizedDescription)")
+        })
+    }
+
+    private static func logToSpike(_ message: String) {
+        Task { @MainActor in SupabaseSpikeClient.shared.logDiagnostic(message) }
+    }
+
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    func sessionDidBecomeInactive(_ session: WCSession) {}
+    func sessionDidDeactivate(_ session: WCSession) {
+        WCSession.default.activate()
+    }
+
     /// App-wide orientation lock, read back to UIKit via
     /// `application(_:supportedInterfaceOrientationsFor:)`. The app is
     /// portrait-only except while GameView shows the landscape-native
@@ -60,6 +102,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         application.registerForRemoteNotifications()
+        if WCSession.isSupported() {
+            WCSession.default.delegate = self
+            WCSession.default.activate()
+        }
         return true
     }
 
