@@ -133,7 +133,16 @@ and its own tracking issue, filed once the prior slice lands.
   Sign-In + `WCSession` relay, promoted from `CloudSyncSpike`. One-time
   migration-on-signin that imports a user's existing local data. Opt-in per
   the local-first invariant in `ROADMAP.md` — CloudKit stays the default,
-  untouched, for anyone who doesn't switch.
+  untouched, for anyone who doesn't switch. **Scope note found during 9b's
+  review**: `SyncEngine` only covers calls `AppStore` itself makes — roughly
+  32 call sites across 9 View files on both targets (SettingsView,
+  FriendSharingSettingsView, ClubDetailView, FriendsView, ContentView,
+  ProfileView, StatsView, HistoryView) call
+  `CloudKitSyncManager.shared.enqueueSettingsChange()` directly to resync
+  Settings after a scalar toggle, bypassing `AppStore`/`syncEngine` entirely.
+  9c must either redirect these through `AppStore` or give them their own
+  `SyncEngine`-typed reference — swapping `AppStore`'s `syncEngine` alone
+  would silently leave these writing to CloudKit only.
 - **9d — Clubs cutover.** `club_members`/`club_invites` replace CKShare
   zone-sharing; migrates `Club` plus club-scoped `players`/`match_records`/
   `challenges`/`reactions`.
