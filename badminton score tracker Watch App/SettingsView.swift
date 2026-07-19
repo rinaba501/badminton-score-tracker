@@ -310,13 +310,13 @@ struct SettingsView: View {
                 Toggle("settings.court_changes", isOn: $courtChangeRemindersEnabled)
             }
             .onChange(of: pointsToWin) { _ in
-                CloudKitSyncManager.shared.enqueueSettingsChange()
+                AppStore.shared.enqueueSettingsChange()
             }
             .onChange(of: gamesInMatch) { _ in
-                CloudKitSyncManager.shared.enqueueSettingsChange()
+                AppStore.shared.enqueueSettingsChange()
             }
             .onChange(of: courtChangeRemindersEnabled) { _ in
-                CloudKitSyncManager.shared.enqueueSettingsChange()
+                AppStore.shared.enqueueSettingsChange()
             }
 
             Section(header: Text("settings.timer")) {

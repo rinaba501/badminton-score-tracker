@@ -52,7 +52,7 @@ struct FriendSharingSettingsView: View {
     // AppStore.isSharingAnyProfileData) — the share/zone itself is always
     // left in place (see CloudKitSyncManager.revokeFriendsHistoryAccess).
     private func toggleShareHistoryWithFriends(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {
@@ -72,7 +72,7 @@ struct FriendSharingSettingsView: View {
     // refreshMyIdentitySnapshotIfSharing), so every one of these four toggles
     // shares this one handler regardless of which direction it flipped.
     private func toggleIdentityField(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {
@@ -86,7 +86,7 @@ struct FriendSharingSettingsView: View {
     }
 
     private func toggleStatsSharing(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {

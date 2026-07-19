@@ -518,7 +518,7 @@ struct ClubDetailView: View {
         guard !trimmed.isEmpty else { return }
         myName = trimmed
         promptingForName = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
         }
@@ -713,7 +713,7 @@ struct ClubDetailView: View {
         var lastViewed = ClubActivityCodec.decode(lastViewedData)
         lastViewed[clubId.uuidString] = Date()
         lastViewedData = ClubActivityCodec.encode(lastViewed)
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
     }
 
     private func prepareShare(for club: Club?) async {

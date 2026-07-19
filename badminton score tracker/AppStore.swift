@@ -199,6 +199,15 @@ final class AppStore: ObservableObject {
         )
     }
 
+    /// Passthrough so Views can enqueue a settings-only sync without reaching
+    /// past AppStore to a concrete sync manager — every View call site used
+    /// to call CloudKitSyncManager.shared directly, which meant a
+    /// Supabase-active device silently kept writing settings to CloudKit
+    /// (Roadmap Phase 9c-4, closing the gap 9b's review flagged).
+    func enqueueSettingsChange() {
+        syncEngine.enqueueSettingsChange()
+    }
+
     // Each save updates the local cache + UserDefaults, then enqueues precise
     // per-record upserts/deletes to CloudKitSyncManager — the only sync path.
     func saveRoster(_ players: [Player]) {
