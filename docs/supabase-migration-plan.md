@@ -5,8 +5,10 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: design only — no sub-phase implementation has started. `CloudSyncSpike/`
-(merged, DEBUG-only) is the completed feasibility precursor this design builds on.**
+**Status: 9a done — schema + RLS applied and verified against the Supabase
+project ([supabase/schema.sql](../supabase/schema.sql), all 10 tables present
+with `rowsecurity = true`). 9b not yet started. `CloudSyncSpike/` (merged,
+DEBUG-only) is the completed feasibility precursor this design builds on.**
 
 ---
 
@@ -58,28 +60,41 @@ handshake and relays the resulting session to the watch over `WCSession`,
 exactly as `CloudSyncSpike` proved — promoted from DEBUG-only spike code to a
 real, always-available path in 9c.
 
-## 4. Target schema (sketch — refined for real in 9a)
+## 4. Target schema
+
+Implemented in [supabase/schema.sql](../supabase/schema.sql) (9a) — the
+tracked, reviewable source of truth, applied manually via the Supabase SQL
+editor (no migration-runner tooling yet; that's a fine later addition, not a
+9a blocker). Reuses the existing `CloudSyncSpike` project rather than
+standing up a second one — the file opens by dropping the spike's throwaway
+`match_records`/`players`/`profiles` scaffolding (disposable test rows only)
+before creating the real tables.
 
 | Table | Replaces | Notes |
 |---|---|---|
-| `profiles` | `FriendProfile` (public DB) | one row per `auth.uid()` |
-| `players` | personal `Player` CKRecords | `owner_id = auth.uid()`, `payload jsonb` (reuse `Codable` shape, like the spike) |
-| `match_records` | personal `MatchRecord` CKRecords | same `owner_id`/`payload jsonb` pattern |
-| `settings` | fixed `Settings` CKRecord | one row per `auth.uid()` |
-| `clubs` | `Club` + its `CKShare` zone | the zone itself goes away — see `club_members` |
-| `club_members` | CKShare's participant list | **explicit membership table** — CKShare's zone-sharing makes "is a member" implicit in share participation; Postgres has no equivalent, so this needs a real table + RLS join, not a re-pointed API call |
-| `club_invites` | `UICloudSharingController` invite flow | link/code based (mirrors the existing `badminton://addfriend` pattern), which also makes club invites cross-platform for free, unlike today's iOS-only `UICloudSharingController` |
-| `challenges` | `ChallengeRecord` | club-scoped, same shape |
-| `reactions` | `ReactionRecord` | club-scoped, same shape |
-| `friend_requests` | `FriendRequest` (public DB) | graph edge, accepted request = friendship |
-| `friend_shares` | FriendsHistory identity-shared zone | **replaces per-user zone sharing with an RLS join**: a friend can read your `players`/`match_records`/identity/stats rows only if a `friend_shares` row (or the equivalent policy over `friend_requests.status = accepted` + your per-field share toggles) grants it |
+| `profiles` | `FriendProfile` (public DB) | one row per `auth.uid()`, readable by any signed-in user (needed for code-based friend lookup with no prior relationship) |
+| `players` | personal `Player` CKRecords | `owner_id`, nullable `club_id`, `payload jsonb` (reuse `Codable` shape, like the spike) |
+| `match_records` | personal `MatchRecord` CKRecords | same `owner_id`/`club_id`/`payload jsonb` pattern |
+| `settings` | fixed `Settings` CKRecord | one row per `auth.uid()`, strictly personal |
+| `clubs` | `Club` + its `CKShare` zone | the zone itself goes away — see `club_members`; a trigger auto-adds the creator as `role = 'owner'` in `club_members`, mirroring CloudKit's implicit "creating a zone makes you its first participant" |
+| `club_members` | CKShare's participant list | **explicit membership table** — CKShare's zone-sharing makes "is a member" implicit in share participation; Postgres has no equivalent, so this needs a real table + RLS join, not a re-pointed API call. Membership reads use a `SECURITY DEFINER` `is_club_member()` helper to avoid the table's RLS policy recursively referencing itself |
+| `club_invites` | `UICloudSharingController` invite flow | schema only in 9a (owner-gated CRUD); the actual link/code redemption flow (mirroring `badminton://addfriend`) is 9d work, which also makes club invites cross-platform for free unlike today's iOS-only `UICloudSharingController` |
+| `challenges` | `ChallengeRecord` | club-scoped; zone-wide write access for any member, matching CloudKit's current documented behavior (`ROADMAP.md` Phase 5: "any club participant can already write any field of any record in a shared zone") — not a new decision |
+| `reactions` | `ReactionRecord` | club-scoped reads, but writes are author-only (`author_id = auth.uid()`) — unlike players/challenges, each reaction has a real author to scope to, so it doesn't need the zone-wide-write carryover |
+| `friend_requests` | `FriendRequest` (public DB) | graph edge, accepted request = friendship; sender-only insert, either side can update (accept/decline/cancel) |
 
-RLS policy shape per table: `owner_id = auth.uid()` for personal data,
-`EXISTS (SELECT 1 FROM club_members WHERE club_id = clubs.id AND user_id =
-auth.uid())`-style joins for club data, and a `friend_shares`/accepted-request
-join for friend-visible data. Proving these joins can't be tricked into
-leaking another user's rows is the direct analogue of the spike's "deliberately
-try to violate RLS" verification step, now under real multi-table conditions.
+**No separate `friend_shares` table** (a deviation from this doc's original
+sketch): friend-visibility policies on `players`/`match_records`/`settings`/
+`profiles` are deferred to 9e, when the Friends graph itself is cut over.
+They'll be additional `SELECT` policies keyed off `friend_requests.status =
+'accepted'` plus the per-field share toggles already present in a user's
+`settings.payload` (`shareHistoryWithFriends`, etc.) — no junction table
+needed, since that data already fully describes who-shares-what-with-whom.
+
+Proving these RLS policies can't be tricked into leaking another user's rows
+is the direct analogue of the spike's "deliberately try to violate RLS"
+verification step, now under real multi-table, multi-policy conditions —
+see `docs/supabase-migration-plan.md` §5's 9c-onward multi-account test gate.
 
 ## 5. Sub-phases
 
@@ -87,10 +102,12 @@ Mirrors the slicing convention already used for Phase 5 (Cross-person sharing,
 5a–5f) and Phase 7 (Friend graph, 7a–7g): each sub-phase below is its own PR
 and its own tracking issue, filed once the prior slice lands.
 
-- **9a — Foundation.** Production Postgres schema + RLS policies (manual SQL
-  in the Supabase dashboard, like the spike's setup but for real, covering the
-  full table list in §4). No app code changes — a schema can be designed and
-  reviewed before any Swift is written against it.
+- **9a — Foundation.** ✅ done. Production Postgres schema + RLS policies,
+  tracked in [supabase/schema.sql](../supabase/schema.sql), applied via the
+  Supabase SQL editor to the existing `CloudSyncSpike` project and verified
+  (all 10 tables present, RLS enabled on every one) — see §4. No app code
+  changes — the schema is designed and reviewed before any Swift is written
+  against it.
 - **9b — `SyncEngine` abstraction.** Extract a `SyncEngine` protocol capturing
   what `AppStore` currently calls directly on `CloudKitSyncManager` today
   (`enqueue*`/`applyRemote*`/the `eraseAllData()` teardown methods).
