@@ -39,6 +39,8 @@ BadmintonCore/                 — local Swift package; platform-free core (no S
     ScoreCallFormatter.swift  — locale-aware spoken score formatting (en/ja/zh); injectable strings closure for tests
   Tests/BadmintonCoreTests/   — all core unit tests; run with `swift test --package-path BadmintonCore`
 
+CloudSyncSpike/                — local Swift package, DEBUG-only: a feasibility spike for a possible future Postgres/Supabase + Google OAuth backend (cross-platform ambition, not a commitment — see ROADMAP.md's "abandoning CloudKit" caveat). `SupabaseSpikeClient` wraps supabase-swift; iOS performs the actual Google OAuth handshake (ASWebAuthenticationSession) and relays the resulting session to the watch over WCSession (WatchAppDelegate/AppDelegate), since watchOS has no in-app browser. Entry point is a `#if DEBUG` "Cloud Sync Spike" row in both targets' SettingsView, pushing CloudSyncSpikeView. Entirely isolated: never imported by AppStore/CloudKitSyncManager/PersistenceStore, writes only to a separate Postgres `match_records` test table, never the real save/sync path
+
 badminton score tracker Watch App/
   ContentView.swift          — root view; owns the AppView routing enum (.menu/.preMatch/.game/.settings/.history/.stats — state-driven, no top-level NavigationLink) and a first-launch, skippable "what should we call you?" prompt (AppStorageKeys.didPromptForName, shown once while myName is still the Player.defaultMyName placeholder) — keeps the local-first "always works with zero setup" invariant by defaulting to Skip-able rather than blocking
   MenuView.swift             — main menu

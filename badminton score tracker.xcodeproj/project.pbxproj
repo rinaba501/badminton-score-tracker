@@ -10,6 +10,8 @@
 		4539878F2FF3F4DD0070EA74 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4539878E2FF3F4DD0070EA74 /* WidgetKit.framework */; };
 		453987912FF3F4DD0070EA74 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 453987902FF3F4DD0070EA74 /* SwiftUI.framework */; };
 		4539879E2FF3F4DE0070EA74 /* badminton score tracker ComplicationExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4539878C2FF3F4DD0070EA74 /* badminton score tracker ComplicationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		45AABA5E300C900D008BF8A5 /* CloudSyncSpike in Frameworks */ = {isa = PBXBuildFile; productRef = 45AABA5D300C900D008BF8A5 /* CloudSyncSpike */; };
+		45AABA60300C905D008BF8A5 /* CloudSyncSpike in Frameworks */ = {isa = PBXBuildFile; productRef = 45AABA5F300C905D008BF8A5 /* CloudSyncSpike */; };
 		A1B2C3D40000000000000003 /* BadmintonCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D40000000000000004 /* BadmintonCore */; };
 		AD0000000000000000000A03 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = AD0000000000000000000A02 /* GoogleMobileAds */; };
 		B32FF05A2DCB7D850008256A /* badminton score tracker Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -157,6 +159,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45AABA5E300C900D008BF8A5 /* CloudSyncSpike in Frameworks */,
 				A1B2C3D40000000000000003 /* BadmintonCore in Frameworks */,
 				AD0000000000000000000A03 /* GoogleMobileAds in Frameworks */,
 			);
@@ -166,6 +169,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45AABA60300C905D008BF8A5 /* CloudSyncSpike in Frameworks */,
 				B32FF0A22DCB7D850008256A /* BadmintonCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -267,6 +271,7 @@
 			packageProductDependencies = (
 				A1B2C3D40000000000000004 /* BadmintonCore */,
 				AD0000000000000000000A02 /* GoogleMobileAds */,
+				45AABA5D300C900D008BF8A5 /* CloudSyncSpike */,
 			);
 			productName = "badminton score tracker";
 			productReference = B32FF0532DCB7D850008256A /* badminton score tracker.app */;
@@ -292,6 +297,7 @@
 			name = "badminton score tracker Watch App";
 			packageProductDependencies = (
 				B32FF0A12DCB7D850008256A /* BadmintonCore */,
+				45AABA5F300C905D008BF8A5 /* CloudSyncSpike */,
 			);
 			productName = "badminton score tracker Watch App";
 			productReference = B32FF0592DCB7D850008256A /* badminton score tracker Watch App.app */;
@@ -389,6 +395,7 @@
 			packageReferences = (
 				B32FF0A02DCB7D850008256A /* XCLocalSwiftPackageReference "BadmintonCore" */,
 				AD0000000000000000000A01 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				45AABA5C300C900D008BF8A5 /* XCLocalSwiftPackageReference "CloudSyncSpike" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B32FF0542DCB7D850008256A /* Products */;
@@ -933,6 +940,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		45AABA5C300C900D008BF8A5 /* XCLocalSwiftPackageReference "CloudSyncSpike" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = CloudSyncSpike;
+		};
 		B32FF0A02DCB7D850008256A /* XCLocalSwiftPackageReference "BadmintonCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = BadmintonCore;
@@ -951,6 +962,15 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		45AABA5D300C900D008BF8A5 /* CloudSyncSpike */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CloudSyncSpike;
+		};
+		45AABA5F300C905D008BF8A5 /* CloudSyncSpike */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45AABA5C300C900D008BF8A5 /* XCLocalSwiftPackageReference "CloudSyncSpike" */;
+			productName = CloudSyncSpike;
+		};
 		A1B2C3D40000000000000004 /* BadmintonCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BadmintonCore;
