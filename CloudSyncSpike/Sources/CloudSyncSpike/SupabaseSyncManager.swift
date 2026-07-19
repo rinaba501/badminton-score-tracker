@@ -22,8 +22,9 @@ import AuthenticationServices
 /// SupabaseSyncEngine type that calls into this class, mirroring how
 /// CloudKitSyncManager itself is duplicated per target rather than shared.
 ///
-/// Only covers the Phase 9c tier (settings + personal players/match_records)
-/// — clubs/challenges/reactions/friends-* CRUD arrives with 9d/9e.
+/// Covers the Phase 9c tier (settings + personal players/match_records) and,
+/// as of Phase 9d, clubs/challenges/reactions — friends-* CRUD arrives
+/// with 9e.
 ///
 /// A `players`/`match_records` row awaiting upsert — a named type rather
 /// than a 4-element tuple so SwiftLint's large_tuple rule (max 2 members)
@@ -38,6 +39,56 @@ public struct PendingRecord: Sendable {
         self.id = id
         self.ownerId = ownerId
         self.clubId = clubId
+        self.payload = payload
+    }
+}
+
+/// A `clubs` row awaiting upsert — `clubs` has no `club_id` column (a club
+/// isn't itself scoped to a club), so `PendingRecord`'s shape doesn't fit.
+public struct ClubPendingRecord: Sendable {
+    public let id: UUID
+    public let ownerId: UUID
+    public let payload: Data
+
+    public init(id: UUID, ownerId: UUID, payload: Data) {
+        self.id = id
+        self.ownerId = ownerId
+        self.payload = payload
+    }
+}
+
+/// A `challenges` row awaiting upsert — no single `owner_id` column, two
+/// participant ids instead, and `club_id` is required (not optional).
+public struct ChallengePendingRecord: Sendable {
+    public let id: UUID
+    public let clubId: UUID
+    public let fromParticipantId: UUID
+    public let toParticipantId: UUID
+    public let payload: Data
+
+    public init(id: UUID, clubId: UUID, fromParticipantId: UUID, toParticipantId: UUID, payload: Data) {
+        self.id = id
+        self.clubId = clubId
+        self.fromParticipantId = fromParticipantId
+        self.toParticipantId = toParticipantId
+        self.payload = payload
+    }
+}
+
+/// A `reactions` row awaiting upsert — `author_id` instead of `owner_id`,
+/// plus a required `match_id`.
+public struct ReactionPendingRecord: Sendable {
+    public let id: UUID
+    public let clubId: UUID
+    public let matchId: UUID
+    public let authorId: UUID
+    public let payload: Data
+
+    public init(id: UUID, clubId: UUID, matchId: UUID, authorId: UUID, payload: Data) {
+        self.id = id
+        self.clubId = clubId
+        self.matchId = matchId
+        self.authorId = authorId
         self.payload = payload
     }
 }
@@ -179,6 +230,55 @@ public final class SupabaseSyncManager: ObservableObject {
         await upsertRows(table: "settings", rows: [row], onConflict: "owner_id")
     }
 
+    // MARK: - Club data CRUD (clubs / challenges / reactions, Phase 9d)
+
+    public func upsertClubs(_ items: [ClubPendingRecord]) async {
+        let rows = items.compactMap { ClubRow(id: $0.id, ownerId: $0.ownerId, payloadData: $0.payload) }
+        guard rows.count == items.count else {
+            appendLog("Upsert clubs failed: a payload did not decode as JSON")
+            return
+        }
+        await upsertRows(table: "clubs", rows: rows)
+    }
+
+    public func deleteClubs(ids: [UUID]) async {
+        await deleteRows(table: "clubs", ids: ids)
+    }
+
+    public func upsertChallenges(_ items: [ChallengePendingRecord]) async {
+        let rows = items.compactMap {
+            ChallengeRow(
+                id: $0.id, clubId: $0.clubId,
+                fromParticipantId: $0.fromParticipantId, toParticipantId: $0.toParticipantId,
+                payloadData: $0.payload
+            )
+        }
+        guard rows.count == items.count else {
+            appendLog("Upsert challenges failed: a payload did not decode as JSON")
+            return
+        }
+        await upsertRows(table: "challenges", rows: rows)
+    }
+
+    public func deleteChallenges(ids: [UUID]) async {
+        await deleteRows(table: "challenges", ids: ids)
+    }
+
+    public func upsertReactions(_ items: [ReactionPendingRecord]) async {
+        let rows = items.compactMap {
+            ReactionRow(id: $0.id, clubId: $0.clubId, matchId: $0.matchId, authorId: $0.authorId, payloadData: $0.payload)
+        }
+        guard rows.count == items.count else {
+            appendLog("Upsert reactions failed: a payload did not decode as JSON")
+            return
+        }
+        await upsertRows(table: "reactions", rows: rows)
+    }
+
+    public func deleteReactions(ids: [UUID]) async {
+        await deleteRows(table: "reactions", ids: ids)
+    }
+
     private func upsertRows(table: String, rows: some Encodable, onConflict: String? = nil) async {
         do {
             try await client.from(table).upsert(rows, onConflict: onConflict).execute()
@@ -214,13 +314,23 @@ public final class SupabaseSyncManager: ObservableObject {
     private var realtimeChannel: RealtimeChannelV2?
     private var realtimeSubscriptions: [RealtimeSubscription] = []
 
-    /// Subscribes to INSERT/UPDATE/DELETE events on each listed table,
-    /// scoped to this user's own rows via an explicit `owner_id` filter —
-    /// defense in depth alongside whatever RLS enforces server-side, so
-    /// correctness here doesn't depend on exactly how this project's
-    /// Realtime replication is configured. Safe to call repeatedly: always
-    /// tears down any existing subscription first, so re-activating after a
-    /// sign-out/sign-in doesn't leak a stale channel.
+    /// Subscribes to INSERT/UPDATE/DELETE events on each listed table.
+    /// Relies entirely on RLS to scope delivery to rows this user can
+    /// actually see (own rows, plus any row visible via club membership) —
+    /// Supabase's Postgres Changes feature enforces the same SELECT RLS
+    /// policy for Realtime delivery as for a regular query, so this doesn't
+    /// need (and, once `clubs`/`challenges`/`reactions` joined the
+    /// subscription list, can't uniformly apply) a client-side `owner_id`
+    /// filter: `challenges`/`reactions` don't even have an `owner_id`
+    /// column, and a blanket `owner_id = this user` filter would wrongly
+    /// drop legitimate updates from other members of a shared club. This is
+    /// unverified by CI — it depends on the live project actually enforcing
+    /// RLS on Realtime, which needs a real multi-account check (see the
+    /// Phase 9d plan's manual verification section).
+    ///
+    /// Safe to call repeatedly: always tears down any existing subscription
+    /// first, so re-activating after a sign-out/sign-in doesn't leak a
+    /// stale channel.
     public func startRealtimeSync(tables: [String], onChange: @escaping @Sendable (RemoteChange) -> Void) async {
         await stopRealtimeSync()
         guard let uid = await currentUserId() else {
@@ -233,8 +343,7 @@ public final class SupabaseSyncManager: ObservableObject {
             let subscription = channel.onPostgresChange(
                 AnyAction.self,
                 schema: "public",
-                table: table,
-                filter: .eq("owner_id", value: uid)
+                table: table
             ) { [weak self] action in
                 guard let change = Self.remoteChange(table: table, action: action) else { return }
                 Task { @MainActor in
@@ -283,33 +392,40 @@ public final class SupabaseSyncManager: ObservableObject {
         // key is `owner_id`, so that's what identifies its one row here too.
         let idKey = table == "settings" ? "owner_id" : "id"
         guard let idString = record[idKey]?.stringValue, let id = UUID(uuidString: idString) else { return nil }
+        // Present on players/match_records/clubs/settings; absent on
+        // challenges/reactions (see `RemoteChange.ownerId`'s doc comment).
+        let ownerId = record["owner_id"]?.stringValue.flatMap { UUID(uuidString: $0) }
         guard kind == .upsert else {
-            return RemoteChange(table: table, id: id, kind: kind, payload: nil)
+            return RemoteChange(table: table, id: id, kind: kind, payload: nil, ownerId: ownerId)
         }
         guard let payload = record["payload"], let payloadData = try? JSONEncoder().encode(payload) else { return nil }
-        return RemoteChange(table: table, id: id, kind: kind, payload: payloadData)
+        return RemoteChange(table: table, id: id, kind: kind, payload: payloadData, ownerId: ownerId)
     }
 
-    /// One-time catch-up read of every row this user owns in `table`, used
-    /// at Supabase activation/launch to backfill data that already existed
-    /// remotely (written by another device, or from before this device ever
-    /// subscribed) before the Realtime subscription above takes over for
-    /// anything that happens next. Never reports `.delete` — a full fetch
-    /// only sees what currently exists, so it has no way to know about a
-    /// row that was deleted before this device ever saw it; the caller
-    /// isn't expected to diff against local state for tombstones here.
+    /// One-time catch-up read of every row this user can see in `table`
+    /// (own rows, plus — for club-visible tables — any row visible via club
+    /// membership), used at Supabase activation/launch to backfill data
+    /// that already existed remotely (written by another device or user, or
+    /// from before this device ever subscribed) before the Realtime
+    /// subscription above takes over for anything that happens next. Relies
+    /// on RLS alone to scope the result, same reasoning as
+    /// `startRealtimeSync` — no client-side `owner_id` filter, since that
+    /// would wrongly exclude club rows owned by someone else. Never reports
+    /// `.delete` — a full fetch only sees what currently exists, so it has
+    /// no way to know about a row that was deleted before this device ever
+    /// saw it; the caller isn't expected to diff against local state for
+    /// tombstones here.
     public func fetchAllRows(table: String) async -> [RemoteChange] {
-        guard let uid = await currentUserId() else { return [] }
+        guard await currentUserId() != nil else { return [] }
         do {
             let rows: [SelectedRow] = try await client
                 .from(table)
                 .select()
-                .eq("owner_id", value: uid)
                 .execute()
                 .value
             return rows.compactMap { row in
                 guard let payload = try? JSONEncoder().encode(row.payload) else { return nil }
-                return RemoteChange(table: table, id: row.id, kind: .upsert, payload: payload)
+                return RemoteChange(table: table, id: row.id, kind: .upsert, payload: payload, ownerId: row.ownerId)
             }
         } catch {
             appendLog("Fetch \(table) failed: \(error.localizedDescription)")
@@ -331,7 +447,7 @@ public final class SupabaseSyncManager: ObservableObject {
                 .execute()
                 .value
             guard let row = rows.first, let payload = try? JSONEncoder().encode(row.payload) else { return nil }
-            return RemoteChange(table: "settings", id: uid, kind: .upsert, payload: payload)
+            return RemoteChange(table: "settings", id: uid, kind: .upsert, payload: payload, ownerId: uid)
         } catch {
             appendLog("Fetch settings failed: \(error.localizedDescription)")
             return nil
@@ -356,11 +472,27 @@ public struct RemoteChange: Sendable {
     /// shape `PersistenceStore.encode*(_:)` produces. Present for `.upsert`,
     /// nil for `.delete` (a delete event carries no payload left to decode).
     public let payload: Data?
+    /// The row's raw `owner_id` column, when the table has one
+    /// (`players`/`match_records`/`clubs`/`settings`) — nil for
+    /// `challenges`/`reactions`, which have no single owner column. Exists
+    /// so a receiving device can determine real ownership from
+    /// server-supplied row data rather than trusting a payload field the
+    /// pushing device encoded from its own point of view — e.g.
+    /// `Club.ownerRecordName`, which the owner always encodes as `nil`
+    /// (they ARE the owner); a receiving member must not adopt that as-is.
+    public let ownerId: UUID?
 }
 
 private struct SelectedRow: Decodable {
     let id: UUID
     let payload: AnyJSON
+    let ownerId: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case payload
+        case ownerId = "owner_id"
+    }
 }
 
 private struct SelectedSettingsRow: Decodable {
@@ -404,6 +536,75 @@ private struct SettingsRow: Encodable {
     init?(ownerId: UUID, payloadData: Data) {
         guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
         self.ownerId = ownerId
+        self.payload = payload
+    }
+}
+
+private struct ClubRow: Encodable {
+    let id: UUID
+    let ownerId: UUID
+    let payload: AnyJSON
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case ownerId = "owner_id"
+        case payload
+    }
+
+    init?(id: UUID, ownerId: UUID, payloadData: Data) {
+        guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
+        self.id = id
+        self.ownerId = ownerId
+        self.payload = payload
+    }
+}
+
+private struct ChallengeRow: Encodable {
+    let id: UUID
+    let clubId: UUID
+    let fromParticipantId: UUID
+    let toParticipantId: UUID
+    let payload: AnyJSON
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case clubId = "club_id"
+        case fromParticipantId = "from_participant_id"
+        case toParticipantId = "to_participant_id"
+        case payload
+    }
+
+    init?(id: UUID, clubId: UUID, fromParticipantId: UUID, toParticipantId: UUID, payloadData: Data) {
+        guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
+        self.id = id
+        self.clubId = clubId
+        self.fromParticipantId = fromParticipantId
+        self.toParticipantId = toParticipantId
+        self.payload = payload
+    }
+}
+
+private struct ReactionRow: Encodable {
+    let id: UUID
+    let clubId: UUID
+    let matchId: UUID
+    let authorId: UUID
+    let payload: AnyJSON
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case clubId = "club_id"
+        case matchId = "match_id"
+        case authorId = "author_id"
+        case payload
+    }
+
+    init?(id: UUID, clubId: UUID, matchId: UUID, authorId: UUID, payloadData: Data) {
+        guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
+        self.id = id
+        self.clubId = clubId
+        self.matchId = matchId
+        self.authorId = authorId
         self.payload = payload
     }
 }

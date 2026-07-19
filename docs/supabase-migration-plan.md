@@ -42,7 +42,15 @@ since those applies merge by id. **Phase 9c (personal data cutover) is now
 genuinely complete — push and pull are both real.** A real-account,
 two-device verification pass is still owed (not yet exercised — same
 not-CI-provable gate CloudKit sync correctness already has) before 9c is
-considered fully verified, not just fully built. 9d (Clubs cutover) is next.
+considered fully verified, not just fully built.
+
+**9d (Clubs cutover) is in progress.** 9d-1 (`clubs`/`challenges`/
+`reactions` push + pull sync) is done — see section 5 below for the full
+technical detail, including a Realtime filter bug it exposed and fixed (the
+9c-5 client-side `owner_id` filter was already too narrow for club data, and
+can't even apply to `challenges`/`reactions`, which have no `owner_id`
+column — removed entirely, delivery now relies on RLS alone). 9d-2 (invite
+redemption) and 9d-3 (member-list read + leave/kick) are next.
 
 ---
 
@@ -292,7 +300,87 @@ and its own tracking issue, filed once the prior slice lands.
     correctness already has).
 - **9d — Clubs cutover.** `club_members`/`club_invites` replace CKShare
   zone-sharing; migrates `Club` plus club-scoped `players`/`match_records`/
-  `challenges`/`reactions`.
+  `challenges`/`reactions`. Got its own dedicated plan-mode pass (unlike
+  9c's slices, which shared one pass); sliced into 9d-1/9d-2/9d-3:
+  - **9d-1 — Clubs/Challenges/Reactions payload sync.** ✅ done. Extended the
+    already-proven `id`+`payload jsonb` machinery from `players`/
+    `match_records` to `clubs`/`challenges`/`reactions` — none of the 3
+    tables fit the existing `PendingRecord` shape (`clubs` has no `club_id`
+    column; `challenges`/`reactions` have no single `owner_id`, using two
+    participant ids or an `author_id` instead), so `SupabaseSyncManager`
+    gained `ClubPendingRecord`/`ChallengePendingRecord`/
+    `ReactionPendingRecord` plus matching batched `upsert*`/`delete*`
+    methods. `SupabaseSyncEngine`'s `enqueueClubChanges`/
+    `enqueueChallengeChanges`/`enqueueReactionChanges` (no-op stubs since
+    9c) are now real, and `pullInitialState`/`handleRemoteChange` gained
+    matching cases — `AppStore.applyRemoteUpsert`/`applyRemoteDeletions`
+    already fully supported clubs/challenges/reactions parameters since
+    9c-1, they just weren't being populated, so **zero `AppStore.swift`
+    changes were needed**.
+
+    Two design questions this resolved. `Club.ownerRecordName: String?` reuse
+    as a backend-opaque owner id: confirmed by grepping every CloudKit read/
+    write site that it's used exclusively as an opaque zone-owner string
+    (never parsed as/compared to a CKShare.Participant identity), always
+    backfilled from server-side record metadata rather than trusted from the
+    payload — the exact shape needed for Supabase (`nil` = self-owned, else
+    the owner's `auth.uid()` string). This backfill needs the row's *real*
+    `owner_id` column, independent of `payload` — a club's owner always
+    encodes their own `ownerRecordName` as `nil` (they ARE the owner), so a
+    receiving member decoding the payload as-is would wrongly conclude they
+    own it. `RemoteChange` gained an `ownerId: UUID?` field for exactly this
+    (nil for `challenges`/`reactions`, which have no single owner column).
+    `ChallengeRecord.fromParticipantId`/`toParticipantId`/
+    `ReactionRecord.authorParticipantId` needed no model change at all —
+    they're already opaque `String` fields never parsed elsewhere, so under
+    Supabase they simply hold the `auth.uid()` string instead of a CKShare
+    participant record name, same opaque-per-backend-id pattern as
+    `ownerRecordName`.
+
+    Also fixed a real Realtime design gap the new tables exposed: 9c-5's
+    `startRealtimeSync` filtered every subscribed table uniformly by
+    `.eq("owner_id", value: uid)` — already too narrow even for the
+    existing personal tier (a club member should see *other* members'
+    club-scoped `players`/`match_records` rows too, per RLS, but the filter
+    silently dropped them), and outright inapplicable to `challenges`/
+    `reactions` (no `owner_id` column to filter on). Removed the filter
+    entirely, for every table — Supabase's Postgres Changes feature already
+    enforces the same SELECT RLS policy for realtime delivery as for a
+    regular query, so this is not a security loosening, just a correctness
+    fix (the filter was always defense-in-depth on top of RLS, never the
+    sole mechanism). `fetchAllRows`'s equivalent `owner_id` filter was
+    removed the same way, for the same reason. **This can't be verified by
+    CI** — it depends on the live project actually enforcing RLS on
+    Postgres Changes, same class of manual gate as the rest of Supabase
+    sync.
+
+    New SQL (external setup, same handoff pattern as every prior addition):
+    `alter publication supabase_realtime add table public.clubs,
+    public.challenges, public.reactions;`.
+
+    The original 9d sketch's two open cross-cutting questions are both
+    resolved, not deferred: reaction cascade-delete semantics turned out to
+    be a non-issue — CloudKit's own club-zone deletion already cascades to
+    every record in the zone (reactions included), matching Postgres's
+    `reactions.club_id on delete cascade` exactly; `reactions.match_id` has
+    no FK at all, so a match-only delete doesn't cascade under either
+    backend, also matching.
+  - **9d-2 — Invite redemption.** A `SECURITY DEFINER` RPC
+    (`redeem_club_invite`, validates `club_invites` expiry/max_uses/
+    use_count then inserts into `club_members`) plus `ClubInviteLink`/
+    `ClubInviteView` mirroring `FriendInviteLink`/`FriendInviteView`,
+    replacing `UICloudSharingController` for Supabase-active devices. New
+    SQL — external setup, flag to user.
+  - **9d-3 — Member-list read + leave/kick.** `SupabaseSyncManager.
+    fetchClubMembers(clubId:)` joins `club_members` against the existing
+    `profiles` table (already public-readable) for display names — a
+    cleaner mechanism than CloudKit's live `CKShare.Participant` name
+    resolution, not a workaround. Resolved as a View-level backend branch on
+    `ClubDetailView.loadParticipants()`, not a `SyncEngine` protocol
+    addition — the protocol stays outbound/push-only as originally scoped
+    in 9b. Also wires `leaveClub`/`removeMember` (simple deletes, already
+    covered by existing RLS) and participant-id resolution at Challenge/
+    Reaction creation call sites.
 - **9e — Friends graph cutover.** `FriendProfile`/`FriendRequest` move from
   CloudKit's public database to Postgres; the FriendsHistory identity-shared
   zone becomes `friend_shares`-scoped RLS; push notifications move from
