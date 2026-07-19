@@ -264,6 +264,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 287 | Watch `fetchOrCreateShare` backport: the Watch copy now rethrows non-`unknownItem` CloudKit errors (offline, not signed into iCloud, permission failure) instead of swallowing them and throwing a generic error, matching the iOS copy so the club-invite UI surfaces the real message | #291 |
 | 264 | Erase All My Data: a Settings "Danger Zone" entry (both targets) that deletes every local + CloudKit-synced record the account owns (roster, history, clubs, settings, Friends graph), gated behind a type-to-confirm keyword; owned clubs are deleted outright with a warning, since real club-ownership transfer isn't supported yet | #269 |
 | 263 | Bulk delete: select mode for History and Roster (both targets) — multi-select rows, Select All/Deselect All scoped to the currently filtered/visible list, one confirmation deletes everything selected | #266 |
 | 260 | In-match settings: a Game Screen toolbar gear button opens a compact sheet for the settings already read live mid-match (Sound Effects, Score Announcement, Court Theme, Watch-only Digital Crown); Match Format/Timer/Court Change Reminders stay full-Settings-only | #262 |
