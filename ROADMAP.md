@@ -136,7 +136,7 @@ Pro/pack IAPs, so `Entitlements.swift` is untouched. Full design — economy, od
 ledger data model, StoreKit redemption, phase slicing 8a–8f — in
 [docs/gacha-design.md](docs/gacha-design.md) (confirmed with the user 2026-07-17).
 
-### Phase 9 — Backend migration to Supabase/Postgres (9a-9b done, 9c in progress: 9c-1 done)
+### Phase 9 — Backend migration to Supabase/Postgres (9a-9b done, 9c in progress: 9c-1/9c-2 done)
 
 Full cutover: eventually replace CloudKit with a Postgres backend (Supabase:
 Postgres + Auth + Realtime) on every platform, including the existing Watch/iOS
@@ -181,8 +181,20 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
     `CloudKitSyncManager` itself is duplicated per target rather than shared.
     The stale `CloudSyncSpikeView`/DEBUG Settings row (targeting the old spike
     schema) were removed as part of this slice rather than left broken.
-  - **9c-2**: `AppStore.syncEngine` becomes swappable; opt-in flag; migration-
-    on-signin upload of existing local data.
+  - **9c-2** ✅ done: `AppStore.syncEngine` → `private(set) var`,
+    `static let shared` reads `AppStorageKeys.supabaseAccountLinked` so a
+    relaunch stays on whichever backend was last active. New
+    `activateSupabaseSync()`/`deactivateSupabaseSync()` (the flag write
+    itself stays the caller's job, same as `accountLinked`'s existing
+    `linkAccount()`/`unlinkAccount()`) — migration-on-signin is just those
+    methods re-enqueueing every existing id, no bespoke code. Also closed
+    the three things 9c-1's `/code-review` flagged as becoming live here:
+    a private serial task chain in `SupabaseSyncEngine` (writes now apply
+    in call order instead of racing), batched upsert/delete (`PendingRecord`
+    replacing a 4-element tuple `SwiftLint`'s `large_tuple` rule rejected)
+    instead of one request per record, and `currentSettingsSnapshot()`
+    moved onto `AppStore` itself so `CloudKitSyncManager` and
+    `SupabaseSyncEngine` share one copy per target instead of one each.
   - **9c-3**: real "Supabase Account" Settings UI (reusing the `accountLinked`
     link/unlink pattern).
   - **9c-4**: route the ~32 View-level `enqueueSettingsChange()` direct calls
@@ -222,7 +234,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
-| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c-1 done (production SupabaseSyncManager), 9c-2–9f not started |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c-1 done (production SupabaseSyncManager), 9c-2 done (AppStore backend-switch plumbing), 9c-3–9f not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.
