@@ -89,7 +89,7 @@ struct ContentView: View {
         myName = trimmed
         didPromptForName = true
         showNamePrompt = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
         }

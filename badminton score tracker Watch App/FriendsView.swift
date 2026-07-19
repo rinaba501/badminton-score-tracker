@@ -286,7 +286,7 @@ struct FriendsView: View {
         guard !trimmed.isEmpty else { return }
         myName = trimmed
         promptingForName = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
             pendingAction?()
@@ -302,13 +302,13 @@ struct FriendsView: View {
             pendingName = ""
             pendingAction = { [self] in
                 accountLinked = true
-                CloudKitSyncManager.shared.enqueueSettingsChange()
+                AppStore.shared.enqueueSettingsChange()
             }
             promptingForName = true
             return
         }
         accountLinked = true
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
     }
 
     // Non-destructive: does not delete the FriendProfile, remove friends, or
@@ -316,7 +316,7 @@ struct FriendsView: View {
     // shared name. Re-linking later restores it.
     private func unlinkAccount() {
         accountLinked = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
     }
 
     private func sendCode() {

@@ -315,7 +315,7 @@ struct ProfileView: View {
         guard !trimmed.isEmpty else { return }
         myName = trimmed
         promptingForName = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
             pendingAction?()
@@ -338,14 +338,14 @@ struct ProfileView: View {
     private func writeGender(_ newValue: String?) {
         let defaults = UserDefaults.standard
         if let newValue { defaults.set(newValue, forKey: AppStorageKeys.gender) } else { defaults.removeObject(forKey: AppStorageKeys.gender) }
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         store.refreshMyIdentitySnapshotIfSharing()
     }
 
     private func writeBirthday(_ newValue: Date?) {
         let defaults = UserDefaults.standard
         if let newValue { defaults.set(newValue, forKey: AppStorageKeys.birthday) } else { defaults.removeObject(forKey: AppStorageKeys.birthday) }
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         store.refreshMyIdentitySnapshotIfSharing()
     }
 
@@ -353,7 +353,7 @@ struct ProfileView: View {
         let defaults = UserDefaults.standard
         let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { defaults.removeObject(forKey: AppStorageKeys.introduction) } else { defaults.set(trimmed, forKey: AppStorageKeys.introduction) }
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         store.refreshMyIdentitySnapshotIfSharing()
     }
 
@@ -365,13 +365,13 @@ struct ProfileView: View {
             pendingName = ""
             pendingAction = { [self] in
                 accountLinked = true
-                CloudKitSyncManager.shared.enqueueSettingsChange()
+                AppStore.shared.enqueueSettingsChange()
             }
             promptingForName = true
             return
         }
         accountLinked = true
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
     }
 
     // Non-destructive: does not delete the FriendProfile, remove friends, or
@@ -379,7 +379,7 @@ struct ProfileView: View {
     // shared name. Re-linking later restores it.
     private func unlinkAccount() {
         accountLinked = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
     }
 
     // shareAvatar/Gender/Birthday/IntroductionWithFriends all gate fields on
@@ -388,7 +388,7 @@ struct ProfileView: View {
     // toggles shares this one handler. Duplicate of FriendSharingSettingsView's
     // — see this file's header comment.
     private func toggleIdentityField(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {

@@ -395,7 +395,7 @@ struct HistoryView: View {
     // AppStore.isSharingAnyProfileData) — the share/zone itself is always
     // left in place (see CloudKitSyncManager.revokeFriendsHistoryAccess).
     private func toggleShareHistoryWithFriends(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {

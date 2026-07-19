@@ -5,10 +5,9 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9b done, 9c in progress (9c-1/9c-2/9c-3 done)** — schema + RLS
-applied and verified against the Supabase project
-([supabase/schema.sql](../supabase/schema.sql), all 10 tables present with
-`rowsecurity = true`); the `SyncEngine` protocol
+**Status: 9a-9c done.** Schema + RLS applied and verified against the
+Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
+tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
 sits between `AppStore` and `CloudKitSyncManager` on both targets, a pure
 refactor with no behavior change; `CloudSyncSpike`'s spike client is now a
@@ -16,14 +15,17 @@ real production `SupabaseSyncManager` + per-target `SupabaseSyncEngine`
 adapters (9c-1) — the DEBUG-only spike UI that proved the OAuth/WCSession-
 relay approach was removed rather than kept alongside the real thing.
 `AppStore.syncEngine` is swappable via `activateSupabaseSync()`/
-`deactivateSupabaseSync()` (9c-2), and as of 9c-3 both targets' Settings
-screens have a real "Sync Backend" section that calls them — iOS drives
-Google Sign-In and relays the session to the Watch, the Watch offers its
-own explicit activation once a relayed session lands. **A real-account,
-two-device verification pass is still owed** (not yet exercised — same
-not-CI-provable gate CloudKit sync correctness already has); 9c-4 (routing
-~32 View-level `enqueueSettingsChange()` bypass call sites through
-`AppStore`) is the only remaining 9c slice.
+`deactivateSupabaseSync()` (9c-2), both targets' Settings screens have a
+real "Sync Backend" section that calls them (9c-3) — iOS drives Google
+Sign-In and relays the session to the Watch, the Watch offers its own
+explicit activation once a relayed session lands — and every View-level
+call site that used to bypass `AppStore` and write settings straight to
+CloudKit now routes through `AppStore.enqueueSettingsChange()` instead
+(9c-4), so a Supabase-active device's settings writes actually land on
+Supabase. **A real-account, two-device verification pass is still owed**
+(not yet exercised — same not-CI-provable gate CloudKit sync correctness
+already has) before 9c is considered fully verified, not just fully built.
+9d (Clubs cutover) is next.
 
 ---
 
@@ -205,13 +207,19 @@ and its own tracking issue, filed once the prior slice lands.
     Watch-side confirmation. Turned out the WCSession relay promotion
     originally scoped for this slice was already done in 9c-1, so 9c-3
     ended up UI-only.
-  - **9c-4 — Fix the View-bypass gap flagged in 9b's `/code-review`.** ~32
-    call sites across 9 View files on both targets (SettingsView,
+  - **9c-4 — Fix the View-bypass gap flagged in 9b's `/code-review`.** ✅ done.
+    All 33 call sites across 13 View files on both targets (SettingsView,
     FriendSharingSettingsView, ClubDetailView, FriendsView, ContentView,
-    ProfileView, StatsView, HistoryView) call
-    `CloudKitSyncManager.shared.enqueueSettingsChange()` directly, bypassing
-    `AppStore`/`syncEngine` entirely — route these through `AppStore` instead,
-    since swapping `AppStore`'s `syncEngine` alone won't redirect them.
+    ProfileView, StatsView, HistoryView) that called
+    `CloudKitSyncManager.shared.enqueueSettingsChange()` directly — bypassing
+    `AppStore`/`syncEngine` entirely, so a Supabase-active device kept
+    silently writing settings to CloudKit — now call a new
+    `AppStore.enqueueSettingsChange()` passthrough (`syncEngine.
+    enqueueSettingsChange()`) instead. Every one of the 33 was a bare
+    statement with no other CloudKit-specific logic attached, confirmed by
+    inspecting each call site before the swap, so this was a mechanical
+    find-and-replace plus the one new passthrough method — no redesign
+    needed. **Phase 9c (personal data cutover) is now fully complete.**
 - **9d — Clubs cutover.** `club_members`/`club_invites` replace CKShare
   zone-sharing; migrates `Club` plus club-scoped `players`/`match_records`/
   `challenges`/`reactions`.

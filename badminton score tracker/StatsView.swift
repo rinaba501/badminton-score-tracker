@@ -359,7 +359,7 @@ struct StatsView: View {
     // MARK: - Sharing
 
     private func toggleStatsSharing(_ isOn: Bool) {
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {

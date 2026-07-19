@@ -265,7 +265,7 @@ struct FriendsView: View {
         guard !trimmed.isEmpty else { return }
         myName = trimmed
         promptingForName = false
-        CloudKitSyncManager.shared.enqueueSettingsChange()
+        AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
             pendingAction?()
