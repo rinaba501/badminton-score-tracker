@@ -5,14 +5,17 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9b done — schema + RLS applied and verified against the Supabase
-project ([supabase/schema.sql](../supabase/schema.sql), all 10 tables present
-with `rowsecurity = true`); the `SyncEngine` protocol
+**Status: 9a-9b done, 9c in progress (9c-1 done)** — schema + RLS applied and
+verified against the Supabase project
+([supabase/schema.sql](../supabase/schema.sql), all 10 tables present with
+`rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
-now sits between `AppStore` and `CloudKitSyncManager` on both targets, a pure
-refactor with no behavior change. 9c not yet started. `CloudSyncSpike/`
-(merged, DEBUG-only) is the completed feasibility precursor this design
-builds on.**
+sits between `AppStore` and `CloudKitSyncManager` on both targets, a pure
+refactor with no behavior change; `CloudSyncSpike`'s spike client is now a
+real production `SupabaseSyncManager` + per-target `SupabaseSyncEngine`
+adapters (9c-1), not yet wired into `AppStore` or reachable from any UI —
+the DEBUG-only spike UI that proved the OAuth/WCSession-relay approach was
+removed as part of 9c-1 rather than kept alongside the real thing.**
 
 ---
 
@@ -127,22 +130,44 @@ and its own tracking issue, filed once the prior slice lands.
   outside the protocol on purpose — `AppStore` remains a concrete singleton
   any backend calls into directly, only the outbound direction needed
   polymorphism.
-- **9c — Personal data cutover.** New `SupabaseSyncManager` conforming to
-  `SyncEngine`, covering only the small/isolated tier: `settings` + personal
-  (`clubId == nil`) `players`/`match_records`. Real (non-DEBUG) Google
-  Sign-In + `WCSession` relay, promoted from `CloudSyncSpike`. One-time
-  migration-on-signin that imports a user's existing local data. Opt-in per
-  the local-first invariant in `ROADMAP.md` — CloudKit stays the default,
-  untouched, for anyone who doesn't switch. **Scope note found during 9b's
-  review**: `SyncEngine` only covers calls `AppStore` itself makes — roughly
-  32 call sites across 9 View files on both targets (SettingsView,
-  FriendSharingSettingsView, ClubDetailView, FriendsView, ContentView,
-  ProfileView, StatsView, HistoryView) call
-  `CloudKitSyncManager.shared.enqueueSettingsChange()` directly to resync
-  Settings after a scalar toggle, bypassing `AppStore`/`syncEngine` entirely.
-  9c must either redirect these through `AppStore` or give them their own
-  `SyncEngine`-typed reference — swapping `AppStore`'s `syncEngine` alone
-  would silently leave these writing to CloudKit only.
+- **9c — Personal data cutover.** Covers only the small/isolated tier:
+  `settings` + personal (`clubId == nil`) `players`/`match_records`. Real
+  (non-DEBUG) Google Sign-In + `WCSession` relay, promoted from
+  `CloudSyncSpike`. One-time migration-on-signin that imports a user's
+  existing local data. Opt-in per the local-first invariant in `ROADMAP.md` —
+  CloudKit stays the default, untouched, for anyone who doesn't switch. Not
+  dual-write: a device is either CloudKit-only or Supabase-only for this
+  tier — dual-run validation is 9f's job, not 9c's. Sliced further:
+  - **9c-1 — `SupabaseSyncManager` production scaffold.** ✅ done.
+    `CloudSyncSpike`'s spike client promoted in place: `SupabaseConfig`
+    (hardcoded real project URL/anon key — anon keys are designed to be
+    client-embeddable, same practice as a Firebase config) and
+    `SupabaseSyncManager` (auth methods kept as-is; the stale
+    `SpikeTestRecord`/`insertTestRecord`/`fetchTestRecords` — which targeted
+    a throwaway table 9a's `schema.sql` already dropped — replaced with real
+    `players`/`match_records`/`settings` CRUD, `payload jsonb` built via
+    supabase-swift's `AnyJSON` decoded from `PersistenceStore.encode*`
+    output). Discovered during implementation: a shared package can't import
+    `AppStore` (an app-target type), so `SupabaseSyncManager` does **not**
+    conform to `SyncEngine` itself — each target gained its own thin
+    `SupabaseSyncEngine.swift` that does, reading `AppStore.shared`'s live
+    roster/history/settings by id (same "materialize fresh from the live
+    cache" pattern `CloudKitSyncManager` already uses) and calling into the
+    package's manager. Not yet wired into `AppStore` (that's 9c-2) or
+    reachable from any UI (that's 9c-3). The stale DEBUG-only
+    `CloudSyncSpikeView`/Settings row (targeting the old spike schema, would
+    no longer compile) were removed as part of this slice.
+  - **9c-2 — `AppStore` backend-switch plumbing.** `syncEngine` becomes
+    swappable; a local-only opt-in flag; migration-on-signin upload logic.
+  - **9c-3 — Production UI.** Real "Supabase Account" Settings section
+    reusing the `accountLinked` link/unlink UX pattern.
+  - **9c-4 — Fix the View-bypass gap flagged in 9b's `/code-review`.** ~32
+    call sites across 9 View files on both targets (SettingsView,
+    FriendSharingSettingsView, ClubDetailView, FriendsView, ContentView,
+    ProfileView, StatsView, HistoryView) call
+    `CloudKitSyncManager.shared.enqueueSettingsChange()` directly, bypassing
+    `AppStore`/`syncEngine` entirely — route these through `AppStore` instead,
+    since swapping `AppStore`'s `syncEngine` alone won't redirect them.
 - **9d — Clubs cutover.** `club_members`/`club_invites` replace CKShare
   zone-sharing; migrates `Club` plus club-scoped `players`/`match_records`/
   `challenges`/`reactions`.
