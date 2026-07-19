@@ -16,7 +16,7 @@ import os
 import BadmintonCore
 
 @MainActor
-final class CloudKitSyncManager {
+final class CloudKitSyncManager: SyncEngine {
     static let shared = CloudKitSyncManager()
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "badminton-score-tracker", category: "CloudKitSync")
