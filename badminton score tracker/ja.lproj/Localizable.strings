@@ -86,6 +86,12 @@
 "settings.deselect_all_players" = "選択解除";
 "settings.delete_selected_players" = "削除 (%d)";
 "settings.delete_selected_players_confirm" = "%d人のプレイヤーを削除しますか？過去の試合にはこれらの名前が残りますが、名簿からは削除されます。";
+"settings.supabase_section_header" = "同期バックエンド";
+"settings.supabase_section_footer" = "個人の試合と設定をiCloudの代わりにSupabase経由で同期できます。クラブとフレンドは引き続きiCloudで同期されます。";
+"settings.supabase_sign_in" = "Googleでサインイン";
+"settings.supabase_synced" = "Supabase経由で同期中";
+"settings.supabase_switch_back" = "iCloudに戻す";
+"settings.supabase_switch_back_confirm" = "この端末をiCloud同期に戻しますか？個人データはSupabaseに残りますが、この端末はそこへの書き込みを停止します。";
 "settings.danger_zone" = "危険ゾーン";
 "settings.erase_all_data" = "すべてのデータを消去";
 "settings.erase_all_data_warning" = "これにより、保存されているプレイヤー、試合履歴、クラブ、設定、フレンド接続が、このデバイスとiCloudの両方から完全に削除されます。この操作は取り消せません。";

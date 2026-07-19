@@ -5,8 +5,8 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9b done, 9c in progress (9c-1/9c-2 done)** — schema + RLS applied
-and verified against the Supabase project
+**Status: 9a-9b done, 9c in progress (9c-1/9c-2/9c-3 done)** — schema + RLS
+applied and verified against the Supabase project
 ([supabase/schema.sql](../supabase/schema.sql), all 10 tables present with
 `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -15,9 +15,15 @@ refactor with no behavior change; `CloudSyncSpike`'s spike client is now a
 real production `SupabaseSyncManager` + per-target `SupabaseSyncEngine`
 adapters (9c-1) — the DEBUG-only spike UI that proved the OAuth/WCSession-
 relay approach was removed rather than kept alongside the real thing.
-`AppStore.syncEngine` is now swappable and `activateSupabaseSync()`/
-`deactivateSupabaseSync()` exist (9c-2), but nothing calls them yet —
-still not reachable from any UI (that's 9c-3).**
+`AppStore.syncEngine` is swappable via `activateSupabaseSync()`/
+`deactivateSupabaseSync()` (9c-2), and as of 9c-3 both targets' Settings
+screens have a real "Sync Backend" section that calls them — iOS drives
+Google Sign-In and relays the session to the Watch, the Watch offers its
+own explicit activation once a relayed session lands. **A real-account,
+two-device verification pass is still owed** (not yet exercised — same
+not-CI-provable gate CloudKit sync correctness already has); 9c-4 (routing
+~32 View-level `enqueueSettingsChange()` bypass call sites through
+`AppStore`) is the only remaining 9c slice.
 
 ---
 
@@ -182,8 +188,23 @@ and its own tracking issue, filed once the prior slice lands.
     rule at 4 members; and `currentSettingsSnapshot()` moved onto `AppStore`
     itself, so `CloudKitSyncManager` and `SupabaseSyncEngine` share one copy
     per target instead of one each (4 copies → 2).
-  - **9c-3 — Production UI.** Real "Supabase Account" Settings section
-    reusing the `accountLinked` link/unlink UX pattern.
+  - **9c-3 — Production UI.** ✅ done. A real "Sync Backend" Settings section
+    on both targets, reusing the `accountLinked` link/unlink UX pattern —
+    gated by its own `AppStorageKeys.supabaseAccountLinked` flag rather than
+    `accountLinked` itself. iOS performs Google Sign-In
+    (`SupabaseSyncManager.shared.signInWithGoogle(presentationAnchor:)`, an
+    `ASWebAuthenticationSession` under the hood) then relays the session to
+    the Watch (`AppDelegate.relaySessionToWatch(tokens:)`, already promoted
+    to production in 9c-1) before calling
+    `AppStore.shared.activateSupabaseSync()`. The Watch never performs OAuth
+    itself: its row shows an informational "sign in on your iPhone first"
+    message until `SupabaseSyncManager.shared.isSignedIn` flips true from a
+    received relay, then offers its own explicit activation button — the
+    relay makes activation *available*, it never auto-activates, so a
+    phone-side sign-in can't silently switch the Watch's transport without a
+    Watch-side confirmation. Turned out the WCSession relay promotion
+    originally scoped for this slice was already done in 9c-1, so 9c-3
+    ended up UI-only.
   - **9c-4 — Fix the View-bypass gap flagged in 9b's `/code-review`.** ~32
     call sites across 9 View files on both targets (SettingsView,
     FriendSharingSettingsView, ClubDetailView, FriendsView, ContentView,

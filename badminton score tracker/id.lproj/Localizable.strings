@@ -86,6 +86,12 @@
 "settings.deselect_all_players" = "Batalkan Semua";
 "settings.delete_selected_players" = "Hapus (%d)";
 "settings.delete_selected_players_confirm" = "Hapus %d pemain? Nama-nama ini akan tetap ada di pertandingan sebelumnya, tetapi akan dihapus dari daftar pemain.";
+"settings.supabase_section_header" = "Backend Sinkronisasi";
+"settings.supabase_section_footer" = "Anda dapat menyinkronkan pertandingan dan pengaturan pribadi melalui Supabase, bukan iCloud. Klub dan Teman tetap disinkronkan melalui iCloud.";
+"settings.supabase_sign_in" = "Masuk dengan Google";
+"settings.supabase_synced" = "Disinkronkan via Supabase";
+"settings.supabase_switch_back" = "Kembali ke iCloud";
+"settings.supabase_switch_back_confirm" = "Alihkan perangkat ini kembali ke sinkronisasi iCloud? Data pribadi Anda tetap berada di Supabase, tetapi perangkat ini berhenti menulis ke sana.";
 "settings.danger_zone" = "Zona Berbahaya";
 "settings.erase_all_data" = "Hapus Semua Data Saya";
 "settings.erase_all_data_warning" = "Tindakan ini akan menghapus permanen pemain, riwayat pertandingan, klub, pengaturan, dan koneksi Teman yang tersimpan — dari perangkat ini dan iCloud. Tindakan ini tidak dapat dibatalkan.";
