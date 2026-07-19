@@ -159,6 +159,25 @@ and its own tracking issue, filed once the prior slice lands.
     no longer compile) were removed as part of this slice.
   - **9c-2 — `AppStore` backend-switch plumbing.** `syncEngine` becomes
     swappable; a local-only opt-in flag; migration-on-signin upload logic.
+    **Three things `/code-review` flagged on 9c-1 that become live here** (no
+    impact in 9c-1 itself since nothing calls `SupabaseSyncEngine` yet):
+    (1) `enqueueRosterChanges`/`enqueueHistoryChanges` each spawn an
+    independent unstructured `Task` — two calls in quick succession race with
+    no ordering guarantee, so an older write's response can land after a
+    newer one and silently overwrite it remotely; decide whether to serialize
+    writes or explicitly accept last-network-response-wins (CloudKit's own
+    conflict resolution is already just last-writer-wins, so this may be an
+    acceptable parallel, but it should be a conscious choice);
+    (2) those same methods upsert/delete one record at a time in a loop —
+    fine for a normal 1-2-record save, but migration-on-signin will upload a
+    user's entire existing history/roster at once, so batch those into
+    supabase-swift's array-`upsert(_:)` rather than looping;
+    (3) `currentSettingsSnapshot()` is now duplicated 4 ways (2 targets ×
+    `CloudKitSyncManager` + `SupabaseSyncEngine`) — a future new Settings
+    field is easy to add to the `CloudKitSyncManager` copies and forget on
+    the `SupabaseSyncEngine` ones, silently shipping an incomplete Settings
+    payload on Supabase-linked devices; worth extracting to one shared helper
+    once this is actually wired up.
   - **9c-3 — Production UI.** Real "Supabase Account" Settings section
     reusing the `accountLinked` link/unlink UX pattern.
   - **9c-4 — Fix the View-bypass gap flagged in 9b's `/code-review`.** ~32
