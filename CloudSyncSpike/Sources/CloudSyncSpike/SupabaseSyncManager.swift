@@ -6,10 +6,13 @@ import AuthenticationServices
 #endif
 
 /// Low-level Supabase transport: auth (Google OAuth on iOS, relayed-session
-/// adoption on watchOS) plus typed CRUD against the Phase 9 schema
-/// (supabase/schema.sql). Lives in this package — imported by both app
-/// targets — rather than in a per-target file, because it has no dependency
-/// on AppStore (an app-target type a shared package cannot import).
+/// adoption on watchOS), typed push CRUD against the Phase 9 schema
+/// (supabase/schema.sql), and (Phase 9c-5) the pull-side counterpart —
+/// `fetchAllRows`/`fetchSettings` for a one-time catch-up read plus
+/// `startRealtimeSync`/`stopRealtimeSync` for ongoing Postgres Changes
+/// delivery. Lives in this package — imported by both app targets — rather
+/// than in a per-target file, because it has no dependency on AppStore (an
+/// app-target type a shared package cannot import).
 ///
 /// Deliberately does NOT conform to BadmintonCore.SyncEngine itself: that
 /// conformance needs to read AppStore.shared's live roster/history/settings
@@ -194,6 +197,174 @@ public final class SupabaseSyncManager: ObservableObject {
             appendLog("Delete \(table) failed: \(error.localizedDescription)")
         }
     }
+
+    // MARK: - Pull-side sync (Phase 9c-5/9c-6: initial fetch + Realtime)
+    //
+    // Everything above this point only pushes local changes out. These
+    // methods are the read-back half: an initial catch-up fetch (for data
+    // that already existed remotely before this device subscribed) plus an
+    // ongoing Realtime subscription (for anything that changes afterward) —
+    // the same two-part shape CKSyncEngine already uses (fetchChanges() on
+    // reconnect, push notifications for what comes after). Decoding the
+    // returned payloads into concrete models and applying them to AppStore
+    // is the per-target SupabaseSyncEngine's job, not this package's — see
+    // the file header on why this class has no PersistenceStore/AppStore
+    // dependency.
+
+    private var realtimeChannel: RealtimeChannelV2?
+    private var realtimeSubscriptions: [RealtimeSubscription] = []
+
+    /// Subscribes to INSERT/UPDATE/DELETE events on each listed table,
+    /// scoped to this user's own rows via an explicit `owner_id` filter —
+    /// defense in depth alongside whatever RLS enforces server-side, so
+    /// correctness here doesn't depend on exactly how this project's
+    /// Realtime replication is configured. Safe to call repeatedly: always
+    /// tears down any existing subscription first, so re-activating after a
+    /// sign-out/sign-in doesn't leak a stale channel.
+    public func startRealtimeSync(tables: [String], onChange: @escaping @Sendable (RemoteChange) -> Void) async {
+        await stopRealtimeSync()
+        guard let uid = await currentUserId() else {
+            appendLog("Realtime sync not started: not signed in")
+            return
+        }
+        let channel = client.channel("personal-sync-\(uid.uuidString)")
+        var subscriptions: [RealtimeSubscription] = []
+        for table in tables {
+            let subscription = channel.onPostgresChange(
+                AnyAction.self,
+                schema: "public",
+                table: table,
+                filter: .eq("owner_id", value: uid)
+            ) { [weak self] action in
+                guard let change = Self.remoteChange(table: table, action: action) else { return }
+                Task { @MainActor in
+                    self?.appendLog("Realtime \(table) change received")
+                }
+                onChange(change)
+            }
+            subscriptions.append(subscription)
+        }
+        do {
+            try await channel.subscribeWithError()
+            realtimeChannel = channel
+            realtimeSubscriptions = subscriptions
+            appendLog("Realtime sync subscribed: \(tables.joined(separator: ", "))")
+        } catch {
+            appendLog("Realtime sync failed to subscribe: \(error.localizedDescription)")
+        }
+    }
+
+    /// Idempotent — safe to call even if no subscription is active (e.g.
+    /// `deactivateSupabaseSync()` running before any sign-in ever happened).
+    public func stopRealtimeSync() async {
+        guard let channel = realtimeChannel else { return }
+        await channel.unsubscribe()
+        realtimeChannel = nil
+        realtimeSubscriptions = []
+        appendLog("Realtime sync unsubscribed")
+    }
+
+    // `nonisolated` — the Realtime SDK invokes this callback off the main
+    // actor, and this pure decode has no instance/static mutable state to
+    // protect, so it doesn't need to hop actors just to run.
+    private nonisolated static func remoteChange(table: String, action: AnyAction) -> RemoteChange? {
+        switch action {
+        case .insert(let insert):
+            return remoteChange(table: table, kind: .upsert, record: insert.record)
+        case .update(let update):
+            return remoteChange(table: table, kind: .upsert, record: update.record)
+        case .delete(let delete):
+            return remoteChange(table: table, kind: .delete, record: delete.oldRecord)
+        }
+    }
+
+    private nonisolated static func remoteChange(table: String, kind: RemoteChange.Kind, record: [String: AnyJSON]) -> RemoteChange? {
+        // `settings` has no `id` column (see `upsertSettings`) — its only
+        // key is `owner_id`, so that's what identifies its one row here too.
+        let idKey = table == "settings" ? "owner_id" : "id"
+        guard let idString = record[idKey]?.stringValue, let id = UUID(uuidString: idString) else { return nil }
+        guard kind == .upsert else {
+            return RemoteChange(table: table, id: id, kind: kind, payload: nil)
+        }
+        guard let payload = record["payload"], let payloadData = try? JSONEncoder().encode(payload) else { return nil }
+        return RemoteChange(table: table, id: id, kind: kind, payload: payloadData)
+    }
+
+    /// One-time catch-up read of every row this user owns in `table`, used
+    /// at Supabase activation/launch to backfill data that already existed
+    /// remotely (written by another device, or from before this device ever
+    /// subscribed) before the Realtime subscription above takes over for
+    /// anything that happens next. Never reports `.delete` — a full fetch
+    /// only sees what currently exists, so it has no way to know about a
+    /// row that was deleted before this device ever saw it; the caller
+    /// isn't expected to diff against local state for tombstones here.
+    public func fetchAllRows(table: String) async -> [RemoteChange] {
+        guard let uid = await currentUserId() else { return [] }
+        do {
+            let rows: [SelectedRow] = try await client
+                .from(table)
+                .select()
+                .eq("owner_id", value: uid)
+                .execute()
+                .value
+            return rows.compactMap { row in
+                guard let payload = try? JSONEncoder().encode(row.payload) else { return nil }
+                return RemoteChange(table: table, id: row.id, kind: .upsert, payload: payload)
+            }
+        } catch {
+            appendLog("Fetch \(table) failed: \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    /// `settings`-specific counterpart to `fetchAllRows` — the row is keyed
+    /// by `owner_id` rather than `id` (mirroring why `upsertSettings`
+    /// doesn't reuse `upsertRows(table:rows:)`'s generic `id`-keyed shape),
+    /// so the returned `RemoteChange.id` is the user's own id, not a row id.
+    public func fetchSettings() async -> RemoteChange? {
+        guard let uid = await currentUserId() else { return nil }
+        do {
+            let rows: [SelectedSettingsRow] = try await client
+                .from("settings")
+                .select()
+                .eq("owner_id", value: uid)
+                .execute()
+                .value
+            guard let row = rows.first, let payload = try? JSONEncoder().encode(row.payload) else { return nil }
+            return RemoteChange(table: "settings", id: uid, kind: .upsert, payload: payload)
+        } catch {
+            appendLog("Fetch settings failed: \(error.localizedDescription)")
+            return nil
+        }
+    }
+}
+
+/// A change to a row on a subscribed table, normalized from either a
+/// Realtime `postgres_changes` event or a `fetchAllRows`/`fetchSettings`
+/// catch-up read. Carries only raw identifiers/bytes — decoding `payload`
+/// into a concrete model is the per-target SupabaseSyncEngine's job.
+public struct RemoteChange: Sendable {
+    public enum Kind: Sendable {
+        case upsert
+        case delete
+    }
+
+    public let table: String
+    public let id: UUID
+    public let kind: Kind
+    /// The row's `payload jsonb` column re-encoded as `Data`, matching the
+    /// shape `PersistenceStore.encode*(_:)` produces. Present for `.upsert`,
+    /// nil for `.delete` (a delete event carries no payload left to decode).
+    public let payload: Data?
+}
+
+private struct SelectedRow: Decodable {
+    let id: UUID
+    let payload: AnyJSON
+}
+
+private struct SelectedSettingsRow: Decodable {
+    let payload: AnyJSON
 }
 
 /// `payload jsonb` needs an `AnyJSON`-typed field, not raw `Data` — `Data`
