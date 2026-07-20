@@ -7,9 +7,8 @@
 //  of the Watch's pushed MatchReactionsView, with one deliberate asymmetry:
 //  comments can be COMPOSED here (real keyboard), while the Watch only reads
 //  them. Emoji toggling works in both places. Authoring requires a resolved
-//  CKShare participant identity (myParticipantId), same as sending a
-//  challenge — without it the input controls are disabled, never hidden
-//  mid-session.
+//  participant identity (myParticipantId), same as sending a challenge —
+//  without it the input controls are disabled, never hidden mid-session.
 //
 
 import SwiftUI

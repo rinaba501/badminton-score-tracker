@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9e done, 9f in progress (9f-1/9f-2 done).** Schema + RLS applied and verified against the
+**Status: complete — 9a-9f all done.** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -706,22 +706,40 @@ and its own tracking issue, filed once the prior slice lands.
     `!UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked)`.
     `acceptShare` forwarding itself stays unconditional, same documented
     no-op-ish gap 9f-1 left, deferred to 9f-3.
-  - **9f-3 — Delete CloudKit's code.** `CloudKitSyncManager.swift` (both
-    targets), `CloudSharingView.swift`, the `AppDelegate`/`WatchAppDelegate`
-    CKShare-accept forwarding (closing 9f-1's known gap by removing the
-    dead code rather than fixing it), iCloud entitlements
-    (`com.apple.developer.icloud-container-identifiers`/`-services`), the
-    `aps-environment` capability (CloudKit-only push — Supabase uses
-    Realtime, not APNs). Also a stale doc comment found in 9f-1's session:
-    `AppStore.swift`'s `challenges`/`reactions` properties are still
-    commented "CloudKit-only — no KV fallback at all", predating Phase
-    9d-1 which made both real under Supabase. Rewrite CLAUDE.md's "Roadmap
-    Phase 9c/9d/9e" qualifiers throughout once CloudKit no longer exists to
-    contrast against — the largest single doc-cleanup pass of the whole
-    migration.
+  - **9f-3 — Delete CloudKit's code.** ✅ done. Deleted
+    `CloudKitSyncManager.swift` (both targets, ~1200 lines each) and
+    `CloudSharingView.swift` outright — verified via `project.pbxproj`
+    (Xcode 16's `PBXFileSystemSynchronizedRootGroup` mechanism, zero
+    individual `.swift` file references) that this needed no project-file
+    surgery, just `rm`. Trimmed `WatchAppDelegate.swift`/`AppDelegate.swift`
+    (removed `userDidAcceptCloudKitShare`, remote-push registration, and
+    the three push-handler methods 9f-2 had gated — their only purpose was
+    the now-deleted CloudKit friend-request subscription/fetch) and deleted
+    `SceneDelegate.swift` (iOS) entirely, since every method in it was
+    CKShare-acceptance forwarding — closing 9f-1's known gap by removing
+    the dead code rather than fixing it. Deleted the now-fully-dead
+    `ShareBox`/`CloudSharingView` sheet from iOS `ClubDetailView.swift`.
+    Removed `aps-environment`/iCloud entitlement keys from both
+    `.entitlements` files and `CKSharingSupported`/`UIBackgroundModes` from
+    both `Info.plist` files (plain XML edits, no capability dict in
+    `project.pbxproj`). Also removed 5 now-fully-dead `AppStorageKeys`
+    constants (`ckSyncEngineState`/`ckSharedSyncEngineState`/
+    `didMigrateToCloudKit`/`ckRecordMetadata`/
+    `friendRequestSubscriptionParticipantId`) beyond the original scope,
+    confirmed zero remaining readers/writers. Fixed the stale
+    `AppStore.swift` `challenges`/`reactions` doc comment. **Scope decision
+    via `AskUserQuestion`**: user chose the full "Roadmap Phase 9c/9d/9e"
+    qualifier sweep over the narrower correctness-only default — done
+    across CLAUDE.md, both targets' `AppStore.swift`/`SupabaseSyncEngine.swift`,
+    `BadmintonCore`'s own doc comments, and SPEC.md's current-behavior
+    claims (Closed Issues table's historical PR descriptions left alone —
+    those correctly describe what a past PR did).
 
-  This is the point a non-Apple client becomes buildable against the same
-  backend everyone else uses.
+  **Phase 9 (the full CloudKit → Supabase backend migration) is now
+  complete.** This is the point a non-Apple client becomes buildable
+  against the same backend everyone else uses. A real two-device/
+  real-account verification pass is still owed — not CI-provable, same gate
+  every slice has carried since 9c.
 
 Each sub-phase carries its own manual test gate. RLS bugs mean cross-user data
 leaks — a strictly higher-stakes failure mode than a CKShare bug, since a

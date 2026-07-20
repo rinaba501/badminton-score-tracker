@@ -4,8 +4,7 @@
 //
 //  Roadmap Phase 9d-2: the confirmation sheet shown when a
 //  `badminton://joinclub` link is opened (parsed by ContentView's
-//  onOpenURL via BadmintonCore.ClubInviteLink) — the Supabase-active
-//  alternative to accepting a CloudKit CKShare invite. Nothing is redeemed
+//  onOpenURL via BadmintonCore.ClubInviteLink). Nothing is redeemed
 //  until the user explicitly confirms — opening a link must never write to
 //  the database by itself, since the URL is untrusted input anyone can
 //  compose. No Watch counterpart, same precedent as FriendInviteView (a

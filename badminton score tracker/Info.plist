@@ -35,10 +35,6 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<!-- Landscape is declared here but gated at runtime: AppDelegate's
@@ -50,8 +46,6 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CKSharingSupported</key>
-	<true/>
 	<!-- DSEG7 Classic Bold (SIL OFL licensed, see Fonts/DSEG-LICENSE.txt at repo
 	     root) — the 7-segment LED font used by the Matchstick GameScreenStyle's
 	     ledDigit so the ghost "unlit segment" overlay reads as a real digital

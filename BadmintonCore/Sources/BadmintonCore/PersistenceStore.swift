@@ -86,7 +86,7 @@ public enum PersistenceStore {
         encodeEnvelope(players)
     }
 
-    // MARK: - Clubs ([Club]) — Roadmap Phase 5b, local only (no CloudKit yet)
+    // MARK: - Clubs ([Club])
 
     /// Decode the club list, returning an empty array if the data is missing
     /// or corrupt. Same envelope/tolerance contract as `decodeRoster`.
@@ -144,10 +144,10 @@ public enum PersistenceStore {
     }
 
     // MARK: - Friend activity ([FriendHistorySnapshot]) — friends' shared
-    // roster/history, local cache only. Never sent to CloudKit as its own
-    // payload type: it's an aggregate of Player/MatchRecord CKRecords fetched
-    // from a friend's "FriendsHistory" zone (see CloudKitSyncManager), kept
-    // local so the Friend Activity view has something to render offline.
+    // roster/history, local cache only. Never pushed as its own payload
+    // type: it's an aggregate of a friend's own players/match_records rows,
+    // made visible via RLS (see FriendHistorySnapshot.swift), kept local so
+    // the Friend Activity view has something to render offline.
 
     /// Decode the friend-activity cache, returning an empty array if the
     /// data is missing or corrupt. Same envelope/tolerance contract as
@@ -164,8 +164,8 @@ public enum PersistenceStore {
 
     // MARK: - Friend identities ([FriendIdentitySnapshot]) — friends' shared
     // profile fields (avatar/gender/birthday/introduction), local cache only.
-    // Same contract as friend activity: an aggregate of a single CKRecord per
-    // friend fetched from their "FriendsHistory" zone.
+    // Same contract as friend activity: an aggregate of a single
+    // `friend_identity_snapshots` row per friend.
 
     /// Decode the friend-identity cache, returning an empty array if the data
     /// is missing or corrupt. Same envelope/tolerance contract as `decodeRoster`.
@@ -210,129 +210,127 @@ public enum PersistenceStore {
         encodeEnvelope(records)
     }
 
-    // MARK: - Single-record codecs (CloudKit)
+    // MARK: - Single-record codecs
 
-    // Each CloudKit CKRecord stores one model as a JSON `payload` field. These
-    // wrap a single record in the same versioned, byte-deterministic envelope
-    // the array codecs use, so schema versioning and per-record tolerant
-    // decoding carry over unchanged — CloudKit stays agnostic about the model
-    // shape. `decode*` returns nil (never throws/crashes) on empty or corrupt
-    // payload, so one bad CKRecord can't take down a whole zone fetch.
+    // Each row stores one model as a JSON `payload` field (Supabase's
+    // `payload jsonb` column). These wrap a single record in the same
+    // versioned, byte-deterministic envelope the array codecs use, so
+    // schema versioning and per-record tolerant decoding carry over
+    // unchanged. `decode*` returns nil (never throws/crashes) on empty or
+    // corrupt payload, so one bad row can't take down a whole sync pass.
 
-    /// Encode a single match record as a CloudKit payload, or `nil` on failure.
+    /// Encode a single match record as a payload, or `nil` on failure.
     public static func encodeRecord(_ record: MatchRecord) -> Data? {
         encodeEnvelope([record])
     }
 
-    /// Decode a single match record from a CloudKit payload, or `nil` if the
+    /// Decode a single match record from a payload, or `nil` if the
     /// payload is empty or unreadable.
     public static func decodeRecord(_ data: Data) -> MatchRecord? {
         decodeTolerant(MatchRecord.self, from: data).first
     }
 
-    /// Encode a single roster player as a CloudKit payload, or `nil` on failure.
+    /// Encode a single roster player as a payload, or `nil` on failure.
     public static func encodePlayer(_ player: Player) -> Data? {
         encodeEnvelope([player])
     }
 
-    /// Decode a single roster player from a CloudKit payload, or `nil` if the
+    /// Decode a single roster player from a payload, or `nil` if the
     /// payload is empty or unreadable.
     public static func decodePlayer(_ data: Data) -> Player? {
         decodeTolerant(Player.self, from: data).first
     }
 
-    /// Encode a single club as a CloudKit payload, or `nil` on failure.
+    /// Encode a single club as a payload, or `nil` on failure.
     public static func encodeClub(_ club: Club) -> Data? {
         encodeEnvelope([club])
     }
 
-    /// Decode a single club from a CloudKit payload, or `nil` if the
+    /// Decode a single club from a payload, or `nil` if the
     /// payload is empty or unreadable.
     public static func decodeClub(_ data: Data) -> Club? {
         decodeTolerant(Club.self, from: data).first
     }
 
-    /// Encode a single challenge as a CloudKit payload, or `nil` on failure.
+    /// Encode a single challenge as a payload, or `nil` on failure.
     public static func encodeChallenge(_ challenge: ChallengeRecord) -> Data? {
         encodeEnvelope([challenge])
     }
 
-    /// Decode a single challenge from a CloudKit payload, or `nil` if the
+    /// Decode a single challenge from a payload, or `nil` if the
     /// payload is empty or unreadable.
     public static func decodeChallenge(_ data: Data) -> ChallengeRecord? {
         decodeTolerant(ChallengeRecord.self, from: data).first
     }
 
-    /// Encode a single reaction as a CloudKit payload, or `nil` on failure.
+    /// Encode a single reaction as a payload, or `nil` on failure.
     public static func encodeReaction(_ reaction: ReactionRecord) -> Data? {
         encodeEnvelope([reaction])
     }
 
-    /// Decode a single reaction from a CloudKit payload, or `nil` if the
+    /// Decode a single reaction from a payload, or `nil` if the
     /// payload is empty or unreadable.
     public static func decodeReaction(_ data: Data) -> ReactionRecord? {
         decodeTolerant(ReactionRecord.self, from: data).first
     }
 
-    /// Encode a single friend request as a CloudKit payload, or `nil` on
+    /// Encode a single friend request as a payload, or `nil` on
     /// failure.
     public static func encodeFriendRequest(_ request: FriendRequest) -> Data? {
         encodeEnvelope([request])
     }
 
-    /// Decode a single friend request from a CloudKit payload, or `nil` if
+    /// Decode a single friend request from a payload, or `nil` if
     /// the payload is empty or unreadable.
     public static func decodeFriendRequest(_ data: Data) -> FriendRequest? {
         decodeTolerant(FriendRequest.self, from: data).first
     }
 
-    /// Encode a single friend profile as a CloudKit payload, or `nil` on
-    /// failure. There is no array-list codec for profiles — unlike
-    /// challenges/reactions/friend requests, profiles aren't cached locally
-    /// as a synced collection; they're fetched on demand per participant
-    /// (see CloudKitSyncManager.fetchProfile).
+    /// Encode a single friend profile payload, or `nil` on failure. There is
+    /// no array-list codec for profiles — unlike challenges/reactions/friend
+    /// requests, profiles aren't cached locally as a synced collection;
+    /// they're fetched on demand per participant (see
+    /// SupabaseSyncManager.fetchProfileDisplayName).
     public static func encodeFriendProfile(_ profile: FriendProfile) -> Data? {
         encodeEnvelope([profile])
     }
 
-    /// Decode a single friend profile from a CloudKit payload, or `nil` if
+    /// Decode a single friend profile from a payload, or `nil` if
     /// the payload is empty or unreadable.
     public static func decodeFriendProfile(_ data: Data) -> FriendProfile? {
         decodeTolerant(FriendProfile.self, from: data).first
     }
 
-    /// Encode a settings snapshot as a CloudKit payload, or `nil` on failure.
+    /// Encode a settings snapshot as a payload, or `nil` on failure.
     public static func encodeSettingsSnapshot(_ snapshot: SettingsSnapshot) -> Data? {
         encodeEnvelope([snapshot])
     }
 
-    /// Decode a settings snapshot from a CloudKit payload, or `nil` if the
+    /// Decode a settings snapshot from a payload, or `nil` if the
     /// payload is empty or unreadable.
     public static func decodeSettingsSnapshot(_ data: Data) -> SettingsSnapshot? {
         decodeTolerant(SettingsSnapshot.self, from: data).first
     }
 
-    /// Encode a single friend-identity snapshot as a CloudKit payload (the
-    /// fixed single "FriendIdentity" record in the FriendsHistory zone), or
-    /// `nil` on failure.
+    /// Encode a single friend-identity snapshot as a payload (one row in
+    /// `friend_identity_snapshots`), or `nil` on failure.
     public static func encodeFriendIdentitySnapshot(_ snapshot: FriendIdentitySnapshot) -> Data? {
         encodeEnvelope([snapshot])
     }
 
-    /// Decode a single friend-identity snapshot from a CloudKit payload, or
+    /// Decode a single friend-identity snapshot from a payload, or
     /// `nil` if the payload is empty or unreadable.
     public static func decodeFriendIdentitySnapshot(_ data: Data) -> FriendIdentitySnapshot? {
         decodeTolerant(FriendIdentitySnapshot.self, from: data).first
     }
 
-    /// Encode a single friend-stats snapshot as a CloudKit payload (the fixed
-    /// single "FriendStats" record in the FriendsHistory zone), or `nil` on
-    /// failure.
+    /// Encode a single friend-stats snapshot as a payload (one row in
+    /// `friend_stats_snapshots`), or `nil` on failure.
     public static func encodeFriendStatsSnapshot(_ snapshot: FriendStatsSnapshot) -> Data? {
         encodeEnvelope([snapshot])
     }
 
-    /// Decode a single friend-stats snapshot from a CloudKit payload, or
+    /// Decode a single friend-stats snapshot from a payload, or
     /// `nil` if the payload is empty or unreadable.
     public static func decodeFriendStatsSnapshot(_ data: Data) -> FriendStatsSnapshot? {
         decodeTolerant(FriendStatsSnapshot.self, from: data).first
@@ -390,13 +388,13 @@ public enum PersistenceStore {
         return newIds != oldIds && newIds.isSubset(of: oldIds)
     }
 
-    // MARK: - Record diffing (CloudKit)
+    // MARK: - Record diffing
 
-    /// The per-record changes between two snapshots of a collection, keyed by
-    /// `id`. Drives CloudKit's `.saveRecord` / `.deleteRecord` pending changes:
+    /// The per-record changes between two snapshots of a collection, keyed
+    /// by `id`. Drives the sync backend's upsert/delete pending changes:
     /// exact upserts and real deletions replace the whole-blob merge, so a
-    /// deletion is an explicit server tombstone that can't be resurrected by a
-    /// union (the bug class that hit `mergeHistory` + clear-history).
+    /// deletion is an explicit server tombstone that can't be resurrected by
+    /// a union (the bug class that hit `mergeHistory` + clear-history).
     public struct RecordDiff: Equatable {
         public let upsertedIds: [UUID]
         public let deletedIds: [UUID]
@@ -455,9 +453,9 @@ public enum PersistenceStore {
         diff(from: old, to: new)
     }
 
-    // MARK: - Conflict resolution (CloudKit)
+    // MARK: - Conflict resolution
 
-    /// How to resolve a CloudKit `.serverRecordChanged` conflict on one record.
+    /// How to resolve a server-vs-local conflict on one record.
     public enum Resolution: Equatable {
         /// Accept the server's record into the local cache (last-writer-wins).
         case takeServer

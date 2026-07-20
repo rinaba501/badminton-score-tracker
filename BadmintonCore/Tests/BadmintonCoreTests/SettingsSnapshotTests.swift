@@ -2,7 +2,7 @@
 //  SettingsSnapshotTests.swift
 //  BadmintonCoreTests
 //
-//  CloudKit-only sync: SettingsSnapshot codec round-trips.
+//  SettingsSnapshot codec round-trips.
 //
 
 import Foundation

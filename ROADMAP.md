@@ -136,7 +136,7 @@ Pro/pack IAPs, so `Entitlements.swift` is untouched. Full design — economy, od
 ledger data model, StoreKit redemption, phase slicing 8a–8f — in
 [docs/gacha-design.md](docs/gacha-design.md) (confirmed with the user 2026-07-17).
 
-### Phase 9 — Backend migration to Supabase/Postgres (9a-9e done, 9f in progress: 9f-1/9f-2 done)
+### Phase 9 — Backend migration to Supabase/Postgres (complete: 9a-9f all done)
 
 Full cutover: eventually replace CloudKit with a Postgres backend (Supabase:
 Postgres + Auth + Realtime) on every platform, including the existing Watch/iOS
@@ -501,24 +501,56 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
     (plain `UserDefaults`, no `@AppStorage` available in a delegate class).
     `userDidAcceptCloudKitShare`/`acceptShare` forwarding is left
     unconditional (documented no-op-ish gap from 9f-1, deferred to 9f-3).
-  - **9f-3 — Delete CloudKit's code**: `CloudKitSyncManager.swift` (both
-    targets), `CloudSharingView.swift`, the `AppDelegate`/`WatchAppDelegate`
-    CKShare-accept forwarding, iCloud entitlements
-    (`com.apple.developer.icloud-container-identifiers`/`-services`), the
-    `aps-environment` capability (CloudKit-only push — Supabase uses
-    Realtime, not APNs). Also fix a stale doc comment found in 9f-1's
-    session: `AppStore.swift`'s `challenges`/`reactions` properties are
-    still commented "CloudKit-only — no KV fallback at all", predating
-    Phase 9d-1 which made both real under Supabase. Rewrite CLAUDE.md's
-    "Roadmap Phase 9c/9d/9e" qualifiers throughout once CloudKit no longer
-    exists to contrast against.
+  - **9f-3** ✅ done — deletes CloudKit's code entirely, closing Phase 9.
+    Removed `CloudKitSyncManager.swift` (both targets, ~1200 lines each) and
+    `CloudSharingView.swift` outright — confirmed via `project.pbxproj`
+    (Xcode 16's `PBXFileSystemSynchronizedRootGroup`, no individual `.swift`
+    file references) that deleting them needed zero project-file surgery.
+    Trimmed `WatchAppDelegate.swift`/`AppDelegate.swift` (removed
+    `userDidAcceptCloudKitShare`, remote-push registration and its three
+    handler methods — their only purpose was the now-deleted CloudKit friend-
+    request subscription/fetch) and deleted `SceneDelegate.swift` (iOS)
+    entirely, since every method in it was CKShare-acceptance forwarding
+    (safe: SwiftUI's `WindowGroup` doesn't depend on a custom
+    `UIWindowSceneDelegate`, and `Info.plist` has no static scene manifest
+    requiring one). Removed the now-fully-dead `ShareBox`/`CloudSharingView`
+    sheet from iOS `ClubDetailView.swift`. Removed the `aps-environment`/
+    iCloud entitlement keys from both `.entitlements` files and
+    `CKSharingSupported`/`UIBackgroundModes` from both `Info.plist` files —
+    both plain XML edits, no capability dict in `project.pbxproj` to touch.
+    Also removed 5 now-fully-dead `AppStorageKeys` constants
+    (`ckSyncEngineState`/`ckSharedSyncEngineState`/`didMigrateToCloudKit`/
+    `ckRecordMetadata`/`friendRequestSubscriptionParticipantId` — confirmed
+    zero remaining readers/writers) beyond what was originally scoped, since
+    they were CloudKit-transport-only bookkeeping with nothing left to
+    bookkeep. Fixed the stale `AppStore.swift` `challenges`/`reactions` doc
+    comment. Per the user's explicit choice (over the narrower
+    correctness-only default), also did the full "Roadmap Phase 9c/9d/9e"
+    qualifier sweep across CLAUDE.md, `AppStore.swift`/`SupabaseSyncEngine.swift`
+    (both targets), `BadmintonCore`'s own doc comments (`FriendHistorySnapshot`/
+    `FriendIdentitySnapshot`/`FriendStatsSnapshot`/`FriendRequest`/
+    `FriendProfile`/`ChallengeRecord`/`ReactionRecord`/`Club`/`SyncEngine`/
+    `SettingsSnapshot`/`PersistenceStore`/`AppStorageKeys`/`Entitlements`),
+    and SPEC.md's current-behavior claims (the "Sync:"/"cross-device sync"
+    Platform bullets, Danger Zone, Sync Backend, Club invites, Club
+    standings, Reactions, Friends invite link, Sharing Settings) — left the
+    Closed Issues table's historical PR descriptions untouched, since those
+    correctly describe what a past PR did, not current architecture.
 
-9a–9f get concrete GitHub issues once the prior slice lands, same convention as
-#133–#139 and Phase 5b–5f. RLS bugs mean cross-user data leaks — a strictly
-higher-stakes failure mode than a CKShare bug — so every slice from 9c onward
-needs real multi-account verification before merge, not just green CI, sharper
-than Phase 4/5's two-device gate. Per CLAUDE.md, any slice touching
-`AppStore`/the sync layer goes through plan mode first.
+**Phase 9 (the full CloudKit → Supabase backend migration) is now complete.**
+9a–9f all merged. A real two-device/real-account verification pass (sign in
+on two devices, confirm cross-device sync, Friends, Clubs, sharing toggles,
+Erase All Data) is still owed — not CI-provable, same not-yet-exercised gate
+every slice has carried since 9c.
+
+9a–9f each got a concrete GitHub issue once its slice landed, same convention
+as #133–#139 and Phase 5b–5f. RLS bugs mean cross-user data leaks — a
+strictly higher-stakes failure mode than the CKShare bugs Phase 5 dealt with
+— so every slice from 9c onward needed real multi-account verification
+before merge, not just green CI, sharper than Phase 4/5's two-device gate.
+Per CLAUDE.md, any slice touching `AppStore`/the sync layer goes through
+plan mode first — a discipline this whole phase followed from 9b through
+9f-3.
 
 ### Guardrails track (#110) — do anytime
 
@@ -538,7 +570,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
-| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), **9e done** (9e-1: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3: friend history sharing via RLS extension + SupabaseSyncEngine pull/Realtime routing fix, no mirrored copy needed; 9e-4: erase-all-data Friends-graph teardown, new profiles_delete RLS policy, explicit identity/stats snapshot cleanup), 9f in progress (9f-1 done: unlinked devices default to NoOpSyncEngine/local-only instead of auto-starting CloudKit, plus gating the CloudKit invite/FriendsHistory-share code paths that would otherwise create empty artifacts; 9f-2 done: every remaining per-View CloudKit branch collapsed to unconditional Supabase behavior, the dead accountLinked flag removed, a friend-request push-notification data-loss bug fixed; 9f-3 next) |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), **9e done** (9e-1: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3: friend history sharing via RLS extension + SupabaseSyncEngine pull/Realtime routing fix, no mirrored copy needed; 9e-4: erase-all-data Friends-graph teardown, new profiles_delete RLS policy, explicit identity/stats snapshot cleanup), **9f done** (9f-1: unlinked devices default to NoOpSyncEngine/local-only instead of auto-starting CloudKit, plus gating the CloudKit invite/FriendsHistory-share code paths that would otherwise create empty artifacts; 9f-2: every remaining per-View CloudKit branch collapsed to unconditional Supabase behavior, the dead accountLinked flag removed, a friend-request push-notification data-loss bug fixed; 9f-3: CloudKitSyncManager.swift/CloudSharingView.swift/SceneDelegate.swift deleted outright, iCloud/push capabilities removed, full CloudKit-reference doc-comment sweep). **Phase 9 is complete** — real two-device/real-account verification still owed |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.

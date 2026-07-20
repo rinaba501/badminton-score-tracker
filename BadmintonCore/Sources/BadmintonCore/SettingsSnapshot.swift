@@ -2,18 +2,18 @@
 //  SettingsSnapshot.swift
 //  BadmintonCore
 //
-//  A single CloudKit record carrying every scalar setting that used to sync
-//  via the iCloud KV store (see CloudKitSyncManager's "Settings" record).
-//  Fields are the raw UserDefaults storage types, not app-side enums
-//  (CourtTheme/GameMode live in each app target) — courtTheme is stored as
-//  its String rawValue, matching what @AppStorage already persists.
+//  A single payload carrying every scalar setting, synced as one row in the
+//  `settings` table. Fields are the raw UserDefaults storage types, not
+//  app-side enums (CourtTheme/GameMode live in each app target) —
+//  courtTheme is stored as its String rawValue, matching what @AppStorage
+//  already persists.
 //
-//  Custom Codable: fields added after the first CloudKit Settings records
-//  were written must decode as optional-with-default so an older payload
+//  Custom Codable: fields added after the first Settings records were
+//  written must decode as optional-with-default so an older payload
 //  (missing those keys) still decodes instead of failing the whole record —
 //  same self-migration approach MatchRecord uses for its `winner` field.
-//  clubLastViewedActivity was added in this vein. Roadmap Phase 9f-2 removed
-//  accountLinked the same safe way in reverse — the field is gone from this
+//  clubLastViewedActivity was added in this vein. `accountLinked` was
+//  removed the same safe way in reverse — the field is gone from this
 //  struct, but an old record still carrying that JSON key decodes fine since
 //  Codable ignores keys the CodingKeys enum no longer declares.
 //
@@ -42,9 +42,9 @@ public struct SettingsSnapshot: Codable, Equatable {
     /// its raw String value, same rationale as courtTheme — Watch round-trips
     /// this field without ever reading it into a typed enum.
     public var gameScreenStyle: String
-    /// Whether personal (clubId == nil) roster + history mirror read-only
-    /// into the "FriendsHistory" CKShare zone for every accepted friend.
-    /// Blind-overwritten on apply, like the other plain Bools.
+    /// Whether personal (clubId == nil) roster + history become read-only
+    /// visible to every accepted friend (RLS-gated). Blind-overwritten on
+    /// apply, like the other plain Bools.
     public var shareHistoryWithFriends: Bool
     /// Per-field friend-visibility toggles for the profile fields below
     /// (avatar/gender/birthday/introduction) plus derived stats — each

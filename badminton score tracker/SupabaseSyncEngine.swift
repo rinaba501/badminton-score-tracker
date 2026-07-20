@@ -2,22 +2,20 @@
 //  SupabaseSyncEngine.swift
 //  badminton score tracker (iOS)
 //
-//  Roadmap Phase 9c: the SyncEngine conformer AppStore swaps to when a
-//  device opts into the Supabase backend (see AppStore.swift's syncEngine
-//  property). Thin adapter over CloudSyncSpike's SupabaseSyncManager (the
-//  low-level Supabase transport, which cannot import AppStore itself since
-//  it lives in a shared package) — reads AppStore.shared's live roster/
-//  history by id and re-encodes via PersistenceStore, the same "materialize
-//  fresh from the live cache" pattern CloudKitSyncManager's own
-//  materializeRecord already uses. Settings construction itself lives on
-//  AppStore (AppStore.currentSettingsSnapshot()) since CloudKitSyncManager
-//  needs the identical logic — one shared copy per target instead of one
-//  per sync engine. Mirrors the Watch's.
+//  The SyncEngine conformer AppStore swaps to when a device opts into the
+//  Supabase backend (see AppStore.swift's syncEngine property). Thin
+//  adapter over CloudSyncSpike's SupabaseSyncManager (the low-level
+//  Supabase transport, which cannot import AppStore itself since it lives
+//  in a shared package) — reads AppStore.shared's live roster/history by id
+//  and re-encodes via PersistenceStore, materializing each record fresh
+//  from the live cache rather than caching a copy of its own. Settings
+//  construction lives on AppStore (AppStore.currentSettingsSnapshot())
+//  since this is the one place that needs it. Mirrors the Watch's.
 //
-//  The personal-data tier (settings + personal players/match_records),
-//  clubs/challenges/reactions (Phase 9d), and the Friends graph
-//  (FriendProfile/FriendRequest push+pull 9e-1, identity/stats sharing 9e-2,
-//  history sharing 9e-3) are all real now. `enqueueFriendsRosterChanges`/
+//  Every table is real: the personal-data tier (settings + personal
+//  players/match_records), clubs/challenges/reactions, and the Friends
+//  graph (FriendProfile/FriendRequest push+pull, identity/stats sharing,
+//  history sharing). `enqueueFriendsRosterChanges`/
 //  `enqueueFriendsHistoryChanges` stay permanent no-ops by design (see their
 //  own doc comment below) — everything else this protocol declares has a
 //  real implementation.
@@ -91,27 +89,22 @@ final class SupabaseSyncEngine: SyncEngine {
         }
     }
 
-    // MARK: - Pull-side sync (Phase 9c-6)
+    // MARK: - Pull-side sync
     //
     // Everything above only pushes local changes out. This is the read-back
     // half: activateSupabaseSync() and app launch (badminton_score_trackerApp.swift)
     // both call startIfActive(), which does a one-time catch-up read of
     // every row this account already owns remotely, then opens a Realtime
-    // subscription for anything that changes afterward — mirroring
-    // CKSyncEngine's own fetchChanges()-on-reconnect-plus-push-notifications
-    // shape. Routed through enqueueWork like every push method, so a fresh
-    // activation's migration-on-signin upload finishes before the catch-up
-    // pull runs, rather than racing it. Also (Phase 9d-3) upserts this
-    // device's own `profiles` row on every call — that table was left
-    // unpopulated through 9d-1/9d-2, but ClubDetailView's Supabase-active
-    // member list needs *a* display name to show sooner than 9e (Friends),
-    // so this narrow slice populates just the caller's own row here. Phase
-    // 9e-1: also caches `currentUserId()` into `AppStorageKeys.myParticipantId`
-    // — `AppStore.friends` (unchanged, cross-backend) reads that key directly
-    // rather than going through `SyncEngine`, and under CloudKit it's only
-    // ever populated by `resolveMyParticipantId()`, which a Supabase-active
-    // device never calls; without this, `AppStore.friends` would silently
-    // stay empty forever on Supabase.
+    // subscription for anything that changes afterward. Routed through
+    // enqueueWork like every push method, so a fresh activation's
+    // migration-on-signin upload finishes before the catch-up pull runs,
+    // rather than racing it. Also upserts this device's own `profiles` row
+    // on every call, so ClubDetailView's member list has *a* display name to
+    // show. Also caches `currentUserId()` into
+    // `AppStorageKeys.myParticipantId` — `AppStore.friends` reads that key
+    // directly rather than going through `SyncEngine`, and without this call
+    // it would never get populated, so `AppStore.friends` would silently
+    // stay empty forever.
 
     private static let pullTables = [
         "players", "match_records", "settings", "clubs", "challenges", "reactions",
@@ -226,9 +219,7 @@ final class SupabaseSyncEngine: SyncEngine {
 
     /// A full reconcile rather than a per-id merge: `friend_requests` is
     /// always a small set, and `AppStore.saveFriendRequests` already expects
-    /// "here is the complete current list" (same contract
-    /// `CloudKitSyncManager.fetchMyFriendRequests()` + `saveFriendRequests`
-    /// already use on the CloudKit path) rather than an incremental diff.
+    /// "here is the complete current list" rather than an incremental diff.
     /// Re-running this on every Realtime event (any kind, including deletes —
     /// a delete's absence is just missing from the fresh result) avoids
     /// needing separate insert/update/delete handling for this one table.
@@ -242,8 +233,7 @@ final class SupabaseSyncEngine: SyncEngine {
     /// owner's point of view (they ARE the owner) — a receiving member must
     /// not adopt that as-is, or every device would think it owns every club
     /// it sees. Backfilled instead from the row's actual `owner_id` column
-    /// (`RemoteChange.ownerId`), mirroring how CloudKitSyncManager backfills
-    /// the same field from `CKRecord.recordID.zoneID.ownerName`.
+    /// (`RemoteChange.ownerId`).
     private func ownerRecordName(for ownerId: UUID?) async -> String? {
         guard let ownerId else { return nil }
         let myId = await manager.currentUserId()
@@ -253,10 +243,10 @@ final class SupabaseSyncEngine: SyncEngine {
     /// A `clubId == nil` row belongs in this device's own `roster`/`history`
     /// only when it's actually this account's row (or `ownerId` came back
     /// nil, the personal-push-echo case) — club-tagged rows always take this
-    /// path too, unchanged from before Phase 9e-3. Everything else is a
-    /// `friend_can_view_history`-granted row (Phase 9e-3): a friend's
-    /// personal data, now visible via RLS but never to be merged into this
-    /// device's own caches — see `applyRemoteFriendActivity`'s doc comment.
+    /// path too. Everything else is a `friend_can_view_history`-granted row:
+    /// a friend's personal data, now visible via RLS but never to be merged
+    /// into this device's own caches — see `applyRemoteFriendActivity`'s doc
+    /// comment.
     private func isPersonalOrClubRow(clubId: UUID?, ownerId: UUID?, myId: UUID?) -> Bool {
         clubId != nil || ownerId == nil || ownerId == myId
     }
@@ -264,8 +254,7 @@ final class SupabaseSyncEngine: SyncEngine {
     /// The Realtime callback. Self-echoes (this same device's own push
     /// coming back through the subscription) are expected and harmless —
     /// applyRemoteUpsert/applyRemoteDeletions merge by id, so re-applying an
-    /// unchanged row is just a redundant no-op write, the same tolerance
-    /// CloudKit's own local-echo path already relies on.
+    /// unchanged row is just a redundant no-op write.
     private func handleRemoteChange(_ change: RemoteChange) async {
         // friend_requests reconciles as a full refetch regardless of kind
         // (see refreshFriendRequests's doc comment) rather than joining the
@@ -374,13 +363,10 @@ final class SupabaseSyncEngine: SyncEngine {
     }
 
     /// `ChallengeRecord.fromParticipantId`/`toParticipantId` are opaque
-    /// strings — under Supabase they hold this account's `auth.uid()`
-    /// string (see the Phase 9d plan's participant-id resolution note), so
-    /// they parse straight to `UUID`. A challenge created while this device
-    /// was CloudKit-active would hold a CKShare participant record name
-    /// instead, which fails to parse as a UUID — `compactMap` just drops
-    /// that item rather than crashing; cross-backend migration of
-    /// in-flight challenges is out of scope here (9f handles cutover).
+    /// strings holding this account's `auth.uid()` string, so they parse
+    /// straight to `UUID`. Any challenge that somehow doesn't parse (e.g.
+    /// stale pre-migration data) is just dropped by `compactMap` rather than
+    /// crashing.
     func enqueueChallengeChanges(upsertedIds: [UUID], deletedIds: [UUID: UUID]) {
         enqueueWork { [self] in
             let items = upsertedIds.compactMap { id -> ChallengePendingRecord? in
@@ -424,16 +410,15 @@ final class SupabaseSyncEngine: SyncEngine {
         }
     }
 
-    // MARK: - Friend identity / stats sharing (Phase 9e-2)
+    // MARK: - Friend identity / stats sharing
 
-    /// Permanent no-ops, not "not yet migrated": under CloudKit these mirror
-    /// a personal player/match record into the separate FriendsHistory zone,
-    /// but Supabase has no such copy (Phase 9e-3) — a personal record
-    /// already pushes to `players`/`match_records` unconditionally via
+    /// Permanent no-ops: a personal record already pushes to
+    /// `players`/`match_records` unconditionally via
     /// `enqueueRosterChanges`/`enqueueHistoryChanges` regardless of any
     /// friend-sharing toggle, and friend visibility is granted entirely by
     /// `friend_can_view_history` RLS reading that same row (see
-    /// `isPersonalOrClubRow`'s routing below), not by a second write.
+    /// `isPersonalOrClubRow`'s routing below), not by a second, mirrored
+    /// write.
     func enqueueFriendsRosterChanges(upsertedIds: [UUID], deletedIds: [UUID]) {}
     func enqueueFriendsHistoryChanges(upsertedIds: [UUID], deletedIds: [UUID]) {}
 
@@ -467,9 +452,8 @@ final class SupabaseSyncEngine: SyncEngine {
         }
     }
 
-    /// Ported from `CloudKitSyncManager.currentFriendIdentitySnapshot()` —
-    /// same per-field toggle gating (a field is left `nil` in the snapshot
-    /// itself whenever its toggle is off, never written at all).
+    /// Per-field toggle gating: a field is left `nil` in the snapshot itself
+    /// whenever its toggle is off, never written at all.
     private func currentFriendIdentitySnapshot(myId: UUID) -> FriendIdentitySnapshot {
         let defaults = UserDefaults.standard
         let myName = defaults.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName
@@ -489,7 +473,6 @@ final class SupabaseSyncEngine: SyncEngine {
         )
     }
 
-    /// Ported from `CloudKitSyncManager.currentFriendStatsSnapshot()`.
     private func currentFriendStatsSnapshot(myId: UUID) -> FriendStatsSnapshot {
         let myName = Player.displayName(for: UserDefaults.standard.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName)
         let personalHistory = AppStore.shared.history.filter { $0.clubId == nil }
@@ -500,24 +483,23 @@ final class SupabaseSyncEngine: SyncEngine {
     }
 
     /// `friend_identity_snapshots`/`friend_stats_snapshots` carry no display
-    /// name of their own (unlike CloudKit's FriendIdentitySnapshot/
-    /// FriendStatsSnapshot, which do) — `profiles`/`friend_requests`
-    /// already have one (9e-1), so this resolves it from the already-synced
-    /// friend graph rather than duplicating it into a third table.
+    /// name of their own — `profiles`/`friend_requests` already have one, so
+    /// this resolves it from the already-synced friend graph rather than
+    /// duplicating it into a third table.
     private func displayName(forFriendParticipant id: UUID) -> String {
         AppStore.shared.friends.first(where: { $0.participantId == id.uuidString })?.displayName ?? ""
     }
 
-    // MARK: - Erase All My Data teardown (Phase 9e-4)
+    // MARK: - Erase All My Data teardown
 
-    /// Permanent no-op under Supabase — there is no CKShare-zone equivalent
-    /// to tear down. Friend history visibility is pure RLS
-    /// (`friend_can_view_history`, 9e-3) gated by `shareHistoryWithFriends`,
-    /// which `AppStore.eraseAllData()` already resets to `false` before
-    /// calling this; the underlying `players`/`match_records` rows are
-    /// themselves deleted outright by that same method's `saveRoster([])`/
-    /// `clearHistory()` calls. Same "documented permanent no-op" precedent
-    /// 9e-2 set for `enqueueFriendsRosterChanges`/`enqueueFriendsHistoryChanges`.
+    /// Permanent no-op — there is no zone-style construct to tear down.
+    /// Friend history visibility is pure RLS (`friend_can_view_history`)
+    /// gated by `shareHistoryWithFriends`, which `AppStore.eraseAllData()`
+    /// already resets to `false` before calling this; the underlying
+    /// `players`/`match_records` rows are themselves deleted outright by
+    /// that same method's `saveRoster([])`/`clearHistory()` calls. Same
+    /// "documented permanent no-op" precedent
+    /// `enqueueFriendsRosterChanges`/`enqueueFriendsHistoryChanges` set.
     func deleteFriendsHistoryZone() async {}
 
     func deleteMyFriendProfile() async {

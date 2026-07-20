@@ -5,8 +5,8 @@
 //  Match format, audio, court theme, and timer — the iOS mirror of the
 //  Watch's SettingsView, minus what's already reachable from ContentView's
 //  own menu (Roster/Clubs/Friends) and Crown Scoring (Digital Crown is
-//  Watch-only hardware, so there's nothing to toggle here). Sync is
-//  always-on CloudKit with no toggle.
+//  Watch-only hardware, so there's nothing to toggle here). Includes the
+//  Sync Backend section (Supabase sign-in/sign-out).
 //
 
 import SwiftUI

@@ -7,7 +7,7 @@
 //  @AppStorage declaration site, because several reference app-only types
 //  (CourtTheme, SettingsView.GameMode). New persisted keys must be added
 //  here, never as inline string literals — and if the new key should sync
-//  across devices, it must ALSO be wired into CloudKitSyncManager: history/
+//  across devices, it must ALSO be wired into SupabaseSyncEngine: history/
 //  roster/club/challenge/reaction keys go through their existing enqueue*
 //  methods, and scalar settings go through enqueueSettingsChange (see
 //  SettingsSnapshot).
@@ -31,19 +31,18 @@ public enum AppStorageKeys {
     public static let playerRoster = "playerRoster"
     public static let matchHistory = "matchHistory"
     public static let clubs = "clubs"
-    // Roadmap Phase 5 backlog (#162): CloudKit-only, no KV fallback — see
-    // ChallengeRecord.swift and AppStore.saveChallenges.
+    // Roadmap Phase 5 backlog (#162): club-scoped only, no personal/KV
+    // fallback — see ChallengeRecord.swift and AppStore.saveChallenges.
     public static let challenges = "challenges"
-    // Roadmap Phase 5 backlog (#164): CloudKit-only, no KV fallback — see
-    // ReactionRecord.swift and AppStore.saveReactions.
+    // Roadmap Phase 5 backlog (#164): club-scoped only, no personal/KV
+    // fallback — see ReactionRecord.swift and AppStore.saveReactions.
     public static let reactions = "reactions"
-    // Friends v1 (graph-only): CloudKit public-database only, no KV
-    // fallback — see FriendRequest.swift and AppStore.saveFriendRequests.
+    // Friends v1 (graph-only): synced via the `friend_requests` table, no
+    // KV fallback — see FriendRequest.swift and AppStore.saveFriendRequests.
     public static let friendRequests = "friendRequests"
-    // Friends v1: per-device cache of CKContainer.fetchUserRecordID()'s
-    // result, resolved once (a CloudKit user record ID is stable for the
-    // life of the iCloud account) — it's a per-device identity cache, not
-    // synced data.
+    // Friends v1: per-device cache of `currentUserId()`'s result (a Supabase
+    // `auth.uid()`, stable for the life of the account) — it's a per-device
+    // identity cache, not synced data.
     public static let myParticipantId = "myParticipantId"
     public static let playerSortOrder = "playerSortOrder"
     public static let pointsToWin = "pointsToWin"
@@ -74,11 +73,10 @@ public enum AppStorageKeys {
     // AppStore.applyRemoteSettings) so a stale device can't re-raise a dot.
     public static let clubLastViewedActivity = "clubLastViewedActivity"
     // Whether the user's personal (clubId == nil) roster and match history
-    // mirror read-only into the "FriendsHistory" CKShare zone, visible to
-    // every accepted friend. Synced via SettingsSnapshot (blind overwrite,
-    // like the other plain Bool settings) — see
-    // CloudKitSyncManager.ensureFriendsHistoryShareExists/
-    // syncFriendsHistoryParticipants.
+    // become read-only visible to every accepted friend, via the
+    // friend_can_view_history RLS policy on players/match_records. Synced
+    // via SettingsSnapshot (blind overwrite, like the other plain Bool
+    // settings).
     public static let shareHistoryWithFriends = "shareHistoryWithFriends"
     // Per-field friend-visibility toggles for profile data (avatar/gender/
     // birthday/introduction) and derived stats — same synced-Bool pattern as
@@ -114,24 +112,14 @@ public enum AppStorageKeys {
     // is device-local and must NEVER be synced.
     public static let ownedProductIds = "ownedProductIds"
 
-    // CloudKit sync (Phase 4, #109). Local device state for the CloudKit
-    // transport: the serialized CKSyncEngine state and a one-time "already
-    // uploaded local data" flag. CloudKit is the only sync path (no flag,
-    // no KV-store fallback).
-    public static let ckSyncEngineState = "ckSyncEngineState"
-    public static let ckSharedSyncEngineState = "ckSharedSyncEngineState"
-    public static let didMigrateToCloudKit = "didMigrateToCloudKit"
     // Supabase sync (Roadmap Phase 9c). Local device state for the Supabase
-    // transport: whether this device has opted into Supabase as its
-    // personal-data (settings + personal players/match_records) sync
-    // backend instead of CloudKit — see AppStore.activateSupabaseSync()/
-    // deactivateSupabaseSync() and SupabaseSyncEngine.swift. Deliberately
-    // excluded from eraseAllDataResetKeys, same reasoning as
-    // didMigrateToCloudKit above — blindly resetting this while
-    // SupabaseSyncEngine is the live AppStore.syncEngine would desync the
-    // flag from AppStore's actual in-memory state. Not synced via
-    // SettingsSnapshot — this decides *which transport* runs on this
-    // device.
+    // transport: whether this device has opted into Supabase as its sync
+    // backend — see AppStore.activateSupabaseSync()/deactivateSupabaseSync()
+    // and SupabaseSyncEngine.swift. Deliberately excluded from
+    // eraseAllDataResetKeys — blindly resetting this while SupabaseSyncEngine
+    // is the live AppStore.syncEngine would desync the flag from AppStore's
+    // actual in-memory state. Not synced via SettingsSnapshot — this decides
+    // *which transport* runs on this device.
     public static let supabaseAccountLinked = "supabaseAccountLinked"
     // Whether the first-launch "what should we call you?" prompt has been
     // shown (skip or save both count) — device-local, never synced, so a
@@ -140,13 +128,6 @@ public enum AppStorageKeys {
     // and the app fully usable (local-first invariant) — Friends/Clubs
     // carry a lighter one-time-per-visit nudge as a backstop instead.
     public static let didPromptForName = "didPromptForName"
-    // Per-record CKRecord system fields (change tags), keyed by recordName, so
-    // in-place updates carry the right tag instead of conflicting every time.
-    public static let ckRecordMetadata = "ckRecordMetadata"
-    // Friends v1 push (Phase 7f): which participantId the FriendRequest
-    // CKQuerySubscription was last registered for, so re-registering isn't a
-    // network call on every launch. Local device state, never synced.
-    public static let friendRequestSubscriptionParticipantId = "friendRequestSubscriptionParticipantId"
 
     // Erase All My Data (#264): every scalar setting key that should reset to
     // its fresh-install default when the user erases their data, so the app
@@ -154,13 +135,9 @@ public enum AppStorageKeys {
     // content-array keys (playerRoster/matchHistory/clubs/challenges/
     // reactions/friendRequests/friendActivity/friendIdentities/friendStats —
     // erased through their own AppStore.save* diffing instead, not raw key
-    // removal), CloudKit-transport bookkeeping (ckSyncEngineState/
-    // ckSharedSyncEngineState/didMigrateToCloudKit/ckRecordMetadata —
-    // resetting these while a CKSyncEngine instance is still running risks
-    // corrupting its live state), myParticipantId/
-    // friendRequestSubscriptionParticipantId (device identity/subscription
-    // cache, not user data), and ownedProductIds (a StoreKit purchase cache
-    // tied to the Apple ID, never app data).
+    // removal), myParticipantId (device identity cache, not user data), and
+    // ownedProductIds (a StoreKit purchase cache tied to the Apple ID, never
+    // app data).
     public static let eraseAllDataResetKeys: [String] = [
         myName, matchMyName, matchOpponentName, matchMyPartnerName, matchOpponentPartnerName,
         matchClubId, matchIsOfficial, playerSortOrder,
