@@ -229,6 +229,7 @@
 "clubs.decline_match_confirm" = "この試合を辞退しますか？クラブの承認待ちリストから削除されます。";
 "clubs.challenges" = "対戦申請";
 "clubs.challenge" = "挑戦する";
+"clubs.remove_member" = "削除";
 "clubs.accept_challenge" = "承諾";
 "clubs.decline_challenge" = "却下";
 "clubs.decline_challenge_confirm" = "この対戦の誘いを辞退しますか？";

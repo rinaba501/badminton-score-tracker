@@ -98,7 +98,11 @@ final class SupabaseSyncEngine: SyncEngine {
     // CKSyncEngine's own fetchChanges()-on-reconnect-plus-push-notifications
     // shape. Routed through enqueueWork like every push method, so a fresh
     // activation's migration-on-signin upload finishes before the catch-up
-    // pull runs, rather than racing it.
+    // pull runs, rather than racing it. Also (Phase 9d-3) upserts this
+    // device's own `profiles` row on every call — that table was left
+    // unpopulated through 9d-1/9d-2, but ClubDetailView's Supabase-active
+    // member list needs *a* display name to show sooner than 9e (Friends),
+    // so this narrow slice populates just the caller's own row here.
 
     private static let pullTables = ["players", "match_records", "settings", "clubs", "challenges", "reactions"]
 
@@ -113,6 +117,8 @@ final class SupabaseSyncEngine: SyncEngine {
     /// nothing.
     func startIfActive() {
         enqueueWork { [self] in
+            let displayName = Player.displayName(for: AppStore.shared.currentSettingsSnapshot().myName)
+            await manager.upsertMyProfile(displayName: displayName)
             await pullInitialState()
             await manager.startRealtimeSync(tables: Self.pullTables) { change in
                 Task { @MainActor in

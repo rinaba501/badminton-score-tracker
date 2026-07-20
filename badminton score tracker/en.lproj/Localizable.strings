@@ -219,6 +219,7 @@
 "clubs.decline_match_confirm" = "Decline this match? It will be removed from the club's pending confirmations.";
 "clubs.challenges" = "Challenges";
 "clubs.challenge" = "Challenge";
+"clubs.remove_member" = "Remove";
 "clubs.accept_challenge" = "Accept";
 "clubs.decline_challenge" = "Decline";
 "clubs.decline_challenge_confirm" = "Decline this challenge?";

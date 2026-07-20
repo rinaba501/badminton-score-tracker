@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9c done.** Schema + RLS applied and verified against the
+**Status: 9a-9d done.** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -44,16 +44,22 @@ two-device verification pass is still owed (not yet exercised — same
 not-CI-provable gate CloudKit sync correctness already has) before 9c is
 considered fully verified, not just fully built.
 
-**9d (Clubs cutover) is in progress.** 9d-1 (`clubs`/`challenges`/
-`reactions` push + pull sync) is done — see section 5 below for the full
+**Phase 9d (Clubs cutover) is now complete.** 9d-1 (`clubs`/`challenges`/
+`reactions` push + pull sync) — see section 5 below for the full
 technical detail, including a Realtime filter bug it exposed and fixed (the
 9c-5 client-side `owner_id` filter was already too narrow for club data, and
 can't even apply to `challenges`/`reactions`, which have no `owner_id`
 column — removed entirely, delivery now relies on RLS alone). 9d-2 (invite
 redemption via a new `redeem_club_invite` RPC + `ClubInviteLink`/
 `ClubInviteView`, and — since a link needs no CKShare — the Watch's first
-invite-sending affordance) is also done. 9d-3 (member-list read + leave/kick)
-is next.
+invite-sending affordance). 9d-3 (member-list read via `club_members`/
+`profiles`, plus `leaveClub`/`removeMember` and an owner-only swipe-to-kick
+action) closes it out — see section 5 for detail, including why `profiles`
+needed a narrow early population (`upsertMyProfile`) even though it was
+deferred to 9e by 9a's own schema comment. A real-account, two-device
+verification pass (confirming cross-account club visibility, invite
+redemption, and membership changes) is still owed for all of 9d, same
+not-CI-provable gate as 9c.
 
 ---
 
@@ -409,16 +415,40 @@ and its own tracking issue, filed once the prior slice lands.
     UIKit-only), so Watch's `ClubDetailView` never had one before this.
     New SQL (external setup, flagged to user): the `redeem_club_invite`
     function itself.
-  - **9d-3 — Member-list read + leave/kick.** `SupabaseSyncManager.
-    fetchClubMembers(clubId:)` joins `club_members` against the existing
-    `profiles` table (already public-readable) for display names — a
-    cleaner mechanism than CloudKit's live `CKShare.Participant` name
-    resolution, not a workaround. Resolved as a View-level backend branch on
-    `ClubDetailView.loadParticipants()`, not a `SyncEngine` protocol
-    addition — the protocol stays outbound/push-only as originally scoped
-    in 9b. Also wires `leaveClub`/`removeMember` (simple deletes, already
-    covered by existing RLS) and participant-id resolution at Challenge/
-    Reaction creation call sites.
+  - **9d-3 — Member-list read + leave/kick.** ✅ done. `SupabaseSyncManager.
+    fetchClubMembers(clubId:)` resolves `club_members` against `profiles`
+    for display names via two client-side queries, not a PostgREST embed —
+    `club_members` and `profiles` both reference `auth.users`, not each
+    other, so there's no FK for PostgREST to embed across. Resolved as a
+    View-level backend branch on `ClubDetailView.loadParticipants()`, not a
+    `SyncEngine` protocol addition — the protocol stays outbound/push-only
+    as originally scoped in 9b. Real gap found during implementation: `9a`'s
+    own schema comment deferred populating `profiles` to 9e (Friends), but
+    a club member list needs *a* name sooner than that — fixed with a
+    narrow `SupabaseSyncManager.upsertMyProfile(displayName:)`, called from
+    `SupabaseSyncEngine.startIfActive()` (already the per-target hook for
+    activation + every app launch) rather than adding a new call site.
+    `leaveClub`/`removeMember` are simple deletes, both already covered by
+    the existing `club_members_delete` RLS policy (self or owner) — no new
+    SQL needed, unlike 9d-2's RPC. Wired into `removeClub()`: a non-owner's
+    "leave" now explicitly calls `leaveClub` alongside the existing
+    `saveClubs` diffing, since that diffing's implicit `clubs` delete
+    silently no-ops for a non-owner under Supabase's owner-only
+    `clubs_delete` RLS (the owner's real delete still cascades to
+    `club_members` via the FK, unchanged from 9d-1). Both targets also
+    gained an owner-only swipe-to-kick action on the member list, gated to
+    Supabase-active only — the CloudKit path never needed one, since
+    `UICloudSharingController`'s system share sheet already offers
+    participant management for free. `ClubParticipant.isFriend` is
+    hardcoded `false` for Supabase-active members (not computed against
+    `AppStore.friends`, unlike the CloudKit path) — Friends stays
+    CloudKit-only until 9e, so there's no Supabase-side friend graph yet to
+    cross-reference a member's `auth.uid()` against. Participant-id
+    resolution at Challenge/Reaction creation sites needed no separate
+    work: both already read `myParticipantId`/`myDisplayName` as plain
+    values threaded down from `ClubDetailView`, so fixing
+    `loadParticipants()` to populate those correctly for Supabase-active
+    covers them automatically.
 - **9e — Friends graph cutover.** `FriendProfile`/`FriendRequest` move from
   CloudKit's public database to Postgres; the FriendsHistory identity-shared
   zone becomes `friend_shares`-scoped RLS; push notifications move from

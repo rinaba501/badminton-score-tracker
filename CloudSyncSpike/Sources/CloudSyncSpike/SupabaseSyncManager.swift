@@ -332,6 +332,86 @@ public final class SupabaseSyncManager: ObservableObject {
         }
     }
 
+    // MARK: - Club membership (Phase 9d-3)
+    //
+    // The Supabase-active alternative to reading a live CKShare's
+    // `participants` list: `club_members` rows joined against `profiles` for
+    // a display name. `club_members_select`/`_delete` RLS (schema.sql)
+    // already allows a member to read their club's roster and remove
+    // themselves, and the owner to remove anyone — no new SQL needed here,
+    // unlike 9d-2's invite RPC.
+
+    /// Upserts this signed-in user's own `profiles` row — the thing
+    /// `fetchClubMembers` joins against for a display name. `profiles` was
+    /// created by 9a but deliberately left unpopulated until now (schema.sql
+    /// deferred it to "9e Friends"); club membership needs *a* name to show
+    /// sooner than that, so this narrow slice populates just the caller's own
+    /// row. Safe to call repeatedly (upsert, keyed by `id`).
+    public func upsertMyProfile(displayName: String) async {
+        guard let uid = await currentUserId() else { return }
+        do {
+            try await client.from("profiles").upsert(ProfileRow(id: uid, displayName: displayName)).execute()
+            appendLog("Upserted profile")
+        } catch {
+            appendLog("Upsert profile failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// One row per club member, resolved with a display name where a
+    /// `profiles` row exists (falls back to the raw id string otherwise —
+    /// e.g. a member who joined before ever calling `upsertMyProfile`, which
+    /// only happens for a fresh Supabase activation, not a steady-state gap).
+    /// Two queries rather than a PostgREST embed: `club_members`/`profiles`
+    /// both reference `auth.users`, not each other, so there's no FK for
+    /// PostgREST to embed across.
+    public func fetchClubMembers(clubId: UUID) async -> [ClubMemberSummary] {
+        do {
+            let memberRows: [ClubMemberRow] = try await client
+                .from("club_members")
+                .select()
+                .eq("club_id", value: clubId)
+                .execute()
+                .value
+            guard !memberRows.isEmpty else { return [] }
+            let profileRows: [ProfileRow] = try await client
+                .from("profiles")
+                .select()
+                .in("id", values: memberRows.map { $0.userId as any PostgrestFilterValue })
+                .execute()
+                .value
+            let namesById = Dictionary(uniqueKeysWithValues: profileRows.map { ($0.id, $0.displayName) })
+            return memberRows.map { row in
+                ClubMemberSummary(userId: row.userId, role: row.role, displayName: namesById[row.userId] ?? row.userId.uuidString)
+            }
+        } catch {
+            appendLog("Fetch club members failed: \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    /// Removes the caller's own membership row (RLS: `user_id = auth.uid()`).
+    public func leaveClub(clubId: UUID) async {
+        guard let uid = await currentUserId() else { return }
+        do {
+            try await client.from("club_members").delete().eq("club_id", value: clubId).eq("user_id", value: uid).execute()
+            appendLog("Left club")
+        } catch {
+            appendLog("Leave club failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Owner-only kick (RLS: `club_members_delete` also allows `is_club_owner`).
+    /// A non-owner caller's request simply matches zero rows under RLS rather
+    /// than erroring, same fail-closed shape as every other owner-gated write.
+    public func removeMember(clubId: UUID, userId: UUID) async {
+        do {
+            try await client.from("club_members").delete().eq("club_id", value: clubId).eq("user_id", value: userId).execute()
+            appendLog("Removed club member")
+        } catch {
+            appendLog("Remove club member failed: \(error.localizedDescription)")
+        }
+    }
+
     private func upsertRows(table: String, rows: some Encodable, onConflict: String? = nil) async {
         do {
             try await client.from(table).upsert(rows, onConflict: onConflict).execute()
@@ -534,6 +614,34 @@ public struct RemoteChange: Sendable {
     /// `Club.ownerRecordName`, which the owner always encodes as `nil`
     /// (they ARE the owner); a receiving member must not adopt that as-is.
     public let ownerId: UUID?
+}
+
+/// One resolved club member, returned by `SupabaseSyncManager.fetchClubMembers`.
+public struct ClubMemberSummary: Sendable, Identifiable {
+    public var id: UUID { userId }
+    public let userId: UUID
+    public let role: String
+    public let displayName: String
+}
+
+private struct ProfileRow: Codable {
+    let id: UUID
+    let displayName: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case displayName = "display_name"
+    }
+}
+
+private struct ClubMemberRow: Decodable {
+    let userId: UUID
+    let role: String
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case role
+    }
 }
 
 private struct SelectedRow: Decodable {
