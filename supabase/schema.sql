@@ -350,8 +350,30 @@ create policy friend_requests_delete on public.friend_requests
 -- tier so SupabaseSyncManager.startRealtimeSync (9c-5) actually receives
 -- INSERT/UPDATE/DELETE events. Without this, a table's changes never
 -- enter the replication stream that Postgres Changes reads from, no
--- matter how a client subscribes or filters. clubs/challenges/reactions
--- join this list in 9d once their push/pull sync is wired up.
+-- matter how a client subscribes or filters.
 -- ---------------------------------------------------------------------
 
 alter publication supabase_realtime add table public.players, public.match_records, public.settings;
+
+-- Phase 9d: clubs/challenges/reactions join Realtime now that their
+-- push/pull sync is wired up (SupabaseSyncEngine.enqueueClubChanges/
+-- enqueueChallengeChanges/enqueueReactionChanges + pullInitialState/
+-- handleRemoteChange).
+alter publication supabase_realtime add table public.clubs, public.challenges, public.reactions;
+
+-- Realtime authorizes delivery of a DELETE event using the table's RLS
+-- SELECT policy evaluated against the old-row image, which under the
+-- default REPLICA IDENTITY only contains primary-key columns (`id`).
+-- `clubs_select`'s `is_club_member(id)` branch needs only the row's own
+-- PK, so `clubs` works fine without FULL. `challenges_select`/
+-- `reactions_select` need `club_id` (and reactions' own delete policy
+-- needs `author_id`) — neither is part of either table's primary key, so
+-- without FULL those columns are absent from a DELETE's old-row image,
+-- `is_club_member(NULL)` evaluates false for every user, and the event
+-- fails RLS for everyone (including the club member who should see it) —
+-- the same REPLICA IDENTITY gap 9c-5 found and fixed for
+-- players/match_records, rediscovered here during 9d-1's /code-review.
+-- There is no fallback: fetchAllRows never reports .delete, so without
+-- this a deleted challenge/reaction would never sync at all.
+alter table public.challenges replica identity full;
+alter table public.reactions replica identity full;
