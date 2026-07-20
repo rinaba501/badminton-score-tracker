@@ -370,11 +370,32 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
     call site (both targets' `FriendsView.swift`/`ContentView.swift`/
     `ClubDetailView.swift`, iOS `ProfileView.swift`/`FriendInviteView.swift`)
     branches on `supabaseAccountLinked`.
-  - **9e-2 — Friend identity + stats sharing**: new
-    `friend_identity_snapshots`/`friend_stats_snapshots` tables (one row per
-    owner, each column populated only when its share toggle is on — never a
-    live view over `settings`, which would leak every unrelated scalar
-    setting to any accepted friend) + an `is_accepted_friend` RLS helper.
+  - **9e-2** ✅ done: new `friend_identity_snapshots`/`friend_stats_snapshots`
+    tables — `id`+`payload jsonb` like every other Phase 9 table (not the
+    discrete-column shape originally sketched; reusing the generic
+    `fetchAllRows`/Realtime machinery unchanged beat bespoke per-column
+    decode logic), one row per owner, each field populated only when its
+    share toggle is on — never a live RLS grant on `settings`, which would
+    leak every unrelated scalar setting to any accepted friend. New
+    `is_accepted_friend` RLS helper (mirrors `is_club_member`); neither
+    table needs `REPLICA IDENTITY FULL` (RLS only reads the row's own PK).
+    `SupabaseSyncEngine.enqueueFriendIdentityChange`/
+    `removeFriendIdentityRecord`/`enqueueFriendStatsChange` (ports
+    `CloudKitSyncManager.currentFriendIdentitySnapshot`/
+    `currentFriendStatsSnapshot`'s toggle-gating verbatim) plus a new
+    `removeFriendStatsRecord` — added to the `SyncEngine` protocol itself,
+    closing a real pre-existing gap: `FriendSharingSettingsView.
+    toggleStatsSharing` (and its iOS `ProfileView`/`StatsView`/`HistoryView`
+    duplicates) called `CloudKitSyncManager.shared.enqueueFriendStatsChange`/
+    `.removeFriendStatsRecord` directly instead of through `AppStore.
+    syncEngine`, the same View-bypass pattern 9c-4 fixed for
+    `enqueueSettingsChange` — invisible before Supabase existed since
+    `CloudKitSyncManager.shared` and `AppStore.syncEngine` were always the
+    same object. `enqueueFriendsRosterChanges`/`enqueueFriendsHistoryChanges`
+    stay permanent no-ops under Supabase (not "not yet migrated" — a
+    personal record already pushes unconditionally via
+    `enqueueRosterChanges`/`enqueueHistoryChanges`; 9e-3 grants friend
+    visibility via RLS on that same row, no mirrored copy needed).
   - **9e-3 — Friend history sharing**: extends already-live
     `players_select`/`match_records_select` RLS with a friend-visibility
     branch — no mirrored copy needed (unlike CloudKit's separate
@@ -413,7 +434,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
-| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), 9e in progress (9e-1 done: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2/9e-3/9e-4 next), 9f not started |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), 9e in progress (9e-1 done: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2 done: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3/9e-4 next), 9f not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.

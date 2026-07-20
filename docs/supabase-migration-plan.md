@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9d done, 9e in progress (9e-1 done).** Schema + RLS applied and verified against the
+**Status: 9a-9d done, 9e in progress (9e-1/9e-2 done).** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -500,16 +500,55 @@ and its own tracking issue, filed once the prior slice lands.
     `fetchProfile`/`sendFriendRequest`/`respondToFriendRequest`/
     `fetchMyFriendRequests` call site across both targets now branches on
     `supabaseAccountLinked`.
-  - **9e-2 — Friend identity + stats sharing** (next): new
+  - **9e-2 — Friend identity + stats sharing.** ✅ done. New
     `friend_identity_snapshots`/`friend_stats_snapshots` tables, one row per
     owner. Deliberately NOT a live RLS grant on `settings` itself — that
     table's single `payload jsonb` blob holds every unrelated scalar setting
     alongside the four/six shareable fields, and RLS can only grant or deny
     a whole row, not individual jsonb keys, so a friend granted `SELECT`
-    there would see everything. The two new tables instead mirror CloudKit's
-    own `currentFriendIdentitySnapshot()`/`currentFriendStatsSnapshot()`
-    shape: derived, precomputed, and each column left `null` client-side
-    (never written at all, not just RLS-hidden) whenever its toggle is off.
+    there would see everything. Shipped shape differs from the original
+    sketch in one way: `id`+`payload jsonb` (like every other Phase 9
+    table) rather than discrete typed columns — that reuses
+    `SupabaseSyncManager.fetchAllRows`/`startRealtimeSync`/`upsertRows`
+    completely unchanged instead of needing bespoke per-column Decodable
+    types, discovered mid-implementation once it became clear the discrete-
+    column design would silently break the generic Realtime decoder (which
+    only knows how to read a `payload` key). The payload itself still
+    mirrors CloudKit's own `currentFriendIdentitySnapshot()`/
+    `currentFriendStatsSnapshot()` shape: derived, precomputed, and each
+    field left `null` client-side (never written at all, not just
+    RLS-hidden) whenever its toggle is off — ported verbatim into
+    `SupabaseSyncEngine`. New `is_accepted_friend` RLS helper; neither table
+    needs `REPLICA IDENTITY FULL` (RLS reads only the row's own PK, same
+    exemption `clubs` already had). Since the tables carry no display name
+    of their own, `SupabaseSyncEngine` resolves one from the already-synced
+    friend graph (`AppStore.friends`, populated by 9e-1) rather than
+    duplicating it into a third place; pull/Realtime handling also filters
+    out a device's own row (`id == currentUserId()`) before applying it,
+    mirroring CloudKit's `zoneID.ownerName != CKCurrentUserDefaultName`
+    self-echo guard — RLS legitimately returns the caller's own row too
+    (`id = auth.uid() or is_accepted_friend(id)`), and without the filter a
+    user would see themselves listed as their own friend.
+    `enqueueFriendsRosterChanges`/`enqueueFriendsHistoryChanges` become
+    permanent no-ops under Supabase (documented as such, not left as "not
+    yet migrated") — CloudKit needs them to mirror a copy into the
+    FriendsHistory zone, but Supabase grants friend visibility via RLS on
+    the *same* `players`/`match_records` row a personal save already pushes
+    unconditionally (9e-3). **Real pre-existing gap found and fixed**:
+    `FriendSharingSettingsView.toggleStatsSharing` (and its iOS
+    `ProfileView`/`StatsView`/`HistoryView` duplicates of the identity/
+    history toggle handlers) called `CloudKitSyncManager.shared.
+    enqueueFriendStatsChange`/`.removeFriendStatsRecord` directly rather
+    than through `AppStore.syncEngine` — the exact View-bypass shape 9c-4
+    already fixed once for `enqueueSettingsChange`, invisible here until now
+    because `CloudKitSyncManager.shared` and `AppStore.syncEngine` were
+    always the same object before Supabase existed. Fixed by adding
+    `removeFriendStatsRecord()` to the `SyncEngine` protocol itself (parity
+    with the already-protocol `removeFriendIdentityRecord()`) and routing
+    every call site through `AppStore.shared.syncEngine` instead of
+    `CloudKitSyncManager.shared`; the CKShare-participant-list calls
+    (`syncFriendsHistoryParticipants`/`revokeFriendsHistoryAccess`) stay
+    CloudKit-only, now explicitly gated on `!supabaseAccountLinked`.
   - **9e-3 — Friend history sharing** (after 9e-2): extends already-live
     `players_select`/`match_records_select` RLS with one more `or` branch
     keyed off a new `is_accepted_friend`/`friend_can_view_history` helper

@@ -28,7 +28,9 @@ import AuthenticationServices
 /// discoverable-profile lookup (`fetchProfileDisplayName`, reusing the
 /// `profiles` table 9d-3 already populates) — the pull side needs no new
 /// method since `friend_requests` fits the existing id-keyed
-/// `fetchAllRows`/Realtime machinery unchanged.
+/// `fetchAllRows`/Realtime machinery unchanged. Phase 9e-2 adds
+/// friend_identity_snapshots/friend_stats_snapshots upsert/remove — both
+/// also id+payload, so they too reuse `fetchAllRows`/Realtime unchanged.
 ///
 /// A `players`/`match_records` row awaiting upsert — a named type rather
 /// than a 4-element tuple so SwiftLint's large_tuple rule (max 2 members)
@@ -504,6 +506,38 @@ public final class SupabaseSyncManager: ObservableObject {
         }
     }
 
+    // MARK: - Friend identity / stats sharing (Phase 9e-2)
+    //
+    // `friend_identity_snapshots`/`friend_stats_snapshots` are id+payload
+    // like every other table (see schema.sql's comment on why — NOT RLS
+    // granted directly on `settings`), so these reuse `upsertRows`/
+    // `deleteRows`/`fetchAllRows`/Realtime unchanged; no bespoke row types
+    // needed beyond `IdPayloadRow` below.
+
+    public func upsertFriendIdentitySnapshot(id: UUID, payload: Data) async {
+        guard let row = IdPayloadRow(id: id, payloadData: payload) else {
+            appendLog("Upsert friend identity snapshot failed: payload did not decode as JSON")
+            return
+        }
+        await upsertRows(table: "friend_identity_snapshots", rows: [row])
+    }
+
+    public func removeFriendIdentitySnapshot(id: UUID) async {
+        await deleteRows(table: "friend_identity_snapshots", ids: [id])
+    }
+
+    public func upsertFriendStatsSnapshot(id: UUID, payload: Data) async {
+        guard let row = IdPayloadRow(id: id, payloadData: payload) else {
+            appendLog("Upsert friend stats snapshot failed: payload did not decode as JSON")
+            return
+        }
+        await upsertRows(table: "friend_stats_snapshots", rows: [row])
+    }
+
+    public func removeFriendStatsSnapshot(id: UUID) async {
+        await deleteRows(table: "friend_stats_snapshots", ids: [id])
+    }
+
     private func upsertRows(table: String, rows: some Encodable, onConflict: String? = nil) async {
         do {
             try await client.from(table).upsert(rows, onConflict: onConflict).execute()
@@ -777,6 +811,20 @@ private struct FriendRequestUpdateRow: Encodable {
     init?(status: String, payloadData: Data) {
         guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
         self.status = status
+        self.payload = payload
+    }
+}
+
+/// A generic `id`+`payload` row for tables that need nothing else —
+/// `friend_identity_snapshots`/`friend_stats_snapshots` (Phase 9e-2), where
+/// `id` is the owning participant's `auth.uid()` and RLS reads only that PK.
+private struct IdPayloadRow: Encodable {
+    let id: UUID
+    let payload: AnyJSON
+
+    init?(id: UUID, payloadData: Data) {
+        guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
+        self.id = id
         self.payload = payload
     }
 }

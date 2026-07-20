@@ -110,7 +110,10 @@ final class SupabaseSyncEngine: SyncEngine {
     // device never calls; without this, `AppStore.friends` would silently
     // stay empty forever on Supabase.
 
-    private static let pullTables = ["players", "match_records", "settings", "clubs", "challenges", "reactions", "friend_requests"]
+    private static let pullTables = [
+        "players", "match_records", "settings", "clubs", "challenges", "reactions",
+        "friend_requests", "friend_identity_snapshots", "friend_stats_snapshots"
+    ]
 
     /// Deliberately does NOT gate on `manager.isSignedIn` — that flag is only
     /// set by `signInWithGoogle`/`adoptRelayedSession`, so it's still `false`
@@ -181,6 +184,17 @@ final class SupabaseSyncEngine: SyncEngine {
             AppStore.shared.applyRemoteSettings(snapshot)
         }
         await refreshFriendRequests()
+        let myId = await manager.currentUserId()
+        for change in await manager.fetchAllRows(table: "friend_identity_snapshots") where change.id != myId {
+            guard let payload = change.payload, var identity = PersistenceStore.decodeFriendIdentitySnapshot(payload) else { continue }
+            identity.displayName = displayName(forFriendParticipant: change.id)
+            AppStore.shared.applyRemoteFriendIdentity(participantId: change.id.uuidString, snapshot: identity)
+        }
+        for change in await manager.fetchAllRows(table: "friend_stats_snapshots") where change.id != myId {
+            guard let payload = change.payload, var stats = PersistenceStore.decodeFriendStatsSnapshot(payload) else { continue }
+            stats.displayName = displayName(forFriendParticipant: change.id)
+            AppStore.shared.applyRemoteFriendStats(participantId: change.id.uuidString, snapshot: stats)
+        }
     }
 
     /// A full reconcile rather than a per-id merge: `friend_requests` is
@@ -245,6 +259,16 @@ final class SupabaseSyncEngine: SyncEngine {
             case "reactions":
                 guard let reaction = PersistenceStore.decodeReaction(payload) else { return }
                 AppStore.shared.applyRemoteUpsert(records: [], players: [], clubs: [], reactions: [reaction])
+            case "friend_identity_snapshots":
+                guard change.id != (await manager.currentUserId()),
+                      var identity = PersistenceStore.decodeFriendIdentitySnapshot(payload) else { return }
+                identity.displayName = displayName(forFriendParticipant: change.id)
+                AppStore.shared.applyRemoteFriendIdentity(participantId: change.id.uuidString, snapshot: identity)
+            case "friend_stats_snapshots":
+                guard change.id != (await manager.currentUserId()),
+                      var stats = PersistenceStore.decodeFriendStatsSnapshot(payload) else { return }
+                stats.displayName = displayName(forFriendParticipant: change.id)
+                AppStore.shared.applyRemoteFriendStats(participantId: change.id.uuidString, snapshot: stats)
             default:
                 break
             }
@@ -260,6 +284,10 @@ final class SupabaseSyncEngine: SyncEngine {
                 AppStore.shared.applyRemoteDeletions(recordIds: [], playerIds: [], clubIds: [], challengeIds: [change.id])
             case "reactions":
                 AppStore.shared.applyRemoteDeletions(recordIds: [], playerIds: [], clubIds: [], reactionIds: [change.id])
+            case "friend_identity_snapshots":
+                AppStore.shared.applyRemoteFriendIdentityDeletion(participantId: change.id.uuidString)
+            case "friend_stats_snapshots":
+                AppStore.shared.applyRemoteFriendStatsDeletion(participantId: change.id.uuidString)
             default:
                 break
             }
@@ -342,13 +370,91 @@ final class SupabaseSyncEngine: SyncEngine {
         }
     }
 
-    // MARK: - Not yet migrated (Phase 9e Friends graph)
+    // MARK: - Friend identity / stats sharing (Phase 9e-2)
 
+    /// Permanent no-ops, not "not yet migrated": under CloudKit these mirror
+    /// a personal player/match record into the separate FriendsHistory zone,
+    /// but Supabase has no such copy (Roadmap 9e-3) — a personal record
+    /// already pushes to `players`/`match_records` unconditionally via
+    /// `enqueueRosterChanges`/`enqueueHistoryChanges` regardless of any
+    /// friend-sharing toggle, and friend visibility is granted by RLS
+    /// reading that same row, not by a second write.
     func enqueueFriendsRosterChanges(upsertedIds: [UUID], deletedIds: [UUID]) {}
     func enqueueFriendsHistoryChanges(upsertedIds: [UUID], deletedIds: [UUID]) {}
-    func enqueueFriendIdentityChange() {}
-    func removeFriendIdentityRecord() {}
-    func enqueueFriendStatsChange() {}
+
+    func enqueueFriendIdentityChange() {
+        enqueueWork { [self] in
+            guard let uid = await manager.currentUserId(),
+                  let payload = PersistenceStore.encodeFriendIdentitySnapshot(currentFriendIdentitySnapshot(myId: uid)) else { return }
+            await manager.upsertFriendIdentitySnapshot(id: uid, payload: payload)
+        }
+    }
+
+    func removeFriendIdentityRecord() {
+        enqueueWork { [self] in
+            guard let uid = await manager.currentUserId() else { return }
+            await manager.removeFriendIdentitySnapshot(id: uid)
+        }
+    }
+
+    func enqueueFriendStatsChange() {
+        enqueueWork { [self] in
+            guard let uid = await manager.currentUserId(),
+                  let payload = PersistenceStore.encodeFriendStatsSnapshot(currentFriendStatsSnapshot(myId: uid)) else { return }
+            await manager.upsertFriendStatsSnapshot(id: uid, payload: payload)
+        }
+    }
+
+    func removeFriendStatsRecord() {
+        enqueueWork { [self] in
+            guard let uid = await manager.currentUserId() else { return }
+            await manager.removeFriendStatsSnapshot(id: uid)
+        }
+    }
+
+    /// Ported from `CloudKitSyncManager.currentFriendIdentitySnapshot()` —
+    /// same per-field toggle gating (a field is left `nil` in the snapshot
+    /// itself whenever its toggle is off, never written at all).
+    private func currentFriendIdentitySnapshot(myId: UUID) -> FriendIdentitySnapshot {
+        let defaults = UserDefaults.standard
+        let myName = defaults.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName
+        let mePlayer = AppStore.shared.roster.first(where: { $0.id == AppStore.shared.localPlayerId })
+        let shareAvatar = defaults.object(forKey: AppStorageKeys.shareAvatarWithFriends) as? Bool ?? false
+        let shareGender = defaults.object(forKey: AppStorageKeys.shareGenderWithFriends) as? Bool ?? false
+        let shareBirthday = defaults.object(forKey: AppStorageKeys.shareBirthdayWithFriends) as? Bool ?? false
+        let shareIntroduction = defaults.object(forKey: AppStorageKeys.shareIntroductionWithFriends) as? Bool ?? false
+        return FriendIdentitySnapshot(
+            participantId: myId.uuidString,
+            displayName: Player.displayName(for: myName),
+            colorIndex: shareAvatar ? mePlayer?.colorIndex : nil,
+            iconName: shareAvatar ? mePlayer?.iconName : nil,
+            gender: shareGender ? defaults.string(forKey: AppStorageKeys.gender) : nil,
+            birthday: shareBirthday ? (defaults.object(forKey: AppStorageKeys.birthday) as? Date) : nil,
+            introduction: shareIntroduction ? defaults.string(forKey: AppStorageKeys.introduction) : nil
+        )
+    }
+
+    /// Ported from `CloudKitSyncManager.currentFriendStatsSnapshot()`.
+    private func currentFriendStatsSnapshot(myId: UUID) -> FriendStatsSnapshot {
+        let myName = Player.displayName(for: UserDefaults.standard.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName)
+        let personalHistory = AppStore.shared.history.filter { $0.clubId == nil }
+        let personalRoster = AppStore.shared.roster.filter { $0.clubId == nil }
+        return FriendStatsSnapshot.compute(
+            participantId: myId.uuidString, displayName: myName, history: personalHistory, roster: personalRoster
+        )
+    }
+
+    /// `friend_identity_snapshots`/`friend_stats_snapshots` carry no display
+    /// name of their own (unlike CloudKit's FriendIdentitySnapshot/
+    /// FriendStatsSnapshot, which do) — `profiles`/`friend_requests`
+    /// already have one (9e-1), so this resolves it from the already-synced
+    /// friend graph rather than duplicating it into a third table.
+    private func displayName(forFriendParticipant id: UUID) -> String {
+        AppStore.shared.friends.first(where: { $0.participantId == id.uuidString })?.displayName ?? ""
+    }
+
+    // MARK: - Not yet migrated (Phase 9e Friends graph)
+
     func deleteFriendsHistoryZone() async {}
     func deleteMyFriendProfile() async {}
     func deleteAllMyFriendRequests() async {}

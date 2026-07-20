@@ -396,13 +396,12 @@ struct ProfileView: View {
     private func toggleIdentityField(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
-            if isOn {
-                await manager.syncFriendsHistoryParticipants()
+            if isOn && !supabaseAccountLinked {
+                await CloudKitSyncManager.shared.syncFriendsHistoryParticipants()
             }
             store.refreshMyIdentitySnapshotIfSharing()
-            if !isOn && !store.isSharingAnyProfileData {
-                await manager.revokeFriendsHistoryAccess()
+            if !isOn && !supabaseAccountLinked && !store.isSharingAnyProfileData {
+                await CloudKitSyncManager.shared.revokeFriendsHistoryAccess()
             }
         }
     }

@@ -27,6 +27,7 @@ struct HistoryView: View {
     @EnvironmentObject private var store: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
     @State private var showingClearConfirmation = false
     @State private var pendingDeleteIds: Set<MatchRecord.ID>?
     @State private var isSelecting = false
@@ -396,6 +397,7 @@ struct HistoryView: View {
     // left in place (see CloudKitSyncManager.revokeFriendsHistoryAccess).
     private func toggleShareHistoryWithFriends(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
+        guard !supabaseAccountLinked else { return }
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {
