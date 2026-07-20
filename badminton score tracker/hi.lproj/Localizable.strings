@@ -327,3 +327,13 @@
 "friends.code_placeholder" = "आमंत्रण लिंक या कोड";
 "friends.code_send" = "अनुरोध भेजें";
 "friends.error_not_found" = "उस कोड वाला कोई खिलाड़ी नहीं मिला।";
+"addmatch.entry_label" = "मैच जोड़ें";
+"addmatch.title" = "पिछला मैच जोड़ें";
+"addmatch.players_section" = "खिलाड़ी";
+"addmatch.select_player" = "चुनें";
+"addmatch.games_section" = "गेम";
+"addmatch.game_number" = "गेम %d";
+"addmatch.add_game" = "गेम जोड़ें";
+"addmatch.date_label" = "तारीख";
+"addmatch.save" = "सहेजें";
+"addmatch.result_error" = "हर गेम का स्कोर दर्ज करें, बिना टाई के, ताकि मैच का विजेता स्पष्ट हो।";

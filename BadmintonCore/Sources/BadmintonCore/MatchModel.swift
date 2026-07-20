@@ -275,6 +275,31 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
     /// "is this record a Doubles match" check (see the comment above).
     public var isDoubles: Bool { myPartnerName != nil || opponentPartnerName != nil }
 
+    /// Derives (myGamesWon, opponentGamesWon, winner) from a manually entered
+    /// list of per-game scores — there is no live `BadmintonMatch` to read
+    /// these from when a match is logged after the fact instead of played
+    /// live (issue #278). Returns `nil` if `games` is empty, any single game
+    /// is tied (impossible in real badminton — every game has a winner), or
+    /// the overall game count is tied (a match can't end without one side
+    /// winning more games than the other).
+    public static func resultFromManualGames(_ games: [GameScore]) -> ManualResult? {
+        guard !games.isEmpty, games.allSatisfy({ $0.my != $0.opponent }) else { return nil }
+        let myGamesWon = games.filter({ $0.my > $0.opponent }).count
+        let opponentGamesWon = games.count - myGamesWon
+        guard myGamesWon != opponentGamesWon else { return nil }
+        return ManualResult(myGamesWon: myGamesWon, opponentGamesWon: opponentGamesWon,
+                             winner: myGamesWon > opponentGamesWon ? .near : .far)
+    }
+
+    /// Named tuple stand-in for `resultFromManualGames` — a plain 3-member
+    /// tuple trips SwiftLint's `large_tuple` rule, same reasoning as
+    /// `CloudSyncSpike`'s `PendingRecord`.
+    public struct ManualResult: Equatable {
+        public let myGamesWon: Int
+        public let opponentGamesWon: Int
+        public let winner: RecordSide
+    }
+
     public init(id: UUID = UUID(),
                 games: [GameScore],
                 myGamesWon: Int,

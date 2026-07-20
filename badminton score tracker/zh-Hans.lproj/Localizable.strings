@@ -327,3 +327,13 @@
 "friends.code_placeholder" = "邀请链接或代码";
 "friends.code_send" = "发送申请";
 "friends.error_not_found" = "未找到该代码对应的球友。";
+"addmatch.entry_label" = "添加比赛";
+"addmatch.title" = "添加过往比赛";
+"addmatch.players_section" = "选手";
+"addmatch.select_player" = "选择";
+"addmatch.games_section" = "局数";
+"addmatch.game_number" = "第%d局";
+"addmatch.add_game" = "添加一局";
+"addmatch.date_label" = "日期";
+"addmatch.save" = "保存";
+"addmatch.result_error" = "请为每一局输入比分且不能平局，以便确定比赛的获胜方。";

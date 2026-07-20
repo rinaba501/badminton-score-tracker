@@ -326,4 +326,14 @@
 "friends.code_prompt_message" = "Paste an invite link or friend code";
 "friends.code_placeholder" = "Invite link or code";
 "friends.code_send" = "Send Request";
+"addmatch.entry_label" = "Add Match";
+"addmatch.title" = "Add Past Match";
+"addmatch.players_section" = "Players";
+"addmatch.select_player" = "Select";
+"addmatch.games_section" = "Games";
+"addmatch.game_number" = "Game %d";
+"addmatch.add_game" = "Add Game";
+"addmatch.date_label" = "Date";
+"addmatch.save" = "Save";
+"addmatch.result_error" = "Enter a score for each game, with no ties, so the match has a clear winner.";
 "friends.error_not_found" = "No player found with that code.";

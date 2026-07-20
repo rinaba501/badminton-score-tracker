@@ -76,6 +76,7 @@ Two-step flow in Singles mode, four-step in Doubles mode on the Watch (see Setti
 - **Filter by date range** — All Time / This Week / This Month
 - **Filter by match type** — All / Singles / Doubles (hidden unless history contains both types)
 - **Sort** — toggle button switches between Newest first (default) and Oldest first
+- **Add a past match manually (#278, iOS-only)** — a "+" button opens a form that produces a `MatchRecord` without playing it live: game mode (Singles/Doubles), near/far players and partners (same roster/friends/guest picker as Pre-Match, any slot in any order), one score row per game (tap "Add Game" for extra games, swipe to remove one, up to 5), a date (defaults to now, can't be set in the future), and the same Club/Official Match picker Pre-Match offers. Games won and the winner are derived from the entered scores — Save is disabled until every game has a non-tied score and the match itself doesn't end in a tie. iOS-only: the date field needs a `DatePicker`, and this app has no `DatePicker`-editing precedent on Watch (see Club Seasons below) — manual score entry alone would have been Watch-feasible, but the date field wasn't
 
 ### Player Stats
 - Win rate, total matches, win/loss streak per player
