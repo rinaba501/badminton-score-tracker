@@ -34,6 +34,14 @@ public protocol SyncEngine {
     func enqueueFriendIdentityChange()
     func removeFriendIdentityRecord()
     func enqueueFriendStatsChange()
+    /// Roadmap Phase 9e-2: mirrors `removeFriendIdentityRecord()`'s shape for
+    /// stats — added because the pre-9e-2 View call site
+    /// (`FriendSharingSettingsView.toggleStatsSharing`) called
+    /// `CloudKitSyncManager.shared.removeFriendStatsRecord()` directly rather
+    /// than through this protocol, the same bypass 9c-4 already fixed for
+    /// `enqueueSettingsChange()` — that gap would have made a Supabase-active
+    /// device's "turn stats sharing off" silently do nothing.
+    func removeFriendStatsRecord()
     func deleteFriendsHistoryZone() async
     func deleteMyFriendProfile() async
     func deleteAllMyFriendRequests() async
@@ -55,6 +63,7 @@ public struct NoOpSyncEngine: SyncEngine {
     public func enqueueFriendIdentityChange() {}
     public func removeFriendIdentityRecord() {}
     public func enqueueFriendStatsChange() {}
+    public func removeFriendStatsRecord() {}
     public func deleteFriendsHistoryZone() async {}
     public func deleteMyFriendProfile() async {}
     public func deleteAllMyFriendRequests() async {}

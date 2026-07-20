@@ -23,6 +23,7 @@ struct StatsView: View {
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.shareStatsWithFriends) private var shareStatsWithFriends = false
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
 
     @State private var selectedPlayer: String = ""
     @State private var selectedClubId: UUID?
@@ -361,14 +362,15 @@ struct StatsView: View {
     private func toggleStatsSharing(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
             if isOn {
-                await manager.syncFriendsHistoryParticipants()
-                manager.enqueueFriendStatsChange()
+                if !supabaseAccountLinked {
+                    await CloudKitSyncManager.shared.syncFriendsHistoryParticipants()
+                }
+                AppStore.shared.syncEngine.enqueueFriendStatsChange()
             } else {
-                manager.removeFriendStatsRecord()
-                if !store.isSharingAnyProfileData {
-                    await manager.revokeFriendsHistoryAccess()
+                AppStore.shared.syncEngine.removeFriendStatsRecord()
+                if !supabaseAccountLinked && !store.isSharingAnyProfileData {
+                    await CloudKitSyncManager.shared.revokeFriendsHistoryAccess()
                 }
             }
         }

@@ -14,6 +14,7 @@ import BadmintonCore
 
 struct FriendSharingSettingsView: View {
     @EnvironmentObject private var store: AppStore
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
     @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
     @AppStorage(AppStorageKeys.shareAvatarWithFriends) private var shareAvatarWithFriends = false
     @AppStorage(AppStorageKeys.shareGenderWithFriends) private var shareGenderWithFriends = false
@@ -51,8 +52,13 @@ struct FriendSharingSettingsView: View {
     // participants only once every other per-field toggle is also off (see
     // AppStore.isSharingAnyProfileData) — the share/zone itself is always
     // left in place (see CloudKitSyncManager.revokeFriendsHistoryAccess).
+    // Supabase-active: none of this has an equivalent (Roadmap 9e-3) — the
+    // settings write above is already the complete access change, since
+    // friend visibility there is RLS + this same toggle, not a per-
+    // participant share list.
     private func toggleShareHistoryWithFriends(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
+        guard !supabaseAccountLinked else { return }
         Task { @MainActor in
             let manager = CloudKitSyncManager.shared
             if isOn {
@@ -71,31 +77,40 @@ struct FriendSharingSettingsView: View {
     // the SAME single "FriendIdentity" record (see AppStore.
     // refreshMyIdentitySnapshotIfSharing), so every one of these four toggles
     // shares this one handler regardless of which direction it flipped.
+    // refreshMyIdentitySnapshotIfSharing() itself is already backend-
+    // polymorphic (routes through AppStore.syncEngine) — only the CKShare
+    // participant-list calls below are CloudKit-specific.
     private func toggleIdentityField(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
-            if isOn {
-                await manager.syncFriendsHistoryParticipants()
+            if isOn && !supabaseAccountLinked {
+                await CloudKitSyncManager.shared.syncFriendsHistoryParticipants()
             }
             store.refreshMyIdentitySnapshotIfSharing()
-            if !isOn && !store.isSharingAnyProfileData {
-                await manager.revokeFriendsHistoryAccess()
+            if !isOn && !supabaseAccountLinked && !store.isSharingAnyProfileData {
+                await CloudKitSyncManager.shared.revokeFriendsHistoryAccess()
             }
         }
     }
 
+    // Roadmap Phase 9e-2: enqueueFriendStatsChange()/removeFriendStatsRecord()
+    // now route through AppStore.syncEngine (backend-polymorphic) instead of
+    // calling CloudKitSyncManager.shared directly — the same View-bypass
+    // pattern 9c-4 fixed for enqueueSettingsChange(), previously invisible
+    // here because CloudKitSyncManager.shared happened to equal
+    // AppStore.shared.syncEngine on every device until Supabase existed.
     private func toggleStatsSharing(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
             if isOn {
-                await manager.syncFriendsHistoryParticipants()
-                manager.enqueueFriendStatsChange()
+                if !supabaseAccountLinked {
+                    await CloudKitSyncManager.shared.syncFriendsHistoryParticipants()
+                }
+                AppStore.shared.syncEngine.enqueueFriendStatsChange()
             } else {
-                manager.removeFriendStatsRecord()
-                if !store.isSharingAnyProfileData {
-                    await manager.revokeFriendsHistoryAccess()
+                AppStore.shared.syncEngine.removeFriendStatsRecord()
+                if !supabaseAccountLinked && !store.isSharingAnyProfileData {
+                    await CloudKitSyncManager.shared.revokeFriendsHistoryAccess()
                 }
             }
         }

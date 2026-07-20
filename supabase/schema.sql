@@ -449,3 +449,85 @@ grant execute on function public.redeem_club_invite (uuid) to authenticated;
 
 alter table public.friend_requests replica identity full;
 alter publication supabase_realtime add table public.friend_requests;
+
+-- ---------------------------------------------------------------------
+-- Friend identity + stats sharing (Phase 9e-2): two new, narrow, one-row-
+-- per-owner tables — NOT RLS granted directly on `settings`. `settings`'s
+-- single `payload jsonb` blob holds every unrelated scalar setting
+-- (pointsToWin, courtTheme, ...) alongside the four identity fields and
+-- derived stats a user might want to share with friends; RLS can only
+-- grant or deny a whole row, not individual jsonb keys, so granting a
+-- friend SELECT there would leak everything, not just what they toggled
+-- on. Each is `id`+`payload jsonb`, the same shape every other Phase 9
+-- table uses (`id` doubles as the owner's participant id here, same as
+-- `settings.owner_id` already does) — this reuses SupabaseSyncManager's
+-- existing generic fetchAllRows/startRealtimeSync/upsertRows machinery
+-- unchanged rather than needing bespoke per-column decode logic. The
+-- payload itself mirrors CloudKitSyncManager's own
+-- currentFriendIdentitySnapshot()/currentFriendStatsSnapshot() shape:
+-- derived, precomputed by the owner client-side, with each field left null
+-- whenever its share toggle is off — never written at all, not just
+-- RLS-hidden, same defense-in-depth CloudKit's FriendIdentitySnapshot
+-- already has.
+-- ---------------------------------------------------------------------
+
+create table public.friend_identity_snapshots (
+    id uuid primary key references auth.users (id) on delete cascade,
+    payload jsonb not null,
+    updated_at timestamptz not null default now()
+);
+
+create table public.friend_stats_snapshots (
+    id uuid primary key references auth.users (id) on delete cascade,
+    payload jsonb not null,
+    updated_at timestamptz not null default now()
+);
+
+create trigger trg_friend_identity_snapshots_updated_at before update on public.friend_identity_snapshots
+    for each row execute function public.set_updated_at();
+create trigger trg_friend_stats_snapshots_updated_at before update on public.friend_stats_snapshots
+    for each row execute function public.set_updated_at();
+
+-- SECURITY DEFINER to avoid RLS self-recursion on friend_requests, mirroring
+-- is_club_member's role for club_members.
+create or replace function public.is_accepted_friend(other_id uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+    select exists (
+        select 1 from public.friend_requests
+        where status = 'accepted'
+          and ((from_participant_id = auth.uid() and to_participant_id = other_id)
+            or (to_participant_id = auth.uid() and from_participant_id = other_id))
+    );
+$$;
+
+grant execute on function public.is_accepted_friend (uuid) to authenticated;
+
+alter table public.friend_identity_snapshots enable row level security;
+alter table public.friend_stats_snapshots enable row level security;
+
+-- Readable by the owner and any accepted friend; writable only by the
+-- owner. Neither table needs REPLICA IDENTITY FULL — is_accepted_friend(id)
+-- only needs the row's own primary key, same reasoning that exempted
+-- `clubs` (is_club_member(id)) from the fix challenges/reactions needed.
+create policy friend_identity_snapshots_select on public.friend_identity_snapshots
+    for select to authenticated
+    using (id = auth.uid() or public.is_accepted_friend(id));
+create policy friend_identity_snapshots_write on public.friend_identity_snapshots
+    for all to authenticated
+    using (id = auth.uid())
+    with check (id = auth.uid());
+
+create policy friend_stats_snapshots_select on public.friend_stats_snapshots
+    for select to authenticated
+    using (id = auth.uid() or public.is_accepted_friend(id));
+create policy friend_stats_snapshots_write on public.friend_stats_snapshots
+    for all to authenticated
+    using (id = auth.uid())
+    with check (id = auth.uid());
+
+alter publication supabase_realtime add table public.friend_identity_snapshots, public.friend_stats_snapshots;
