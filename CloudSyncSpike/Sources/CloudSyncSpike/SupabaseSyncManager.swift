@@ -506,6 +506,73 @@ public final class SupabaseSyncManager: ObservableObject {
         }
     }
 
+    // MARK: - Match invites (Phase 10a)
+    //
+    // Same "primitives here, model per-target" split as friend requests
+    // above — this package has no BadmintonCore dependency, so callers pass
+    // an already-`PersistenceStore.encodeMatchInvite`-encoded
+    // SharedMatchInvite. `match_invites` is id-primary-keyed like every
+    // other table (see schema.sql — `id` deliberately reuses the sender's
+    // own MatchRecord.id), so the pull side needs no bespoke fetch method
+    // either: `fetchAllRows(table: "match_invites")` already covers it.
+
+    public enum MatchInviteError: Error {
+        case selfInvite
+    }
+
+    /// Upserts (not insert-only) keyed on `recordId`, since `id` reuses the
+    /// sender's own `MatchRecord.id` — re-saving an edited match just
+    /// updates the same invite row instead of creating a duplicate. The
+    /// friends-only requirement is DB-enforced via `match_invites_insert`'s
+    /// `is_accepted_friend` RLS check (schema.sql); the self-invite guard
+    /// here just turns what would otherwise be an opaque RLS failure into a
+    /// clear client-side error.
+    public func sendMatchInvite(recordId: UUID, fromParticipantId: UUID, toParticipantId: UUID, payload: Data) async throws {
+        guard fromParticipantId != toParticipantId else { throw MatchInviteError.selfInvite }
+        guard let row = NewMatchInviteRow(
+            id: recordId, fromParticipantId: fromParticipantId, toParticipantId: toParticipantId, payloadData: payload
+        ) else {
+            appendLog("Send match invite failed: payload did not decode as JSON")
+            return
+        }
+        do {
+            try await client.from("match_invites").upsert(row).execute()
+            appendLog("Sent match invite")
+        } catch {
+            appendLog("Send match invite failed: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    /// Flips `status` and re-saves the full payload in one write — identical
+    /// shape to `respondToFriendRequest`, reusing `FriendRequestUpdateRow`
+    /// (its `status`+`payload` columns are byte-identical across both
+    /// tables, same cross-table struct reuse `IdPayloadRow` already does for
+    /// the friend identity/stats snapshot tables).
+    public func respondToMatchInvite(id: UUID, status: String, payload: Data) async {
+        guard let row = FriendRequestUpdateRow(status: status, payloadData: payload) else {
+            appendLog("Respond to match invite failed: payload did not decode as JSON")
+            return
+        }
+        do {
+            try await client.from("match_invites").update(row).eq("id", value: id).execute()
+            appendLog("Responded to match invite")
+        } catch {
+            appendLog("Respond to match invite failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Best-effort cleanup when the source `MatchRecord` is deleted — not
+    /// gated on an ownership check client-side, RLS covers it.
+    public func deleteMatchInvite(id: UUID) async {
+        do {
+            try await client.from("match_invites").delete().eq("id", value: id).execute()
+            appendLog("Deleted match invite")
+        } catch {
+            appendLog("Delete match invite failed: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - Erase All My Data teardown (Phase 9e-4)
     //
     // The Supabase-active counterpart to CloudKitSyncManager's
@@ -546,6 +613,25 @@ public final class SupabaseSyncManager: ObservableObject {
             appendLog("Deleted all friend requests")
         } catch {
             appendLog("Delete all friend requests failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Deletes every `match_invites` row the caller is party to, on either
+    /// side — same bidirectional shape as `deleteAllFriendRequests`, needed
+    /// because a personal-tier erase would otherwise leave invites the
+    /// caller sent (or received) permanently orphaned but still visible to
+    /// the other party via `match_invites_select`.
+    public func deleteAllMyMatchInvites() async {
+        guard let uid = await currentUserId() else { return }
+        do {
+            try await client
+                .from("match_invites")
+                .delete()
+                .or("from_participant_id.eq.\(uid),to_participant_id.eq.\(uid)")
+                .execute()
+            appendLog("Deleted all match invites")
+        } catch {
+            appendLog("Delete all match invites failed: \(error.localizedDescription)")
         }
     }
 
@@ -864,6 +950,32 @@ private struct FriendRequestUpdateRow: Encodable {
     init?(status: String, payloadData: Data) {
         guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
         self.status = status
+        self.payload = payload
+    }
+}
+
+/// `match_invites`' insert/upsert row — same shape as `NewFriendRequestRow`
+/// (id/from/to/payload), kept as its own type rather than reused since
+/// `match_invites`' `id` carries different semantics (reused from the
+/// sender's own `MatchRecord.id`, not freshly generated).
+private struct NewMatchInviteRow: Encodable {
+    let id: UUID
+    let fromParticipantId: UUID
+    let toParticipantId: UUID
+    let payload: AnyJSON
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case fromParticipantId = "from_participant_id"
+        case toParticipantId = "to_participant_id"
+        case payload
+    }
+
+    init?(id: UUID, fromParticipantId: UUID, toParticipantId: UUID, payloadData: Data) {
+        guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
+        self.id = id
+        self.fromParticipantId = fromParticipantId
+        self.toParticipantId = toParticipantId
         self.payload = payload
     }
 }

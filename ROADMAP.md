@@ -552,6 +552,60 @@ Per CLAUDE.md, any slice touching `AppStore`/the sync layer goes through
 plan mode first — a discipline this whole phase followed from 9b through
 9f-3.
 
+### Phase 10 — Friend match auto-sync (in progress: 10a landing)
+
+Today, picking a Friend as your opponent only copies their display name —
+the resulting `MatchRecord` never touches the friend's own account, even
+though Friends already supports read-only history sharing. Goal: when two
+friends play a personal singles match, it shows up in **both** of their own
+histories/stats, not just as a separate read-only mirror. Design decided
+through user discussion (not yet in a separate design doc): each side keeps
+its own independently-owned `MatchRecord` (no shared/dual-write row — see
+CLAUDE.md's `MatchInvite.swift`/`MatchInviteMirror.swift` entries for why),
+mirrored onto the recipient's account via a `SharedMatchInvite` ping reusing
+the `ChallengeRecord`/`FriendRequest` pattern, but **auto-accepted silently**
+in the common case — friendship is already the trust boundary, the same
+reasoning `shareHistoryWithFriends` needs no per-record approval — falling
+back to a manual confirm/dispute UI only when a conflict is detected (the
+friend already has a differing record that looks like the same match).
+Scoped to singles, personal (non-club) matches only; club matches keep their
+existing `requireMatchConfirmation`/`isConfirmed` flow untouched.
+
+Sliced into 3 PRs, same convention as Phase 5/7/9:
+
+- **10a — Data model + sync plumbing** ✅ done: `match_invites` table + RLS
+  ([supabase/schema.sql](supabase/schema.sql)); `SharedMatchInvite`
+  ([MatchInvite.swift](BadmintonCore/Sources/BadmintonCore/MatchInvite.swift))
+  + `MatchInviteMirror.build`
+  ([MatchInviteMirror.swift](BadmintonCore/Sources/BadmintonCore/MatchInviteMirror.swift))
+  + `StatsCalculator.conflictingRecord`; `MatchRecord.opponentParticipantId`/
+  `.sourceMatchId`; `PersistenceStore` codecs; `SyncEngine` protocol methods;
+  `CloudSyncSpike.SupabaseSyncManager.sendMatchInvite`/`respondToMatchInvite`/
+  `deleteMatchInvite`/`deleteAllMyMatchInvites`; both targets'
+  `AppStore.swift` (`matchInvites`/`matchConflicts`/`saveMatchInvites`/
+  `autoResolvePendingMatchInvites`/`respondToMatchInvite`, `saveHistory`'s
+  outbound trigger) and `SupabaseSyncEngine.swift` (`match_invites` in
+  `pullTables`, `enqueueMatchInvite`/`enqueueMatchInviteResponse`/
+  `refreshMatchInvites`). No UI yet — inert until 10b, since no picker
+  collects a friend's `participantId` yet, so low-risk to review in
+  isolation. `swift test --package-path BadmintonCore` green; both app
+  targets build clean.
+- **10b — Opponent-picker threading**: thread the friend's `participantId`
+  (already in scope at every `ForEach(filteredFriends, id: \.participantId)`
+  call site, currently discarded) through Watch/iOS `PreMatchView` +
+  `GameViewModel.saveMatch()` and iOS `AddMatchView`'s
+  `AddMatchPlayerPicker` into the saved `MatchRecord`, activating 10a
+  end-to-end. Needs a real two-account manual pass (log a match on Account A
+  against Account B, confirm B's history silently gains the mirrored
+  record) — not CI-provable.
+- **10c — Conflict-review UI**: a "Match Requests"/conflict section in
+  `FriendsView` (both targets) for the rare case 10a's auto-mirror declines
+  to resolve silently.
+
+Known v1 non-goals: doubles/club opponent tagging, re-syncing a mirror after
+the source match is edited, retracting a mirror when the source is deleted,
+auto-dedupe against a match the friend already logged themselves.
+
 ### Guardrails track (#110) — do anytime
 
 Cheap, independent CI hardening: a localization key-sync check across the 6 locales, code-coverage reporting on the test job, a build job for the Complication target, deployment-target alignment (Complication 26.5 vs app 11.4), and eventually a lightweight release process (semver tags + changelog).
@@ -571,6 +625,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
 | 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), **9e done** (9e-1: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3: friend history sharing via RLS extension + SupabaseSyncEngine pull/Realtime routing fix, no mirrored copy needed; 9e-4: erase-all-data Friends-graph teardown, new profiles_delete RLS policy, explicit identity/stats snapshot cleanup), **9f done** (9f-1: unlinked devices default to NoOpSyncEngine/local-only instead of auto-starting CloudKit, plus gating the CloudKit invite/FriendsHistory-share code paths that would otherwise create empty artifacts; 9f-2: every remaining per-View CloudKit branch collapsed to unconditional Supabase behavior, the dead accountLinked flag removed, a friend-request push-notification data-loss bug fixed; 9f-3: CloudKitSyncManager.swift/CloudSharingView.swift/SceneDelegate.swift deleted outright, iCloud/push capabilities removed, full CloudKit-reference doc-comment sweep). **Phase 9 is complete** — real two-device/real-account verification still owed |
+| 10 — Friend match auto-sync | not yet issue-tracked | 10a done (data model + sync plumbing: `match_invites` table/RLS, `SharedMatchInvite`/`MatchInviteMirror`, `StatsCalculator.conflictingRecord`, both targets' `AppStore`/`SupabaseSyncEngine` wiring — no UI yet, inert until 10b); 10b (opponent-picker threading) and 10c (conflict-review UI) not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.

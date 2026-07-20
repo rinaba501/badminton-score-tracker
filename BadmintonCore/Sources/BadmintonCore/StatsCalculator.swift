@@ -157,6 +157,59 @@ public enum StatsCalculator {
         return (wins: wins, losses: relevant.count - wins)
     }
 
+    // MARK: - Friend match conflict detection (Phase 10a)
+
+    /// True when `a`/`b` involve the same two participants — participant-id
+    /// match (`opponentParticipantId`) takes exclusive priority when BOTH
+    /// records tag one, since that's unambiguous; otherwise falls back to
+    /// comparing the unordered (myName, opponentName) pair, which is valid
+    /// because both `a`/`b` are always THIS device's own personal records
+    /// (myName is consistently "me" across them).
+    private static func sameParticipants(_ a: MatchRecord, _ b: MatchRecord) -> Bool {
+        if let aOpponent = a.opponentParticipantId, let bOpponent = b.opponentParticipantId {
+            return aOpponent == bOpponent
+        }
+        return Set([a.myName, a.opponentName]) == Set([b.myName, b.opponentName])
+    }
+
+    /// `GameScore.id` is a fresh UUID assigned per-instance and carries no
+    /// meaning about whether two games have the same result — comparing
+    /// `[GameScore]` arrays with `==` (which includes `id` via synthesized
+    /// `Equatable`) would treat any two independently-constructed matches
+    /// with identical scores as "different games". This compares only the
+    /// `my`/`opponent` value pairs, which is what "same score" actually means.
+    private static func sameScore(_ a: [GameScore], _ b: [GameScore]) -> Bool {
+        a.map { [$0.my, $0.opponent] } == b.map { [$0.my, $0.opponent] }
+    }
+
+    /// The first record in `history` that plausibly IS `candidate` under a
+    /// different score — same two participants (`sameParticipants` above),
+    /// within `dateProximity` of each other, but a `games` result that
+    /// differs. Returns `nil` when no record shares both participants and
+    /// date, OR when one does but the score already matches exactly (an
+    /// already-agreeing duplicate isn't a conflict — see
+    /// `MatchInviteMirror.swift`'s doc comment on why this feature doesn't
+    /// attempt to auto-dedupe two independently-logged, identically-scored
+    /// records into one). Both `candidate` and every `history` record
+    /// considered are restricted to personal (`clubId == nil`) singles
+    /// (`!isDoubles`) matches — this feature is scoped to that slice for v1;
+    /// club matches already have their own `requireMatchConfirmation` flow.
+    public static func conflictingRecord(
+        for candidate: MatchRecord,
+        in history: [MatchRecord],
+        dateProximity: TimeInterval = 86_400
+    ) -> MatchRecord? {
+        guard candidate.clubId == nil, !candidate.isDoubles else { return nil }
+        return history.first { existing in
+            existing.id != candidate.id
+                && existing.clubId == nil
+                && !existing.isDoubles
+                && sameParticipants(candidate, existing)
+                && abs(existing.date.timeIntervalSince(candidate.date)) <= dateProximity
+                && !sameScore(existing.games, candidate.games)
+        }
+    }
+
     // MARK: - Aggregates
 
     public static func wins(player: String, playerHistory: [MatchRecord]) -> Int {

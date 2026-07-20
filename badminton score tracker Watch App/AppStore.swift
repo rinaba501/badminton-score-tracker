@@ -39,6 +39,14 @@ final class AppStore: ObservableObject {
     /// (see saveFriendRequests). This cache is updated only after such a
     /// direct call succeeds, or after a `refreshFriendRequests()` poll.
     @Published private(set) var friendRequests: [FriendRequest]
+    /// Roadmap Phase 10a: "did this happen?" pings for personal singles
+    /// matches whose opponent was picked from Friends — same "updated only
+    /// after a direct network call/refetch, not through syncEngine's
+    /// enqueue* diffing" contract as `friendRequests` (see
+    /// `saveMatchInvites`). Most of these are resolved silently by
+    /// `autoResolvePendingMatchInvites()` and never seen by a human — see
+    /// `matchConflicts` for the ones that aren't.
+    @Published private(set) var matchInvites: [SharedMatchInvite]
     /// Friends' shared personal roster/history, keyed by their participantId
     /// — a friend's own players/match_records rows become visible via the
     /// friend_can_view_history RLS policy once they've turned on history
@@ -73,6 +81,39 @@ final class AppStore: ObservableObject {
         }
     }
 
+    /// Pending invites addressed to me that `autoResolvePendingMatchInvites`
+    /// could NOT silently mirror because `StatsCalculator.conflictingRecord`
+    /// found a pre-existing, differently-scored record for the same two
+    /// participants — the only match invites a human ever sees (FriendsView's
+    /// conflict-review section). Computed rather than a separate persisted
+    /// status, so there's no fourth wire-status value to keep in sync with
+    /// the schema's 3-value check constraint.
+    var matchConflicts: [SharedMatchInvite] {
+        guard let myId = UserDefaults.standard.string(forKey: AppStorageKeys.myParticipantId) else { return [] }
+        return matchInvites.filter { invite in
+            guard invite.status == .pending, invite.toParticipantId == myId else { return false }
+            guard !history.contains(where: { $0.sourceMatchId == invite.id }) else { return false }
+            guard let mirror = MatchInviteMirror.build(from: invite, myName: myDisplayName, myPlayerId: localPlayerId) else { return false }
+            return StatsCalculator.conflictingRecord(for: mirror, in: history) != nil
+        }
+    }
+
+    /// The pre-existing record `StatsCalculator.conflictingRecord` flagged
+    /// against `invite`, for FriendsView's conflict-review row to render
+    /// both sides — recomputed rather than cached, matching `matchConflicts`.
+    func conflictingRecord(for invite: SharedMatchInvite) -> MatchRecord? {
+        guard let mirror = MatchInviteMirror.build(from: invite, myName: myDisplayName, myPlayerId: localPlayerId) else { return nil }
+        return StatsCalculator.conflictingRecord(for: mirror, in: history)
+    }
+
+    /// This device's own scoring name, read the same way `saveMatch()`
+    /// resolves "me" — used only for building a mirrored `MatchRecord`
+    /// (`MatchInviteMirror.build`'s `myName` must be the RECIPIENT's own
+    /// identity, never copied from the invite).
+    private var myDisplayName: String {
+        UserDefaults.standard.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName
+    }
+
     @AppStorage(AppStorageKeys.localPlayerId) private var localPlayerIdString: String = ""
 
     /// Every outbound sync call goes through this seam rather than a
@@ -102,6 +143,7 @@ final class AppStore: ObservableObject {
         let ch = UserDefaults.standard.data(forKey: AppStorageKeys.challenges) ?? Data()
         let re = UserDefaults.standard.data(forKey: AppStorageKeys.reactions) ?? Data()
         let fr = UserDefaults.standard.data(forKey: AppStorageKeys.friendRequests) ?? Data()
+        let mi = UserDefaults.standard.data(forKey: AppStorageKeys.matchInvites) ?? Data()
         let fa = UserDefaults.standard.data(forKey: AppStorageKeys.friendActivity) ?? Data()
         let fi = UserDefaults.standard.data(forKey: AppStorageKeys.friendIdentities) ?? Data()
         let fs = UserDefaults.standard.data(forKey: AppStorageKeys.friendStats) ?? Data()
@@ -111,6 +153,7 @@ final class AppStore: ObservableObject {
         challenges = PersistenceStore.decodeChallenges(ch)
         reactions = PersistenceStore.decodeReactions(re)
         friendRequests = PersistenceStore.decodeFriendRequests(fr)
+        matchInvites = PersistenceStore.decodeMatchInvites(mi)
         friendActivity = Dictionary(
             uniqueKeysWithValues: PersistenceStore.decodeFriendActivity(fa).map { ($0.participantId, $0) }
         )
@@ -266,6 +309,21 @@ final class AppStore: ObservableObject {
         if isSharingStatsWithFriends {
             syncEngine.enqueueFriendStatsChange()
         }
+
+        // Roadmap Phase 10a: push a match invite for every newly-upserted
+        // personal singles record tagged with a friend opponent.
+        // sourceMatchId == nil is the guard that stops a MIRRORED record
+        // (which also carries an opponentParticipantId — pointing back at
+        // the original sender) from spawning its own outbound invite chain.
+        if !diff.upsertedIds.isEmpty {
+            let byId = Dictionary(records.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            for id in diff.upsertedIds {
+                guard let record = byId[id],
+                      record.clubId == nil, !record.isDoubles, record.sourceMatchId == nil,
+                      let participantId = record.opponentParticipantId else { continue }
+                syncEngine.enqueueMatchInvite(recordId: id, opponentParticipantId: participantId)
+            }
+        }
     }
 
     func clearHistory() {
@@ -320,6 +378,8 @@ final class AppStore: ObservableObject {
 
         await syncEngine.deleteAllMyFriendRequests()
         saveFriendRequests([])
+        await syncEngine.deleteAllMyMatchInvites()
+        saveMatchInvites([])
         await syncEngine.deleteMyFriendProfile()
         await syncEngine.deleteFriendsHistoryZone()
         // Explicit and unconditional, rather than relying on saveRoster's
@@ -424,6 +484,46 @@ final class AppStore: ObservableObject {
         UserDefaults.standard.set(encoded, forKey: AppStorageKeys.friendRequests)
         self.friendRequests = friendRequests
         pruneFriendActivityToCurrentFriends()
+    }
+
+    // Roadmap Phase 10a: same "not through syncEngine's enqueue* diffing"
+    // shape as saveFriendRequests, for the same reason — the network
+    // mutation (send/respond) already happened via a direct
+    // SupabaseSyncManager call before this reconciles the local cache.
+    func saveMatchInvites(_ matchInvites: [SharedMatchInvite]) {
+        guard let encoded = PersistenceStore.encodeMatchInvites(matchInvites) else { return }
+        UserDefaults.standard.set(encoded, forKey: AppStorageKeys.matchInvites)
+        self.matchInvites = matchInvites
+        autoResolvePendingMatchInvites()
+    }
+
+    /// For every pending invite addressed to me with no existing mirrored
+    /// record (`sourceMatchId` dedup) and no detected conflict, silently
+    /// build + save the mirror and mark the invite accepted — the auto-sync
+    /// path, no confirmation tap, since being friends already is the trust
+    /// boundary (same reasoning `shareHistoryWithFriends` needs no per-record
+    /// approval). A conflicting invite is left `pending` for FriendsView's
+    /// review UI (`matchConflicts`) instead. Idempotent — re-running against
+    /// an already-resolved invite list is a no-op, which is what lets
+    /// `SupabaseSyncEngine.handleRemoteChange`'s `match_invites` branch
+    /// always do a full refetch-and-reconcile rather than incremental
+    /// per-event handling.
+    private func autoResolvePendingMatchInvites() {
+        guard let myId = UserDefaults.standard.string(forKey: AppStorageKeys.myParticipantId) else { return }
+        for invite in matchInvites where invite.status == .pending && invite.toParticipantId == myId {
+            guard !history.contains(where: { $0.sourceMatchId == invite.id }) else { continue }
+            guard let mirror = MatchInviteMirror.build(from: invite, myName: myDisplayName, myPlayerId: localPlayerId) else { continue }
+            guard StatsCalculator.conflictingRecord(for: mirror, in: history) == nil else { continue }
+            saveHistory(history + [mirror])
+            respondToMatchInvite(invite, accept: true)
+        }
+    }
+
+    /// The one call path for accepting/declining a match invite — used both
+    /// by the silent auto-resolve above and by a human tapping Accept-
+    /// anyway/Ignore in FriendsView's conflict-review section.
+    func respondToMatchInvite(_ invite: SharedMatchInvite, accept: Bool) {
+        syncEngine.enqueueMatchInviteResponse(id: invite.id, accept: accept)
     }
 
     /// Drops any cached `friendActivity` entry for a participantId no longer
