@@ -134,12 +134,13 @@ All key strings are constants in `BadmintonCore.AppStorageKeys` — **read that 
 - Create a `feature/...` or `fix/...` branch for every change
 - Every PR that adds or changes a feature **must also update `SPEC.md`**
 - Every PR that changes project structure, architecture, models, or conventions **must also update `CLAUDE.md`**
-- After merging a PR, always clean up without being asked:
+- After merging a PR, always clean up without being asked (repo settings only allow squash merges — `allow_merge_commit`/`allow_rebase_merge` are both off, confirmed via `gh api repos/rinaba501/badminton-score-tracker`; `--merge` fails outright):
   ```
-  gh pr merge <number> --merge --delete-branch
+  gh pr merge <number> --squash --delete-branch
   git checkout main && git pull
   git remote prune origin
   ```
+  A squash-merged branch's tip commit is never an ancestor of `main` (`git merge-base --is-ancestor` returns false even though the content landed) — don't mistake that for the branch being unmerged when doing manual cleanup; check the PR/commit title or trust that `origin/<branch>` was auto-deleted.
 - Do not leave stale local or remote branches — one branch per PR, deleted on merge
 
 ### CI & review
