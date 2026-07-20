@@ -26,6 +26,7 @@ struct ContentView: View {
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.didPromptForName) private var didPromptForName = false
     @State private var showScoring = false
+    @State private var showingAddMatch = false
     @State private var showNamePrompt = false
     @State private var pendingName = ""
     @State private var pendingFriendInvite: PendingFriendInvite?
@@ -92,9 +93,12 @@ struct ContentView: View {
                 }
 
                 Section {
-                    newMatchButton
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                    VStack(spacing: 10) {
+                        newMatchButton
+                        addMatchButton
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
 
                 Section {
@@ -184,6 +188,7 @@ struct ContentView: View {
                     .environmentObject(AppStore.shared)
                     .environmentObject(StoreManager.shared)
             }
+            .sheet(isPresented: $showingAddMatch) { AddMatchView() }
             .safeAreaInset(edge: .bottom) {
                 if storeManager.entitlements.showsAds {
                     AdBannerView()
@@ -258,6 +263,22 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
+    }
+
+    // Smaller and less visually competing than newMatchButton — a frequent
+    // but secondary action (#278), not the primary CTA this screen exists
+    // to surface.
+    private var addMatchButton: some View {
+        Button {
+            showingAddMatch = true
+        } label: {
+            Label("addmatch.entry_label", systemImage: "plus.rectangle.on.folder")
+                .font(.subheadline.weight(.medium))
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+        }
+        .buttonStyle(.bordered)
+        .tint(.secondary)
     }
 
     // "You" as an avatar, not a generic icon tile — mirrors the identity

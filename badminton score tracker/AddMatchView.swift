@@ -22,13 +22,17 @@ struct AddMatchView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appStore: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    // Match Format's own picker only ever offers 1/3/5 (settings.games_1/3/5)
+    // — an odd "Best of N" count, never an arbitrary number — so this is the
+    // same cap the Games section below uses for its "Add Game" ceiling.
+    @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
 
     @State private var gameMode: GameMode = .singles
     @State private var nearName = ""
     @State private var nearPartnerName = ""
     @State private var farName = ""
     @State private var farPartnerName = ""
-    @State private var games: [EditableGameScore] = [EditableGameScore(), EditableGameScore()]
+    @State private var games: [EditableGameScore]
     @State private var date = Date()
     @State private var clubId: UUID?
     @State private var isOfficial = true
@@ -38,6 +42,18 @@ struct AddMatchView: View {
         let id = UUID()
         var my: Int = 0
         var opponent: Int = 0
+    }
+
+    /// Starts with just enough rows to decide a match in the fewest games
+    /// under the device's current Match Format (e.g. Best of 1 → 1 row, Best
+    /// of 3 → 2 rows) rather than a fixed count — a single-game result is the
+    /// default when that's what the format is, not something to delete a row
+    /// to reach.
+    init() {
+        let storedGamesInMatch = UserDefaults.standard.integer(forKey: AppStorageKeys.gamesInMatch)
+        let initialGamesInMatch = storedGamesInMatch == 0 ? 3 : storedGamesInMatch
+        let gamesToWin = (initialGamesInMatch / 2) + 1
+        _games = State(initialValue: Array(repeating: EditableGameScore(), count: gamesToWin))
     }
 
     private enum PickerSlot: Identifiable {
@@ -180,7 +196,7 @@ struct AddMatchView: View {
             }
             .onDelete(perform: deleteGames)
 
-            if games.count < 5 {
+            if games.count < gamesInMatch {
                 Button {
                     games.append(EditableGameScore())
                 } label: {
