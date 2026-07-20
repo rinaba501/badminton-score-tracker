@@ -508,9 +508,23 @@ final class SupabaseSyncEngine: SyncEngine {
         AppStore.shared.friends.first(where: { $0.participantId == id.uuidString })?.displayName ?? ""
     }
 
-    // MARK: - Not yet migrated (Phase 9e Friends graph)
+    // MARK: - Erase All My Data teardown (Phase 9e-4)
 
+    /// Permanent no-op under Supabase — there is no CKShare-zone equivalent
+    /// to tear down. Friend history visibility is pure RLS
+    /// (`friend_can_view_history`, 9e-3) gated by `shareHistoryWithFriends`,
+    /// which `AppStore.eraseAllData()` already resets to `false` before
+    /// calling this; the underlying `players`/`match_records` rows are
+    /// themselves deleted outright by that same method's `saveRoster([])`/
+    /// `clearHistory()` calls. Same "documented permanent no-op" precedent
+    /// 9e-2 set for `enqueueFriendsRosterChanges`/`enqueueFriendsHistoryChanges`.
     func deleteFriendsHistoryZone() async {}
-    func deleteMyFriendProfile() async {}
-    func deleteAllMyFriendRequests() async {}
+
+    func deleteMyFriendProfile() async {
+        await manager.deleteMyProfile()
+    }
+
+    func deleteAllMyFriendRequests() async {
+        await manager.deleteAllFriendRequests()
+    }
 }

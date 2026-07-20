@@ -506,6 +506,49 @@ public final class SupabaseSyncManager: ObservableObject {
         }
     }
 
+    // MARK: - Erase All My Data teardown (Phase 9e-4)
+    //
+    // The Supabase-active counterpart to CloudKitSyncManager's
+    // deleteMyFriendProfile()/deleteAllMyFriendRequests(), called from
+    // AppStore.eraseAllData() via SupabaseSyncEngine. There is no zone
+    // concept here (unlike CloudKit's FriendsHistory CKShare zone), so
+    // there's no third teardown method to add — see SupabaseSyncEngine's
+    // deleteFriendsHistoryZone() doc comment for why that one stays a
+    // documented no-op.
+
+    /// Deletes the caller's own `profiles` row (schema.sql's `profiles_delete`
+    /// policy, added in this same slice — nothing needed a profile delete
+    /// until now).
+    public func deleteMyProfile() async {
+        guard let uid = await currentUserId() else { return }
+        do {
+            try await client.from("profiles").delete().eq("id", value: uid).execute()
+            appendLog("Deleted profile")
+        } catch {
+            appendLog("Delete profile failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Deletes every `friend_requests` row the caller is party to, on either
+    /// side — mirrors `fetchMyFriendRequests`'s/CloudKit's own bidirectional
+    /// intent. `friend_requests_delete` RLS (widened to either-party in 9e-1)
+    /// already scopes this correctly on its own, but the explicit `.or()`
+    /// filter keeps the query's intent readable rather than leaning on RLS
+    /// alone to narrow an unfiltered delete.
+    public func deleteAllFriendRequests() async {
+        guard let uid = await currentUserId() else { return }
+        do {
+            try await client
+                .from("friend_requests")
+                .delete()
+                .or("from_participant_id.eq.\(uid),to_participant_id.eq.\(uid)")
+                .execute()
+            appendLog("Deleted all friend requests")
+        } catch {
+            appendLog("Delete all friend requests failed: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - Friend identity / stats sharing (Phase 9e-2)
     //
     // `friend_identity_snapshots`/`friend_stats_snapshots` are id+payload
