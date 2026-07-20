@@ -4,12 +4,18 @@
 //
 //  Roadmap Phase 5d: rename, member list, and per-club roster for a single
 //  Club. Member list is read live from the CKShare (Phase 5c's
-//  fetchOrCreateShare) when CloudKit sync is on, and always shows a self row
-//  (myRow, badged rather than labeled "You" — see youBadge) as a fallback
-//  first row so viewing a club never depends on CloudKit — see the
+//  fetchOrCreateShare) when Supabase isn't active, and always shows a self
+//  row (myRow, badged rather than labeled "You" — see youBadge) as a
+//  fallback first row so viewing a club never depends on CloudKit — see the
 //  local-first invariant in ROADMAP.md. Since invite-sending UI (5e) doesn't
 //  exist yet, a club's only real participant today is its owner, so the
 //  fetched list filters out the `.owner` role to avoid double-listing myRow.
+//  Roadmap Phase 9f-1: the CloudKit member-list fetch above only actually
+//  runs once CloudKit is started again (see CLAUDE.md/AppStore.swift) — with
+//  CloudKit no longer auto-started at launch, an unlinked device just falls
+//  back to the self-row-only view immediately instead of calling
+//  fetchOrCreateShare, since that would silently create a real-but-empty
+//  CKShare zone (this club's data was never pushed there).
 //  Deleting/leaving a club never deletes match/player data — it only clears
 //  clubId back to personal (nil) on every roster player and match record
 //  tagged with it, then removes the club via the same AppStore.saveClubs
@@ -682,31 +688,15 @@ struct ClubDetailView: View {
             Task { await loadParticipantsFromSupabase(club: club) }
             return
         }
-        Task {
-            do {
-                let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
-                let me = share.currentUserParticipant
-                let myId = me?.userIdentity.userRecordID?.recordName
-                let friendIds = Set(appStore.friends.map(\.participantId))
-                // Exclude the owner (shown separately as myRow when I am the owner)
-                // and, when I'm a non-owner member, exclude myself too — otherwise
-                // I'd see my own name (and a "Challenge" button) in the list.
-                let others = share.participants
-                    .filter { $0.role != .owner }
-                    .compactMap { participant -> ClubParticipant? in
-                        guard let id = participant.userIdentity.userRecordID?.recordName, id != myId else { return nil }
-                        return ClubParticipant(id: id, name: displayName(for: participant), isFriend: friendIds.contains(id))
-                    }
-                await MainActor.run {
-                    participants = others
-                    myParticipantId = me?.userIdentity.userRecordID?.recordName
-                    myDisplayName = me.map { displayName(for: $0) }
-                    loadingParticipants = false
-                }
-            } catch {
-                await MainActor.run { loadingParticipants = false }
-            }
-        }
+        // Roadmap Phase 9f-1: CloudKit is no longer started at launch, so
+        // AppStore's syncEngine defaults to NoOpSyncEngine until an explicit
+        // Supabase sign-in — this club's roster/history/membership data was
+        // never pushed to CloudKit in the first place. Calling
+        // fetchOrCreateShare here would still silently create (or read) a
+        // real CKShare zone with nothing behind it, worse than just falling
+        // back to the self-only view a genuine share-fetch failure already
+        // produces below.
+        loadingParticipants = false
     }
 
     /// Supabase-active counterpart to the CKShare fetch above — reads
@@ -729,15 +719,6 @@ struct ClubDetailView: View {
             myDisplayName = myRowName
             loadingParticipants = false
         }
-    }
-
-    /// Same nameComponents/email resolution for any participant, self included
-    /// (`CKShare.currentUserParticipant` is just another `CKShare.Participant`).
-    private func displayName(for participant: CKShare.Participant) -> String {
-        if let components = participant.userIdentity.nameComponents {
-            return PersonNameComponentsFormatter().string(from: components)
-        }
-        return participant.userIdentity.lookupInfo?.emailAddress ?? NSLocalizedString("clubs.you", comment: "")
     }
 
     /// Roadmap Phase 9d-2: creates a `club_invites` row and builds a

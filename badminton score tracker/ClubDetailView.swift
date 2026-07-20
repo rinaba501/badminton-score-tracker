@@ -4,13 +4,21 @@
 //
 //  Roadmap Phase 5d: rename, member list, and per-club roster for a single
 //  Club. Member list is read live from the CKShare (Phase 5c's
-//  fetchOrCreateShare) when CloudKit sync is on, and always shows a self row
-//  (myRow, badged rather than labeled "You" — see youBadge) as a fallback
-//  first row so viewing a club never depends on CloudKit — see the
+//  fetchOrCreateShare) when Supabase isn't active, and always shows a self
+//  row (myRow, badged rather than labeled "You" — see youBadge) as a
+//  fallback first row so viewing a club never depends on CloudKit — see the
 //  local-first invariant in ROADMAP.md. The fetched list filters out the
 //  `.owner` role to avoid double-listing myRow.
 //  Phase 5e adds the owner-only "Invite" button (CloudSharingView, a
 //  UICloudSharingController wrapper — iOS-only, no watchOS equivalent).
+//  Roadmap Phase 9f-1: both the CKShare member-list fetch and the Invite
+//  button's CloudKit path only actually work once CloudKit is started again
+//  (see CLAUDE.md/AppStore.swift) — with CloudKit no longer auto-started at
+//  launch, the Invite button is now gated to supabaseAccountLinked only
+//  (matching the Watch's — CKShare invites never had a Watch UI to begin
+//  with) and the member-list fetch falls back to the self-row-only view
+//  immediately when not linked, instead of calling fetchOrCreateShare and
+//  silently creating a real-but-empty CKShare zone.
 //  Deleting/leaving a club never deletes match/player data — it only clears
 //  clubId back to personal (nil) on every roster player and match record
 //  tagged with it, then removes the club via the same AppStore.saveClubs
@@ -304,7 +312,11 @@ struct ClubDetailView: View {
                             }
                         }
                     }
-                    if isOwned {
+                    // Roadmap Phase 9f-1: gated to Supabase-active only, same
+                    // as the Watch's own Invite button — CloudKit is no
+                    // longer started at launch, so its CKShare invite path
+                    // was removed from prepareInvite() above.
+                    if isOwned && supabaseAccountLinked {
                         Button {
                             Task { await prepareInvite(for: club) }
                         } label: {
@@ -753,31 +765,25 @@ struct ClubDetailView: View {
         AppStore.shared.enqueueSettingsChange()
     }
 
-    /// Branches on the active sync backend: CloudKit-active devices keep the
-    /// existing CKShare invite (UICloudSharingController) completely
-    /// unchanged; Supabase-active devices create a `club_invites` row and
-    /// build a `ClubInviteLink` URL instead (Roadmap Phase 9d-2) — no CKShare
-    /// involved, so this path works on watchOS too (see the Watch's own
-    /// ClubDetailView), unlike UICloudSharingController.
+    /// Creates a `club_invites` row and builds a `ClubInviteLink` URL
+    /// (Roadmap Phase 9d-2) — works on watchOS too (see the Watch's own
+    /// ClubDetailView), unlike CloudKit's UICloudSharingController.
+    /// Roadmap Phase 9f-1: only reachable when `supabaseAccountLinked` (see
+    /// the Invite button below) — the CloudKit branch this used to have was
+    /// removed here since `fetchOrCreateShare` would silently create a real
+    /// CKShare zone with no data behind it (CloudKit is no longer started at
+    /// launch). `ShareBox`/`CloudSharingView` themselves are left in place,
+    /// unreachable until Phase 9f-3 removes CloudKit's UI surface entirely.
     private func prepareInvite(for club: Club?) async {
         guard let club else { return }
         isPreparingShare = true
         defer { isPreparingShare = false }
-        if supabaseAccountLinked {
-            guard let inviteId = await SupabaseSyncManager.shared.createClubInvite(clubId: club.id),
-                  let url = ClubInviteLink.url(inviteId: inviteId.uuidString, clubName: club.name) else {
-                shareErrorMessage = NSLocalizedString("clubs.invite_create_failed_message", comment: "")
-                return
-            }
-            clubInviteBox = ClubInviteBox(url: url)
-        } else {
-            do {
-                let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
-                shareBox = ShareBox(share: share)
-            } catch {
-                shareErrorMessage = error.localizedDescription
-            }
+        guard let inviteId = await SupabaseSyncManager.shared.createClubInvite(clubId: club.id),
+              let url = ClubInviteLink.url(inviteId: inviteId.uuidString, clubName: club.name) else {
+            shareErrorMessage = NSLocalizedString("clubs.invite_create_failed_message", comment: "")
+            return
         }
+        clubInviteBox = ClubInviteBox(url: url)
     }
 
     private func sendChallenge(to participant: ClubParticipant) {
@@ -816,31 +822,15 @@ struct ClubDetailView: View {
             Task { await loadParticipantsFromSupabase(club: club) }
             return
         }
-        Task {
-            do {
-                let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
-                let me = share.currentUserParticipant
-                let myId = me?.userIdentity.userRecordID?.recordName
-                let friendIds = Set(store.friends.map(\.participantId))
-                // Exclude the owner (shown separately as myRow when I am the owner)
-                // and, when I'm a non-owner member, exclude myself too — otherwise
-                // I'd see my own name (and a "Challenge" button) in the list.
-                let others = share.participants
-                    .filter { $0.role != .owner }
-                    .compactMap { participant -> ClubParticipant? in
-                        guard let id = participant.userIdentity.userRecordID?.recordName, id != myId else { return nil }
-                        return ClubParticipant(id: id, name: displayName(for: participant), isFriend: friendIds.contains(id))
-                    }
-                await MainActor.run {
-                    participants = others
-                    myParticipantId = me?.userIdentity.userRecordID?.recordName
-                    myDisplayName = me.map { displayName(for: $0) }
-                    loadingParticipants = false
-                }
-            } catch {
-                await MainActor.run { loadingParticipants = false }
-            }
-        }
+        // Roadmap Phase 9f-1: CloudKit is no longer started at launch, so
+        // AppStore's syncEngine defaults to NoOpSyncEngine until an explicit
+        // Supabase sign-in — this club's roster/history/membership data was
+        // never pushed to CloudKit in the first place. Calling
+        // fetchOrCreateShare here would still silently create (or read) a
+        // real CKShare zone with nothing behind it, worse than just falling
+        // back to the self-only view a genuine share-fetch failure already
+        // produces below.
+        loadingParticipants = false
     }
 
     /// Supabase-active counterpart to the CKShare fetch above — reads
@@ -865,14 +855,6 @@ struct ClubDetailView: View {
         }
     }
 
-    /// Same nameComponents/email resolution for any participant, self included
-    /// (`CKShare.currentUserParticipant` is just another `CKShare.Participant`).
-    private func displayName(for participant: CKShare.Participant) -> String {
-        if let components = participant.userIdentity.nameComponents {
-            return PersonNameComponentsFormatter().string(from: components)
-        }
-        return participant.userIdentity.lookupInfo?.emailAddress ?? NSLocalizedString("clubs.you", comment: "")
-    }
 }
 
 /// CKShare isn't Identifiable, so this wraps it for `.sheet(item:)`.

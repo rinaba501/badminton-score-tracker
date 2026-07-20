@@ -23,7 +23,6 @@ struct StatsView: View {
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.shareStatsWithFriends) private var shareStatsWithFriends = false
-    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
 
     @State private var selectedPlayer: String = ""
     @State private var selectedClubId: UUID?
@@ -359,20 +358,16 @@ struct StatsView: View {
 
     // MARK: - Sharing
 
+    // Roadmap Phase 9f-1: the CloudKit FriendsHistory CKShare zone/
+    // participant calls this used to make in the !supabaseAccountLinked
+    // branch were removed — see FriendSharingSettingsView's matching handler
+    // for why.
     private func toggleStatsSharing(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
-        Task { @MainActor in
-            if isOn {
-                if !supabaseAccountLinked {
-                    await CloudKitSyncManager.shared.syncFriendsHistoryParticipants()
-                }
-                AppStore.shared.syncEngine.enqueueFriendStatsChange()
-            } else {
-                AppStore.shared.syncEngine.removeFriendStatsRecord()
-                if !supabaseAccountLinked && !store.isSharingAnyProfileData {
-                    await CloudKitSyncManager.shared.revokeFriendsHistoryAccess()
-                }
-            }
+        if isOn {
+            AppStore.shared.syncEngine.enqueueFriendStatsChange()
+        } else {
+            AppStore.shared.syncEngine.removeFriendStatsRecord()
         }
     }
 

@@ -47,8 +47,14 @@ public protocol SyncEngine {
     func deleteAllMyFriendRequests() async
 }
 
-/// Test double — no call site yet, kept for future AppStore unit tests, same
-/// precedent as HapticsProvider's currently-unused iOS NoOpHapticsProvider.
+/// Roadmap Phase 9f-1: the real default for a device that has never signed
+/// into Supabase — `AppStore.shared`/`deactivateSupabaseSync()` (both
+/// targets) use this instead of `CloudKitSyncManager.shared` now that
+/// CloudKit is no longer started automatically at launch. Local-only: saves
+/// still work (roster/history/settings persist via `PersistenceStore` as
+/// always), nothing leaves the device until an explicit Supabase sign-in
+/// swaps `syncEngine` to `SupabaseSyncEngine.shared`. Originally added in 9b
+/// as a test double with no call site; this is its first real one.
 public struct NoOpSyncEngine: SyncEngine {
     public init() {}
 
