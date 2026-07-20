@@ -327,3 +327,14 @@
 "friends.code_placeholder" = "招待リンクまたはコード";
 "friends.code_send" = "申請を送る";
 "friends.error_not_found" = "そのコードのプレイヤーが見つかりません。";
+"addmatch.entry_label" = "試合を追加";
+"addmatch.title" = "過去の試合を追加";
+"addmatch.players_section" = "プレイヤー";
+"addmatch.select_player" = "選択";
+"addmatch.games_section" = "ゲーム";
+"addmatch.game_number" = "ゲーム%d";
+"addmatch.date_label" = "日付";
+"addmatch.save" = "保存";
+"addmatch.result_error" = "各ゲームにスコアを入力し、引き分けがないようにして、試合の勝者を決めてください。";
+"addmatch.game_count_label" = "ゲーム数：%d";
+"addmatch.even_games_warning" = "ストレート勝ちならゲーム数が偶数でも問題ありません。ゲームの入れ忘れがないか確認してください。";

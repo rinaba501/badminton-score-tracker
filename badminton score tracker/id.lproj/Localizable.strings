@@ -327,3 +327,14 @@
 "friends.code_placeholder" = "Tautan undangan atau kode";
 "friends.code_send" = "Kirim Permintaan";
 "friends.error_not_found" = "Tidak ada pemain dengan kode tersebut.";
+"addmatch.entry_label" = "Tambah Pertandingan";
+"addmatch.title" = "Tambah Pertandingan Lalu";
+"addmatch.players_section" = "Pemain";
+"addmatch.select_player" = "Pilih";
+"addmatch.games_section" = "Game";
+"addmatch.game_number" = "Game %d";
+"addmatch.date_label" = "Tanggal";
+"addmatch.save" = "Simpan";
+"addmatch.result_error" = "Masukkan skor untuk setiap game, tanpa hasil seri, agar pertandingan memiliki pemenang yang jelas.";
+"addmatch.game_count_label" = "Game: %d";
+"addmatch.even_games_warning" = "Jumlah game genap tidak masalah untuk kemenangan straight-set — pastikan tidak ada game yang terlewat.";

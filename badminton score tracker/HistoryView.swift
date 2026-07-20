@@ -38,6 +38,7 @@ struct HistoryView: View {
     @State private var newestFirst = true
     @State private var matchType: StatsCalculator.MatchTypeFilter = .all
     @State private var selectedClubId: UUID?
+    @State private var showingAddMatch = false
 
     enum DateRange: String, CaseIterable {
         case week, month, all
@@ -202,6 +203,7 @@ struct HistoryView: View {
                     Button(allFilteredSelected ? "history.deselect_all" : "history.select_all") { toggleSelectAll() }
                 }
             } else {
+                ToolbarItem(placement: .topBarLeading) { addMatchButton }
                 if !store.clubs.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) { clubFilterMenu }
                 }
@@ -211,6 +213,7 @@ struct HistoryView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingAddMatch) { AddMatchView() }
         .alert(Text("history.clear_title"), isPresented: $showingClearConfirmation) {
             Button("history.cancel", role: .cancel) { }
             Button("history.clear", role: .destructive) { store.clearHistory() }
@@ -257,6 +260,15 @@ struct HistoryView: View {
                 .pickerStyle(.segmented)
             }
         }
+    }
+
+    private var addMatchButton: some View {
+        Button {
+            showingAddMatch = true
+        } label: {
+            Image(systemName: "plus")
+        }
+        .accessibilityLabel(Text("addmatch.entry_label"))
     }
 
     @ViewBuilder private var clubFilterMenu: some View {
