@@ -17,6 +17,7 @@
 
 import SwiftUI
 import BadmintonCore
+import CloudSyncSpike
 
 struct FriendInviteView: View {
     let invite: FriendInviteLink.Invite
@@ -24,6 +25,7 @@ struct FriendInviteView: View {
 
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
 
     private enum SendState: Equatable {
         case idle, sending, sent, failed(String)
@@ -123,6 +125,10 @@ struct FriendInviteView: View {
         // @MainActor: the awaits on the (MainActor) sync manager would
         // otherwise resume on a background executor before mutating @State.
         Task { @MainActor in
+            if supabaseAccountLinked {
+                await sendViaSupabase(displayName: displayName)
+                return
+            }
             do {
                 let manager = CloudKitSyncManager.shared
                 try await manager.ensureMyProfileExists(displayName: displayName)
@@ -140,6 +146,44 @@ struct FriendInviteView: View {
             } catch {
                 sendState = .failed(NSLocalizedString("friends.error_generic", comment: ""))
             }
+        }
+    }
+
+    /// `invite.participantId` must be a real `auth.uid()` string here — an
+    /// invite link sent from a Supabase-active device always encodes one, so
+    /// no separate `profiles` lookup is needed; `invite.displayName` (the
+    /// link's own embedded UGC name, same as the CloudKit path uses) is
+    /// trusted the same way here too, not re-resolved against `profiles`.
+    private func sendViaSupabase(displayName: String) async {
+        guard let toId = UUID(uuidString: invite.participantId) else {
+            sendState = .failed(NSLocalizedString("friends.error_generic", comment: ""))
+            return
+        }
+        guard let myId = await SupabaseSyncManager.shared.currentUserId() else {
+            sendState = .failed(NSLocalizedString("friends.error_generic", comment: ""))
+            return
+        }
+        await SupabaseSyncManager.shared.upsertMyProfile(displayName: displayName)
+        let request = FriendRequest(
+            fromParticipantId: myId.uuidString, fromDisplayName: displayName,
+            toParticipantId: toId.uuidString, toDisplayName: invite.displayName
+        )
+        guard let payload = PersistenceStore.encodeFriendRequest(request) else {
+            sendState = .failed(NSLocalizedString("friends.error_generic", comment: ""))
+            return
+        }
+        do {
+            try await SupabaseSyncManager.shared.sendFriendRequest(
+                id: request.id, fromParticipantId: myId, toParticipantId: toId, payload: payload
+            )
+            await SupabaseSyncEngine.shared.refreshFriendRequests()
+            sendState = .sent
+        } catch SupabaseSyncManager.FriendRequestError.selfRequest {
+            sendState = .failed(NSLocalizedString("friends.error_self", comment: ""))
+        } catch SupabaseSyncManager.FriendRequestError.alreadyPending {
+            sendState = .failed(NSLocalizedString("friends.error_pending", comment: ""))
+        } catch {
+            sendState = .failed(NSLocalizedString("friends.error_generic", comment: ""))
         }
     }
 }

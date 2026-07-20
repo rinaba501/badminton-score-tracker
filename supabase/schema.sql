@@ -333,7 +333,10 @@ create policy reactions_delete on public.reactions
 
 -- friend_requests: visible to either side of the request; only the sender
 -- can create one (can't send as someone else); either side can update
--- (recipient accepts/declines, sender cancels).
+-- (recipient accepts/declines, sender cancels). Delete is symmetric (either
+-- side can remove the row, same self-or-owner shape as club_members_delete)
+-- rather than sender-only, so a full erase-all-data teardown (Phase 9e-4)
+-- can clean up requests where this account is only the recipient.
 create policy friend_requests_select on public.friend_requests
     for select to authenticated
     using (from_participant_id = auth.uid() or to_participant_id = auth.uid());
@@ -343,7 +346,8 @@ create policy friend_requests_update on public.friend_requests
     for update to authenticated
     using (from_participant_id = auth.uid() or to_participant_id = auth.uid());
 create policy friend_requests_delete on public.friend_requests
-    for delete to authenticated using (from_participant_id = auth.uid());
+    for delete to authenticated
+    using (from_participant_id = auth.uid() or to_participant_id = auth.uid());
 
 -- ---------------------------------------------------------------------
 -- Realtime (Phase 9c-6): enable logical replication for the personal
@@ -432,3 +436,16 @@ end;
 $$;
 
 grant execute on function public.redeem_club_invite (uuid) to authenticated;
+
+-- ---------------------------------------------------------------------
+-- Friends graph (Phase 9e-1): friend_requests joins Realtime now that its
+-- push/pull sync is wired up (SupabaseSyncEngine.refreshFriendRequests via
+-- pullInitialState/handleRemoteChange). Same REPLICA IDENTITY gap as
+-- challenges/reactions (9d-1) and players/match_records (9c-5):
+-- friend_requests_select/_delete need from_participant_id/to_participant_id,
+-- neither the primary key, so a DELETE's old-row image is missing them
+-- under the default identity and the event fails RLS for everyone.
+-- ---------------------------------------------------------------------
+
+alter table public.friend_requests replica identity full;
+alter publication supabase_realtime add table public.friend_requests;

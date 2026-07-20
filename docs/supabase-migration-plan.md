@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9d done.** Schema + RLS applied and verified against the
+**Status: 9a-9d done, 9e in progress (9e-1 done).** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -449,10 +449,87 @@ and its own tracking issue, filed once the prior slice lands.
     values threaded down from `ClubDetailView`, so fixing
     `loadParticipants()` to populate those correctly for Supabase-active
     covers them automatically.
-- **9e — Friends graph cutover.** `FriendProfile`/`FriendRequest` move from
-  CloudKit's public database to Postgres; the FriendsHistory identity-shared
-  zone becomes `friend_shares`-scoped RLS; push notifications move from
-  `CKQuerySubscription` to Supabase Realtime or an Edge Function + APNs.
+- **9e — Friends graph cutover**, split 9e-1/9e-2/9e-3/9e-4 (its own
+  plan-mode pass this session, superseding this bullet's original one-line
+  sketch — the "`friend_shares`-scoped RLS"/"Edge Function + APNs" wording
+  below predates that pass and is resolved differently, kept struck-through
+  for history rather than deleted):
+  - ~~`FriendProfile`/`FriendRequest` move from CloudKit's public database to
+    Postgres; the FriendsHistory identity-shared zone becomes
+    `friend_shares`-scoped RLS; push notifications move from
+    `CKQuerySubscription` to Supabase Realtime or an Edge Function + APNs.~~
+  - **9e-1** ✅ done: `FriendProfile`/`FriendRequest` reuse `profiles` (9d-3)
+    and `friend_requests` (9a) directly — no new tables, no `friend_shares`
+    junction table, no APNs/Edge Function (Realtime alone, same as every
+    other table since 9c-5). `profiles.id`/`friend_requests.
+    from_participant_id`/`to_participant_id` are already `auth.uid()`
+    itself, simpler than the opaque-CKShare-id parsing challenges/reactions
+    needed in 9d-1. `SupabaseSyncManager` gained
+    `fetchProfileDisplayName`/`sendFriendRequest`/`respondToFriendRequest` —
+    all primitives-only (`UUID`/`String`/`Data`), since this package still
+    has no `BadmintonCore` dependency and so can never construct a
+    `FriendRequest`/`FriendProfile` itself; every target's View builds the
+    model, encodes it via `PersistenceStore`, and passes the raw pieces in,
+    same split every other method in this file already follows. The pull
+    side needed no new manager method at all: `friend_requests` is
+    id-primary-keyed like every other table, so it just joined `pullTables`
+    and reuses the existing `fetchAllRows`/Realtime subscription unchanged.
+    New `SupabaseSyncEngine.refreshFriendRequests()` does a full
+    refetch-and-reconcile into `AppStore.saveFriendRequests` (not a per-id
+    merge — matches that method's existing "here is the complete current
+    list" contract, and the CloudKit path already refetches the whole set
+    after every mutation too) on both the initial pull and every Realtime
+    event for that table, regardless of insert/update/delete — simpler than
+    branching per change kind for a table this small. A real correctness
+    gap was found (not anticipated by the plan-mode pass): `AppStore.
+    friends` reads `AppStorageKeys.myParticipantId` from `UserDefaults`
+    directly rather than through `SyncEngine`, and that key was previously
+    only ever written by CloudKit's `resolveMyParticipantId()` — a
+    Supabase-active device never called that, so `AppStore.friends` would
+    have silently stayed empty forever. Fixed by caching `currentUserId()`
+    into the same key from `SupabaseSyncEngine.startIfActive()` (already the
+    per-target hook for "activation + every app launch" side effects, same
+    place 9d-3's `upsertMyProfile` call landed). Also two SQL changes:
+    widened `friend_requests_delete` RLS from sender-only to either-party
+    (symmetric with `club_members_delete`'s self-or-owner shape, needed so a
+    future full-teardown delete can clean up requests where this account is
+    only ever the recipient), and the by-now-familiar `REPLICA IDENTITY
+    FULL` fix (third occurrence — 9c-5, 9d-1, 9e-1 — `friend_requests_select`/
+    `_delete` read `from_participant_id`/`to_participant_id`, neither the
+    primary key). Every `CloudKitSyncManager.shared.ensureMyProfileExists`/
+    `fetchProfile`/`sendFriendRequest`/`respondToFriendRequest`/
+    `fetchMyFriendRequests` call site across both targets now branches on
+    `supabaseAccountLinked`.
+  - **9e-2 — Friend identity + stats sharing** (next): new
+    `friend_identity_snapshots`/`friend_stats_snapshots` tables, one row per
+    owner. Deliberately NOT a live RLS grant on `settings` itself — that
+    table's single `payload jsonb` blob holds every unrelated scalar setting
+    alongside the four/six shareable fields, and RLS can only grant or deny
+    a whole row, not individual jsonb keys, so a friend granted `SELECT`
+    there would see everything. The two new tables instead mirror CloudKit's
+    own `currentFriendIdentitySnapshot()`/`currentFriendStatsSnapshot()`
+    shape: derived, precomputed, and each column left `null` client-side
+    (never written at all, not just RLS-hidden) whenever its toggle is off.
+  - **9e-3 — Friend history sharing** (after 9e-2): extends already-live
+    `players_select`/`match_records_select` RLS with one more `or` branch
+    keyed off a new `is_accepted_friend`/`friend_can_view_history` helper
+    pair — no mirrored copy of the data is needed at all (a genuine
+    simplification over CloudKit's separate "FriendsHistory" zone, which
+    only existed because a `CKShare` grants access at zone granularity, not
+    per-row; Postgres RLS is row-level natively). Since `fetchAllRows`/
+    `startRealtimeSync` already apply no client-side owner filter, the
+    already-running players/match_records sync will start returning
+    friend-shared rows the instant this RLS lands — the real work is
+    teaching `SupabaseSyncEngine`'s pull/Realtime routing to send a
+    `clubId == nil && ownerId != self` row to `AppStore.
+    applyRemoteFriendActivity` instead of the normal merge-into-my-own-roster
+    path, the highest-risk piece of 9e (touches already-live RLS + sync
+    routing logic).
+  - **9e-4 — Erase-all-data teardown + remaining UI wiring**: real
+    `deleteFriendsHistoryZone`/`deleteMyFriendProfile`/
+    `deleteAllMyFriendRequests` implementations (currently no-op stubs), plus
+    whatever `FriendSharingSettingsView`/`FriendActivityView` call sites
+    9e-2/9e-3 leave unbranched.
 - **9f — Dual-run validation & cutover.** Run both backends live for opted-in
   users during a validation window, compare data for drift, then flip the
   default identity provider and retire the CloudKit code paths and

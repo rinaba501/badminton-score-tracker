@@ -545,6 +545,10 @@ struct ClubDetailView: View {
         promptingForName = false
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
+            if supabaseAccountLinked {
+                await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
+                return
+            }
             try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
         }
     }
