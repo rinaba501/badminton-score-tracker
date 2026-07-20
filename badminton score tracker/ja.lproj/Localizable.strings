@@ -236,6 +236,16 @@
 "clubs.filter_label" = "クラブで絞り込む";
 "clubs.invite" = "招待…";
 "clubs.invite_failed" = "招待を作成できませんでした";
+"clubs.invite_title" = "招待";
+"clubs.invite_link_ready" = "招待リンクの準備ができました。";
+"clubs.invite_share" = "招待リンクを共有";
+"clubs.invite_create_failed_message" = "招待の作成中に問題が発生しました。もう一度お試しください。";
+"clubs.invite_join_title" = "クラブに参加";
+"clubs.invite_join_message" = "%@に参加しますか？";
+"clubs.invite_join" = "クラブに参加";
+"clubs.invite_joined" = "参加しました！";
+"clubs.invite_join_failed" = "この招待は無効か、期限が切れています。";
+"clubs.invite_unknown_club" = "クラブ";
 "playeredit.club" = "クラブ";
 "playeredit.club_personal" = "個人";
 "common.ok" = "OK";

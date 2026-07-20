@@ -236,6 +236,16 @@
 "clubs.filter_label" = "Filter by Club";
 "clubs.invite" = "Invite…";
 "clubs.invite_failed" = "Couldn't create invite";
+"clubs.invite_title" = "Invite";
+"clubs.invite_link_ready" = "Your invite link is ready to share.";
+"clubs.invite_share" = "Share Invite Link";
+"clubs.invite_create_failed_message" = "Something went wrong creating the invite. Try again.";
+"clubs.invite_join_title" = "Join Club";
+"clubs.invite_join_message" = "Join %@?";
+"clubs.invite_join" = "Join Club";
+"clubs.invite_joined" = "Joined!";
+"clubs.invite_join_failed" = "This invite is invalid or has expired.";
+"clubs.invite_unknown_club" = "A club";
 "playeredit.club" = "Club";
 "playeredit.club_personal" = "Personal";
 "common.ok" = "OK";

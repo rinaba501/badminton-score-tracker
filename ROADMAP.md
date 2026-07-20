@@ -296,10 +296,26 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
     deferred: participant-id remapping needed no model change (see above),
     and `reactions.club_id`'s Postgres cascade-delete turned out to already
     match CloudKit's own zone-delete cascade — not a divergence.
-  - **9d-2 — Invite redemption**: a `SECURITY DEFINER` RPC
-    (`redeem_club_invite`) plus a `ClubInviteLink`/`ClubInviteView` pair
-    mirroring `FriendInviteLink`/`FriendInviteView`, replacing
-    `UICloudSharingController` for Supabase-active devices.
+  - **9d-2** ✅ done: `club_members` has no direct INSERT policy (9a's own
+    RLS comment already anticipated this) — a new `SECURITY DEFINER`
+    Postgres function, `redeem_club_invite(invite_id)`, validates a
+    `club_invites` row's expiry/`max_uses`/`use_count` (row-locked via
+    `for update` to close a race between two concurrent redemptions) then
+    inserts the caller into `club_members`, mirroring how `handle_new_club()`
+    already bypasses the caller's own insert privilege for owners. `SupabaseSyncManager`
+    gained `createClubInvite`/`redeemClubInvite`; new `ClubInviteLink.swift`
+    (`BadmintonCore`, byte-shape mirror of `FriendInviteLink.swift`,
+    `badminton://joinclub?id=<inviteId>&name=<clubName>`) and iOS-only
+    `ClubInviteView.swift` (mirrors `FriendInviteView.swift`), wired into
+    `ContentView`'s `onOpenURL` as a second parse attempt after
+    `FriendInviteLink.parse` misses. `ClubDetailView`'s owner-only Invite
+    button (both targets) now branches on `supabaseAccountLinked`:
+    CloudKit-active keeps `CloudSharingView` completely unchanged;
+    Supabase-active creates an invite then presents a `ShareLink` over the
+    `ClubInviteLink` URL — no CKShare involved, so this is the **Watch's
+    first invite-sending affordance** (CKShare invites were always iOS-only,
+    `UICloudSharingController` being UIKit-only). New SQL (external setup,
+    flagged to user): the `redeem_club_invite` function itself.
   - **9d-3 — Member-list read + leave/kick**: `SupabaseSyncManager.
     fetchClubMembers(clubId:)` (joins `club_members` against the existing
     `profiles` table for display names) as the Supabase-active branch of
@@ -337,7 +353,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
-| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), 9d in progress (9d-1 done: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2/9d-3 next), 9e–9f not started |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), 9d in progress (9d-1 done: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2 done: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3 next), 9e–9f not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.

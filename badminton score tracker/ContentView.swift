@@ -28,6 +28,7 @@ struct ContentView: View {
     @State private var showNamePrompt = false
     @State private var pendingName = ""
     @State private var pendingFriendInvite: PendingFriendInvite?
+    @State private var pendingClubInvite: PendingClubInvite?
     @State private var stripDestination: StripDestination?
 
     /// Three co-located `NavigationLink`s sharing one `List` row (the stats
@@ -46,6 +47,13 @@ struct ContentView: View {
     private struct PendingFriendInvite: Identifiable {
         let id = UUID()
         let invite: FriendInviteLink.Invite
+    }
+
+    /// Identifiable wrapper so a parsed `badminton://joinclub` link can drive
+    /// `.sheet(item:)`, same shape as `PendingFriendInvite` (Roadmap 9d-2).
+    private struct PendingClubInvite: Identifiable {
+        let id = UUID()
+        let invite: ClubInviteLink.Invite
     }
 
     private var needsName: Bool {
@@ -151,12 +159,20 @@ struct ContentView: View {
                 }
             }
             .onOpenURL { url in
-                guard let invite = FriendInviteLink.parse(url) else { return }
-                pendingFriendInvite = PendingFriendInvite(invite: invite)
+                if let invite = FriendInviteLink.parse(url) {
+                    pendingFriendInvite = PendingFriendInvite(invite: invite)
+                } else if let invite = ClubInviteLink.parse(url) {
+                    pendingClubInvite = PendingClubInvite(invite: invite)
+                }
             }
             .sheet(item: $pendingFriendInvite) { pending in
                 FriendInviteView(invite: pending.invite) {
                     pendingFriendInvite = nil
+                }
+            }
+            .sheet(item: $pendingClubInvite) { pending in
+                ClubInviteView(invite: pending.invite) {
+                    pendingClubInvite = nil
                 }
             }
             .sheet(isPresented: $showNamePrompt) {
