@@ -334,6 +334,16 @@ final class AppStore: ObservableObject {
         saveFriendRequests([])
         await syncEngine.deleteMyFriendProfile()
         await syncEngine.deleteFriendsHistoryZone()
+        // Explicit and unconditional (Roadmap Phase 9e-4), rather than
+        // relying on saveRoster's diff-gated refreshMyIdentitySnapshotIfSharing()
+        // call above to happen to fire: under CloudKit this is redundant with
+        // the zone delete just above (harmless, idempotent), but under
+        // Supabase there is no zone — friend_identity_snapshots/
+        // friend_stats_snapshots are ordinary tables with no bulk-delete-by-
+        // owner shortcut, so these two calls are the only thing that clears
+        // them during an erase.
+        syncEngine.removeFriendIdentityRecord()
+        syncEngine.removeFriendStatsRecord()
 
         syncEngine.enqueueSettingsChange()
     }

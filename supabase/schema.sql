@@ -248,6 +248,13 @@ create policy profiles_insert on public.profiles
     for insert to authenticated with check (id = auth.uid());
 create policy profiles_update on public.profiles
     for update to authenticated using (id = auth.uid());
+-- Phase 9e-4: delete needed by AppStore.eraseAllData()'s Supabase-active
+-- teardown (SupabaseSyncManager.deleteMyProfile()) — omitted from 9a since
+-- nothing called for it until Erase All My Data's Friends-graph cleanup
+-- landed on Supabase. No REPLICA IDENTITY FULL needed (filters on the row's
+-- own primary key).
+create policy profiles_delete on public.profiles
+    for delete to authenticated using (id = auth.uid());
 
 -- clubs: visible to the owner and any member; only the owner can create,
 -- rename, or delete.

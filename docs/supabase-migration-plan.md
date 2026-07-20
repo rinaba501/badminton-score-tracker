@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9d done, 9e in progress (9e-1/9e-2/9e-3 done).** Schema + RLS applied and verified against the
+**Status: 9a-9e done, 9f not started.** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -578,11 +578,41 @@ and its own tracking issue, filed once the prior slice lands.
     carried `club_id`, it just wasn't being read into `RemoteChange` before
     now. `/code-review` before merge, called out specifically for the
     routing-logic risk, per the plan.
-  - **9e-4 — Erase-all-data teardown + remaining UI wiring**: real
-    `deleteFriendsHistoryZone`/`deleteMyFriendProfile`/
-    `deleteAllMyFriendRequests` implementations (currently no-op stubs), plus
-    whatever `FriendSharingSettingsView`/`FriendActivityView` call sites
-    9e-2/9e-3 leave unbranched.
+  - **9e-4 — Erase-all-data teardown.** ✅ done. `deleteMyFriendProfile()`/
+    `deleteAllMyFriendRequests()` (both targets' `SupabaseSyncEngine`) were
+    still 9b-era no-op stubs — now call new `SupabaseSyncManager.
+    deleteMyProfile()`/`deleteAllFriendRequests()`. `deleteMyProfile()`
+    needed a new `profiles_delete` RLS policy (`schema.sql`) — 9a never
+    added one, since nothing called for a profile delete until this slice.
+    `deleteAllFriendRequests()` deletes every `friend_requests` row the
+    caller is party to via an explicit `.or("from_participant_id.eq.<uid>,
+    to_participant_id.eq.<uid>")` filter, mirroring CloudKit's own
+    bidirectional `deleteAllMyFriendRequests()` intent — RLS (widened
+    either-party in 9e-1) already scopes it correctly on its own, the filter
+    just keeps the query's intent readable. `deleteFriendsHistoryZone()`
+    stays a documented permanent no-op — there's no zone concept under
+    Supabase, and friend history access is pure RLS gated by
+    `shareHistoryWithFriends` (already reset to `false` earlier in
+    `eraseAllData()`) over rows `saveRoster([])`/`clearHistory()` delete
+    outright in that same method, same "documented no-op" precedent 9e-2
+    set for the roster/history mirror methods.
+
+    **Real backend-agnostic gap found and fixed**, not anticipated by the
+    plan-mode pass: `AppStore.eraseAllData()` never unconditionally cleared
+    the FriendIdentity/FriendStats snapshot — under CloudKit this was
+    invisible, since deleting the whole FriendsHistory *zone* implicitly
+    wipes both records regardless of whether `saveRoster`'s roster-diff-
+    gated `refreshMyIdentitySnapshotIfSharing()` call happens to fire for
+    this erase. Supabase's `friend_identity_snapshots`/
+    `friend_stats_snapshots` are ordinary tables with no zone-wide delete,
+    so `eraseAllData()` (both targets) now calls
+    `syncEngine.removeFriendIdentityRecord()`/`removeFriendStatsRecord()`
+    explicitly and unconditionally (both already real since 9e-2) —
+    harmless/idempotent under CloudKit, the only thing that reliably clears
+    these two rows under Supabase. **New SQL owed to the user**: the
+    `profiles_delete` policy, same "merged but inert without this" handoff
+    as every prior schema addition. **Phase 9e (Friends graph cutover) is
+    now complete.**
 - **9f — Dual-run validation & cutover.** Run both backends live for opted-in
   users during a validation window, compare data for drift, then flip the
   default identity provider and retire the CloudKit code paths and
