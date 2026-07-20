@@ -462,12 +462,12 @@ struct FriendsView: View {
             if let requests = try? await manager.fetchMyFriendRequests() {
                 appStore.saveFriendRequests(requests)
             }
-            // Reconcile the FriendsHistory share's participant list against
-            // the (now-updated) friend graph — covers both a newly-accepted
-            // friend gaining access and a declined request never having had it.
-            if appStore.isSharingAnyProfileData {
-                await manager.syncFriendsHistoryParticipants()
-            }
+            // Roadmap Phase 9f-1: the FriendsHistory share's participant-list
+            // reconciliation this used to do here was removed — CloudKit is
+            // no longer started at launch, so the zone was never actually
+            // populated with mirror data for this device in the first place
+            // (see FriendSharingSettingsView's toggle handlers for the same
+            // reasoning).
         }
     }
 }

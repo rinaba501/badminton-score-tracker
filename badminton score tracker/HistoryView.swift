@@ -27,7 +27,6 @@ struct HistoryView: View {
     @EnvironmentObject private var store: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
-    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
     @State private var showingClearConfirmation = false
     @State private var pendingDeleteIds: Set<MatchRecord.ID>?
     @State private var isSelecting = false
@@ -390,26 +389,12 @@ struct HistoryView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // Turning on: create/reuse the "FriendsHistory" share and add every
-    // current friend as a read-only participant. Turning off: strip all
-    // participants only once every other per-field toggle is also off (see
-    // AppStore.isSharingAnyProfileData) — the share/zone itself is always
-    // left in place (see CloudKitSyncManager.revokeFriendsHistoryAccess).
+    // Roadmap Phase 9f-1: the CloudKit FriendsHistory CKShare zone/
+    // participant calls this used to make in the !supabaseAccountLinked
+    // branch were removed — see FriendSharingSettingsView's matching handler
+    // for why.
     private func toggleShareHistoryWithFriends(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
-        guard !supabaseAccountLinked else { return }
-        Task { @MainActor in
-            let manager = CloudKitSyncManager.shared
-            if isOn {
-                await manager.syncFriendsHistoryParticipants()
-                let personalHistory = store.history.filter { $0.clubId == nil }.map(\.id)
-                let personalRoster = store.roster.filter { $0.clubId == nil }.map(\.id)
-                manager.enqueueFriendsHistoryChanges(upsertedIds: personalHistory, deletedIds: [])
-                manager.enqueueFriendsRosterChanges(upsertedIds: personalRoster, deletedIds: [])
-            } else if !store.isSharingAnyProfileData {
-                await manager.revokeFriendsHistoryAccess()
-            }
-        }
     }
 }
 

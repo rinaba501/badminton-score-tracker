@@ -18,11 +18,15 @@ import CloudSyncSpike
 final class AppStore: ObservableObject {
     /// Reads whichever backend was active last session, so a relaunch after
     /// activateSupabaseSync() stays on Supabase rather than silently
-    /// reverting to CloudKit (can't use @AppStorage in a static initializer).
+    /// reverting to local-only (can't use @AppStorage in a static
+    /// initializer). Roadmap Phase 9f-1: an unlinked device defaults to
+    /// NoOpSyncEngine, not CloudKitSyncManager — CloudKit is no longer
+    /// started at launch (see badminton_score_trackerApp.swift), so nothing
+    /// would be listening on the other end of that engine anyway.
     static let shared = AppStore(
         syncEngine: UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked)
             ? SupabaseSyncEngine.shared
-            : CloudKitSyncManager.shared
+            : NoOpSyncEngine()
     )
 
     @Published private(set) var roster: [Player]
@@ -166,11 +170,13 @@ final class AppStore: ObservableObject {
         SupabaseSyncEngine.shared.startIfActive()
     }
 
-    /// Reverts to CloudKit. No remote Supabase delete — safe/reversible
-    /// since CloudKit was never touched while Supabase-linked.
+    /// Reverts to local-only (Roadmap Phase 9f-1 — previously reverted to
+    /// CloudKit; CloudKit is no longer started at launch, so there's no
+    /// backend left to fall back to). No remote Supabase delete — safe/
+    /// reversible, matches the prior CloudKit-revert's own no-delete contract.
     func deactivateSupabaseSync() {
         SupabaseSyncEngine.shared.stopRealtimeSync()
-        syncEngine = CloudKitSyncManager.shared
+        syncEngine = NoOpSyncEngine()
     }
 
     /// Settings live as scattered `@AppStorage` scalars, not in AppStore's
@@ -362,16 +368,6 @@ final class AppStore: ObservableObject {
 
     var isSharingStatsWithFriends: Bool {
         UserDefaults.standard.bool(forKey: AppStorageKeys.shareStatsWithFriends)
-    }
-
-    /// Whether any of the six per-field friend-sharing toggles is on — the
-    /// FriendsHistory share/zone and its participant list must exist
-    /// whenever this is true, and get torn down only when every toggle
-    /// (including shareHistoryWithFriends) is off. See CloudKitSyncManager's
-    /// ensureFriendsHistoryShareExists/syncFriendsHistoryParticipants/
-    /// revokeFriendsHistoryAccess.
-    var isSharingAnyProfileData: Bool {
-        isSharingAnyFriendIdentityField || isSharingStatsWithFriends || isSharingHistoryWithFriends
     }
 
     /// Recomputes and re-enqueues this device's own "FriendIdentity" record

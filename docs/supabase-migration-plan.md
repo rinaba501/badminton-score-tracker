@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9e done, 9f not started.** Schema + RLS applied and verified against the
+**Status: 9a-9e done, 9f in progress (9f-1 done).** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -613,11 +613,99 @@ and its own tracking issue, filed once the prior slice lands.
     `profiles_delete` policy, same "merged but inert without this" handoff
     as every prior schema addition. **Phase 9e (Friends graph cutover) is
     now complete.**
-- **9f — Dual-run validation & cutover.** Run both backends live for opted-in
-  users during a validation window, compare data for drift, then flip the
-  default identity provider and retire the CloudKit code paths and
-  entitlements. This is the point a non-Apple client becomes buildable against
-  the same backend everyone else uses.
+- **9f — Cutover.** This bullet originally sketched a dual-run validation
+  window (both backends live for opted-in users, compare data for drift)
+  before flipping the default and retiring CloudKit. User decision this
+  session: skip it — the app is pre-launch with no real users, so there's no
+  live data to protect against drift; go straight to the flip. Google-only
+  auth (no Sign in with Apple yet) stays acceptable for now, deferred as a
+  later, separate improvement. Split into 9f-1/9f-2/9f-3 (too much surface
+  area for one PR — ~15+ files per target still branch on
+  `supabaseAccountLinked`):
+  - **9f-1 — Flip the default.** ✅ done. `AppStore.shared` (both targets)
+    now defaults an unlinked device to `NoOpSyncEngine` (pure local, zero
+    sync) instead of `CloudKitSyncManager.shared`; `deactivateSupabaseSync()`
+    reverts to the same instead of "back to CloudKit". Neither
+    `badminton_score_trackerApp.swift` calls `CloudKitSyncManager.shared.start()`
+    at launch anymore. `NoOpSyncEngine` (`SyncEngine.swift`) needed no code
+    change — it was already a complete, correct conformer, just an unused
+    test double until now.
+
+    **Real correctness gap found and fixed while implementing**, expanding
+    this slice beyond its original narrow scope: several CloudKit code
+    paths still reachable from `if supabaseAccountLinked {...} else {
+    CloudKit }` View branches aren't part of the `SyncEngine` protocol, so
+    the default flip alone didn't neutralize them — they'd have kept
+    silently creating real CKShare artifacts with nothing behind them, since
+    the data that used to back them now routes through `NoOpSyncEngine`.
+    Two instances found and fixed:
+    1. **Club invites**: `fetchOrCreateShare` — both targets'
+       `ClubDetailView.loadParticipants()` (called on every appear, not just
+       on an explicit tap) fell back to the self-row-only view immediately
+       instead of calling it; iOS's owner-only Invite button is now gated to
+       `supabaseAccountLinked` only (matching the Watch's — CKShare invites
+       never had a Watch UI at all, so there was nothing to gate there).
+       Without this, an unlinked owner could still generate and hand out a
+       real invite link to a CKShare zone with no club/roster/match data
+       ever pushed into it.
+    2. **Friends-sharing toggles**: `syncFriendsHistoryParticipants()` (and
+       the roster/history mirror push it used to accompany) — the six
+       per-field "share with friends" toggle handlers
+       (`FriendSharingSettingsView`, both targets, plus iOS's
+       `ProfileView`/`StatsView`/`HistoryView` duplicates of the same
+       handlers) and `FriendsView.respond(to:accept:)`'s post-accept/decline
+       participant-list reconciliation all dropped their CloudKit branch
+       entirely — the settings write alone is now the complete action for
+       every backend, same as Supabase's RLS-based model already was
+       (Roadmap 9e-3). `AppStore.isSharingAnyProfileData` (both targets)
+       removed — its only remaining reference was its own now-dead doc
+       comment once every call site was gone.
+
+    **Known remaining gap, deliberately deferred to 9f-2/9f-3** rather than
+    expanding this slice a third time: `WatchAppDelegate`/`SceneDelegate`'s
+    CKShare-accept callback (`acceptShare`) still calls
+    `sharedSyncEngine?.fetchChanges()`, which is now a silent no-op
+    (`sharedSyncEngine` is never started) — an incoming share would be
+    accepted at the CloudKit level but its data never actually pulled in.
+    Low severity (a receive-only path, doesn't mislead a third party the way
+    handing out a broken invite link would) and low reachability now that
+    invite *creation* is gated — only matters for an external or
+    pre-9f-1-vintage invite link.
+
+    **Also found**: `SettingsView`'s Sync Backend section copy
+    (`settings.supabase_section_footer`/`supabase_switch_back`/
+    `supabase_switch_back_confirm`) assumed CloudKit auto-syncs by default
+    ("Switch Back to iCloud", "Clubs and Friends still sync through iCloud
+    either way") — no longer true post-9f-1. English strings (both targets)
+    rewritten to describe local-only-until-sign-in accurately. **Translations
+    owed to the user**: the other 5 languages (ja/zh-Hans/ko/id/hi) still
+    have the old, now-inaccurate copy for these 3 keys — same "code merged,
+    follow-up owed" pattern as this migration's SQL handoffs, flagged rather
+    than auto-translated this session. `settings.erase_all_data_warning`
+    ("...from this device and iCloud") has the same class of staleness
+    (should say Supabase too, since Roadmap 9e-4 made erase-all-data real
+    there) but predates this session — left alone rather than expanding
+    scope further.
+  - **9f-2 — Collapse the CloudKit branches.** Every remaining
+    `if supabaseAccountLinked { ... } else { CloudKit path } }` View branch
+    becomes unconditional Supabase behavior; remove the now-dead
+    `accountLinked` CloudKit link/unlink flag and its Settings UI section.
+  - **9f-3 — Delete CloudKit's code.** `CloudKitSyncManager.swift` (both
+    targets), `CloudSharingView.swift`, the `AppDelegate`/`WatchAppDelegate`
+    CKShare-accept forwarding (closing 9f-1's known gap by removing the
+    dead code rather than fixing it), iCloud entitlements
+    (`com.apple.developer.icloud-container-identifiers`/`-services`), the
+    `aps-environment` capability (CloudKit-only push — Supabase uses
+    Realtime, not APNs). Also a stale doc comment found in 9f-1's session:
+    `AppStore.swift`'s `challenges`/`reactions` properties are still
+    commented "CloudKit-only — no KV fallback at all", predating Phase
+    9d-1 which made both real under Supabase. Rewrite CLAUDE.md's "Roadmap
+    Phase 9c/9d/9e" qualifiers throughout once CloudKit no longer exists to
+    contrast against — the largest single doc-cleanup pass of the whole
+    migration.
+
+  This is the point a non-Apple client becomes buildable against the same
+  backend everyone else uses.
 
 Each sub-phase carries its own manual test gate. RLS bugs mean cross-user data
 leaks — a strictly higher-stakes failure mode than a CKShare bug, since a

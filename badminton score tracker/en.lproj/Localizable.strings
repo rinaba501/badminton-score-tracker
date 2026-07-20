@@ -87,11 +87,11 @@
 "settings.delete_selected_players" = "Delete (%d)";
 "settings.delete_selected_players_confirm" = "Delete %d players? Their past matches will keep these names, but they'll be removed from your roster.";
 "settings.supabase_section_header" = "Sync Backend";
-"settings.supabase_section_footer" = "Optionally sync your personal matches and settings through Supabase instead of iCloud. Clubs and Friends still sync through iCloud either way.";
+"settings.supabase_section_footer" = "Sign in to sync your matches, settings, clubs, and friends through Supabase. Without this, your data stays on this device only.";
 "settings.supabase_sign_in" = "Sign in with Google";
 "settings.supabase_synced" = "Synced via Supabase";
-"settings.supabase_switch_back" = "Switch Back to iCloud";
-"settings.supabase_switch_back_confirm" = "Switch this device back to iCloud sync? Your personal data stays on Supabase but this device stops writing to it.";
+"settings.supabase_switch_back" = "Stop Syncing";
+"settings.supabase_switch_back_confirm" = "Stop syncing this device? Your data stays on Supabase, but this device stops writing to it and switches to local-only.";
 "settings.danger_zone" = "Danger Zone";
 "settings.erase_all_data" = "Erase All My Data";
 "settings.erase_all_data_warning" = "This permanently deletes your saved players, match history, clubs, settings, and Friends connections — from this device and iCloud. This cannot be undone.";
