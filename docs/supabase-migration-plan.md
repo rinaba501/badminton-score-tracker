@@ -358,6 +358,21 @@ and its own tracking issue, filed once the prior slice lands.
     `alter publication supabase_realtime add table public.clubs,
     public.challenges, public.reactions;`.
 
+    This slice's own `/code-review` caught a repeat of 9c-5's REPLICA
+    IDENTITY bug, this time on `challenges`/`reactions`: their RLS SELECT
+    policies need `club_id` (reactions' delete policy separately needs
+    `author_id`), and neither is a primary-key column, so without `REPLICA
+    IDENTITY FULL` a DELETE event's old-row image (default: primary key
+    only) can't satisfy RLS for anyone — the event fails closed for every
+    subscriber, including the legitimate club member/author, and since
+    `fetchAllRows` never reports deletes (see its own doc comment above), a
+    deleted challenge or reaction would never sync to another device at
+    all. `clubs` genuinely doesn't need the same fix — its
+    `is_club_member(id)` RLS branch only needs the row's own primary key,
+    which is always present regardless of REPLICA IDENTITY. Fixed before
+    merge with `alter table public.challenges replica identity full;` and
+    the equivalent for `reactions`, added to `supabase/schema.sql`.
+
     The original 9d sketch's two open cross-cutting questions are both
     resolved, not deferred: reaction cascade-delete semantics turned out to
     be a non-issue — CloudKit's own club-zone deletion already cascades to

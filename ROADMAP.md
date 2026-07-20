@@ -281,7 +281,17 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
     per-row for realtime the same as for a regular query. New SQL:
     `alter publication supabase_realtime add table public.clubs,
     public.challenges, public.reactions;` — same "user must run this in the
-    SQL editor" handoff as every prior schema addition. Both cross-cutting
+    SQL editor" handoff as every prior schema addition. This slice's own
+    `/code-review` caught a repeat of 9c-5's REPLICA IDENTITY bug, this time
+    on `challenges`/`reactions`: their RLS policies need `club_id`/
+    `author_id`, neither a primary-key column, so without `REPLICA IDENTITY
+    FULL` a DELETE's old-row image can't satisfy RLS for anyone — the event
+    fails closed for every subscriber (including the legitimate club
+    member), and since `fetchAllRows` never reports deletes, a deleted
+    challenge/reaction would never sync at all. `clubs` genuinely doesn't
+    need it (its `is_club_member(id)` policy branch only needs the row's
+    own primary key). Fixed before merge by adding `REPLICA IDENTITY FULL`
+    for both tables. Both cross-cutting
     design questions the original 9d sketch left open are resolved, not
     deferred: participant-id remapping needed no model change (see above),
     and `reactions.club_id`'s Postgres cascade-delete turned out to already
