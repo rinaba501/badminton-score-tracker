@@ -219,6 +219,7 @@
 "clubs.decline_match_confirm" = "拒绝这场比赛？它将从俱乐部的待确认列表中移除。";
 "clubs.challenges" = "挑战";
 "clubs.challenge" = "发起挑战";
+"clubs.remove_member" = "移除";
 "clubs.accept_challenge" = "接受";
 "clubs.decline_challenge" = "拒绝";
 "clubs.decline_challenge_confirm" = "拒绝这个挑战邀请？";

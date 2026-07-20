@@ -228,6 +228,7 @@
 "clubs.decline_match_confirm" = "इस मैच को अस्वीकार करें? इसे क्लब की लंबित पुष्टि सूची से हटा दिया जाएगा।";
 "clubs.challenges" = "चुनौतियाँ";
 "clubs.challenge" = "चुनौती दें";
+"clubs.remove_member" = "हटाएं";
 "clubs.accept_challenge" = "स्वीकार करें";
 "clubs.decline_challenge" = "अस्वीकार करें";
 "clubs.decline_challenge_confirm" = "इस चुनौती को अस्वीकार करें?";

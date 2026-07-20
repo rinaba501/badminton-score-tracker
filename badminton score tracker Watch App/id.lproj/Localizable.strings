@@ -228,6 +228,7 @@
 "clubs.decline_match_confirm" = "Tolak pertandingan ini? Pertandingan akan dihapus dari daftar konfirmasi tertunda klub.";
 "clubs.challenges" = "Tantangan";
 "clubs.challenge" = "Tantang";
+"clubs.remove_member" = "Hapus";
 "clubs.accept_challenge" = "Terima";
 "clubs.decline_challenge" = "Tolak";
 "clubs.decline_challenge_confirm" = "Tolak tantangan ini?";

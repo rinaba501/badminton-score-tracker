@@ -219,6 +219,7 @@
 "clubs.decline_match_confirm" = "이 경기를 거절하시겠습니까? 클럽의 확인 대기 목록에서 제거됩니다.";
 "clubs.challenges" = "도전";
 "clubs.challenge" = "도전하기";
+"clubs.remove_member" = "제거";
 "clubs.accept_challenge" = "수락";
 "clubs.decline_challenge" = "거절";
 "clubs.decline_challenge_confirm" = "이 대결 신청을 거절하시겠습니까?";
