@@ -3,9 +3,9 @@
 //  BadmintonCore
 //
 //  A friend's shared *aggregate* stats — win rate, games played, head-to-head
-//  — mirrored into the same "FriendsHistory" CKShare zone FriendHistorySnapshot
-//  uses (see CloudKitSyncManager's ensureFriendsHistoryShareExists/
-//  syncFriendsHistoryParticipants), gated by SettingsSnapshot.shareStatsWithFriends.
+//  — mirrored one row per participant into the `friend_stats_snapshots`
+//  table (RLS: readable by any accepted friend, writable by the owner
+//  only), gated by SettingsSnapshot.shareStatsWithFriends.
 //  Deliberately a precomputed/derived snapshot rather than raw match records,
 //  so a person can share their win-rate without exposing full match-by-match
 //  history (that's the separate shareHistoryWithFriends toggle). Built via

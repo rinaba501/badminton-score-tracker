@@ -2,20 +2,16 @@
 //  AppDelegate.swift
 //  badminton score tracker (iOS)
 //
-//  Registers the SceneDelegate class to handle incoming scene connections,
-//  enabling CloudKit share acceptance callbacks. Roadmap Phase 7f adds
-//  best-effort remote-push registration for the Friends FriendRequest
-//  subscription — never required for Friends to work since FriendsView
-//  still polls on appear/pull-to-refresh regardless. Also activates
-//  WCSession to relay a signed-in Supabase session to the paired watch
-//  (Roadmap Phase 9c, docs/supabase-migration-plan.md) — the phone always
-//  performs the actual Google OAuth handshake; the watch only ever adopts a
-//  relayed session, since watchOS has no in-app browser.
+//  Activates WCSession to relay a signed-in Supabase session to the paired
+//  watch (docs/supabase-migration-plan.md) — the phone always performs the
+//  actual Google OAuth handshake; the watch only ever adopts a relayed
+//  session, since watchOS has no in-app browser. Also owns the app-wide
+//  orientation lock (#252) since UIKit's rotation hooks only exist on
+//  UIApplicationDelegate, not in SwiftUI.
 //
 
 import UIKit
 import WatchConnectivity
-import BadmintonCore
 import CloudSyncSpike
 
 class AppDelegate: NSObject, UIApplicationDelegate, WCSessionDelegate {
@@ -90,59 +86,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, WCSessionDelegate {
 
     func application(
         _ application: UIApplication,
-        configurationForConnecting connectingSceneSession: UISceneSession,
-        options: UIScene.ConnectionOptions
-    ) -> UISceneConfiguration {
-        let sceneConfig = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
-        sceneConfig.delegateClass = SceneDelegate.self
-        return sceneConfig
-    }
-
-    func application(
-        _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        application.registerForRemoteNotifications()
         if WCSession.isSupported() {
             WCSession.default.delegate = self
             WCSession.default.activate()
         }
         return true
-    }
-
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        // Roadmap Phase 9f-2: gated on !supabaseAccountLinked — this used to
-        // run unconditionally on every device, registering a CloudKit push
-        // subscription even for Supabase-active devices that never write to
-        // CloudKit at all.
-        guard !UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked) else { return }
-        Task { await CloudKitSyncManager.shared.ensureFriendRequestSubscriptionExists() }
-    }
-
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {}
-
-    // Roadmap Phase 9f-2: gated on !supabaseAccountLinked — this used to
-    // unconditionally overwrite AppStore.friendRequests with a CloudKit
-    // fetch on every push, which is a full reconcile (not a merge). A stray
-    // push on a Supabase-active device (e.g. a leftover subscription from
-    // before this device switched) would have silently wiped the real,
-    // Supabase-sourced friends list.
-    func application(
-        _ application: UIApplication,
-        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
-        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
-    ) {
-        guard !UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked) else {
-            completionHandler(.noData)
-            return
-        }
-        Task {
-            guard let requests = try? await CloudKitSyncManager.shared.fetchMyFriendRequests() else {
-                completionHandler(.failed)
-                return
-            }
-            await AppStore.shared.saveFriendRequests(requests)
-            completionHandler(.newData)
-        }
     }
 }

@@ -3,15 +3,15 @@
 //  badminton score tracker (iOS)
 //
 //  Erase All My Data (#264): a strongly-confirmed action that deletes every
-//  local + CloudKit-synced record this account owns (roster, history,
-//  clubs, the Friends graph) and resets every scalar setting back to its
+//  local + cloud-synced record this account owns (roster, history, clubs,
+//  the Friends graph) and resets every scalar setting back to its
 //  fresh-install default — see AppStore.eraseAllData(). Owned clubs are
 //  deleted outright (warned about below, listed by name); real club
-//  ownership *transfer* isn't supported yet (CloudKit ties a private-DB
-//  zone's ownership permanently to its creating account — transferring
-//  would mean copying every record into a new zone under the new owner and
-//  re-sharing it, a separate feature). Entered from SettingsView's Danger
-//  Zone section. On success, shows a confirmation and dismisses back to
+//  ownership *transfer* isn't supported yet (a club's `owner_id` ties its
+//  ownership permanently to its creating account — transferring would mean
+//  copying every row to the new owner and re-inviting members, a separate
+//  feature). Entered from SettingsView's Danger Zone section. On success,
+//  shows a confirmation and dismisses back to
 //  Settings — the user's normal back-navigation to ContentView's root
 //  re-triggers the first-launch name prompt, since myName/didPromptForName
 //  are reset along with everything else.

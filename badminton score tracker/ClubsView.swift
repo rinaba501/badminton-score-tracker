@@ -2,11 +2,10 @@
 //  ClubsView.swift
 //  badminton score tracker (iOS)
 //
-//  Roadmap Phase 5d: club list + create. Pure UI over AppStore.saveClubs
-//  (Phase 5b) — CKShare zone mechanics (Phase 5c) already handle the
-//  CloudKit side of create/rename/delete via AppStore's existing diffing, so
-//  this view never talks to CloudKitSyncManager for writes. iOS restyle of
-//  the Watch's ClubsView.
+//  Roadmap Phase 5d: club list + create. Pure UI over AppStore.saveClubs —
+//  syncing create/rename/delete is already handled by AppStore's existing
+//  diffing, so this view never talks to the sync backend directly. iOS
+//  restyle of the Watch's ClubsView.
 //
 
 import SwiftUI

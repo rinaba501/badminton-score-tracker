@@ -7,21 +7,19 @@
 //  ChallengeRecord (same fromParticipantId/toParticipantId/status/
 //  createdDate shape, same snapshotted-display-name rationale — a request
 //  still renders correctly even if the other side's profile is never
-//  re-fetched) but has no `clubId`: friend requests live in CloudKit's
-//  public database, not a club's private/shared zone, and are found via an
-//  out-of-band invite link/code rather than a CKShare's participant list.
+//  re-fetched) but has no `clubId`: friend requests live in the
+//  `friend_requests` table (RLS-gated, not club-scoped), found via an
+//  out-of-band invite link/code rather than a club's member list.
 //
 //  There is no separate `Friendship` record. An accepted FriendRequest *is*
 //  the friendship edge — the same "status flips in place, no new record"
 //  convention ChallengeRecord already uses. Accepting a request never
-//  creates a CKShare/zone by itself, and match-history sharing is never
-//  automatic — it stays an explicit, separate opt-in (see
-//  SettingsSnapshot.shareHistoryWithFriends / FriendHistorySnapshot): when
-//  that toggle is on, CloudKitSyncManager.respondToFriendRequest(accept:)
-//  additionally reconciles the sharer's "FriendsHistory" CKShare
-//  participant list against the current friend graph, as a side effect of
-//  status flipping to `.accepted` — but a FriendRequest record itself still
-//  carries no data-sharing semantics.
+//  creates any extra sharing artifact by itself, and match-history/identity/
+//  stats sharing is never automatic — it stays an explicit, separate opt-in
+//  (see SettingsSnapshot.shareHistoryWithFriends and the four
+//  share*WithFriends toggles) gated purely by RLS on the shared rows
+//  themselves once accepted — a FriendRequest record still carries no
+//  data-sharing semantics of its own.
 //
 
 import Foundation

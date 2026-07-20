@@ -46,17 +46,8 @@ struct FriendSharingSettingsView: View {
 
     // MARK: - Actions
 
-    // Roadmap Phase 9f-1: the CloudKit FriendsHistory CKShare zone/
-    // participant management this trio of handlers used to do in the
-    // !supabaseAccountLinked branch (create/reuse the share, add friends as
-    // participants, push the roster/history mirror) is removed — CloudKit is
-    // no longer started at launch, so `syncFriendsHistoryParticipants()`
-    // would still create a real CKShare zone, but the actual mirror data
-    // behind it (`enqueueFriendsHistoryChanges`/etc.) silently no-ops,
-    // leaving friends with access to an empty share. The settings write is
-    // now the complete access change for every backend — Supabase already
-    // worked this way (Roadmap 9e-3: friend visibility there is RLS + this
-    // same toggle, not a per-participant share list).
+    // The settings write is the complete access change — friend visibility
+    // is RLS + this toggle, not a per-participant share list.
     private func toggleShareHistoryWithFriends(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
     }
@@ -72,12 +63,10 @@ struct FriendSharingSettingsView: View {
         store.refreshMyIdentitySnapshotIfSharing()
     }
 
-    // Roadmap Phase 9e-2: enqueueFriendStatsChange()/removeFriendStatsRecord()
-    // route through AppStore.syncEngine (backend-polymorphic) instead of
-    // calling CloudKitSyncManager.shared directly — the same View-bypass
-    // pattern 9c-4 fixed for enqueueSettingsChange(), previously invisible
-    // here because CloudKitSyncManager.shared happened to equal
-    // AppStore.shared.syncEngine on every device until Supabase existed.
+    // enqueueFriendStatsChange()/removeFriendStatsRecord() route through
+    // AppStore.syncEngine rather than a hardcoded sync manager reference —
+    // see AppStore.enqueueSettingsChange()'s doc comment for the bug class
+    // this avoids.
     private func toggleStatsSharing(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
         if isOn {

@@ -389,10 +389,8 @@ struct HistoryView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // Roadmap Phase 9f-1: the CloudKit FriendsHistory CKShare zone/
-    // participant calls this used to make in the !supabaseAccountLinked
-    // branch were removed — see FriendSharingSettingsView's matching handler
-    // for why.
+    // See FriendSharingSettingsView's matching handler — the settings write
+    // is the complete access change.
     private func toggleShareHistoryWithFriends(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
     }

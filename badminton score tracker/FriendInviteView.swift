@@ -129,10 +129,10 @@ struct FriendInviteView: View {
     }
 
     /// `invite.participantId` must be a real `auth.uid()` string here — an
-    /// invite link sent from a Supabase-active device always encodes one, so
-    /// no separate `profiles` lookup is needed; `invite.displayName` (the
-    /// link's own embedded UGC name, same as the CloudKit path uses) is
-    /// trusted the same way here too, not re-resolved against `profiles`.
+    /// invite link sent from another device always encodes one, so no
+    /// separate `profiles` lookup is needed; `invite.displayName` (the
+    /// link's own embedded UGC name) is trusted as-is too, not re-resolved
+    /// against `profiles`.
     private func sendViaSupabase(displayName: String) async {
         guard let toId = UUID(uuidString: invite.participantId) else {
             sendState = .failed(NSLocalizedString("friends.error_generic", comment: ""))

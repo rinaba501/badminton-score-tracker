@@ -7,7 +7,7 @@
 //  Owns the Transaction.updates listener, purchase/restore, and the
 //  UserDefaults launch-state cache. Transaction.currentEntitlements is the
 //  per-Apple-ID source of truth — purchase state is never synced through the
-//  KV store or CloudKit, StoreKit itself is the cross-device channel, which
+//  app's own sync backend, StoreKit itself is the cross-device channel, which
 //  is why the Watch and iPhone each run their own copy of this class (same
 //  per-target pattern as HapticsProvider/CourtTheme).
 //

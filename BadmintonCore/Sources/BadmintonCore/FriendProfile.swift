@@ -2,19 +2,18 @@
 //  FriendProfile.swift
 //  BadmintonCore
 //
-//  Friends v1 (graph-only, data-model slice): a discoverable public-CloudKit-
-//  database record so two people who don't already share a club's CKShare
-//  zone can find each other via an out-of-band invite link/code. `participantId`
-//  is a CKContainer.fetchUserRecordID() result — the durable, per-Apple-ID key
-//  — NOT a CKShare.Participant id like ChallengeRecord/ReactionRecord use,
-//  since there is no club/share in common yet. One profile per Apple ID,
-//  upserted by `participantId` rather than freely created. `displayName` is
-//  user-supplied free text (no Apple identity verification), same convention
-//  as ChallengeRecord's snapshotted names.
+//  Friends v1 (graph-only, data-model slice): a discoverable profile record
+//  so two people who don't already share a club can find each other via an
+//  out-of-band invite link/code. `participantId` is a durable, per-account
+//  key (an `auth.uid()` string) — the same identity space ChallengeRecord/
+//  ReactionRecord's participant-id fields use once a device is Supabase-
+//  active. One profile per account, upserted by `participantId` rather than
+//  freely created. `displayName` is user-supplied free text (no identity
+//  verification), same convention as ChallengeRecord's snapshotted names.
 //
-//  This model is deliberately CloudKit-transport-agnostic (Foundation only,
-//  no CloudKit import) — CloudKitSyncManager on each app target owns the
-//  actual public-database read/write; this struct is just the payload shape.
+//  This model is deliberately transport-agnostic (Foundation only) —
+//  SupabaseSyncManager on each app target owns the actual `profiles` table
+//  read/write; this struct is just the payload shape.
 //
 
 import Foundation

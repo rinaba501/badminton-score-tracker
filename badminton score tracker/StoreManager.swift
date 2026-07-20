@@ -8,7 +8,7 @@
 //  Entitlements.swift holds the pure product-ID → feature mapping this feeds.
 //  Transaction.currentEntitlements is the per-Apple-ID source of truth, so
 //  a purchase on either device unlocks both — purchase state is never synced
-//  through the KV store or CloudKit. On iOS, Pro additionally hides the
+//  through the app's own sync backend. On iOS, Pro additionally hides the
 //  AdBannerView (ads are iOS-only; the Watch never shows them).
 //
 

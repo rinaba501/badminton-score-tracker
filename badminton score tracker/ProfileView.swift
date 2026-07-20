@@ -288,10 +288,7 @@ struct ProfileView: View {
     // the SAME single "FriendIdentity" record (see AppStore.
     // refreshMyIdentitySnapshotIfSharing), so every one of these four inline
     // toggles shares this one handler. Duplicate of FriendSharingSettingsView's
-    // — see this file's header comment. Roadmap Phase 9f-1: the CloudKit
-    // FriendsHistory CKShare zone/participant calls this used to make in the
-    // !supabaseAccountLinked branch were removed — see
-    // FriendSharingSettingsView's matching handler for why.
+    // — see this file's header comment.
     private func toggleIdentityField(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
         store.refreshMyIdentitySnapshotIfSharing()

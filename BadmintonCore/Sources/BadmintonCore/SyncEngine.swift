@@ -3,20 +3,23 @@
 //  BadmintonCore
 //
 //  The outbound half of AppStore's sync boundary: every method AppStore
-//  calls to push a local change out to a sync backend. CloudKitSyncManager
-//  (both targets) is the only conformer today; Phase 9 (ROADMAP.md,
-//  docs/supabase-migration-plan.md) will add a Supabase-backed one. The
-//  reverse direction — a backend calling back into AppStore.applyRemote*
-//  when remote data arrives — is deliberately NOT part of this protocol:
+//  calls to push a local change out to a sync backend. `SupabaseSyncEngine`
+//  (both targets) is the real conformer; `NoOpSyncEngine` (below) is the
+//  local-only default for a device that has never signed in. This protocol
+//  is what let the backend be swapped from CloudKit to Supabase (Roadmap
+//  Phase 9, ROADMAP.md/docs/supabase-migration-plan.md) without touching
+//  AppStore's call sites — CloudKitSyncManager was the original sole
+//  conformer through Phase 9f-2, deleted entirely in 9f-3. The reverse
+//  direction — a backend calling back into AppStore.applyRemote* when
+//  remote data arrives — is deliberately NOT part of this protocol:
 //  AppStore stays a concrete singleton any backend can call into directly,
-//  since only the outbound direction needs polymorphism to let 9c swap
-//  backends without touching AppStore's call sites again.
+//  since only the outbound direction needs the polymorphism this seam buys.
 //
-//  Foundation-only signatures (no CloudKit/SwiftUI/WatchKit types) so this
-//  lives in BadmintonCore rather than being duplicated per target, unlike
+//  Foundation-only signatures (no SwiftUI/WatchKit types) so this lives in
+//  BadmintonCore rather than being duplicated per target, unlike
 //  HapticsProvider (which is genuinely per-platform because its haptic-type
-//  argument differs). @MainActor because both CloudKitSyncManager and
-//  AppStore already are.
+//  argument differs). @MainActor because both `SupabaseSyncEngine` and
+//  `AppStore` already are.
 //
 
 import Foundation
@@ -34,27 +37,22 @@ public protocol SyncEngine {
     func enqueueFriendIdentityChange()
     func removeFriendIdentityRecord()
     func enqueueFriendStatsChange()
-    /// Roadmap Phase 9e-2: mirrors `removeFriendIdentityRecord()`'s shape for
-    /// stats — added because the pre-9e-2 View call site
-    /// (`FriendSharingSettingsView.toggleStatsSharing`) called
-    /// `CloudKitSyncManager.shared.removeFriendStatsRecord()` directly rather
-    /// than through this protocol, the same bypass 9c-4 already fixed for
-    /// `enqueueSettingsChange()` — that gap would have made a Supabase-active
-    /// device's "turn stats sharing off" silently do nothing.
+    /// Mirrors `removeFriendIdentityRecord()`'s shape for stats — added
+    /// because an early View call site called into the sync manager
+    /// directly rather than through this protocol, a View-bypass bug class
+    /// this codebase has hit more than once (see AppStore.swift's own
+    /// history of the same fix).
     func removeFriendStatsRecord()
     func deleteFriendsHistoryZone() async
     func deleteMyFriendProfile() async
     func deleteAllMyFriendRequests() async
 }
 
-/// Roadmap Phase 9f-1: the real default for a device that has never signed
-/// into Supabase — `AppStore.shared`/`deactivateSupabaseSync()` (both
-/// targets) use this instead of `CloudKitSyncManager.shared` now that
-/// CloudKit is no longer started automatically at launch. Local-only: saves
-/// still work (roster/history/settings persist via `PersistenceStore` as
-/// always), nothing leaves the device until an explicit Supabase sign-in
-/// swaps `syncEngine` to `SupabaseSyncEngine.shared`. Originally added in 9b
-/// as a test double with no call site; this is its first real one.
+/// The default for a device that has never signed into Supabase —
+/// `AppStore.shared`/`deactivateSupabaseSync()` (both targets) use this.
+/// Local-only: saves still work (roster/history/settings persist via
+/// `PersistenceStore` as always), nothing leaves the device until an
+/// explicit Supabase sign-in swaps `syncEngine` to `SupabaseSyncEngine.shared`.
 public struct NoOpSyncEngine: SyncEngine {
     public init() {}
 

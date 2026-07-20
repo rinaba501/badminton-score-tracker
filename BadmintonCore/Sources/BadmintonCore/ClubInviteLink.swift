@@ -2,14 +2,12 @@
 //  ClubInviteLink.swift
 //  BadmintonCore
 //
-//  Roadmap Phase 9d-2: builds and parses the out-of-band link used to join a
-//  club under the Supabase backend — `badminton://joinclub?id=<inviteId>&
-//  name=<clubName>` — mirroring FriendInviteLink.swift's exact shape and
-//  rationale (pure URL formatting/parsing, unit-testable on macOS, neither
-//  side touches the network). This is the Supabase-active alternative to
-//  CloudKit's CKShare invite (UICloudSharingController, iOS-only) — a club
-//  invite link works on watchOS too, since it's just a URL, unlike
-//  UICloudSharingController.
+//  Builds and parses the out-of-band link used to join a club —
+//  `badminton://joinclub?id=<inviteId>&name=<clubName>` — mirroring
+//  FriendInviteLink.swift's exact shape and rationale (pure URL
+//  formatting/parsing, unit-testable on macOS, neither side touches the
+//  network). Works on watchOS too, since it's just a URL, unlike a
+//  UIKit-only system share sheet tied to one view controller.
 //
 //  `inviteId` identifies a row in the `club_invites` table (its own `id`,
 //  not the club's id) — redeeming it goes through the `redeem_club_invite`

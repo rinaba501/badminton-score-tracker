@@ -2,11 +2,11 @@
 //  RecordCodecTests.swift
 //  BadmintonCoreTests
 //
-//  Pins the pure CloudKit-support helpers on PersistenceStore: single-record
+//  Pins the pure sync-support helpers on PersistenceStore: single-record
 //  payload codecs, the write-path diff (upserts/deletes), and per-record
-//  conflict resolution. These are the CI-verifiable core of the CloudKit
-//  migration (#109); the CKSyncEngine glue that consumes them lives in the app
-//  target and is validated by a two-device test instead.
+//  conflict resolution. These are the CI-verifiable core of the sync layer;
+//  the SupabaseSyncEngine glue that consumes them lives in the app target
+//  and is validated by a real-account test instead.
 //
 
 import Foundation

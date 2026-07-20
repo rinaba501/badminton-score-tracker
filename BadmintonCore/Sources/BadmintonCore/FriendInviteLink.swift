@@ -6,12 +6,12 @@
 //  out-of-band invite link two people exchange to find each other —
 //  `badminton://addfriend?id=<participantId>&name=<displayName>` — alongside
 //  the existing `badminton://newmatch` scheme. Pure URL formatting/parsing so
-//  it is unit-testable on macOS; neither side touches CloudKit. The app
+//  it is unit-testable on macOS; neither side touches the network. The app
 //  targets own what happens around it: generation embeds the sender's own
-//  resolved participantId (a `CKContainer.fetchUserRecordID()` result, same
-//  identity as FriendProfile), and consumption always goes through a
-//  confirmation sheet before `sendFriendRequest` is ever called — parsing a
-//  link must never trigger a network write by itself.
+//  resolved participantId (an `auth.uid()` string, same identity as
+//  FriendProfile), and consumption always goes through a confirmation sheet
+//  before `sendFriendRequest` is ever called — parsing a link must never
+//  trigger a network write by itself.
 //
 //  The embedded display name is a convenience snapshot so the confirmation
 //  sheet can render "Add <name>?" without a profile fetch; it is untrusted

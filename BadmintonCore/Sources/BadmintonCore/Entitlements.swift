@@ -10,7 +10,7 @@
 //
 //  Source of truth is StoreKit's Transaction.currentEntitlements, which is
 //  per-Apple-ID and already cross-device — purchase state is NEVER synced
-//  through the iCloud KV store or CloudKit (see AppStorageKeys.ownedProductIds
+//  through the app's own sync backend (see AppStorageKeys.ownedProductIds
 //  for the local launch-state cache). Governing invariant (ROADMAP.md):
 //  scoring, history, roster, and clubs stay free; everything gated here is
 //  additive polish — advanced stats, cosmetics, and ad removal.
