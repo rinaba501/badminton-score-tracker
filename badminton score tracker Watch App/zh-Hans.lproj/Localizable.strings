@@ -307,11 +307,6 @@
 "onboarding.welcome_name_title" = "欢迎！";
 "onboarding.welcome_name_message" = "其他球友该怎么称呼你？你可以随时在设置中更改。";
 "onboarding.skip" = "跳过";
-"friends.account_section_header" = "账户";
-"friends.link_account" = "关联此设备";
-"friends.linked_as" = "已关联为 %@";
-"friends.unlink_account" = "取消关联";
-"friends.unlink_account_confirm" = "取消此设备与你账号的关联？你可以随时重新关联。";
 "friends.enter_code" = "输入代码";
 "friends.code_prompt_message" = "粘贴邀请链接或好友代码";
 "friends.code_placeholder" = "邀请链接或代码";

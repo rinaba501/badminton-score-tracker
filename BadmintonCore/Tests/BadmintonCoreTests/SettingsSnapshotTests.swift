@@ -24,7 +24,6 @@ struct SettingsSnapshotTests {
         timeLimitMinutes: Int = 10,
         courtChangeRemindersEnabled: Bool = false,
         clubLastViewedActivity: [String: Date] = [:],
-        accountLinked: Bool = false,
         gameScreenStyle: String = "Depth",
         shareHistoryWithFriends: Bool = false,
         shareAvatarWithFriends: Bool = false,
@@ -44,7 +43,6 @@ struct SettingsSnapshotTests {
             timeModeEnabled: timeModeEnabled, timeLimitMinutes: timeLimitMinutes,
             courtChangeRemindersEnabled: courtChangeRemindersEnabled,
             clubLastViewedActivity: clubLastViewedActivity,
-            accountLinked: accountLinked,
             gameScreenStyle: gameScreenStyle,
             shareHistoryWithFriends: shareHistoryWithFriends,
             shareAvatarWithFriends: shareAvatarWithFriends,
@@ -77,13 +75,6 @@ struct SettingsSnapshotTests {
         let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
         let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
         #expect(decoded.courtChangeRemindersEnabled == true)
-    }
-
-    @Test func accountLinkedRoundTrips() throws {
-        let snapshot = makeSnapshot(accountLinked: true)
-        let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
-        let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
-        #expect(decoded.accountLinked == true)
     }
 
     @Test func gameScreenStyleRoundTrips() throws {
@@ -152,9 +143,9 @@ struct SettingsSnapshotTests {
         #expect(decoded.clubLastViewedActivity == dates)
     }
 
-    // A Settings payload written before clubLastViewedActivity /
-    // accountLinked existed must still decode, defaulting the new fields —
-    // the whole point of the custom decodeIfPresent init.
+    // A Settings payload written before clubLastViewedActivity existed must
+    // still decode, defaulting the new fields — the whole point of the
+    // custom decodeIfPresent init.
     @Test func decodesPreMigrationPayloadWithoutNewFields() throws {
         let legacyJSON = """
         {"schemaVersion":1,"records":[{\
@@ -169,7 +160,6 @@ struct SettingsSnapshotTests {
         #expect(decoded.pointsToWin == 15)
         #expect(decoded.courtChangeRemindersEnabled == false)
         #expect(decoded.clubLastViewedActivity == [:])
-        #expect(decoded.accountLinked == false)
         #expect(decoded.gameScreenStyle == "Depth")
         #expect(decoded.shareHistoryWithFriends == false)
         #expect(decoded.shareAvatarWithFriends == false)
@@ -180,5 +170,24 @@ struct SettingsSnapshotTests {
         #expect(decoded.gender == nil)
         #expect(decoded.birthday == nil)
         #expect(decoded.introduction == nil)
+    }
+
+    // Roadmap Phase 9f-2: accountLinked was removed from the struct entirely
+    // (dead field, no code read it). A record some old device already wrote
+    // still carries the "accountLinked" JSON key — decode must ignore it
+    // rather than fail, same tolerance the decodeIfPresent init already
+    // gives every field that isn't present.
+    @Test func decodesPayloadWithNowRemovedAccountLinkedKey() throws {
+        let legacyJSON = """
+        {"schemaVersion":1,"records":[{\
+        "myName":"Sam","localPlayerId":"","pointsToWin":15,"gamesInMatch":1,\
+        "courtTheme":"Blue","announceScore":false,"enableSounds":true,\
+        "enableCrownScoring":false,"timeModeEnabled":true,"timeLimitMinutes":20,\
+        "accountLinked":true}]}
+        """
+        let decoded = try #require(
+            PersistenceStore.decodeSettingsSnapshot(Data(legacyJSON.utf8))
+        )
+        #expect(decoded.myName == "Sam")
     }
 }

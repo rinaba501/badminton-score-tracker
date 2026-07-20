@@ -313,11 +313,6 @@
 "friends.cancel_request" = "取消";
 "friends.cancel_request_confirm" = "取消这条好友请求？";
 "friends.add_friend" = "添加好友";
-"profile.account_section_header" = "账户";
-"profile.link_account" = "关联此设备";
-"profile.linked_as" = "已关联为 %@";
-"profile.unlink_account" = "取消关联";
-"profile.unlink_account_confirm" = "取消此设备与你账号的关联？你可以随时重新关联。";
 "profile.gender_label" = "性别";
 "profile.gender_prefer_not_to_say" = "不愿透露";
 "profile.birthday_label" = "生日";

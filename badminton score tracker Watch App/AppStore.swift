@@ -150,8 +150,7 @@ final class AppStore: ObservableObject {
     /// Supabase the active backend for the personal-data tier. CloudKit
     /// itself is untouched by this — only future writes are redirected.
     /// Does not set `AppStorageKeys.supabaseAccountLinked` itself; the
-    /// caller (a `@AppStorage`-bound Settings toggle) owns that write, same
-    /// pattern as `accountLinked`'s existing `linkAccount()`/`unlinkAccount()`.
+    /// caller (a `@AppStorage`-bound Settings toggle) owns that write.
     func activateSupabaseSync() {
         guard SupabaseSyncManager.shared.isSignedIn else { return }
         syncEngine = SupabaseSyncEngine.shared
@@ -194,7 +193,6 @@ final class AppStore: ObservableObject {
             timeLimitMinutes: defaults.object(forKey: AppStorageKeys.timeLimitMinutes) as? Int ?? 10,
             courtChangeRemindersEnabled: defaults.object(forKey: AppStorageKeys.courtChangeRemindersEnabled) as? Bool ?? false,
             clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
-            accountLinked: defaults.object(forKey: AppStorageKeys.accountLinked) as? Bool ?? false,
             gameScreenStyle: defaults.string(forKey: AppStorageKeys.gameScreenStyle) ?? "Depth",
             shareHistoryWithFriends: defaults.object(forKey: AppStorageKeys.shareHistoryWithFriends) as? Bool ?? false,
             shareAvatarWithFriends: defaults.object(forKey: AppStorageKeys.shareAvatarWithFriends) as? Bool ?? false,
@@ -489,7 +487,6 @@ final class AppStore: ObservableObject {
         defaults.set(snapshot.timeModeEnabled, forKey: AppStorageKeys.timeModeEnabled)
         defaults.set(snapshot.timeLimitMinutes, forKey: AppStorageKeys.timeLimitMinutes)
         defaults.set(snapshot.courtChangeRemindersEnabled, forKey: AppStorageKeys.courtChangeRemindersEnabled)
-        defaults.set(snapshot.accountLinked, forKey: AppStorageKeys.accountLinked)
         defaults.set(snapshot.gameScreenStyle, forKey: AppStorageKeys.gameScreenStyle)
         defaults.set(snapshot.shareHistoryWithFriends, forKey: AppStorageKeys.shareHistoryWithFriends)
         defaults.set(snapshot.shareAvatarWithFriends, forKey: AppStorageKeys.shareAvatarWithFriends)

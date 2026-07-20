@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9e done, 9f in progress (9f-1 done).** Schema + RLS applied and verified against the
+**Status: 9a-9e done, 9f in progress (9f-1/9f-2 done).** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -686,10 +686,26 @@ and its own tracking issue, filed once the prior slice lands.
     (should say Supabase too, since Roadmap 9e-4 made erase-all-data real
     there) but predates this session — left alone rather than expanding
     scope further.
-  - **9f-2 — Collapse the CloudKit branches.** Every remaining
+  - **9f-2 — Collapse the CloudKit branches.** ✅ done. Every remaining
     `if supabaseAccountLinked { ... } else { CloudKit path } }` View branch
-    becomes unconditional Supabase behavior; remove the now-dead
-    `accountLinked` CloudKit link/unlink flag and its Settings UI section.
+    (`FriendsView`/`ClubDetailView`/`ContentView`/`ProfileView`/
+    `FriendInviteView`, both targets) collapsed to unconditional Supabase
+    behavior; the now-dead `accountLinked` CloudKit link/unlink flag removed
+    entirely, including its `SettingsSnapshot` wire field (the same
+    decodeIfPresent scheme that lets a new field join safely also lets a
+    removed one leave safely — Codable ignores a JSON key `CodingKeys` no
+    longer declares) and its `eraseAllDataResetKeys` entry. **Found and
+    fixed while implementing**, same bug class as both 9f-1 findings:
+    `WatchAppDelegate`/`AppDelegate`'s remote-push handlers weren't gated on
+    `supabaseAccountLinked` at all — every device, Supabase-active or not,
+    still registered a CloudKit push subscription for friend requests, and
+    the push handler unconditionally did `fetchMyFriendRequests()` →
+    `AppStore.shared.saveFriendRequests(requests)`, a full reconcile (not a
+    merge) that would have silently wiped a Supabase-active device's real
+    friends list on a stray push. Both handlers now gate on
+    `!UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked)`.
+    `acceptShare` forwarding itself stays unconditional, same documented
+    no-op-ish gap 9f-1 left, deferred to 9f-3.
   - **9f-3 — Delete CloudKit's code.** `CloudKitSyncManager.swift` (both
     targets), `CloudSharingView.swift`, the `AppDelegate`/`WatchAppDelegate`
     CKShare-accept forwarding (closing 9f-1's known gap by removing the

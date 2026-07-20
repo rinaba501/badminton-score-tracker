@@ -5,9 +5,11 @@
 //  Dedicated "who am I" page, split out from the shared roster (RosterView,
 //  which now only manages other players) and from Friends (FriendsView,
 //  which now only manages the friend graph). Owns name/avatar editing for
-//  "Me" and the CloudKit account-link toggle. iOS-only: on watchOS "Me" stays
-//  a distinguished row inside Settings/Roster, since the small screen doesn't
-//  warrant another top-level nav destination.
+//  "Me". iOS-only: on watchOS "Me" stays a distinguished row inside
+//  Settings/Roster, since the small screen doesn't warrant another
+//  top-level nav destination. Roadmap Phase 9f-2: the CloudKit account-link
+//  toggle (a metadata-only "link this device" flag with no behavioral effect
+//  even before Supabase existed) was removed as dead code.
 //
 //  Each identity field (avatar/gender/birthday/bio) carries its own inline
 //  "share with friends" toggle right next to where it's edited, so the
@@ -25,18 +27,12 @@ import CloudSyncSpike
 struct ProfileView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
-    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
     @AppStorage(AppStorageKeys.shareAvatarWithFriends) private var shareAvatarWithFriends = false
     @AppStorage(AppStorageKeys.shareGenderWithFriends) private var shareGenderWithFriends = false
     @AppStorage(AppStorageKeys.shareBirthdayWithFriends) private var shareBirthdayWithFriends = false
     @AppStorage(AppStorageKeys.shareIntroductionWithFriends) private var shareIntroductionWithFriends = false
 
     @State private var editingPlayer: Player?
-    @State private var promptingForName = false
-    @State private var pendingName = ""
-    @State private var pendingAction: (() -> Void)?
-    @State private var showUnlinkConfirm = false
     @State private var toastMessage: String?
 
     // Gender/birthday/introduction aren't @AppStorage-native types (String?/
@@ -49,12 +45,6 @@ struct ProfileView: View {
     @State private var birthday = Date()
     @State private var introduction = ""
     private static let introductionCharacterLimit = 200
-
-    // Backstop for anyone who skipped the first-launch prompt (ContentView) —
-    // linkAccount() still needs a real name before it publishes a FriendProfile.
-    private var needsName: Bool {
-        myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
-    }
 
     private var roster: [Player] { store.roster }
 
@@ -160,22 +150,6 @@ struct ProfileView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
-
-            Section("profile.account_section_header") {
-                if accountLinked {
-                    HStack(spacing: 8) {
-                        AvatarView(name: myName, color: meAsPlayer().avatarColor, size: 24, iconName: meAsPlayer().iconName)
-                        Text(String(format: NSLocalizedString("profile.linked_as", comment: ""), myName))
-                    }
-                    Button("profile.unlink_account", role: .destructive) { showUnlinkConfirm = true }
-                } else {
-                    Button {
-                        linkAccount()
-                    } label: {
-                        Label("profile.link_account", systemImage: "link")
-                    }
-                }
-            }
         }
         .overlay(alignment: .bottom) {
             if let toastMessage {
@@ -199,16 +173,6 @@ struct ProfileView: View {
                 clubs: store.clubs,
                 onSave: saveMe
             )
-        }
-        .sheet(isPresented: $promptingForName) {
-            namePrompt
-        }
-        .confirmationDialog(
-            "profile.unlink_account_confirm",
-            isPresented: $showUnlinkConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("profile.unlink_account", role: .destructive) { unlinkAccount() }
         }
         .onAppear { loadIdentityFields() }
     }
@@ -250,32 +214,6 @@ struct ProfileView: View {
         }
     }
 
-    private var namePrompt: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    Text("friends.display_name_prompt_message")
-                        .foregroundStyle(.secondary)
-                    TextField("friends.display_name_placeholder", text: $pendingName)
-                }
-            }
-            .navigationTitle(Text("friends.display_name_prompt_title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("history.cancel") {
-                        pendingAction = nil
-                        promptingForName = false
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("playeredit.save") { savePendingName() }
-                        .disabled(pendingName.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-        }
-    }
-
     // MARK: - Actions
 
     // Write myName before any save* that enqueues Settings so the
@@ -312,23 +250,6 @@ struct ProfileView: View {
         editingPlayer = nil
     }
 
-    private func savePendingName() {
-        let trimmed = pendingName.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        myName = trimmed
-        promptingForName = false
-        AppStore.shared.enqueueSettingsChange()
-        Task { @MainActor in
-            if supabaseAccountLinked {
-                await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
-            } else {
-                try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
-            }
-            pendingAction?()
-            pendingAction = nil
-        }
-    }
-
     private func loadIdentityFields() {
         let defaults = UserDefaults.standard
         gender = defaults.string(forKey: AppStorageKeys.gender)
@@ -361,31 +282,6 @@ struct ProfileView: View {
         if trimmed.isEmpty { defaults.removeObject(forKey: AppStorageKeys.introduction) } else { defaults.set(trimmed, forKey: AppStorageKeys.introduction) }
         AppStore.shared.enqueueSettingsChange()
         store.refreshMyIdentitySnapshotIfSharing()
-    }
-
-    // Explicit "link this device to one CloudKit account" opt-in flag —
-    // purely informational today (Club's "you" row/badge no longer branches
-    // on it, since there's only one identity to show), kept for future use.
-    private func linkAccount() {
-        guard !needsName else {
-            pendingName = ""
-            pendingAction = { [self] in
-                accountLinked = true
-                AppStore.shared.enqueueSettingsChange()
-            }
-            promptingForName = true
-            return
-        }
-        accountLinked = true
-        AppStore.shared.enqueueSettingsChange()
-    }
-
-    // Non-destructive: does not delete the FriendProfile, remove friends, or
-    // leave clubs — just detaches the local link so Club stops showing the
-    // shared name. Re-linking later restores it.
-    private func unlinkAccount() {
-        accountLinked = false
-        AppStore.shared.enqueueSettingsChange()
     }
 
     // shareAvatar/Gender/Birthday/IntroductionWithFriends all gate fields on

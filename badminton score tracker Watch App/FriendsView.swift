@@ -3,9 +3,10 @@
 //  badminton score tracker Watch App
 //
 //  Roadmap Phase 7e: Friends UI — pending requests, friends list, and an
-//  invite-generation ShareLink, over the CloudKit public-DB plumbing built in
-//  7a-7d (CloudKitSyncManager's Friends section, AppStore.friendRequests/
-//  friends). Unlike Phase 5e's club invite (UICloudSharingController,
+//  invite-generation ShareLink. Talks to Supabase (SupabaseSyncManager/
+//  SupabaseSyncEngine, AppStore.friendRequests/friends) — the original
+//  CloudKit-only plumbing this shipped over (7a-7d) was fully retired as of
+//  Roadmap Phase 9f-2. Unlike Phase 5e's club invite (UICloudSharingController,
 //  UIKit-only, hence iOS-only), a friend invite is just a URL
 //  (FriendInviteLink.url), so ShareLink works natively here too — no keyboard
 //  needed, just the system share sheet. iOS restyle counterpart is
@@ -29,8 +30,6 @@ private struct PendingFriendRequestResponse: Identifiable {
 struct FriendsView: View {
     @EnvironmentObject private var appStore: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
-    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
 
     @State private var myParticipantId: String?
     @State private var enteringCode = false
@@ -41,7 +40,6 @@ struct FriendsView: View {
     @State private var pendingName = ""
     @State private var pendingAction: (() -> Void)?
     @State private var pendingRequestResponse: PendingFriendRequestResponse?
-    @State private var showUnlinkConfirm = false
 
     // Backstop for anyone who skipped the first-launch prompt (ContentView) —
     // still lets Friends work, just nudges before anything gets sent.
@@ -88,13 +86,6 @@ struct FriendsView: View {
                 namePrompt
             }
             .confirmationDialog(
-                "friends.unlink_account_confirm",
-                isPresented: $showUnlinkConfirm,
-                titleVisibility: .visible
-            ) {
-                Button("friends.unlink_account", role: .destructive) { unlinkAccount() }
-            }
-            .confirmationDialog(
                 pendingRequestResponse?.isCancel == true ? "friends.cancel_request_confirm" : "friends.decline_confirm",
                 isPresented: Binding(
                     get: { pendingRequestResponse != nil },
@@ -114,22 +105,6 @@ struct FriendsView: View {
 
     private var friendsList: some View {
         List {
-            Section(header: Text("friends.account_section_header")) {
-                if accountLinked {
-                    HStack(spacing: 8) {
-                        AvatarView(name: Player.displayName(for: myName), color: avatarColor(for: myName), size: 24, iconName: avatarIcon(for: myName))
-                        Text(String(format: NSLocalizedString("friends.linked_as", comment: ""), Player.displayName(for: myName)))
-                    }
-                    Button("friends.unlink_account", role: .destructive) { showUnlinkConfirm = true }
-                } else {
-                    Button {
-                        linkAccount()
-                    } label: {
-                        Label("friends.link_account", systemImage: "link")
-                    }
-                }
-            }
-
             if !incomingRequests.isEmpty {
                 Section(header: Text("friends.pending_received")) {
                     ForEach(incomingRequests) { request in
@@ -268,32 +243,16 @@ struct FriendsView: View {
     // MARK: - Actions
 
     private func refresh() async {
-        if supabaseAccountLinked {
-            if let uid = await SupabaseSyncManager.shared.currentUserId() {
-                myParticipantId = uid.uuidString
-            }
-            if needsName {
-                pendingName = ""
-                promptingForName = true
-            } else {
-                await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
-            }
-            await SupabaseSyncEngine.shared.refreshFriendRequests()
-            return
-        }
-        let manager = CloudKitSyncManager.shared
-        if let id = try? await manager.resolveMyParticipantId() {
-            myParticipantId = id
+        if let uid = await SupabaseSyncManager.shared.currentUserId() {
+            myParticipantId = uid.uuidString
         }
         if needsName {
             pendingName = ""
             promptingForName = true
         } else {
-            try? await manager.ensureMyProfileExists(displayName: Player.displayName(for: myName))
+            await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
         }
-        if let requests = try? await manager.fetchMyFriendRequests() {
-            appStore.saveFriendRequests(requests)
-        }
+        await SupabaseSyncEngine.shared.refreshFriendRequests()
     }
 
     private func savePendingName() {
@@ -303,39 +262,10 @@ struct FriendsView: View {
         promptingForName = false
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
-            if supabaseAccountLinked {
-                await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
-            } else {
-                try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
-            }
+            await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
             pendingAction?()
             pendingAction = nil
         }
-    }
-
-    // Explicit "link this device to one CloudKit account" opt-in flag —
-    // purely informational today (Club's "you" row/badge no longer branches
-    // on it, since there's only one identity to show), kept for future use.
-    private func linkAccount() {
-        guard !needsName else {
-            pendingName = ""
-            pendingAction = { [self] in
-                accountLinked = true
-                AppStore.shared.enqueueSettingsChange()
-            }
-            promptingForName = true
-            return
-        }
-        accountLinked = true
-        AppStore.shared.enqueueSettingsChange()
-    }
-
-    // Non-destructive: does not delete the FriendProfile, remove friends, or
-    // leave clubs — just detaches the local link so Club stops showing the
-    // shared name. Re-linking later restores it.
-    private func unlinkAccount() {
-        accountLinked = false
-        AppStore.shared.enqueueSettingsChange()
     }
 
     private func sendCode() {
@@ -358,47 +288,14 @@ struct FriendsView: View {
         // @MainActor: the awaits on the (MainActor) sync manager would
         // otherwise resume on a background executor before mutating @State.
         Task { @MainActor in
-            if supabaseAccountLinked {
-                await sendCodeViaSupabase(participantId: participantId)
-            } else {
-                await sendCodeViaCloudKit(participantId: participantId)
-            }
+            await sendCodeViaSupabase(participantId: participantId)
         }
     }
 
-    private func sendCodeViaCloudKit(participantId: String) async {
-        let manager = CloudKitSyncManager.shared
-        guard let profile = await manager.fetchProfile(participantId: participantId) else {
-            codeError = NSLocalizedString("friends.error_not_found", comment: "")
-            isSendingCode = false
-            return
-        }
-        do {
-            try await manager.ensureMyProfileExists(displayName: Player.displayName(for: myName))
-            try await manager.sendFriendRequest(toParticipantId: participantId, toDisplayName: profile.displayName)
-            if let requests = try? await manager.fetchMyFriendRequests() {
-                appStore.saveFriendRequests(requests)
-            }
-            isSendingCode = false
-            enteringCode = false
-            codeInput = ""
-        } catch CloudKitSyncManager.FriendRequestError.selfRequest {
-            codeError = NSLocalizedString("friends.error_self", comment: "")
-            isSendingCode = false
-        } catch CloudKitSyncManager.FriendRequestError.alreadyPending {
-            codeError = NSLocalizedString("friends.error_pending", comment: "")
-            isSendingCode = false
-        } catch {
-            codeError = NSLocalizedString("friends.error_generic", comment: "")
-            isSendingCode = false
-        }
-    }
-
-    /// Supabase-active counterpart: `participantId` must be a real
-    /// `auth.uid()` string here (an invite link/code sent from a
-    /// Supabase-active device always encodes one) — a CloudKit-era code
-    /// pasted into a now-Supabase-active device fails the UUID parse and
-    /// reports the same "not found" error a truly unknown id would.
+    /// `participantId` must be a real `auth.uid()` string here (an invite
+    /// link/code sent from another device always encodes one) — a
+    /// malformed/unparseable code fails the UUID parse and reports the same
+    /// "not found" error a truly unknown id would.
     private func sendCodeViaSupabase(participantId: String) async {
         guard let toId = UUID(uuidString: participantId),
               let toDisplayName = await SupabaseSyncManager.shared.fetchProfileDisplayName(participantId: toId) else {
@@ -444,30 +341,16 @@ struct FriendsView: View {
         // @MainActor: the awaits on the (MainActor) sync manager would
         // otherwise resume on a background executor before mutating appStore.
         Task { @MainActor in
-            if supabaseAccountLinked {
-                var updated = request
-                updated.status = accept ? .accepted : .declined
-                guard let payload = PersistenceStore.encodeFriendRequest(updated) else { return }
-                await SupabaseSyncManager.shared.respondToFriendRequest(id: request.id, status: updated.status.rawValue, payload: payload)
-                await SupabaseSyncEngine.shared.refreshFriendRequests()
-                // No FriendsHistory-participant-list equivalent needed here —
-                // friend history/identity/stats visibility under Supabase is
-                // RLS + settings-toggle gated, not a per-participant share
-                // list (see Roadmap 9e-2/9e-3), so accepting/declining alone
-                // is already the complete access change.
-                return
-            }
-            let manager = CloudKitSyncManager.shared
-            try? await manager.respondToFriendRequest(request, accept: accept)
-            if let requests = try? await manager.fetchMyFriendRequests() {
-                appStore.saveFriendRequests(requests)
-            }
-            // Roadmap Phase 9f-1: the FriendsHistory share's participant-list
-            // reconciliation this used to do here was removed — CloudKit is
-            // no longer started at launch, so the zone was never actually
-            // populated with mirror data for this device in the first place
-            // (see FriendSharingSettingsView's toggle handlers for the same
-            // reasoning).
+            var updated = request
+            updated.status = accept ? .accepted : .declined
+            guard let payload = PersistenceStore.encodeFriendRequest(updated) else { return }
+            await SupabaseSyncManager.shared.respondToFriendRequest(id: request.id, status: updated.status.rawValue, payload: payload)
+            await SupabaseSyncEngine.shared.refreshFriendRequests()
+            // No FriendsHistory-participant-list equivalent needed here —
+            // friend history/identity/stats visibility under Supabase is
+            // RLS + settings-toggle gated, not a per-participant share
+            // list (see Roadmap 9e-2/9e-3), so accepting/declining alone
+            // is already the complete access change.
         }
     }
 }

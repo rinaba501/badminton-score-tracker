@@ -307,11 +307,6 @@
 "onboarding.welcome_name_title" = "स्वागत है!";
 "onboarding.welcome_name_message" = "अन्य खिलाड़ी आपको किस नाम से बुलाएं? आप इसे कभी भी सेटिंग्स में बदल सकते हैं।";
 "onboarding.skip" = "छोड़ें";
-"friends.account_section_header" = "खाता";
-"friends.link_account" = "इस डिवाइस को लिंक करें";
-"friends.linked_as" = "%@ के रूप में लिंक किया गया";
-"friends.unlink_account" = "अनलिंक करें";
-"friends.unlink_account_confirm" = "इस डिवाइस को अपने खाते से अनलिंक करें? आप इसे कभी भी फिर से लिंक कर सकते हैं।";
 "friends.enter_code" = "कोड दर्ज करें";
 "friends.code_prompt_message" = "आमंत्रण लिंक या मित्र कोड पेस्ट करें";
 "friends.code_placeholder" = "आमंत्रण लिंक या कोड";

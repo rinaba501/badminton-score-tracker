@@ -5,14 +5,15 @@
 //  Friends v1 (invite-link slice, Roadmap 7d): the confirmation sheet shown
 //  when a `badminton://addfriend` link is opened (parsed by ContentView's
 //  onOpenURL via BadmintonCore.FriendInviteLink). Nothing is sent until the
-//  user explicitly confirms — opening a link must never write to CloudKit by
-//  itself, since the URL is untrusted input anyone can compose.
+//  user explicitly confirms — opening a link must never write to the backend
+//  by itself, since the URL is untrusted input anyone can compose.
 //
-//  On confirm it upserts my public FriendProfile first (using the roster
-//  "Me" name, myName — there's no separate Friends display name to seed),
-//  sends the request, then reconciles AppStore.friendRequests with a fresh
-//  public-DB fetch (the saveFriendRequests convention — no CKSyncEngine
-//  involved).
+//  On confirm it upserts my public profile first (using the roster "Me"
+//  name, myName — there's no separate Friends display name to seed), sends
+//  the request via Supabase, then reconciles AppStore.friendRequests
+//  (SupabaseSyncEngine.refreshFriendRequests). Roadmap Phase 9f-2: the
+//  original CloudKit-branch this shipped with (7d) was removed — Friends is
+//  Supabase-only now.
 //
 
 import SwiftUI
@@ -23,9 +24,7 @@ struct FriendInviteView: View {
     let invite: FriendInviteLink.Invite
     let onClose: () -> Void
 
-    @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
 
     private enum SendState: Equatable {
         case idle, sending, sent, failed(String)
@@ -125,27 +124,7 @@ struct FriendInviteView: View {
         // @MainActor: the awaits on the (MainActor) sync manager would
         // otherwise resume on a background executor before mutating @State.
         Task { @MainActor in
-            if supabaseAccountLinked {
-                await sendViaSupabase(displayName: displayName)
-                return
-            }
-            do {
-                let manager = CloudKitSyncManager.shared
-                try await manager.ensureMyProfileExists(displayName: displayName)
-                try await manager.sendFriendRequest(
-                    toParticipantId: invite.participantId,
-                    toDisplayName: invite.displayName
-                )
-                let requests = try await manager.fetchMyFriendRequests()
-                store.saveFriendRequests(requests)
-                sendState = .sent
-            } catch CloudKitSyncManager.FriendRequestError.selfRequest {
-                sendState = .failed(NSLocalizedString("friends.error_self", comment: ""))
-            } catch CloudKitSyncManager.FriendRequestError.alreadyPending {
-                sendState = .failed(NSLocalizedString("friends.error_pending", comment: ""))
-            } catch {
-                sendState = .failed(NSLocalizedString("friends.error_generic", comment: ""))
-            }
+            await sendViaSupabase(displayName: displayName)
         }
     }
 

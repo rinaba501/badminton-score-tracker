@@ -313,11 +313,6 @@
 "friends.cancel_request" = "取り消す";
 "friends.cancel_request_confirm" = "このフレンド申請をキャンセルしますか？";
 "friends.add_friend" = "フレンドを追加";
-"profile.account_section_header" = "アカウント";
-"profile.link_account" = "この端末をリンク";
-"profile.linked_as" = "%@ としてリンク済み";
-"profile.unlink_account" = "リンク解除";
-"profile.unlink_account_confirm" = "このデバイスのアカウント連携を解除しますか？いつでも再度連携できます。";
 "profile.gender_label" = "性別";
 "profile.gender_prefer_not_to_say" = "回答しない";
 "profile.birthday_label" = "誕生日";
