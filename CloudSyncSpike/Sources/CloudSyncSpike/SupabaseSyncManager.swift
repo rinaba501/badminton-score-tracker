@@ -654,11 +654,14 @@ public final class SupabaseSyncManager: ObservableObject {
         // Present on players/match_records/clubs/settings; absent on
         // challenges/reactions (see `RemoteChange.ownerId`'s doc comment).
         let ownerId = record["owner_id"]?.stringValue.flatMap { UUID(uuidString: $0) }
+        // Present on players/match_records/challenges/reactions; absent
+        // elsewhere.
+        let clubId = record["club_id"]?.stringValue.flatMap { UUID(uuidString: $0) }
         guard kind == .upsert else {
-            return RemoteChange(table: table, id: id, kind: kind, payload: nil, ownerId: ownerId)
+            return RemoteChange(table: table, id: id, kind: kind, payload: nil, ownerId: ownerId, clubId: clubId)
         }
         guard let payload = record["payload"], let payloadData = try? JSONEncoder().encode(payload) else { return nil }
-        return RemoteChange(table: table, id: id, kind: kind, payload: payloadData, ownerId: ownerId)
+        return RemoteChange(table: table, id: id, kind: kind, payload: payloadData, ownerId: ownerId, clubId: clubId)
     }
 
     /// One-time catch-up read of every row this user can see in `table`
@@ -684,7 +687,7 @@ public final class SupabaseSyncManager: ObservableObject {
                 .value
             return rows.compactMap { row in
                 guard let payload = try? JSONEncoder().encode(row.payload) else { return nil }
-                return RemoteChange(table: table, id: row.id, kind: .upsert, payload: payload, ownerId: row.ownerId)
+                return RemoteChange(table: table, id: row.id, kind: .upsert, payload: payload, ownerId: row.ownerId, clubId: row.clubId)
             }
         } catch {
             appendLog("Fetch \(table) failed: \(error.localizedDescription)")
@@ -706,7 +709,7 @@ public final class SupabaseSyncManager: ObservableObject {
                 .execute()
                 .value
             guard let row = rows.first, let payload = try? JSONEncoder().encode(row.payload) else { return nil }
-            return RemoteChange(table: "settings", id: uid, kind: .upsert, payload: payload, ownerId: uid)
+            return RemoteChange(table: "settings", id: uid, kind: .upsert, payload: payload, ownerId: uid, clubId: nil)
         } catch {
             appendLog("Fetch settings failed: \(error.localizedDescription)")
             return nil
@@ -740,6 +743,13 @@ public struct RemoteChange: Sendable {
     /// `Club.ownerRecordName`, which the owner always encodes as `nil`
     /// (they ARE the owner); a receiving member must not adopt that as-is.
     public let ownerId: UUID?
+    /// The row's raw `club_id` column, when the table has one
+    /// (`players`/`match_records`/`challenges`/`reactions`) — nil otherwise.
+    /// Exists so a `.delete` event (no `payload` to decode a model's own
+    /// `clubId` from) can still be routed correctly — see
+    /// `SupabaseSyncEngine`'s personal-vs-club-vs-friend routing (Phase
+    /// 9e-3).
+    public let clubId: UUID?
 }
 
 /// One resolved club member, returned by `SupabaseSyncManager.fetchClubMembers`.
@@ -833,11 +843,13 @@ private struct SelectedRow: Decodable {
     let id: UUID
     let payload: AnyJSON
     let ownerId: UUID?
+    let clubId: UUID?
 
     enum CodingKeys: String, CodingKey {
         case id
         case payload
         case ownerId = "owner_id"
+        case clubId = "club_id"
     }
 }
 

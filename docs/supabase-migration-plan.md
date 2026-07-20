@@ -5,7 +5,7 @@ Realtime) as the app's sync/identity layer, on every platform including the
 existing Watch/iOS app. This document is the reference for the implementation
 phases (Phase 9 in [ROADMAP.md](../ROADMAP.md)).
 
-**Status: 9a-9d done, 9e in progress (9e-1/9e-2 done).** Schema + RLS applied and verified against the
+**Status: 9a-9d done, 9e in progress (9e-1/9e-2/9e-3 done).** Schema + RLS applied and verified against the
 Supabase project ([supabase/schema.sql](../supabase/schema.sql), all 10
 tables present with `rowsecurity = true`); the `SyncEngine` protocol
 ([SyncEngine.swift](../BadmintonCore/Sources/BadmintonCore/SyncEngine.swift))
@@ -549,21 +549,35 @@ and its own tracking issue, filed once the prior slice lands.
     `CloudKitSyncManager.shared`; the CKShare-participant-list calls
     (`syncFriendsHistoryParticipants`/`revokeFriendsHistoryAccess`) stay
     CloudKit-only, now explicitly gated on `!supabaseAccountLinked`.
-  - **9e-3 — Friend history sharing** (after 9e-2): extends already-live
-    `players_select`/`match_records_select` RLS with one more `or` branch
-    keyed off a new `is_accepted_friend`/`friend_can_view_history` helper
-    pair — no mirrored copy of the data is needed at all (a genuine
-    simplification over CloudKit's separate "FriendsHistory" zone, which
-    only existed because a `CKShare` grants access at zone granularity, not
-    per-row; Postgres RLS is row-level natively). Since `fetchAllRows`/
-    `startRealtimeSync` already apply no client-side owner filter, the
-    already-running players/match_records sync will start returning
-    friend-shared rows the instant this RLS lands — the real work is
-    teaching `SupabaseSyncEngine`'s pull/Realtime routing to send a
-    `clubId == nil && ownerId != self` row to `AppStore.
-    applyRemoteFriendActivity` instead of the normal merge-into-my-own-roster
-    path, the highest-risk piece of 9e (touches already-live RLS + sync
-    routing logic).
+  - **9e-3 — Friend history sharing.** ✅ done. New `friend_can_view_history`
+    helper (`is_accepted_friend(target_owner) and` that owner's `settings`
+    row has `shareHistoryWithFriends` true), added as one more `or` branch on
+    `players_select`/`match_records_select` — no mirrored copy of the data
+    needed at all (a genuine simplification over CloudKit's separate
+    "FriendsHistory" zone, which only existed because a `CKShare` grants
+    access at zone granularity, not per-row; Postgres RLS is row-level
+    natively). Since `fetchAllRows`/`startRealtimeSync` already apply no
+    client-side owner filter, the already-running `players`/`match_records`
+    sync started returning friend-shared rows the moment this RLS landed —
+    no new manager method needed. The real work, and the highest-risk piece
+    of 9e (touches already-live RLS + sync routing logic): `SupabaseSyncEngine`'s
+    pull (`pullInitialState`) and Realtime (`handleRemoteChange`) now decode
+    every `players`/`match_records` row and branch on
+    `(clubId, ownerId vs currentUserId())` via a new `isPersonalOrClubRow`
+    helper — `clubId != nil` (club-shared) or `ownerId == nil`/`ownerId ==
+    self` (personal, including the push-echo case) keeps going through the
+    existing `applyRemoteUpsert`/`applyRemoteDeletions` merge-into-my-own
+    path unchanged; everything else — a friend's now-RLS-visible personal
+    row — routes to `AppStore.applyRemoteFriendActivity`/
+    `applyRemoteFriendActivityDeletions` instead, so it never merges into
+    this device's own roster/history. `RemoteChange` gained a
+    `clubId: UUID?` field (same reasoning as its existing `ownerId`): a
+    `.delete` Realtime event carries no `payload`, so a decoded model's own
+    `clubId` isn't available to route on — `players`/`match_records` already
+    have `REPLICA IDENTITY FULL` (9c-5), so the old-row image already
+    carried `club_id`, it just wasn't being read into `RemoteChange` before
+    now. `/code-review` before merge, called out specifically for the
+    routing-logic risk, per the plan.
   - **9e-4 — Erase-all-data teardown + remaining UI wiring**: real
     `deleteFriendsHistoryZone`/`deleteMyFriendProfile`/
     `deleteAllMyFriendRequests` implementations (currently no-op stubs), plus

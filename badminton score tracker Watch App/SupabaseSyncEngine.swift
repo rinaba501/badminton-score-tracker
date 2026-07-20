@@ -14,10 +14,13 @@
 //  needs the identical logic — one shared copy per target instead of one
 //  per sync engine.
 //
-//  The personal-data tier (settings + personal players/match_records) and,
-//  as of Phase 9d, clubs/challenges/reactions are real — friends-* stay
-//  no-ops here until 9e migrates them, matching BadmintonCore.NoOpSyncEngine's
-//  shape.
+//  The personal-data tier (settings + personal players/match_records),
+//  clubs/challenges/reactions (Phase 9d), and the Friends graph
+//  (FriendProfile/FriendRequest push+pull 9e-1, identity/stats sharing 9e-2,
+//  history sharing 9e-3) are all real now. `enqueueFriendsRosterChanges`/
+//  `enqueueFriendsHistoryChanges` stay permanent no-ops by design (see their
+//  own doc comment below) — everything else this protocol declares has a
+//  real implementation.
 //
 
 import Foundation
@@ -149,16 +152,41 @@ final class SupabaseSyncEngine: SyncEngine {
     }
 
     private func pullInitialState() async {
-        let playerChanges = await manager.fetchAllRows(table: "players")
-        let players = playerChanges.compactMap { $0.payload.flatMap(PersistenceStore.decodePlayer) }
-        if !players.isEmpty {
-            AppStore.shared.applyRemoteUpsert(records: [], players: players, clubs: [])
+        let myId = await manager.currentUserId()
+        var personalPlayers: [Player] = []
+        var friendPlayersByOwner: [UUID: [Player]] = [:]
+        for change in await manager.fetchAllRows(table: "players") {
+            guard let payload = change.payload, let player = PersistenceStore.decodePlayer(payload) else { continue }
+            if isPersonalOrClubRow(clubId: player.clubId, ownerId: change.ownerId, myId: myId) {
+                personalPlayers.append(player)
+            } else if let ownerId = change.ownerId {
+                friendPlayersByOwner[ownerId, default: []].append(player)
+            }
         }
-        let recordChanges = await manager.fetchAllRows(table: "match_records")
-        let records = recordChanges.compactMap { $0.payload.flatMap(PersistenceStore.decodeRecord) }
-        if !records.isEmpty {
-            AppStore.shared.applyRemoteUpsert(records: records, players: [], clubs: [])
+        if !personalPlayers.isEmpty {
+            AppStore.shared.applyRemoteUpsert(records: [], players: personalPlayers, clubs: [])
         }
+        for (ownerId, players) in friendPlayersByOwner {
+            AppStore.shared.applyRemoteFriendActivity(participantId: ownerId.uuidString, matches: [], players: players)
+        }
+
+        var personalRecords: [MatchRecord] = []
+        var friendRecordsByOwner: [UUID: [MatchRecord]] = [:]
+        for change in await manager.fetchAllRows(table: "match_records") {
+            guard let payload = change.payload, let record = PersistenceStore.decodeRecord(payload) else { continue }
+            if isPersonalOrClubRow(clubId: record.clubId, ownerId: change.ownerId, myId: myId) {
+                personalRecords.append(record)
+            } else if let ownerId = change.ownerId {
+                friendRecordsByOwner[ownerId, default: []].append(record)
+            }
+        }
+        if !personalRecords.isEmpty {
+            AppStore.shared.applyRemoteUpsert(records: personalRecords, players: [], clubs: [])
+        }
+        for (ownerId, records) in friendRecordsByOwner {
+            AppStore.shared.applyRemoteFriendActivity(participantId: ownerId.uuidString, matches: records, players: [])
+        }
+
         var clubs: [Club] = []
         for change in await manager.fetchAllRows(table: "clubs") {
             guard let payload = change.payload, var club = PersistenceStore.decodeClub(payload) else { continue }
@@ -184,7 +212,6 @@ final class SupabaseSyncEngine: SyncEngine {
             AppStore.shared.applyRemoteSettings(snapshot)
         }
         await refreshFriendRequests()
-        let myId = await manager.currentUserId()
         for change in await manager.fetchAllRows(table: "friend_identity_snapshots") where change.id != myId {
             guard let payload = change.payload, var identity = PersistenceStore.decodeFriendIdentitySnapshot(payload) else { continue }
             identity.displayName = displayName(forFriendParticipant: change.id)
@@ -223,6 +250,17 @@ final class SupabaseSyncEngine: SyncEngine {
         return ownerId == myId ? nil : ownerId.uuidString
     }
 
+    /// A `clubId == nil` row belongs in this device's own `roster`/`history`
+    /// only when it's actually this account's row (or `ownerId` came back
+    /// nil, the personal-push-echo case) — club-tagged rows always take this
+    /// path too, unchanged from before Phase 9e-3. Everything else is a
+    /// `friend_can_view_history`-granted row (Phase 9e-3): a friend's
+    /// personal data, now visible via RLS but never to be merged into this
+    /// device's own caches — see `applyRemoteFriendActivity`'s doc comment.
+    private func isPersonalOrClubRow(clubId: UUID?, ownerId: UUID?, myId: UUID?) -> Bool {
+        clubId != nil || ownerId == nil || ownerId == myId
+    }
+
     /// The Realtime callback. Self-echoes (this same device's own push
     /// coming back through the subscription) are expected and harmless —
     /// applyRemoteUpsert/applyRemoteDeletions merge by id, so re-applying an
@@ -242,10 +280,18 @@ final class SupabaseSyncEngine: SyncEngine {
             switch change.table {
             case "players":
                 guard let player = PersistenceStore.decodePlayer(payload) else { return }
-                AppStore.shared.applyRemoteUpsert(records: [], players: [player], clubs: [])
+                if isPersonalOrClubRow(clubId: player.clubId, ownerId: change.ownerId, myId: await manager.currentUserId()) {
+                    AppStore.shared.applyRemoteUpsert(records: [], players: [player], clubs: [])
+                } else if let ownerId = change.ownerId {
+                    AppStore.shared.applyRemoteFriendActivity(participantId: ownerId.uuidString, matches: [], players: [player])
+                }
             case "match_records":
                 guard let record = PersistenceStore.decodeRecord(payload) else { return }
-                AppStore.shared.applyRemoteUpsert(records: [record], players: [], clubs: [])
+                if isPersonalOrClubRow(clubId: record.clubId, ownerId: change.ownerId, myId: await manager.currentUserId()) {
+                    AppStore.shared.applyRemoteUpsert(records: [record], players: [], clubs: [])
+                } else if let ownerId = change.ownerId {
+                    AppStore.shared.applyRemoteFriendActivity(participantId: ownerId.uuidString, matches: [record], players: [])
+                }
             case "settings":
                 guard let snapshot = PersistenceStore.decodeSettingsSnapshot(payload) else { return }
                 AppStore.shared.applyRemoteSettings(snapshot)
@@ -275,9 +321,17 @@ final class SupabaseSyncEngine: SyncEngine {
         case .delete:
             switch change.table {
             case "players":
-                AppStore.shared.applyRemoteDeletions(recordIds: [], playerIds: [change.id], clubIds: [])
+                if isPersonalOrClubRow(clubId: change.clubId, ownerId: change.ownerId, myId: await manager.currentUserId()) {
+                    AppStore.shared.applyRemoteDeletions(recordIds: [], playerIds: [change.id], clubIds: [])
+                } else if let ownerId = change.ownerId {
+                    AppStore.shared.applyRemoteFriendActivityDeletions(participantId: ownerId.uuidString, matchIds: [], playerIds: [change.id])
+                }
             case "match_records":
-                AppStore.shared.applyRemoteDeletions(recordIds: [change.id], playerIds: [], clubIds: [])
+                if isPersonalOrClubRow(clubId: change.clubId, ownerId: change.ownerId, myId: await manager.currentUserId()) {
+                    AppStore.shared.applyRemoteDeletions(recordIds: [change.id], playerIds: [], clubIds: [])
+                } else if let ownerId = change.ownerId {
+                    AppStore.shared.applyRemoteFriendActivityDeletions(participantId: ownerId.uuidString, matchIds: [change.id], playerIds: [])
+                }
             case "clubs":
                 AppStore.shared.applyRemoteDeletions(recordIds: [], playerIds: [], clubIds: [change.id])
             case "challenges":
@@ -374,11 +428,12 @@ final class SupabaseSyncEngine: SyncEngine {
 
     /// Permanent no-ops, not "not yet migrated": under CloudKit these mirror
     /// a personal player/match record into the separate FriendsHistory zone,
-    /// but Supabase has no such copy (Roadmap 9e-3) — a personal record
+    /// but Supabase has no such copy (Phase 9e-3) — a personal record
     /// already pushes to `players`/`match_records` unconditionally via
     /// `enqueueRosterChanges`/`enqueueHistoryChanges` regardless of any
-    /// friend-sharing toggle, and friend visibility is granted by RLS
-    /// reading that same row, not by a second write.
+    /// friend-sharing toggle, and friend visibility is granted entirely by
+    /// `friend_can_view_history` RLS reading that same row (see
+    /// `isPersonalOrClubRow`'s routing below), not by a second write.
     func enqueueFriendsRosterChanges(upsertedIds: [UUID], deletedIds: [UUID]) {}
     func enqueueFriendsHistoryChanges(upsertedIds: [UUID], deletedIds: [UUID]) {}
 
