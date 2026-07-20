@@ -584,3 +584,62 @@ create policy match_records_select on public.match_records
         or (club_id is not null and public.is_club_member(club_id))
         or (club_id is null and public.friend_can_view_history(owner_id))
     );
+
+-- ---------------------------------------------------------------------
+-- Phase 10a: friend match invites. A personal (non-club) MatchRecord whose
+-- opponent was picked from Friends gets pushed here so the recipient's own
+-- device can mirror it into their own history — see CLAUDE.md's
+-- MatchInvite.swift/MatchInviteMirror.swift entries. `id` deliberately
+-- reuses the SENDER's own MatchRecord.id (not a fresh gen_random_uuid())
+-- so a push is a plain upsert keyed on the match's own id, and the
+-- recipient's mirrored MatchRecord.sourceMatchId can just equal this same
+-- id with no separate lookup. No unique(from,to) constraint like
+-- friend_requests has — the same two friends can play, and invite, each
+-- other repeatedly.
+-- ---------------------------------------------------------------------
+
+create table public.match_invites (
+    id uuid primary key,
+    from_participant_id uuid not null references auth.users (id) on delete cascade,
+    to_participant_id uuid not null references auth.users (id) on delete cascade,
+    status text not null default 'pending' check (status in ('pending', 'accepted', 'declined')),
+    payload jsonb not null,
+    updated_at timestamptz not null default now()
+);
+
+create index match_invites_to_participant_id_idx on public.match_invites (to_participant_id);
+create index match_invites_from_participant_id_idx on public.match_invites (from_participant_id);
+
+-- Same REPLICA IDENTITY gap as friend_requests/challenges/reactions above:
+-- match_invites_select needs from_participant_id/to_participant_id, neither
+-- the primary key, so a DELETE's old-row image is missing them under the
+-- default identity and the event fails RLS for everyone.
+alter table public.match_invites replica identity full;
+
+create trigger trg_match_invites_updated_at before update on public.match_invites
+    for each row execute function public.set_updated_at();
+
+alter table public.match_invites enable row level security;
+
+-- match_invites: visible to either side, same as friend_requests. Insert
+-- requires the sender to be an accepted friend of the recipient — unlike
+-- friend_requests (which is how you BECOME friends), a match invite
+-- requires already being friends, enforced here in the DB rather than only
+-- client-side. Update/delete symmetric (either side), same rationale as
+-- friend_requests_update/_delete: the recipient flips status to
+-- accepted/declined, and a full erase-all-data teardown needs to clean up
+-- invites where this account is only the recipient.
+create policy match_invites_select on public.match_invites
+    for select to authenticated
+    using (from_participant_id = auth.uid() or to_participant_id = auth.uid());
+create policy match_invites_insert on public.match_invites
+    for insert to authenticated
+    with check (from_participant_id = auth.uid() and public.is_accepted_friend(to_participant_id));
+create policy match_invites_update on public.match_invites
+    for update to authenticated
+    using (from_participant_id = auth.uid() or to_participant_id = auth.uid());
+create policy match_invites_delete on public.match_invites
+    for delete to authenticated
+    using (from_participant_id = auth.uid() or to_participant_id = auth.uid());
+
+alter publication supabase_realtime add table public.match_invites;

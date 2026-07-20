@@ -40,6 +40,9 @@ public enum AppStorageKeys {
     // Friends v1 (graph-only): synced via the `friend_requests` table, no
     // KV fallback — see FriendRequest.swift and AppStore.saveFriendRequests.
     public static let friendRequests = "friendRequests"
+    // Roadmap Phase 10a: synced via the `match_invites` table, no KV
+    // fallback — see MatchInvite.swift and AppStore.saveMatchInvites.
+    public static let matchInvites = "matchInvites"
     // Friends v1: per-device cache of `currentUserId()`'s result (a Supabase
     // `auth.uid()`, stable for the life of the account) — it's a per-device
     // identity cache, not synced data.

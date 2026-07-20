@@ -143,6 +143,21 @@ public enum PersistenceStore {
         encodeEnvelope(requests)
     }
 
+    // MARK: - Match invites ([SharedMatchInvite]) — Roadmap Phase 10a
+
+    /// Decode the match-invite list, returning an empty array if the data
+    /// is missing or corrupt. Same envelope/tolerance contract as
+    /// `decodeRoster`.
+    public static func decodeMatchInvites(_ data: Data) -> [SharedMatchInvite] {
+        decodeTolerant(SharedMatchInvite.self, from: data)
+    }
+
+    /// Encode the match-invite list for storage (as the current versioned
+    /// envelope), or `nil` if encoding fails.
+    public static func encodeMatchInvites(_ invites: [SharedMatchInvite]) -> Data? {
+        encodeEnvelope(invites)
+    }
+
     // MARK: - Friend activity ([FriendHistorySnapshot]) — friends' shared
     // roster/history, local cache only. Never pushed as its own payload
     // type: it's an aggregate of a friend's own players/match_records rows,
@@ -284,6 +299,17 @@ public enum PersistenceStore {
     /// the payload is empty or unreadable.
     public static func decodeFriendRequest(_ data: Data) -> FriendRequest? {
         decodeTolerant(FriendRequest.self, from: data).first
+    }
+
+    /// Encode a single match invite as a payload, or `nil` on failure.
+    public static func encodeMatchInvite(_ invite: SharedMatchInvite) -> Data? {
+        encodeEnvelope([invite])
+    }
+
+    /// Decode a single match invite from a payload, or `nil` if the
+    /// payload is empty or unreadable.
+    public static func decodeMatchInvite(_ data: Data) -> SharedMatchInvite? {
+        decodeTolerant(SharedMatchInvite.self, from: data).first
     }
 
     /// Encode a single friend profile payload, or `nil` on failure. There is

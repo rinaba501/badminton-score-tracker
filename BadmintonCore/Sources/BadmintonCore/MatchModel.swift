@@ -270,6 +270,22 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
     /// toward standings has nothing to gate. Defaults true so legacy history
     /// with no key on disk keeps counting toward standings unchanged.
     public var isOfficial: Bool = true
+    /// Roadmap Phase 10a: the opponent's real account id (an `auth.uid()`
+    /// string, same opaque-identity convention as `ChallengeRecord`'s
+    /// participant fields), set only when the opponent was picked from
+    /// Friends rather than the local roster/a guest. Deliberately distinct
+    /// from `opponentPlayerId` (`UUID?`), which points into THIS device's
+    /// own roster and is meaningless on the friend's device — see
+    /// `MatchInvite.swift`. `nil` (the default) is every match that isn't
+    /// tagged with a friend opponent, which is most of them.
+    public var opponentParticipantId: String?
+    /// Roadmap Phase 10a: set only on a record this device *mirrored* from
+    /// an accepted `SharedMatchInvite` (see `MatchInviteMirror.swift`) —
+    /// points back at the sender's own `MatchRecord.id`/`SharedMatchInvite.id`
+    /// (the two are the same value by construction). `nil` means "not a
+    /// mirror," which is the guard `AppStore.saveHistory` uses to avoid a
+    /// mirrored record spawning its own outbound invite.
+    public var sourceMatchId: UUID?
 
     /// True when either partner field is populated — the single home of the
     /// "is this record a Doubles match" check (see the comment above).
@@ -317,7 +333,9 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
                 opponentPartnerPlayerId: UUID? = nil,
                 clubId: UUID? = nil,
                 isConfirmed: Bool = true,
-                isOfficial: Bool = true) {
+                isOfficial: Bool = true,
+                opponentParticipantId: String? = nil,
+                sourceMatchId: UUID? = nil) {
         self.id = id
         self.games = games
         self.myGamesWon = myGamesWon
@@ -336,12 +354,14 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         self.clubId = clubId
         self.isConfirmed = isConfirmed
         self.isOfficial = isOfficial
+        self.opponentParticipantId = opponentParticipantId
+        self.sourceMatchId = sourceMatchId
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, games, myGamesWon, opponentGamesWon, winner, myName, opponentName, date, duration,
              myPlayerId, opponentPlayerId, myPartnerName, opponentPartnerName, myPartnerPlayerId, opponentPartnerPlayerId,
-             clubId, isConfirmed, isOfficial
+             clubId, isConfirmed, isOfficial, opponentParticipantId, sourceMatchId
     }
 
     /// Self-migrating: reads the current `RecordSide` shape, or — for records
@@ -369,6 +389,8 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         clubId = try container.decodeIfPresent(UUID.self, forKey: .clubId)
         isConfirmed = try container.decodeIfPresent(Bool.self, forKey: .isConfirmed) ?? true
         isOfficial = try container.decodeIfPresent(Bool.self, forKey: .isOfficial) ?? true
+        opponentParticipantId = try container.decodeIfPresent(String.self, forKey: .opponentParticipantId)
+        sourceMatchId = try container.decodeIfPresent(UUID.self, forKey: .sourceMatchId)
 
         if let side = try? container.decode(RecordSide.self, forKey: .winner) {
             winner = side
@@ -398,5 +420,7 @@ public struct MatchRecord: Identifiable, Codable, Equatable {
         try container.encodeIfPresent(clubId, forKey: .clubId)
         try container.encode(isConfirmed, forKey: .isConfirmed)
         try container.encode(isOfficial, forKey: .isOfficial)
+        try container.encodeIfPresent(opponentParticipantId, forKey: .opponentParticipantId)
+        try container.encodeIfPresent(sourceMatchId, forKey: .sourceMatchId)
     }
 }

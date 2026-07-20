@@ -387,4 +387,92 @@ struct StatsCalculatorDoublesTests {
         let all = StatsCalculator.filteredHistory(history, selectedPlayers: [], cutoff: nil, matchType: .all)
         #expect(all.count == 2)
     }
+
+    // MARK: - conflictingRecord (Roadmap Phase 10a: friend match auto-sync)
+
+    private func personalRecord(
+        id: UUID = UUID(), my: String = "Me", opp: String = "Alex", games: [(Int, Int)] = [(21, 15)],
+        date: Date = Date(timeIntervalSince1970: 10_000),
+        clubId: UUID? = nil, isDoubles: Bool = false,
+        opponentParticipantId: String? = nil
+    ) -> MatchRecord {
+        MatchRecord(
+            id: id,
+            games: games.map { GameScore(my: $0.0, opponent: $0.1) },
+            myGamesWon: 1, opponentGamesWon: 0, winner: .near,
+            myName: my, opponentName: opp, date: date,
+            myPartnerName: isDoubles ? "Partner" : nil,
+            opponentPartnerName: isDoubles ? "OppPartner" : nil,
+            clubId: clubId,
+            opponentParticipantId: opponentParticipantId
+        )
+    }
+
+    @Test func conflictingRecordReturnsNilWhenNoParticipantOrDateMatch() {
+        let candidate = personalRecord(games: [(21, 10)])
+        let unrelated = personalRecord(my: "Me", opp: "Someone Else", games: [(21, 18)])
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [unrelated]) == nil)
+    }
+
+    @Test func conflictingRecordReturnsNilWhenScoreAlreadyMatches() {
+        // Same participants, same date, identical score — an already-agreeing
+        // duplicate is not a conflict (this feature doesn't auto-dedupe).
+        let candidate = personalRecord(games: [(21, 15)])
+        let existing = personalRecord(games: [(21, 15)])
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [existing]) == nil)
+    }
+
+    @Test func conflictingRecordFindsDifferingScoreForSameParticipantsAndDate() {
+        let candidate = personalRecord(games: [(21, 15)])
+        let existing = personalRecord(games: [(19, 21)])
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [existing]) == existing)
+    }
+
+    @Test func conflictingRecordMatchesByParticipantIdEvenIfNamesDiffer() {
+        let candidate = personalRecord(opp: "Alex", games: [(21, 15)], opponentParticipantId: "alex-id")
+        // Same participant id, but a locally-renamed opponent display name.
+        let existing = personalRecord(opp: "Alexander", games: [(19, 21)], opponentParticipantId: "alex-id")
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [existing]) == existing)
+    }
+
+    @Test func conflictingRecordIgnoresDifferentParticipantIdsEvenWithSameNames() {
+        // Two different friends who happen to share a display name must not
+        // be conflated once both records tag a real participantId.
+        let candidate = personalRecord(opp: "Sam", games: [(21, 15)], opponentParticipantId: "sam-1")
+        let existing = personalRecord(opp: "Sam", games: [(19, 21)], opponentParticipantId: "sam-2")
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [existing]) == nil)
+    }
+
+    @Test func conflictingRecordRespectsDateProximity() {
+        let candidate = personalRecord(games: [(21, 15)], date: Date(timeIntervalSince1970: 100_000))
+        let farAway = personalRecord(games: [(19, 21)], date: Date(timeIntervalSince1970: 300_000))
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [farAway]) == nil)
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [farAway], dateProximity: 250_000) == farAway)
+    }
+
+    @Test func conflictingRecordExcludesClubRecordsOnEitherSide() {
+        let candidate = personalRecord(games: [(21, 15)])
+        let clubExisting = personalRecord(games: [(19, 21)], clubId: UUID())
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [clubExisting]) == nil)
+
+        let clubCandidate = personalRecord(games: [(21, 15)], clubId: UUID())
+        let personalExisting = personalRecord(games: [(19, 21)])
+        #expect(StatsCalculator.conflictingRecord(for: clubCandidate, in: [personalExisting]) == nil)
+    }
+
+    @Test func conflictingRecordExcludesDoublesRecordsOnEitherSide() {
+        let candidate = personalRecord(games: [(21, 15)])
+        let doublesExisting = personalRecord(games: [(19, 21)], isDoubles: true)
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [doublesExisting]) == nil)
+    }
+
+    @Test func conflictingRecordSkipsItselfById() {
+        // Same id, differing games would otherwise look like a conflict —
+        // the id guard must exclude a record from being flagged against
+        // itself regardless of what its games say.
+        let id = UUID()
+        let candidate = personalRecord(id: id, games: [(21, 15)])
+        let sameIdDifferentGames = personalRecord(id: id, games: [(19, 21)])
+        #expect(StatsCalculator.conflictingRecord(for: candidate, in: [sameIdDifferentGames]) == nil)
+    }
 }

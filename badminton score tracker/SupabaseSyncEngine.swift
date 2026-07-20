@@ -108,7 +108,7 @@ final class SupabaseSyncEngine: SyncEngine {
 
     private static let pullTables = [
         "players", "match_records", "settings", "clubs", "challenges", "reactions",
-        "friend_requests", "friend_identity_snapshots", "friend_stats_snapshots"
+        "friend_requests", "friend_identity_snapshots", "friend_stats_snapshots", "match_invites"
     ]
 
     /// Deliberately does NOT gate on `manager.isSignedIn` — that flag is only
@@ -205,6 +205,7 @@ final class SupabaseSyncEngine: SyncEngine {
             AppStore.shared.applyRemoteSettings(snapshot)
         }
         await refreshFriendRequests()
+        await refreshMatchInvites()
         for change in await manager.fetchAllRows(table: "friend_identity_snapshots") where change.id != myId {
             guard let payload = change.payload, var identity = PersistenceStore.decodeFriendIdentitySnapshot(payload) else { continue }
             identity.displayName = displayName(forFriendParticipant: change.id)
@@ -227,6 +228,16 @@ final class SupabaseSyncEngine: SyncEngine {
         let changes = await manager.fetchAllRows(table: "friend_requests")
         let requests = changes.compactMap { $0.payload.flatMap(PersistenceStore.decodeFriendRequest) }
         AppStore.shared.saveFriendRequests(requests)
+    }
+
+    /// Same full-reconcile shape as `refreshFriendRequests`, and for the same
+    /// reason it's safe: `AppStore.saveMatchInvites` → `autoResolvePendingMatchInvites`
+    /// is idempotent (guarded by each mirrored record's `sourceMatchId`), so
+    /// re-running this on every Realtime event needs no per-kind branching.
+    func refreshMatchInvites() async {
+        let changes = await manager.fetchAllRows(table: "match_invites")
+        let invites = changes.compactMap { $0.payload.flatMap(PersistenceStore.decodeMatchInvite) }
+        AppStore.shared.saveMatchInvites(invites)
     }
 
     /// A club's payload always encodes `ownerRecordName` as `nil` from its
@@ -256,11 +267,15 @@ final class SupabaseSyncEngine: SyncEngine {
     /// applyRemoteUpsert/applyRemoteDeletions merge by id, so re-applying an
     /// unchanged row is just a redundant no-op write.
     private func handleRemoteChange(_ change: RemoteChange) async {
-        // friend_requests reconciles as a full refetch regardless of kind
-        // (see refreshFriendRequests's doc comment) rather than joining the
-        // per-kind/per-table switch below.
+        // friend_requests/match_invites both reconcile as a full refetch
+        // regardless of kind (see refreshFriendRequests's/refreshMatchInvites's
+        // doc comments) rather than joining the per-kind/per-table switch below.
         guard change.table != "friend_requests" else {
             await refreshFriendRequests()
+            return
+        }
+        guard change.table != "match_invites" else {
+            await refreshMatchInvites()
             return
         }
         switch change.kind {
@@ -410,6 +425,42 @@ final class SupabaseSyncEngine: SyncEngine {
         }
     }
 
+    // MARK: - Match invites (Phase 10a)
+
+    /// Builds the invite from the just-saved `MatchRecord` in `AppStore.shared.history`
+    /// (materialized fresh, same "read the live cache by id" pattern every
+    /// other enqueue* method here uses) and pushes it — `SupabaseSyncManager.sendMatchInvite`
+    /// upserts by `recordId`, so a later edit to the same match re-sends
+    /// cleanly instead of creating a duplicate row.
+    func enqueueMatchInvite(recordId: UUID, opponentParticipantId: String) {
+        enqueueWork { [self] in
+            guard let fromId = await manager.currentUserId(),
+                  let toId = UUID(uuidString: opponentParticipantId),
+                  let record = AppStore.shared.history.first(where: { $0.id == recordId }) else { return }
+            let myName = Player.displayName(for: UserDefaults.standard.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName)
+            let invite = SharedMatchInvite(
+                id: recordId, fromParticipantId: fromId.uuidString, fromDisplayName: myName,
+                toParticipantId: opponentParticipantId, matchSnapshot: record
+            )
+            guard let payload = PersistenceStore.encodeMatchInvite(invite) else { return }
+            try? await manager.sendMatchInvite(recordId: recordId, fromParticipantId: fromId, toParticipantId: toId, payload: payload)
+        }
+    }
+
+    /// The one push path for both `AppStore.autoResolvePendingMatchInvites`'s
+    /// silent auto-accept and a human tapping Accept-anyway/Ignore in
+    /// FriendsView's conflict review.
+    func enqueueMatchInviteResponse(id: UUID, accept: Bool) {
+        enqueueWork { [self] in
+            guard let invite = AppStore.shared.matchInvites.first(where: { $0.id == id }) else { return }
+            var updated = invite
+            updated.status = accept ? .accepted : .declined
+            guard let payload = PersistenceStore.encodeMatchInvite(updated) else { return }
+            await manager.respondToMatchInvite(id: id, status: updated.status.rawValue, payload: payload)
+            await refreshMatchInvites()
+        }
+    }
+
     // MARK: - Friend identity / stats sharing
 
     /// Permanent no-ops: a personal record already pushes to
@@ -508,5 +559,9 @@ final class SupabaseSyncEngine: SyncEngine {
 
     func deleteAllMyFriendRequests() async {
         await manager.deleteAllFriendRequests()
+    }
+
+    func deleteAllMyMatchInvites() async {
+        await manager.deleteAllMyMatchInvites()
     }
 }

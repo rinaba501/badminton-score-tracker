@@ -46,6 +46,19 @@ public protocol SyncEngine {
     func deleteFriendsHistoryZone() async
     func deleteMyFriendProfile() async
     func deleteAllMyFriendRequests() async
+    /// Roadmap Phase 10a: push a "did this happen?" invite for a just-saved
+    /// personal singles `MatchRecord` (`recordId`) whose opponent was picked
+    /// from Friends (`opponentParticipantId`). Called from
+    /// `AppStore.saveHistory` for every newly-upserted record that qualifies
+    /// — see that method's `sourceMatchId == nil` guard, which stops a
+    /// *mirrored* record from spawning its own invite chain.
+    func enqueueMatchInvite(recordId: UUID, opponentParticipantId: String)
+    /// Roadmap Phase 10a: the one call path used both by
+    /// `AppStore.autoResolvePendingMatchInvites()`'s silent auto-accept and
+    /// by a human tapping Accept-anyway/Ignore in `FriendsView`'s conflict
+    /// review — see `AppStore.respondToMatchInvite(_:accept:)`.
+    func enqueueMatchInviteResponse(id: UUID, accept: Bool)
+    func deleteAllMyMatchInvites() async
 }
 
 /// The default for a device that has never signed into Supabase —
@@ -71,4 +84,7 @@ public struct NoOpSyncEngine: SyncEngine {
     public func deleteFriendsHistoryZone() async {}
     public func deleteMyFriendProfile() async {}
     public func deleteAllMyFriendRequests() async {}
+    public func enqueueMatchInvite(recordId: UUID, opponentParticipantId: String) {}
+    public func enqueueMatchInviteResponse(id: UUID, accept: Bool) {}
+    public func deleteAllMyMatchInvites() async {}
 }
