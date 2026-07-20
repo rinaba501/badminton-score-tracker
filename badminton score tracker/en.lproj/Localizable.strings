@@ -236,6 +236,7 @@
 "clubs.filter_label" = "Filter by Club";
 "clubs.invite" = "Invite…";
 "clubs.invite_failed" = "Couldn't create invite";
+"clubs.invite_title" = "Invite";
 "clubs.invite_link_ready" = "Your invite link is ready to share.";
 "clubs.invite_share" = "Share Invite Link";
 "clubs.invite_create_failed_message" = "Something went wrong creating the invite. Try again.";

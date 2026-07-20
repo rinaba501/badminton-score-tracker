@@ -236,6 +236,7 @@
 "clubs.filter_label" = "按俱乐部筛选";
 "clubs.invite" = "邀请…";
 "clubs.invite_failed" = "无法创建邀请";
+"clubs.invite_title" = "邀请";
 "clubs.invite_link_ready" = "邀请链接已生成，可以分享了。";
 "clubs.invite_share" = "分享邀请链接";
 "clubs.invite_create_failed_message" = "创建邀请时出错，请重试。";

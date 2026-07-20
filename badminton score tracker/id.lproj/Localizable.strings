@@ -236,6 +236,7 @@
 "clubs.filter_label" = "Filter berdasarkan Klub";
 "clubs.invite" = "Undang…";
 "clubs.invite_failed" = "Tidak dapat membuat undangan";
+"clubs.invite_title" = "Undang";
 "clubs.invite_link_ready" = "Tautan undangan Anda siap dibagikan.";
 "clubs.invite_share" = "Bagikan Tautan Undangan";
 "clubs.invite_create_failed_message" = "Terjadi kesalahan saat membuat undangan. Coba lagi.";

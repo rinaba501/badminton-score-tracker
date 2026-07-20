@@ -388,6 +388,12 @@ alter table public.reactions replica identity full;
 -- owner. `for update` row-locks the invite for the duration of the
 -- check-and-increment so two concurrent redemptions of a max_uses:1
 -- invite can't both pass the check before either increments use_count.
+-- use_count only increments when the insert actually adds a new member
+-- (checked via `get diagnostics`) — an already-a-member caller re-opening
+-- the same link (a real scenario: re-tapping an old link out of
+-- confusion, or a retry after a dropped response from a first successful
+-- call) hits `on conflict do nothing` and must not burn down a limited
+-- invite's remaining uses when nobody new actually joined.
 -- ---------------------------------------------------------------------
 
 create or replace function public.redeem_club_invite(invite_id uuid)
@@ -398,6 +404,7 @@ set search_path = public
 as $$
 declare
     target_club_id uuid;
+    inserted_count int;
 begin
     select club_id into target_club_id
     from public.club_invites
@@ -414,7 +421,11 @@ begin
     values (target_club_id, auth.uid(), 'member')
     on conflict do nothing;
 
-    update public.club_invites set use_count = use_count + 1 where id = invite_id;
+    get diagnostics inserted_count = row_count;
+
+    if inserted_count > 0 then
+        update public.club_invites set use_count = use_count + 1 where id = invite_id;
+    end if;
 
     return target_club_id;
 end;
