@@ -396,15 +396,29 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
     personal record already pushes unconditionally via
     `enqueueRosterChanges`/`enqueueHistoryChanges`; 9e-3 grants friend
     visibility via RLS on that same row, no mirrored copy needed).
-  - **9e-3 — Friend history sharing**: extends already-live
-    `players_select`/`match_records_select` RLS with a friend-visibility
-    branch — no mirrored copy needed (unlike CloudKit's separate
-    "FriendsHistory" zone), since Postgres RLS grants row-level access to
-    the *original* rows directly; the real work is teaching
-    `SupabaseSyncEngine`'s pull/Realtime routing not to merge a friend's
-    now-visible personal rows into this device's own roster/history.
+  - **9e-3** ✅ done: friend history sharing. New `friend_can_view_history`
+    RLS helper (`is_accepted_friend(target_owner) and settings.
+    shareHistoryWithFriends is true` for that owner) added as a third `or`
+    branch on `players_select`/`match_records_select` — no mirrored copy
+    needed (unlike CloudKit's separate "FriendsHistory" zone), since Postgres
+    RLS grants row-level access to the *original* rows directly; the already-
+    running `players`/`match_records` pull + Realtime subscription starts
+    returning friend-shared rows the moment this RLS lands, no new manager
+    method. The real work was `SupabaseSyncEngine`'s pull/Realtime routing:
+    a decoded `players`/`match_records` row now branches on
+    `(clubId, ownerId vs currentUserId())` — club-tagged or self-owned (or
+    `ownerId == nil`, the personal-push-echo case) keeps going through
+    `applyRemoteUpsert`/`applyRemoteDeletions` unchanged; everything else is
+    a friend's now-visible personal row, routed to
+    `applyRemoteFriendActivity`/`applyRemoteFriendActivityDeletions` instead
+    so it never merges into this device's own roster/history. `RemoteChange`
+    gained a `clubId: UUID?` field (mirrors `ownerId`'s reasoning) since a
+    `.delete` event carries no `payload` to decode a model's own `clubId`
+    from — `players`/`match_records` already have `REPLICA IDENTITY FULL`
+    (9c-5), so the old-row image already carried `club_id`, just previously
+    undecoded.
   - **9e-4 — Erase-all-data teardown + any remaining UI wiring** left over
-    from 9e-2/9e-3.
+    from 9e-1/9e-2/9e-3.
 - **9f — Dual-run validation & cutover**: both backends live for opted-in users
   during a validation window, then flip the default and retire CloudKit —
   the point a non-Apple client becomes buildable against the same backend.
@@ -434,7 +448,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
-| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), 9e in progress (9e-1 done: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2 done: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3/9e-4 next), 9f not started |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), 9e in progress (9e-1 done: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2 done: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3 done: friend history sharing via RLS extension + SupabaseSyncEngine pull/Realtime routing fix, no mirrored copy needed; 9e-4 next), 9f not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.

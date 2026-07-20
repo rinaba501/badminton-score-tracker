@@ -531,3 +531,49 @@ create policy friend_stats_snapshots_write on public.friend_stats_snapshots
     with check (id = auth.uid());
 
 alter publication supabase_realtime add table public.friend_identity_snapshots, public.friend_stats_snapshots;
+
+-- Phase 9e-3: friend history sharing. Unlike CloudKit (which must mirror a
+-- physical copy of personal roster/history into a separate CKShare zone,
+-- since CKShare only grants access at zone granularity), Postgres RLS is
+-- row-level natively — an accepted friend can read the *original*
+-- players/match_records rows directly once granted, no duplication needed.
+-- SECURITY DEFINER for the same self-recursion-avoidance reason as
+-- is_club_member/is_accepted_friend.
+create or replace function public.friend_can_view_history(target_owner uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+    select public.is_accepted_friend(target_owner) and exists (
+        select 1 from public.settings
+        where owner_id = target_owner and (payload ->> 'shareHistoryWithFriends')::boolean is true
+    );
+$$;
+
+grant execute on function public.friend_can_view_history (uuid) to authenticated;
+
+-- players_select / match_records_select gain one more branch: a personal
+-- (club_id is null) row owned by an accepted friend who has
+-- shareHistoryWithFriends on. players/match_records already have REPLICA
+-- IDENTITY FULL (9c-5), so this needs no further identity change — a
+-- DELETE's old-row image already carries club_id/owner_id for the client
+-- routing fix landing in the same PR as this SQL.
+drop policy players_select on public.players;
+create policy players_select on public.players
+    for select to authenticated
+    using (
+        owner_id = auth.uid()
+        or (club_id is not null and public.is_club_member(club_id))
+        or (club_id is null and public.friend_can_view_history(owner_id))
+    );
+
+drop policy match_records_select on public.match_records;
+create policy match_records_select on public.match_records
+    for select to authenticated
+    using (
+        owner_id = auth.uid()
+        or (club_id is not null and public.is_club_member(club_id))
+        or (club_id is null and public.friend_can_view_history(owner_id))
+    );
