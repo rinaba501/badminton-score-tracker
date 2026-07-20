@@ -307,11 +307,6 @@
 "onboarding.welcome_name_title" = "Welcome!";
 "onboarding.welcome_name_message" = "What should other players call you? You can change this anytime in Settings.";
 "onboarding.skip" = "Skip";
-"friends.account_section_header" = "Account";
-"friends.link_account" = "Link This Device";
-"friends.linked_as" = "Linked as %@";
-"friends.unlink_account" = "Unlink";
-"friends.unlink_account_confirm" = "Unlink this device from your account? You can link it again anytime.";
 "friends.enter_code" = "Enter a Code";
 "friends.code_prompt_message" = "Paste an invite link or friend code";
 "friends.code_placeholder" = "Invite link or code";

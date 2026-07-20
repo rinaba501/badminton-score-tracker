@@ -313,11 +313,6 @@
 "friends.cancel_request" = "Batalkan";
 "friends.cancel_request_confirm" = "Batalkan permintaan pertemanan ini?";
 "friends.add_friend" = "Tambah Teman";
-"profile.account_section_header" = "Akun";
-"profile.link_account" = "Tautkan Perangkat Ini";
-"profile.linked_as" = "Tertaut sebagai %@";
-"profile.unlink_account" = "Putuskan Tautan";
-"profile.unlink_account_confirm" = "Putuskan tautan perangkat ini dari akun Anda? Anda dapat menautkannya kembali kapan saja.";
 "profile.gender_label" = "Jenis Kelamin";
 "profile.gender_prefer_not_to_say" = "Tidak ingin menyebutkan";
 "profile.birthday_label" = "Ulang Tahun";

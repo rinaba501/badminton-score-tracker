@@ -313,11 +313,6 @@
 "friends.cancel_request" = "취소";
 "friends.cancel_request_confirm" = "이 친구 요청을 취소하시겠습니까?";
 "friends.add_friend" = "친구 추가";
-"profile.account_section_header" = "계정";
-"profile.link_account" = "이 기기 연결";
-"profile.linked_as" = "%@(으)로 연결됨";
-"profile.unlink_account" = "연결 해제";
-"profile.unlink_account_confirm" = "이 기기의 계정 연결을 해제하시겠습니까? 언제든 다시 연결할 수 있습니다.";
 "profile.gender_label" = "성별";
 "profile.gender_prefer_not_to_say" = "밝히지 않음";
 "profile.birthday_label" = "생일";

@@ -313,11 +313,6 @@
 "friends.cancel_request" = "रद्द करें";
 "friends.cancel_request_confirm" = "इस मित्र अनुरोध को रद्द करें?";
 "friends.add_friend" = "मित्र जोड़ें";
-"profile.account_section_header" = "खाता";
-"profile.link_account" = "इस डिवाइस को लिंक करें";
-"profile.linked_as" = "%@ के रूप में लिंक किया गया";
-"profile.unlink_account" = "अनलिंक करें";
-"profile.unlink_account_confirm" = "इस डिवाइस को अपने खाते से अनलिंक करें? आप इसे कभी भी फिर से लिंक कर सकते हैं।";
 "profile.gender_label" = "लिंग";
 "profile.gender_prefer_not_to_say" = "बताना नहीं चाहते";
 "profile.birthday_label" = "जन्मदिन";

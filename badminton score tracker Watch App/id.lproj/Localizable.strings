@@ -307,11 +307,6 @@
 "onboarding.welcome_name_title" = "Selamat datang!";
 "onboarding.welcome_name_message" = "Nama apa yang harus dipanggil pemain lain untukmu? Kamu bisa mengubahnya kapan saja di Pengaturan.";
 "onboarding.skip" = "Lewati";
-"friends.account_section_header" = "Akun";
-"friends.link_account" = "Tautkan Perangkat Ini";
-"friends.linked_as" = "Tertaut sebagai %@";
-"friends.unlink_account" = "Putuskan Tautan";
-"friends.unlink_account_confirm" = "Putuskan tautan perangkat ini dari akun Anda? Anda dapat menautkannya kembali kapan saja.";
 "friends.enter_code" = "Masukkan Kode";
 "friends.code_prompt_message" = "Tempel tautan undangan atau kode teman";
 "friends.code_placeholder" = "Tautan undangan atau kode";

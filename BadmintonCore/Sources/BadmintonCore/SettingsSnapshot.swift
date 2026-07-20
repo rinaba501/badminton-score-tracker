@@ -12,7 +12,10 @@
 //  were written must decode as optional-with-default so an older payload
 //  (missing those keys) still decodes instead of failing the whole record —
 //  same self-migration approach MatchRecord uses for its `winner` field.
-//  clubLastViewedActivity / accountLinked were added in this vein.
+//  clubLastViewedActivity was added in this vein. Roadmap Phase 9f-2 removed
+//  accountLinked the same safe way in reverse — the field is gone from this
+//  struct, but an old record still carrying that JSON key decodes fine since
+//  Codable ignores keys the CodingKeys enum no longer declares.
 //
 
 import Foundation
@@ -35,12 +38,6 @@ public struct SettingsSnapshot: Codable, Equatable {
     /// backing the unread dot on ClubsView. Merged (per-club max), never
     /// overwritten, on apply — see AppStore.applyRemoteSettings.
     public var clubLastViewedActivity: [String: Date]
-    /// Whether the user has opted to link this local identity to their
-    /// CloudKit account (the same account backing Friends/Club). The account
-    /// id itself is never stored here — it's always re-derived via
-    /// CloudKitSyncManager.resolveMyParticipantId(), which is deterministic
-    /// per Apple ID. Blind-overwritten on apply, like the other plain Bools.
-    public var accountLinked: Bool
     /// iOS-only GameView visual style ("Depth"/"Split"/"Minimal") stored as
     /// its raw String value, same rationale as courtTheme — Watch round-trips
     /// this field without ever reading it into a typed enum.
@@ -82,7 +79,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         timeLimitMinutes: Int,
         courtChangeRemindersEnabled: Bool = false,
         clubLastViewedActivity: [String: Date] = [:],
-        accountLinked: Bool = false,
         gameScreenStyle: String = "Depth",
         shareHistoryWithFriends: Bool = false,
         shareAvatarWithFriends: Bool = false,
@@ -106,7 +102,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         self.timeLimitMinutes = timeLimitMinutes
         self.courtChangeRemindersEnabled = courtChangeRemindersEnabled
         self.clubLastViewedActivity = clubLastViewedActivity
-        self.accountLinked = accountLinked
         self.gameScreenStyle = gameScreenStyle
         self.shareHistoryWithFriends = shareHistoryWithFriends
         self.shareAvatarWithFriends = shareAvatarWithFriends
@@ -123,7 +118,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         case myName, localPlayerId, pointsToWin, gamesInMatch, courtTheme
         case announceScore, enableSounds, enableCrownScoring, timeModeEnabled
         case timeLimitMinutes, courtChangeRemindersEnabled, clubLastViewedActivity
-        case accountLinked, gameScreenStyle, shareHistoryWithFriends
+        case gameScreenStyle, shareHistoryWithFriends
         case shareAvatarWithFriends, shareGenderWithFriends, shareBirthdayWithFriends
         case shareIntroductionWithFriends, shareStatsWithFriends
         case gender, birthday, introduction
@@ -144,7 +139,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         // Added after the first Settings records shipped — tolerate absence.
         courtChangeRemindersEnabled = try container.decodeIfPresent(Bool.self, forKey: .courtChangeRemindersEnabled) ?? false
         clubLastViewedActivity = try container.decodeIfPresent([String: Date].self, forKey: .clubLastViewedActivity) ?? [:]
-        accountLinked = try container.decodeIfPresent(Bool.self, forKey: .accountLinked) ?? false
         gameScreenStyle = try container.decodeIfPresent(String.self, forKey: .gameScreenStyle) ?? "Depth"
         shareHistoryWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareHistoryWithFriends) ?? false
         shareAvatarWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareAvatarWithFriends) ?? false
@@ -171,7 +165,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         try container.encode(timeLimitMinutes, forKey: .timeLimitMinutes)
         try container.encode(courtChangeRemindersEnabled, forKey: .courtChangeRemindersEnabled)
         try container.encode(clubLastViewedActivity, forKey: .clubLastViewedActivity)
-        try container.encode(accountLinked, forKey: .accountLinked)
         try container.encode(gameScreenStyle, forKey: .gameScreenStyle)
         try container.encode(shareHistoryWithFriends, forKey: .shareHistoryWithFriends)
         try container.encode(shareAvatarWithFriends, forKey: .shareAvatarWithFriends)

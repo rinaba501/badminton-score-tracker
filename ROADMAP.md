@@ -136,7 +136,7 @@ Pro/pack IAPs, so `Entitlements.swift` is untouched. Full design — economy, od
 ledger data model, StoreKit redemption, phase slicing 8a–8f — in
 [docs/gacha-design.md](docs/gacha-design.md) (confirmed with the user 2026-07-17).
 
-### Phase 9 — Backend migration to Supabase/Postgres (9a-9e done, 9f in progress: 9f-1 done)
+### Phase 9 — Backend migration to Supabase/Postgres (9a-9e done, 9f in progress: 9f-1/9f-2 done)
 
 Full cutover: eventually replace CloudKit with a Postgres backend (Supabase:
 Postgres + Auth + Realtime) on every platform, including the existing Watch/iOS
@@ -476,10 +476,31 @@ Sequenced as its own sub-roadmap, same slicing convention as Phase 5/7:
     (both targets) fixed; **translations owed to the user** for the other 5
     languages on the 3 affected keys, same handoff pattern as this
     migration's SQL-owed-to-the-user notes.
-  - **9f-2 — Collapse the CloudKit branches**: every remaining
+  - **9f-2** ✅ done: every remaining
     `if supabaseAccountLinked { ... } else { CloudKit path } }` View branch
-    becomes unconditional Supabase behavior; remove the now-dead
-    `accountLinked` CloudKit link/unlink flag and its Settings UI section.
+    (`FriendsView`/`ClubDetailView`/`ContentView`/`ProfileView`/
+    `FriendInviteView`, both targets) collapsed to unconditional Supabase
+    behavior; the now-dead `accountLinked` CloudKit link/unlink flag removed
+    entirely — its Settings UI section (both targets' "Account" section),
+    its `SettingsSnapshot` wire field (safe to drop under the same
+    decodeIfPresent scheme that lets fields join safely — Codable just
+    ignores a JSON key `CodingKeys` no longer declares), and its
+    `eraseAllDataResetKeys` entry. **Found and fixed while implementing**
+    (not part of the original narrow scope, same bug class as 9f-1's two
+    findings): `WatchAppDelegate`/`AppDelegate`'s remote-push handlers ran
+    **unconditionally on every device, not gated on `supabaseAccountLinked`
+    at all** — `didRegisterForRemoteNotifications` registered a CloudKit
+    push subscription for friend requests even on Supabase-active devices,
+    and the push handler unconditionally did
+    `CloudKitSyncManager.shared.fetchMyFriendRequests()` →
+    `AppStore.shared.saveFriendRequests(requests)`, a **full reconcile, not
+    a merge** — a stray push (e.g. a leftover subscription from before a
+    device switched backends) would have silently wiped a Supabase-active
+    device's real friends list. Both handlers now gate on
+    `!UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked)`
+    (plain `UserDefaults`, no `@AppStorage` available in a delegate class).
+    `userDidAcceptCloudKitShare`/`acceptShare` forwarding is left
+    unconditional (documented no-op-ish gap from 9f-1, deferred to 9f-3).
   - **9f-3 — Delete CloudKit's code**: `CloudKitSyncManager.swift` (both
     targets), `CloudSharingView.swift`, the `AppDelegate`/`WatchAppDelegate`
     CKShare-accept forwarding, iCloud entitlements
@@ -517,7 +538,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 6 — iOS companion app | [#41](https://github.com/rinaba501/badminton-score-tracker/issues/41) | Feature-complete — PR1 (#133 shell+CI), PR2 (#135 iCloud KV sync), PR3 (#136 History+Stats), PR4 (#137 Roster), PR5 (#138 Share, closed #13), PR6 (#139 live scoring on iPhone) — see [docs/ios-companion-app-plan.md](docs/ios-companion-app-plan.md). Two-device sync tests still pending (deferred, no hardware). Watch app is no longer WKWatchOnly as of PR1 — archive an earlier commit for a watch-only App Store submission |
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
-| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), **9e done** (9e-1: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3: friend history sharing via RLS extension + SupabaseSyncEngine pull/Realtime routing fix, no mirrored copy needed; 9e-4: erase-all-data Friends-graph teardown, new profiles_delete RLS policy, explicit identity/stats snapshot cleanup), 9f in progress (9f-1 done: unlinked devices default to NoOpSyncEngine/local-only instead of auto-starting CloudKit, plus gating the CloudKit invite/FriendsHistory-share code paths that would otherwise create empty artifacts; 9f-2/9f-3 next) |
+| 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), **9e done** (9e-1: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3: friend history sharing via RLS extension + SupabaseSyncEngine pull/Realtime routing fix, no mirrored copy needed; 9e-4: erase-all-data Friends-graph teardown, new profiles_delete RLS policy, explicit identity/stats snapshot cleanup), 9f in progress (9f-1 done: unlinked devices default to NoOpSyncEngine/local-only instead of auto-starting CloudKit, plus gating the CloudKit invite/FriendsHistory-share code paths that would otherwise create empty artifacts; 9f-2 done: every remaining per-View CloudKit branch collapsed to unconditional Supabase behavior, the dead accountLinked flag removed, a friend-request push-notification data-loss bug fixed; 9f-3 next) |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.

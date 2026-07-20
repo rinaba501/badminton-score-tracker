@@ -25,7 +25,6 @@ struct ContentView: View {
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.didPromptForName) private var didPromptForName = false
-    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
     @State private var showScoring = false
     @State private var showNamePrompt = false
     @State private var pendingName = ""
@@ -336,11 +335,7 @@ struct ContentView: View {
         showNamePrompt = false
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
-            if supabaseAccountLinked {
-                await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
-                return
-            }
-            try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
+            await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
         }
     }
 }

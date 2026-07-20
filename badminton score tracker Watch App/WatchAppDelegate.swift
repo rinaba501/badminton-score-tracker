@@ -16,6 +16,7 @@
 import WatchKit
 import CloudKit
 import WatchConnectivity
+import BadmintonCore
 import CloudSyncSpike
 
 class WatchAppDelegate: NSObject, WKApplicationDelegate, WCSessionDelegate {
@@ -62,12 +63,24 @@ class WatchAppDelegate: NSObject, WKApplicationDelegate, WCSessionDelegate {
     }
 
     func didRegisterForRemoteNotifications(withDeviceToken deviceToken: Data) {
+        // Roadmap Phase 9f-2: gated on !supabaseAccountLinked — this used to
+        // run unconditionally on every device, registering a CloudKit push
+        // subscription even for Supabase-active devices that never write to
+        // CloudKit at all.
+        guard !UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked) else { return }
         Task { await CloudKitSyncManager.shared.ensureFriendRequestSubscriptionExists() }
     }
 
     func didFailToRegisterForRemoteNotificationsWithError(_ error: Error) {}
 
+    // Roadmap Phase 9f-2: gated on !supabaseAccountLinked — this used to
+    // unconditionally overwrite AppStore.friendRequests with a CloudKit
+    // fetch on every push, which is a full reconcile (not a merge). A stray
+    // push on a Supabase-active device (e.g. a leftover subscription from
+    // before this device switched) would have silently wiped the real,
+    // Supabase-sourced friends list.
     nonisolated func didReceiveRemoteNotification(_ userInfo: sending [AnyHashable: Any]) async -> WKBackgroundFetchResult {
+        guard !UserDefaults.standard.bool(forKey: AppStorageKeys.supabaseAccountLinked) else { return .noData }
         guard let requests = try? await CloudKitSyncManager.shared.fetchMyFriendRequests() else { return .failed }
         await AppStore.shared.saveFriendRequests(requests)
         return .newData

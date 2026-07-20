@@ -308,11 +308,6 @@
 "onboarding.welcome_name_title" = "ようこそ！";
 "onboarding.welcome_name_message" = "他のプレイヤーにどの名前で呼ばれたいですか？設定からいつでも変更できます。";
 "onboarding.skip" = "スキップ";
-"friends.account_section_header" = "アカウント";
-"friends.link_account" = "この端末をリンク";
-"friends.linked_as" = "%@ としてリンク済み";
-"friends.unlink_account" = "リンク解除";
-"friends.unlink_account_confirm" = "このデバイスのアカウント連携を解除しますか？いつでも再度連携できます。";
 "friends.enter_code" = "コードを入力";
 "friends.code_prompt_message" = "招待リンクまたはフレンドコードを貼り付けてください";
 "friends.code_placeholder" = "招待リンクまたはコード";

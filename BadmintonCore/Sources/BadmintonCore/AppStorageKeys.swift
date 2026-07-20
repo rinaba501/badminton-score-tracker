@@ -73,12 +73,6 @@ public enum AppStorageKeys {
     // per-club (max date), never overwritten, on apply (see
     // AppStore.applyRemoteSettings) so a stale device can't re-raise a dot.
     public static let clubLastViewedActivity = "clubLastViewedActivity"
-    // Whether the user has opted to link this local identity to their
-    // CloudKit account (the same account backing Friends and Club
-    // membership). Synced via SettingsSnapshot (blind overwrite, like the
-    // other plain Bool settings) — the account id itself is never stored
-    // here, only re-derived via CloudKitSyncManager.resolveMyParticipantId().
-    public static let accountLinked = "accountLinked"
     // Whether the user's personal (clubId == nil) roster and match history
     // mirror read-only into the "FriendsHistory" CKShare zone, visible to
     // every accepted friend. Synced via SettingsSnapshot (blind overwrite,
@@ -137,7 +131,7 @@ public enum AppStorageKeys {
     // SupabaseSyncEngine is the live AppStore.syncEngine would desync the
     // flag from AppStore's actual in-memory state. Not synced via
     // SettingsSnapshot — this decides *which transport* runs on this
-    // device, unlike accountLinked (informational only).
+    // device.
     public static let supabaseAccountLinked = "supabaseAccountLinked"
     // Whether the first-launch "what should we call you?" prompt has been
     // shown (skip or save both count) — device-local, never synced, so a
@@ -173,7 +167,6 @@ public enum AppStorageKeys {
         pointsToWin, gamesInMatch, courtTheme, gameScreenStyle,
         announceScore, enableSounds, enableCrownScoring, timeModeEnabled, timeLimitMinutes,
         courtChangeRemindersEnabled, gameMode, localPlayerId, clubLastViewedActivity,
-        accountLinked,
         shareHistoryWithFriends, shareAvatarWithFriends, shareGenderWithFriends,
         shareBirthdayWithFriends, shareIntroductionWithFriends, shareStatsWithFriends,
         gender, birthday, introduction,

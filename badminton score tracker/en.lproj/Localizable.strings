@@ -313,11 +313,6 @@
 "friends.cancel_request" = "Cancel";
 "friends.cancel_request_confirm" = "Cancel this friend request?";
 "friends.add_friend" = "Add Friend";
-"profile.account_section_header" = "Account";
-"profile.link_account" = "Link This Device";
-"profile.linked_as" = "Linked as %@";
-"profile.unlink_account" = "Unlink";
-"profile.unlink_account_confirm" = "Unlink this device from your account? You can link it again anytime.";
 "profile.gender_label" = "Gender";
 "profile.gender_prefer_not_to_say" = "Prefer not to say";
 "profile.birthday_label" = "Birthday";
