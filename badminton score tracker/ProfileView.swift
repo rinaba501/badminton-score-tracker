@@ -20,11 +20,13 @@
 
 import SwiftUI
 import BadmintonCore
+import CloudSyncSpike
 
 struct ProfileView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
     @AppStorage(AppStorageKeys.accountLinked) private var accountLinked = false
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
     @AppStorage(AppStorageKeys.shareAvatarWithFriends) private var shareAvatarWithFriends = false
     @AppStorage(AppStorageKeys.shareGenderWithFriends) private var shareGenderWithFriends = false
     @AppStorage(AppStorageKeys.shareBirthdayWithFriends) private var shareBirthdayWithFriends = false
@@ -317,7 +319,11 @@ struct ProfileView: View {
         promptingForName = false
         AppStore.shared.enqueueSettingsChange()
         Task { @MainActor in
-            try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
+            if supabaseAccountLinked {
+                await SupabaseSyncManager.shared.upsertMyProfile(displayName: Player.displayName(for: myName))
+            } else {
+                try? await CloudKitSyncManager.shared.ensureMyProfileExists(displayName: Player.displayName(for: myName))
+            }
             pendingAction?()
             pendingAction = nil
         }

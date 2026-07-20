@@ -23,8 +23,12 @@ import AuthenticationServices
 /// CloudKitSyncManager itself is duplicated per target rather than shared.
 ///
 /// Covers the Phase 9c tier (settings + personal players/match_records) and,
-/// as of Phase 9d, clubs/challenges/reactions — friends-* CRUD arrives
-/// with 9e.
+/// as of Phase 9d, clubs/challenges/reactions. Phase 9e-1 adds
+/// friend_requests push (`sendFriendRequest`/`respondToFriendRequest`) and
+/// discoverable-profile lookup (`fetchProfileDisplayName`, reusing the
+/// `profiles` table 9d-3 already populates) — the pull side needs no new
+/// method since `friend_requests` fits the existing id-keyed
+/// `fetchAllRows`/Realtime machinery unchanged.
 ///
 /// A `players`/`match_records` row awaiting upsert — a named type rather
 /// than a 4-element tuple so SwiftLint's large_tuple rule (max 2 members)
@@ -412,6 +416,94 @@ public final class SupabaseSyncManager: ObservableObject {
         }
     }
 
+    // MARK: - Friend requests / profile lookup (Phase 9e-1)
+    //
+    // This package has no BadmintonCore dependency (see file header), so
+    // these methods work in raw ids/strings/Data rather than
+    // BadmintonCore.FriendProfile/FriendRequest — each target's View or
+    // SupabaseSyncEngine builds/decodes the real model around these calls,
+    // same "primitives here, models per-target" split every other method in
+    // this file already follows. `friend_requests` itself is id-primary-keyed
+    // like players/match_records/clubs/challenges/reactions, so the pull side
+    // needs no bespoke fetch method at all — `fetchAllRows(table:
+    // "friend_requests")` (below) already covers it, RLS-scoped like every
+    // other table.
+
+    public enum FriendRequestError: Error {
+        case selfRequest
+        case alreadyPending
+    }
+
+    /// Resolves a display name for a discoverable `profiles` row — the
+    /// Supabase-active equivalent of CloudKit's `fetchProfile`, used to show
+    /// "X wants to add you" when consuming an invite link/code. Fails soft
+    /// (nil) rather than throwing, same as the CloudKit method.
+    public func fetchProfileDisplayName(participantId: UUID) async -> String? {
+        do {
+            let rows: [ProfileRow] = try await client
+                .from("profiles")
+                .select()
+                .eq("id", value: participantId)
+                .execute()
+                .value
+            return rows.first?.displayName
+        } catch {
+            appendLog("Fetch profile failed: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    /// Guards against a self-request and an existing pending request in
+    /// either direction (mirrors CloudKit's `sendFriendRequest`'s bidirectional
+    /// check — the DB's own `unique (from_participant_id, to_participant_id)`
+    /// constraint is directional and only a backstop, not the primary guard),
+    /// then inserts a new `friend_requests` row. `payload` is the caller's
+    /// already-`PersistenceStore.encodeFriendRequest`-encoded FriendRequest.
+    public func sendFriendRequest(id: UUID, fromParticipantId: UUID, toParticipantId: UUID, payload: Data) async throws {
+        guard fromParticipantId != toParticipantId else { throw FriendRequestError.selfRequest }
+        let existing: [FriendRequestStatusRow] = (try? await client
+            .from("friend_requests")
+            .select("from_participant_id, to_participant_id, status")
+            .execute()
+            .value) ?? []
+        let alreadyPending = existing.contains { row in
+            row.status == "pending" &&
+            ((row.fromParticipantId == fromParticipantId && row.toParticipantId == toParticipantId) ||
+             (row.fromParticipantId == toParticipantId && row.toParticipantId == fromParticipantId))
+        }
+        guard !alreadyPending else { throw FriendRequestError.alreadyPending }
+        guard let row = NewFriendRequestRow(
+            id: id, fromParticipantId: fromParticipantId, toParticipantId: toParticipantId, payloadData: payload
+        ) else {
+            appendLog("Send friend request failed: payload did not decode as JSON")
+            return
+        }
+        do {
+            try await client.from("friend_requests").insert(row).execute()
+            appendLog("Sent friend request")
+        } catch {
+            appendLog("Send friend request failed: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    /// Flips `status` and re-saves the full payload in one write — same
+    /// mutate-don't-delete convention as CloudKit's `respondToFriendRequest`.
+    /// `status`/`payload` are both the caller's responsibility to keep in
+    /// sync (the caller flips `FriendRequest.status` then re-encodes).
+    public func respondToFriendRequest(id: UUID, status: String, payload: Data) async {
+        guard let row = FriendRequestUpdateRow(status: status, payloadData: payload) else {
+            appendLog("Respond to friend request failed: payload did not decode as JSON")
+            return
+        }
+        do {
+            try await client.from("friend_requests").update(row).eq("id", value: id).execute()
+            appendLog("Responded to friend request")
+        } catch {
+            appendLog("Respond to friend request failed: \(error.localizedDescription)")
+        }
+    }
+
     private func upsertRows(table: String, rows: some Encodable, onConflict: String? = nil) async {
         do {
             try await client.from(table).upsert(rows, onConflict: onConflict).execute()
@@ -641,6 +733,51 @@ private struct ClubMemberRow: Decodable {
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case role
+    }
+}
+
+private struct FriendRequestStatusRow: Decodable {
+    let fromParticipantId: UUID
+    let toParticipantId: UUID
+    let status: String
+
+    enum CodingKeys: String, CodingKey {
+        case fromParticipantId = "from_participant_id"
+        case toParticipantId = "to_participant_id"
+        case status
+    }
+}
+
+private struct NewFriendRequestRow: Encodable {
+    let id: UUID
+    let fromParticipantId: UUID
+    let toParticipantId: UUID
+    let payload: AnyJSON
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case fromParticipantId = "from_participant_id"
+        case toParticipantId = "to_participant_id"
+        case payload
+    }
+
+    init?(id: UUID, fromParticipantId: UUID, toParticipantId: UUID, payloadData: Data) {
+        guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
+        self.id = id
+        self.fromParticipantId = fromParticipantId
+        self.toParticipantId = toParticipantId
+        self.payload = payload
+    }
+}
+
+private struct FriendRequestUpdateRow: Encodable {
+    let status: String
+    let payload: AnyJSON
+
+    init?(status: String, payloadData: Data) {
+        guard let payload = try? JSONDecoder().decode(AnyJSON.self, from: payloadData) else { return nil }
+        self.status = status
+        self.payload = payload
     }
 }
 

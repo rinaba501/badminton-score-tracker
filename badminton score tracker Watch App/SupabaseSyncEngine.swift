@@ -102,9 +102,15 @@ final class SupabaseSyncEngine: SyncEngine {
     // device's own `profiles` row on every call — that table was left
     // unpopulated through 9d-1/9d-2, but ClubDetailView's Supabase-active
     // member list needs *a* display name to show sooner than 9e (Friends),
-    // so this narrow slice populates just the caller's own row here.
+    // so this narrow slice populates just the caller's own row here. Phase
+    // 9e-1: also caches `currentUserId()` into `AppStorageKeys.myParticipantId`
+    // — `AppStore.friends` (unchanged, cross-backend) reads that key directly
+    // rather than going through `SyncEngine`, and under CloudKit it's only
+    // ever populated by `resolveMyParticipantId()`, which a Supabase-active
+    // device never calls; without this, `AppStore.friends` would silently
+    // stay empty forever on Supabase.
 
-    private static let pullTables = ["players", "match_records", "settings", "clubs", "challenges", "reactions"]
+    private static let pullTables = ["players", "match_records", "settings", "clubs", "challenges", "reactions", "friend_requests"]
 
     /// Deliberately does NOT gate on `manager.isSignedIn` — that flag is only
     /// set by `signInWithGoogle`/`adoptRelayedSession`, so it's still `false`
@@ -119,6 +125,9 @@ final class SupabaseSyncEngine: SyncEngine {
         enqueueWork { [self] in
             let displayName = Player.displayName(for: AppStore.shared.currentSettingsSnapshot().myName)
             await manager.upsertMyProfile(displayName: displayName)
+            if let uid = await manager.currentUserId() {
+                UserDefaults.standard.set(uid.uuidString, forKey: AppStorageKeys.myParticipantId)
+            }
             await pullInitialState()
             await manager.startRealtimeSync(tables: Self.pullTables) { change in
                 Task { @MainActor in
@@ -171,6 +180,21 @@ final class SupabaseSyncEngine: SyncEngine {
            let snapshot = PersistenceStore.decodeSettingsSnapshot(payload) {
             AppStore.shared.applyRemoteSettings(snapshot)
         }
+        await refreshFriendRequests()
+    }
+
+    /// A full reconcile rather than a per-id merge: `friend_requests` is
+    /// always a small set, and `AppStore.saveFriendRequests` already expects
+    /// "here is the complete current list" (same contract
+    /// `CloudKitSyncManager.fetchMyFriendRequests()` + `saveFriendRequests`
+    /// already use on the CloudKit path) rather than an incremental diff.
+    /// Re-running this on every Realtime event (any kind, including deletes —
+    /// a delete's absence is just missing from the fresh result) avoids
+    /// needing separate insert/update/delete handling for this one table.
+    func refreshFriendRequests() async {
+        let changes = await manager.fetchAllRows(table: "friend_requests")
+        let requests = changes.compactMap { $0.payload.flatMap(PersistenceStore.decodeFriendRequest) }
+        AppStore.shared.saveFriendRequests(requests)
     }
 
     /// A club's payload always encodes `ownerRecordName` as `nil` from its
@@ -191,6 +215,13 @@ final class SupabaseSyncEngine: SyncEngine {
     /// unchanged row is just a redundant no-op write, the same tolerance
     /// CloudKit's own local-echo path already relies on.
     private func handleRemoteChange(_ change: RemoteChange) async {
+        // friend_requests reconciles as a full refetch regardless of kind
+        // (see refreshFriendRequests's doc comment) rather than joining the
+        // per-kind/per-table switch below.
+        guard change.table != "friend_requests" else {
+            await refreshFriendRequests()
+            return
+        }
         switch change.kind {
         case .upsert:
             guard let payload = change.payload else { return }
