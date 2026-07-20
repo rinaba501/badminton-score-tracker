@@ -333,7 +333,8 @@
 "addmatch.select_player" = "चुनें";
 "addmatch.games_section" = "गेम";
 "addmatch.game_number" = "गेम %d";
-"addmatch.add_game" = "गेम जोड़ें";
 "addmatch.date_label" = "तारीख";
 "addmatch.save" = "सहेजें";
 "addmatch.result_error" = "हर गेम का स्कोर दर्ज करें, बिना टाई के, ताकि मैच का विजेता स्पष्ट हो।";
+"addmatch.game_count_label" = "गेम: %d";
+"addmatch.even_games_warning" = "स्ट्रेट-सेट जीत के लिए गेम की सम संख्या ठीक है — बस जांच लें कि कोई गेम छूटा तो नहीं।";

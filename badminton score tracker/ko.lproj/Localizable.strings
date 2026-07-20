@@ -333,7 +333,8 @@
 "addmatch.select_player" = "선택";
 "addmatch.games_section" = "게임";
 "addmatch.game_number" = "게임 %d";
-"addmatch.add_game" = "게임 추가";
 "addmatch.date_label" = "날짜";
 "addmatch.save" = "저장";
 "addmatch.result_error" = "각 게임에 무승부 없이 점수를 입력하여 경기의 승자를 정하세요.";
+"addmatch.game_count_label" = "게임 수: %d";
+"addmatch.even_games_warning" = "스트레이트 승리라면 게임 수가 짝수여도 문제없습니다 — 빠뜨린 게임이 없는지 확인하세요.";

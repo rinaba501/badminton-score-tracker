@@ -22,10 +22,15 @@ struct AddMatchView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appStore: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    // Match Format's own picker only ever offers 1/3/5 (settings.games_1/3/5)
-    // — an odd "Best of N" count, never an arbitrary number — so this is the
-    // same cap the Games section below uses for its "Add Game" ceiling.
-    @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
+
+    /// Upper bound for the Games Stepper — generous enough for any real
+    /// Match Format (the highest is Best of 5) plus room for an unusual
+    /// manually-entered result, not a rule about how many games a match
+    /// "should" have. Games actually played can legitimately be even (a
+    /// straight-sets sweep) or odd (a match that went to a decider) — see
+    /// `enteredGames`'s even-count warning below, which flags rather than
+    /// blocks, since even is common, not wrong.
+    private static let maxGames = 7
 
     @State private var gameMode: GameMode = .singles
     @State private var nearName = ""
@@ -184,6 +189,10 @@ struct AddMatchView: View {
 
     private var gamesSection: some View {
         Section {
+            Stepper(value: gameCountBinding, in: 1...Self.maxGames) {
+                Text(String(format: NSLocalizedString("addmatch.game_count_label", comment: ""), games.count))
+            }
+
             ForEach(games.indices, id: \.self) { idx in
                 HStack {
                     Text(String(format: NSLocalizedString("addmatch.game_number", comment: ""), idx + 1))
@@ -195,21 +204,34 @@ struct AddMatchView: View {
                 }
             }
             .onDelete(perform: deleteGames)
-
-            if games.count < gamesInMatch {
-                Button {
-                    games.append(EditableGameScore())
-                } label: {
-                    Label("addmatch.add_game", systemImage: "plus")
-                }
-            }
         } header: {
             Text("addmatch.games_section")
         } footer: {
             if derivedResult == nil {
                 Text("addmatch.result_error")
+            } else if enteredGames.count % 2 == 0 {
+                Text("addmatch.even_games_warning")
             }
         }
+    }
+
+    /// The Stepper controls total row *count*, not any particular row's
+    /// identity — growing appends fresh empty rows at the end, shrinking
+    /// removes from the end. Swiping a specific row still works
+    /// independently (`deleteGames`) for removing a wrongly-added row
+    /// that isn't the last one.
+    private var gameCountBinding: Binding<Int> {
+        Binding(
+            get: { games.count },
+            set: { newValue in
+                let clamped = max(1, min(newValue, Self.maxGames))
+                if clamped > games.count {
+                    games.append(contentsOf: (games.count..<clamped).map { _ in EditableGameScore() })
+                } else if clamped < games.count {
+                    games.removeLast(games.count - clamped)
+                }
+            }
+        )
     }
 
     private func scoreField(value: Binding<Int>) -> some View {
