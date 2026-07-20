@@ -236,6 +236,15 @@
 "clubs.filter_label" = "Filter berdasarkan Klub";
 "clubs.invite" = "Undang…";
 "clubs.invite_failed" = "Tidak dapat membuat undangan";
+"clubs.invite_link_ready" = "Tautan undangan Anda siap dibagikan.";
+"clubs.invite_share" = "Bagikan Tautan Undangan";
+"clubs.invite_create_failed_message" = "Terjadi kesalahan saat membuat undangan. Coba lagi.";
+"clubs.invite_join_title" = "Gabung Klub";
+"clubs.invite_join_message" = "Gabung dengan %@?";
+"clubs.invite_join" = "Gabung Klub";
+"clubs.invite_joined" = "Berhasil bergabung!";
+"clubs.invite_join_failed" = "Undangan ini tidak valid atau sudah kedaluwarsa.";
+"clubs.invite_unknown_club" = "Sebuah klub";
 "playeredit.club" = "Klub";
 "playeredit.club_personal" = "Pribadi";
 "common.ok" = "OK";

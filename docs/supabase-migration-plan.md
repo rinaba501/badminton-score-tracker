@@ -50,7 +50,10 @@ technical detail, including a Realtime filter bug it exposed and fixed (the
 9c-5 client-side `owner_id` filter was already too narrow for club data, and
 can't even apply to `challenges`/`reactions`, which have no `owner_id`
 column — removed entirely, delivery now relies on RLS alone). 9d-2 (invite
-redemption) and 9d-3 (member-list read + leave/kick) are next.
+redemption via a new `redeem_club_invite` RPC + `ClubInviteLink`/
+`ClubInviteView`, and — since a link needs no CKShare — the Watch's first
+invite-sending affordance) is also done. 9d-3 (member-list read + leave/kick)
+is next.
 
 ---
 
@@ -380,12 +383,32 @@ and its own tracking issue, filed once the prior slice lands.
     `reactions.club_id on delete cascade` exactly; `reactions.match_id` has
     no FK at all, so a match-only delete doesn't cascade under either
     backend, also matching.
-  - **9d-2 — Invite redemption.** A `SECURITY DEFINER` RPC
-    (`redeem_club_invite`, validates `club_invites` expiry/max_uses/
-    use_count then inserts into `club_members`) plus `ClubInviteLink`/
-    `ClubInviteView` mirroring `FriendInviteLink`/`FriendInviteView`,
-    replacing `UICloudSharingController` for Supabase-active devices. New
-    SQL — external setup, flag to user.
+  - **9d-2 — Invite redemption.** ✅ done. `club_members` has no direct
+    INSERT policy (9a's own RLS comment already anticipated this exact
+    function) — `redeem_club_invite(invite_id)`, a `SECURITY DEFINER`
+    Postgres function, validates a `club_invites` row's expiry/`max_uses`/
+    `use_count` (row-locked via `for update` to close a race between two
+    concurrent redemptions of the same invite) then inserts the caller
+    into `club_members`, mirroring how `handle_new_club()` already
+    bypasses the caller's own insert privilege for owners.
+    `SupabaseSyncManager` gained `createClubInvite(clubId:expiresAt:maxUses:)`
+    (owner-only, RLS-enforced) and `redeemClubInvite(inviteId:)` (wraps the
+    RPC). New `BadmintonCore/Sources/BadmintonCore/ClubInviteLink.swift` —
+    a byte-shape mirror of `FriendInviteLink.swift`
+    (`badminton://joinclub?id=<inviteId>&name=<clubName>`) — and iOS-only
+    `ClubInviteView.swift` mirroring `FriendInviteView.swift`, wired into
+    `ContentView`'s `onOpenURL` as a second parse attempt when
+    `FriendInviteLink.parse` misses (the two invite links share one scheme
+    but different hosts). `ClubDetailView`'s owner-only Invite button (both
+    targets) now branches on `supabaseAccountLinked`: CloudKit-active
+    devices keep `CloudSharingView`/`UICloudSharingController` completely
+    unchanged; Supabase-active devices call `createClubInvite` then present
+    a `ShareLink` over the resulting `ClubInviteLink` URL — no CKShare
+    involved, so this is the **Watch's first invite-sending affordance**;
+    CKShare invites were always iOS-only (`UICloudSharingController` is
+    UIKit-only), so Watch's `ClubDetailView` never had one before this.
+    New SQL (external setup, flagged to user): the `redeem_club_invite`
+    function itself.
   - **9d-3 — Member-list read + leave/kick.** `SupabaseSyncManager.
     fetchClubMembers(clubId:)` joins `club_members` against the existing
     `profiles` table (already public-readable) for display names — a

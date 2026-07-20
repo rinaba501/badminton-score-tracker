@@ -377,3 +377,47 @@ alter publication supabase_realtime add table public.clubs, public.challenges, p
 -- this a deleted challenge/reaction would never sync at all.
 alter table public.challenges replica identity full;
 alter table public.reactions replica identity full;
+
+-- ---------------------------------------------------------------------
+-- Invite redemption (Phase 9d-2): club_members has no direct INSERT
+-- policy (see its RLS comment above) — the only way to join a club you
+-- don't own is through this SECURITY DEFINER function, which validates a
+-- club_invites row (existence/expiry/max_uses) and inserts the caller
+-- into club_members itself, bypassing the caller's own (nonexistent)
+-- insert privilege the same way handle_new_club() already does for the
+-- owner. `for update` row-locks the invite for the duration of the
+-- check-and-increment so two concurrent redemptions of a max_uses:1
+-- invite can't both pass the check before either increments use_count.
+-- ---------------------------------------------------------------------
+
+create or replace function public.redeem_club_invite(invite_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    target_club_id uuid;
+begin
+    select club_id into target_club_id
+    from public.club_invites
+    where id = invite_id
+      and (expires_at is null or expires_at > now())
+      and (max_uses is null or use_count < max_uses)
+    for update;
+
+    if target_club_id is null then
+        raise exception 'invite not found, expired, or fully used';
+    end if;
+
+    insert into public.club_members (club_id, user_id, role)
+    values (target_club_id, auth.uid(), 'member')
+    on conflict do nothing;
+
+    update public.club_invites set use_count = use_count + 1 where id = invite_id;
+
+    return target_club_id;
+end;
+$$;
+
+grant execute on function public.redeem_club_invite (uuid) to authenticated;

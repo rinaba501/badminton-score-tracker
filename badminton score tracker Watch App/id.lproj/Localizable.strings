@@ -243,6 +243,13 @@
 "clubs.leave_confirm" = "Keluar dari klub ini? Pemain dan pertandingan akan tetap ada, tetapi tidak lagi terhubung ke klub ini.";
 "clubs.filter_personal" = "Pribadi";
 "clubs.filter_label" = "Filter berdasarkan Klub";
+"clubs.invite" = "Undang…";
+"clubs.invite_failed" = "Tidak dapat membuat undangan";
+"clubs.invite_link_ready" = "Tautan undangan Anda siap dibagikan.";
+"clubs.invite_share" = "Bagikan Tautan Undangan";
+"clubs.invite_create_failed_message" = "Terjadi kesalahan saat membuat undangan. Coba lagi.";
+"common.ok" = "OK";
+"common.done" = "Selesai";
 "playeredit.club" = "Klub";
 "playeredit.club_personal" = "Pribadi";
 

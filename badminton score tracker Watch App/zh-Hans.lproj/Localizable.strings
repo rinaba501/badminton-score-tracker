@@ -243,6 +243,13 @@
 "clubs.leave_confirm" = "退出这个俱乐部？选手和比赛记录会保留，但不再关联到该俱乐部。";
 "clubs.filter_personal" = "个人";
 "clubs.filter_label" = "按俱乐部筛选";
+"clubs.invite" = "邀请…";
+"clubs.invite_failed" = "无法创建邀请";
+"clubs.invite_link_ready" = "邀请链接已生成，可以分享了。";
+"clubs.invite_share" = "分享邀请链接";
+"clubs.invite_create_failed_message" = "创建邀请时出错，请重试。";
+"common.ok" = "好";
+"common.done" = "完成";
 "playeredit.club" = "俱乐部";
 "playeredit.club_personal" = "个人";
 

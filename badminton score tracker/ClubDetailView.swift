@@ -21,6 +21,7 @@
 import SwiftUI
 import CloudKit
 import BadmintonCore
+import CloudSyncSpike
 
 /// A club member resolved from a live CKShare fetch, with a stable identity
 /// (Roadmap Phase 5 backlog #162) — unlike the display-name-only list this
@@ -54,6 +55,7 @@ struct ClubDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(AppStorageKeys.clubLastViewedActivity) private var lastViewedData = Data()
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
+    @AppStorage(AppStorageKeys.supabaseAccountLinked) private var supabaseAccountLinked = false
 
     @State private var name = ""
     @State private var participants: [ClubParticipant] = []
@@ -66,6 +68,7 @@ struct ClubDetailView: View {
     @State private var editingPlayer: Player?
     @State private var reactionEntry: StatsCalculator.ActivityFeedEntry?
     @State private var shareBox: ShareBox?
+    @State private var clubInviteBox: ClubInviteBox?
     @State private var isPreparingShare = false
     @State private var shareErrorMessage: String?
     @State private var promptingForName = false
@@ -284,7 +287,7 @@ struct ClubDetailView: View {
                     }
                     if isOwned {
                         Button {
-                            Task { await prepareShare(for: club) }
+                            Task { await prepareInvite(for: club) }
                         } label: {
                             if isPreparingShare {
                                 ProgressView()
@@ -479,6 +482,9 @@ struct ClubDetailView: View {
         .sheet(item: $shareBox) { box in
             CloudSharingView(share: box.share, container: CloudKitSyncManager.shared.ckContainer, itemTitle: club?.name ?? "")
                 .onDisappear { loadParticipants() }
+        }
+        .sheet(item: $clubInviteBox) { box in
+            ClubInviteShareSheet(url: box.url)
         }
         .alert("clubs.invite_failed", isPresented: Binding(
             get: { shareErrorMessage != nil },
@@ -716,15 +722,30 @@ struct ClubDetailView: View {
         AppStore.shared.enqueueSettingsChange()
     }
 
-    private func prepareShare(for club: Club?) async {
+    /// Branches on the active sync backend: CloudKit-active devices keep the
+    /// existing CKShare invite (UICloudSharingController) completely
+    /// unchanged; Supabase-active devices create a `club_invites` row and
+    /// build a `ClubInviteLink` URL instead (Roadmap Phase 9d-2) — no CKShare
+    /// involved, so this path works on watchOS too (see the Watch's own
+    /// ClubDetailView), unlike UICloudSharingController.
+    private func prepareInvite(for club: Club?) async {
         guard let club else { return }
         isPreparingShare = true
         defer { isPreparingShare = false }
-        do {
-            let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
-            shareBox = ShareBox(share: share)
-        } catch {
-            shareErrorMessage = error.localizedDescription
+        if supabaseAccountLinked {
+            guard let inviteId = await SupabaseSyncManager.shared.createClubInvite(clubId: club.id),
+                  let url = ClubInviteLink.url(inviteId: inviteId.uuidString, clubName: club.name) else {
+                shareErrorMessage = NSLocalizedString("clubs.invite_create_failed_message", comment: "")
+                return
+            }
+            clubInviteBox = ClubInviteBox(url: url)
+        } else {
+            do {
+                let share = try await CloudKitSyncManager.shared.fetchOrCreateShare(for: club)
+                shareBox = ShareBox(share: share)
+            } catch {
+                shareErrorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -792,4 +813,49 @@ struct ClubDetailView: View {
 private struct ShareBox: Identifiable {
     let id = UUID()
     let share: CKShare
+}
+
+/// Wraps a freshly-built `ClubInviteLink` URL for `.sheet(item:)` (Roadmap
+/// Phase 9d-2, the Supabase-active alternative to `ShareBox`/CloudSharingView).
+private struct ClubInviteBox: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+/// The Supabase-active Invite sheet: a `ShareLink` over the freshly-created
+/// `ClubInviteLink` URL, presented in the same `.sheet(item:)` shape
+/// `CloudSharingView` uses for the CloudKit path so both invite flows read
+/// consistently even though only one of them is a system share sheet.
+private struct ClubInviteShareSheet: View {
+    let url: URL
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "link.circle.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(Color.accentColor)
+                    .accessibilityHidden(true)
+                Text("clubs.invite_link_ready")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Spacer(minLength: 0)
+                ShareLink(item: url) {
+                    Label("clubs.invite_share", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding(24)
+            .navigationTitle(Text("clubs.invite_title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("common.done") { dismiss() }
+                }
+            }
+        }
+    }
 }

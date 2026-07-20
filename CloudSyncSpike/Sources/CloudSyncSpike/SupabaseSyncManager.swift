@@ -279,6 +279,59 @@ public final class SupabaseSyncManager: ObservableObject {
         await deleteRows(table: "reactions", ids: ids)
     }
 
+    // MARK: - Club invites (Phase 9d-2)
+    //
+    // The Supabase-active alternative to CloudKit's CKShare invite
+    // (UICloudSharingController, iOS-only): a club owner creates a
+    // `club_invites` row and shares its id as a `ClubInviteLink` URL;
+    // anyone who opens it redeems it through `redeem_club_invite`, a
+    // SECURITY DEFINER Postgres function (supabase/schema.sql) — club_
+    // members has no direct INSERT policy, so this RPC is the only way to
+    // join a club you don't own, mirroring how handle_new_club() already
+    // bypasses the caller's own (nonexistent) insert privilege for owners.
+
+    /// Owner-only (RLS: `club_invites_insert` requires `is_club_owner`).
+    /// Returns the new invite's id for building a `ClubInviteLink.url`, or
+    /// nil on failure (not signed in, or the request itself errored).
+    public func createClubInvite(clubId: UUID, expiresAt: Date? = nil, maxUses: Int? = nil) async -> UUID? {
+        guard let uid = await currentUserId() else { return nil }
+        let row = NewClubInviteRow(clubId: clubId, createdBy: uid, expiresAt: expiresAt, maxUses: maxUses)
+        do {
+            let inserted: InsertedClubInvite = try await client
+                .from("club_invites")
+                .insert(row)
+                .select()
+                .single()
+                .execute()
+                .value
+            appendLog("Created club invite")
+            return inserted.id
+        } catch {
+            appendLog("Create club invite failed: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    /// Validates and redeems an invite via the `redeem_club_invite` RPC,
+    /// returning the joined club's id on success. Fails (returns nil) if
+    /// the invite doesn't exist, is expired, or has hit `max_uses` — the
+    /// function raises a Postgres exception in each of those cases, which
+    /// surfaces here as a thrown error and is logged, not distinguished by
+    /// case (the caller only needs to know join-succeeded vs. join-failed).
+    public func redeemClubInvite(inviteId: UUID) async -> UUID? {
+        do {
+            let clubId: UUID = try await client
+                .rpc("redeem_club_invite", params: RedeemClubInviteParams(inviteId: inviteId))
+                .execute()
+                .value
+            appendLog("Redeemed club invite")
+            return clubId
+        } catch {
+            appendLog("Redeem club invite failed: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
     private func upsertRows(table: String, rows: some Encodable, onConflict: String? = nil) async {
         do {
             try await client.from(table).upsert(rows, onConflict: onConflict).execute()
@@ -606,6 +659,32 @@ private struct ReactionRow: Encodable {
         self.matchId = matchId
         self.authorId = authorId
         self.payload = payload
+    }
+}
+
+private struct NewClubInviteRow: Encodable {
+    let clubId: UUID
+    let createdBy: UUID
+    let expiresAt: Date?
+    let maxUses: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case clubId = "club_id"
+        case createdBy = "created_by"
+        case expiresAt = "expires_at"
+        case maxUses = "max_uses"
+    }
+}
+
+private struct InsertedClubInvite: Decodable {
+    let id: UUID
+}
+
+private struct RedeemClubInviteParams: Encodable {
+    let inviteId: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case inviteId = "invite_id"
     }
 }
 

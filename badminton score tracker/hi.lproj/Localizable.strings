@@ -236,6 +236,15 @@
 "clubs.filter_label" = "क्लब के अनुसार फ़िल्टर करें";
 "clubs.invite" = "आमंत्रित करें…";
 "clubs.invite_failed" = "आमंत्रण नहीं बनाया जा सका";
+"clubs.invite_link_ready" = "आपका आमंत्रण लिंक साझा करने के लिए तैयार है।";
+"clubs.invite_share" = "आमंत्रण लिंक साझा करें";
+"clubs.invite_create_failed_message" = "आमंत्रण बनाने में समस्या हुई। फिर से प्रयास करें।";
+"clubs.invite_join_title" = "क्लब से जुड़ें";
+"clubs.invite_join_message" = "%@ से जुड़ें?";
+"clubs.invite_join" = "क्लब से जुड़ें";
+"clubs.invite_joined" = "जुड़ गए!";
+"clubs.invite_join_failed" = "यह आमंत्रण अमान्य है या समाप्त हो चुका है।";
+"clubs.invite_unknown_club" = "एक क्लब";
 "playeredit.club" = "क्लब";
 "playeredit.club_personal" = "व्यक्तिगत";
 "common.ok" = "ठीक है";

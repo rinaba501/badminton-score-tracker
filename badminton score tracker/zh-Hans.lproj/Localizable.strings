@@ -236,6 +236,15 @@
 "clubs.filter_label" = "按俱乐部筛选";
 "clubs.invite" = "邀请…";
 "clubs.invite_failed" = "无法创建邀请";
+"clubs.invite_link_ready" = "邀请链接已生成，可以分享了。";
+"clubs.invite_share" = "分享邀请链接";
+"clubs.invite_create_failed_message" = "创建邀请时出错，请重试。";
+"clubs.invite_join_title" = "加入俱乐部";
+"clubs.invite_join_message" = "加入%@？";
+"clubs.invite_join" = "加入俱乐部";
+"clubs.invite_joined" = "已加入！";
+"clubs.invite_join_failed" = "此邀请无效或已过期。";
+"clubs.invite_unknown_club" = "一个俱乐部";
 "playeredit.club" = "俱乐部";
 "playeredit.club_personal" = "个人";
 "common.ok" = "好";
