@@ -82,6 +82,15 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
+    private func avatarColor(forParticipant participantId: String) -> Color {
+        guard let colorIndex = appStore.friendIdentities[participantId]?.colorIndex else { return .gray }
+        return Player.avatarColors[colorIndex % Player.avatarColors.count]
+    }
+
+    private func avatarIcon(forParticipant participantId: String) -> String? {
+        appStore.friendIdentities[participantId]?.iconName
+    }
+
     /// Same "me" marker ClubDetailView uses — `defaultLabel` is a pinned
     /// "Me" shortcut shown on any step where you haven't already been
     /// placed in another slot this match.
@@ -174,7 +183,12 @@ struct PreMatchView: View {
                     ForEach(filteredFriends, id: \.participantId) { friend in
                         Button(action: { onSelect(friend.displayName, friend.participantId) }) {
                             HStack {
-                                AvatarView(name: friend.displayName, color: .gray, size: 24)
+                                AvatarView(
+                                    name: friend.displayName,
+                                    color: avatarColor(forParticipant: friend.participantId),
+                                    size: 24,
+                                    iconName: avatarIcon(forParticipant: friend.participantId)
+                                )
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(friend.displayName)
                                     if let against = h2hAgainst,

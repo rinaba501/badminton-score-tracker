@@ -73,6 +73,15 @@ struct PreMatchView: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
+    private func avatarColor(forParticipant participantId: String) -> Color {
+        guard let colorIndex = appStore.friendIdentities[participantId]?.colorIndex else { return .gray }
+        return Player.avatarColors[colorIndex % Player.avatarColors.count]
+    }
+
+    private func avatarIcon(forParticipant participantId: String) -> String? {
+        appStore.friendIdentities[participantId]?.iconName
+    }
+
     private func addPlayer(_ player: Player, thenSelect select: (String, String?) -> Void) {
         var r = roster
         if !r.contains(where: { $0.name == player.name }) {
@@ -329,7 +338,11 @@ struct PreMatchView: View {
                     ForEach(filteredFriends, id: \.participantId) { friend in
                         Button { onSelect(friend.displayName, friend.participantId) } label: {
                             HStack {
-                                playerRow(name: friend.displayName, color: .gray, icon: nil)
+                                playerRow(
+                                    name: friend.displayName,
+                                    color: avatarColor(forParticipant: friend.participantId),
+                                    icon: avatarIcon(forParticipant: friend.participantId)
+                                )
                                 if let against = h2hAgainst,
                                    let record = StatsCalculator.headToHeadIfAny(me: against, opponent: friend.displayName, history: history, roster: roster) {
                                     Text("\(record.wins)W – \(record.losses)L")
