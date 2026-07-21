@@ -153,7 +153,7 @@ struct HistoryView: View {
                                         Image(systemName: selectedIds.contains(record.id) ? "checkmark.circle.fill" : "circle")
                                             .foregroundStyle(selectedIds.contains(record.id) ? Color.accentColor : Color.secondary)
                                     }
-                                    MatchHistoryRow(record: record)
+                                    MatchHistoryRow(record: record, allowsFriendLink: !isSelecting)
                                 }
                                 .contentShape(Rectangle())
                                 .accessibilityAddTraits(isSelecting && selectedIds.contains(record.id) ? .isSelected : [])
@@ -410,6 +410,11 @@ struct HistoryView: View {
 
 struct MatchHistoryRow: View {
     let record: MatchRecord
+    /// Whether the opponent name may link to their friend profile — off while
+    /// the parent list is in multi-select mode (History's checkbox row), on
+    /// everywhere else (including inside a friend's own profile history, so
+    /// a mutual friend's name there links too).
+    var allowsFriendLink = true
 
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
@@ -446,6 +451,14 @@ struct MatchHistoryRow: View {
         let fallback = NSLocalizedString("history.opponent_fallback", comment: "")
         let name = record.opponentName.isEmpty ? fallback : Player.displayName(for: record.opponentName)
         return teamLabel(name: name, partnerName: record.opponentPartnerName)
+    }
+
+    /// The opponent as a still-accepted friend, if any — `record.opponentParticipantId`
+    /// can point at someone no longer in `store.friends` (unfriended since the match
+    /// was recorded), which has no profile to link to.
+    private var opponentFriend: (participantId: String, displayName: String)? {
+        guard let participantId = record.opponentParticipantId else { return nil }
+        return store.friends.first { $0.participantId == participantId }
     }
 
     // Roster lookups by raw (stored) name — a guest falls back to its fixed
@@ -502,13 +515,34 @@ struct MatchHistoryRow: View {
         }
     }
 
+    @ViewBuilder
+    private var opponentRow: some View {
+        let row = teamRow(rawName: record.opponentName, rawPartner: record.opponentPartnerName,
+                          label: opponentLabel, games: record.opponentGamesWon, won: !iWon,
+                          participantId: record.opponentParticipantId)
+        if allowsFriendLink, let opponentFriend {
+            NavigationLink {
+                FriendProfileDetailView(
+                    participantId: opponentFriend.participantId,
+                    displayName: opponentFriend.displayName,
+                    identity: store.friendIdentities[opponentFriend.participantId],
+                    stats: store.friendStats[opponentFriend.participantId],
+                    activity: store.friendActivity[opponentFriend.participantId]
+                )
+            } label: {
+                row
+            }
+            .buttonStyle(.plain)
+        } else {
+            row
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             teamRow(rawName: record.myName, rawPartner: record.myPartnerName,
                     label: myLabel, games: record.myGamesWon, won: iWon)
-            teamRow(rawName: record.opponentName, rawPartner: record.opponentPartnerName,
-                    label: opponentLabel, games: record.opponentGamesWon, won: !iWon,
-                    participantId: record.opponentParticipantId)
+            opponentRow
 
             HStack(spacing: 5) {
                 if !gameLine.isEmpty {

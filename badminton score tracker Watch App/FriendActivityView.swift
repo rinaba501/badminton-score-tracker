@@ -76,7 +76,10 @@ struct FriendActivityView: View {
     }
 }
 
-private struct FriendProfileDetailView: View {
+/// Shared with HistoryView's MatchHistoryRow (not private) so a friend's name
+/// in any match history list — this device's own History or a friend's
+/// shared Activity history — can link straight to their profile.
+struct FriendProfileDetailView: View {
     let participantId: String
     let displayName: String
     let identity: FriendIdentitySnapshot?
