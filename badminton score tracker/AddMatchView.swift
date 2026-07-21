@@ -406,6 +406,15 @@ private struct AddMatchPlayerPicker: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
+    private func avatarColor(forParticipant participantId: String) -> Color {
+        guard let colorIndex = appStore.friendIdentities[participantId]?.colorIndex else { return .gray }
+        return Player.avatarColors[colorIndex % Player.avatarColors.count]
+    }
+
+    private func avatarIcon(forParticipant participantId: String) -> String? {
+        appStore.friendIdentities[participantId]?.iconName
+    }
+
     private func select(_ name: String, participantId: String? = nil) {
         onSelect(name, participantId)
         dismiss()
@@ -477,7 +486,11 @@ private struct AddMatchPlayerPicker: View {
                 Section(header: Text("prematch.friends")) {
                     ForEach(filteredFriends, id: \.participantId) { friend in
                         Button { select(friend.displayName, participantId: friend.participantId) } label: {
-                            playerRow(name: friend.displayName, color: .gray, icon: nil)
+                            playerRow(
+                                name: friend.displayName,
+                                color: avatarColor(forParticipant: friend.participantId),
+                                icon: avatarIcon(forParticipant: friend.participantId)
+                            )
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
