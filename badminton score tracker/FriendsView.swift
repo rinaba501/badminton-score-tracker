@@ -49,6 +49,21 @@ struct FriendsView: View {
         myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
     }
 
+    // Every friend now always mirrors their avatar (Roadmap issue #272 —
+    // FriendIdentitySnapshot.colorIndex/iconName are unconditional), so a
+    // friend/request/invite row can show their real avatar instead of a
+    // flat gray placeholder once that snapshot has synced. Falls back to
+    // gray/no-icon until then (e.g. a request that hasn't been accepted
+    // yet, or the snapshot just hasn't pulled down).
+    private func avatarColor(forParticipant participantId: String) -> Color {
+        guard let colorIndex = store.friendIdentities[participantId]?.colorIndex else { return .gray }
+        return Player.avatarColors[colorIndex % Player.avatarColors.count]
+    }
+
+    private func avatarIcon(forParticipant participantId: String) -> String? {
+        store.friendIdentities[participantId]?.iconName
+    }
+
     private var incomingRequests: [FriendRequest] {
         guard let myParticipantId else { return [] }
         return store.friendRequests.filter { $0.status == .pending && $0.toParticipantId == myParticipantId }
@@ -107,7 +122,12 @@ struct FriendsView: View {
                 Section("friends.pending_sent") {
                     ForEach(outgoingRequests) { request in
                         HStack(spacing: 8) {
-                            AvatarView(name: request.toDisplayName, color: .gray, size: 24)
+                            AvatarView(
+                                name: request.toDisplayName,
+                                color: avatarColor(forParticipant: request.toParticipantId),
+                                size: 24,
+                                iconName: avatarIcon(forParticipant: request.toParticipantId)
+                            )
                             Text(request.toDisplayName)
                         }
                         .swipeActions {
@@ -133,7 +153,12 @@ struct FriendsView: View {
                 } else {
                     ForEach(store.friends, id: \.participantId) { friend in
                         HStack(spacing: 8) {
-                            AvatarView(name: friend.displayName, color: .gray, size: 24)
+                            AvatarView(
+                                name: friend.displayName,
+                                color: avatarColor(forParticipant: friend.participantId),
+                                size: 24,
+                                iconName: avatarIcon(forParticipant: friend.participantId)
+                            )
                             Text(friend.displayName)
                         }
                     }
@@ -177,7 +202,12 @@ struct FriendsView: View {
             : request.fromDisplayName
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                AvatarView(name: name, color: .gray, size: 24)
+                AvatarView(
+                    name: name,
+                    color: avatarColor(forParticipant: request.fromParticipantId),
+                    size: 24,
+                    iconName: avatarIcon(forParticipant: request.fromParticipantId)
+                )
                 Text(name)
             }
             HStack {
@@ -199,7 +229,12 @@ struct FriendsView: View {
     private func matchConflictRow(_ invite: SharedMatchInvite) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                AvatarView(name: invite.fromDisplayName, color: .gray, size: 24)
+                AvatarView(
+                    name: invite.fromDisplayName,
+                    color: avatarColor(forParticipant: invite.fromParticipantId),
+                    size: 24,
+                    iconName: avatarIcon(forParticipant: invite.fromParticipantId)
+                )
                 Text(invite.fromDisplayName)
             }
             if let conflict = store.conflictingRecord(for: invite) {

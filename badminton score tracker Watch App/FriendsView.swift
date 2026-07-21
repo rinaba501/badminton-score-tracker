@@ -47,16 +47,19 @@ struct FriendsView: View {
         myName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || myName == Player.defaultMyName
     }
 
-    // Same avatarColor(for:)/avatarIcon(for:) roster lookup ClubDetailView/
-    // PreMatchView use — editing "Me" in Settings saves a real Player row,
-    // so the linked-account row shows your actual customized avatar instead
-    // of a flat gray placeholder.
-    private func avatarColor(for name: String) -> Color {
-        appStore.roster.first(where: { $0.name == name })?.avatarColor ?? .gray
+    // Every friend now always mirrors their avatar (Roadmap issue #272 —
+    // FriendIdentitySnapshot.colorIndex/iconName are unconditional), so a
+    // friend/request/invite row can show their real avatar instead of a
+    // flat gray placeholder once that snapshot has synced. Falls back to
+    // gray/no-icon until then (e.g. a request that hasn't been accepted
+    // yet, or the snapshot just hasn't pulled down).
+    private func avatarColor(forParticipant participantId: String) -> Color {
+        guard let colorIndex = appStore.friendIdentities[participantId]?.colorIndex else { return .gray }
+        return Player.avatarColors[colorIndex % Player.avatarColors.count]
     }
 
-    private func avatarIcon(for name: String) -> String? {
-        appStore.roster.first(where: { $0.name == name })?.iconName
+    private func avatarIcon(forParticipant participantId: String) -> String? {
+        appStore.friendIdentities[participantId]?.iconName
     }
 
     private var incomingRequests: [FriendRequest] {
@@ -118,7 +121,12 @@ struct FriendsView: View {
                     ForEach(outgoingRequests) { request in
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 8) {
-                                AvatarView(name: request.toDisplayName, color: .gray, size: 24)
+                                AvatarView(
+                                    name: request.toDisplayName,
+                                    color: avatarColor(forParticipant: request.toParticipantId),
+                                    size: 24,
+                                    iconName: avatarIcon(forParticipant: request.toParticipantId)
+                                )
                                 Text(request.toDisplayName)
                             }
                             Button("friends.cancel_request", role: .destructive) {
@@ -145,7 +153,12 @@ struct FriendsView: View {
                 } else {
                     ForEach(appStore.friends, id: \.participantId) { friend in
                         HStack(spacing: 8) {
-                            AvatarView(name: friend.displayName, color: .gray, size: 24)
+                            AvatarView(
+                                name: friend.displayName,
+                                color: avatarColor(forParticipant: friend.participantId),
+                                size: 24,
+                                iconName: avatarIcon(forParticipant: friend.participantId)
+                            )
                             Text(friend.displayName)
                         }
                     }
@@ -187,7 +200,12 @@ struct FriendsView: View {
             : request.fromDisplayName
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                AvatarView(name: name, color: .gray, size: 24)
+                AvatarView(
+                    name: name,
+                    color: avatarColor(forParticipant: request.fromParticipantId),
+                    size: 24,
+                    iconName: avatarIcon(forParticipant: request.fromParticipantId)
+                )
                 Text(name)
             }
             Button("friends.accept") { respond(to: request, accept: true) }
@@ -207,7 +225,12 @@ struct FriendsView: View {
     private func matchConflictRow(_ invite: SharedMatchInvite) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                AvatarView(name: invite.fromDisplayName, color: .gray, size: 24)
+                AvatarView(
+                    name: invite.fromDisplayName,
+                    color: avatarColor(forParticipant: invite.fromParticipantId),
+                    size: 24,
+                    iconName: avatarIcon(forParticipant: invite.fromParticipantId)
+                )
                 Text(invite.fromDisplayName)
             }
             if let conflict = appStore.conflictingRecord(for: invite) {
