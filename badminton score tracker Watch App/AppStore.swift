@@ -526,6 +526,23 @@ final class AppStore: ObservableObject {
         syncEngine.enqueueMatchInviteResponse(id: invite.id, accept: accept)
     }
 
+    /// FriendsView's "Accept anyway" action on a conflicting invite
+    /// (`matchConflicts`) — same build+save sequence
+    /// `autoResolvePendingMatchInvites` runs automatically for the
+    /// no-conflict case, but here a human explicitly opted in despite the
+    /// flagged conflict, so this deliberately skips re-checking
+    /// `StatsCalculator.conflictingRecord`. Creates a second, separate
+    /// MatchRecord — no merge/dedup with the pre-existing conflicting one,
+    /// same tradeoff baked into 10a (see MatchInviteMirror.swift). Guarded
+    /// by the same sourceMatchId dedup as the auto-resolve path so a
+    /// double-tap can't create two mirrors.
+    func acceptConflictingMatchInvite(_ invite: SharedMatchInvite) {
+        guard !history.contains(where: { $0.sourceMatchId == invite.id }) else { return }
+        guard let mirror = MatchInviteMirror.build(from: invite, myName: myDisplayName, myPlayerId: localPlayerId) else { return }
+        saveHistory(history + [mirror])
+        respondToMatchInvite(invite, accept: true)
+    }
+
     /// Drops any cached `friendActivity` entry for a participantId no longer
     /// in the accepted-friends graph (e.g. a declined/no-longer-accepted
     /// request) — a friend's shared history must stop being visible the

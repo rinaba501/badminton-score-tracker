@@ -270,6 +270,9 @@
 "friends.unknown_inviter" = "一位球友";
 "friends.pending_received" = "收到的申请";
 "friends.pending_sent" = "发出的申请";
+"friends.match_conflicts_section" = "比分冲突";
+"friends.match_conflict_accept" = "仍然接受";
+"friends.match_conflict_ignore" = "忽略";
 "friends.your_friends" = "好友";
 "friends.no_friends_yet" = "暂无好友";
 "friends.share_history_toggle" = "与好友分享我的记录";

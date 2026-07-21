@@ -287,6 +287,9 @@
 "settings.friends" = "मित्र";
 "friends.pending_received" = "प्राप्त अनुरोध";
 "friends.pending_sent" = "भेजे गए अनुरोध";
+"friends.match_conflicts_section" = "स्कोर विवाद";
+"friends.match_conflict_accept" = "फिर भी स्वीकारें";
+"friends.match_conflict_ignore" = "अनदेखा करें";
 "friends.no_friends_yet" = "अभी कोई मित्र नहीं";
 "friends.share_history_toggle" = "मित्रों के साथ अपना इतिहास साझा करें";
 "friends.share_section_header" = "मित्रों के साथ साझा करें";

@@ -271,6 +271,9 @@
 "friends.unknown_inviter" = "プレイヤー";
 "friends.pending_received" = "受信した申請";
 "friends.pending_sent" = "送信した申請";
+"friends.match_conflicts_section" = "スコアの相違";
+"friends.match_conflict_accept" = "それでも承認";
+"friends.match_conflict_ignore" = "無視";
 "friends.your_friends" = "フレンド";
 "friends.no_friends_yet" = "フレンドはまだいません";
 "friends.share_history_toggle" = "フレンドに履歴を共有";
