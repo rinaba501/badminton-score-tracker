@@ -282,7 +282,7 @@ struct HistoryView: View {
                                     Image(systemName: selectedIds.contains(record.id) ? "checkmark.circle.fill" : "circle")
                                         .foregroundColor(selectedIds.contains(record.id) ? .yellow : .secondary)
                                 }
-                                MatchHistoryRow(record: record)
+                                MatchHistoryRow(record: record, allowsFriendLink: !isSelecting)
                             }
                             .contentShape(Rectangle())
                             .accessibilityAddTraits(isSelecting && selectedIds.contains(record.id) ? .isSelected : [])
@@ -414,7 +414,13 @@ struct HistoryView: View {
 
 struct MatchHistoryRow: View {
     let record: MatchRecord
+    /// Whether the opponent name may link to their friend profile — off while
+    /// the parent list is in multi-select mode (History's checkbox row), on
+    /// everywhere else (including inside a friend's own profile history, so
+    /// a mutual friend's name there links too).
+    var allowsFriendLink = true
 
+    @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     private var iWon: Bool { record.winner == .near }
@@ -451,6 +457,40 @@ struct MatchHistoryRow: View {
         return teamLabel(name: name, partnerName: record.opponentPartnerName)
     }
 
+    /// The opponent as a still-accepted friend, if any — `record.opponentParticipantId`
+    /// can point at someone no longer in `store.friends` (unfriended since the match
+    /// was recorded), which has no profile to link to.
+    private var opponentFriend: (participantId: String, displayName: String)? {
+        guard let participantId = record.opponentParticipantId else { return nil }
+        return store.friends.first { $0.participantId == participantId }
+    }
+
+    @ViewBuilder
+    private var opponentLine: some View {
+        let line = HStack(spacing: 3) {
+            Text(opponentLabel)
+                .font(.system(size: 12, weight: iWon ? .regular : .bold))
+                .lineLimit(1)
+            if record.opponentName == myName { youBadge }
+        }
+        if allowsFriendLink, let opponentFriend {
+            NavigationLink {
+                FriendProfileDetailView(
+                    participantId: opponentFriend.participantId,
+                    displayName: opponentFriend.displayName,
+                    identity: store.friendIdentities[opponentFriend.participantId],
+                    stats: store.friendStats[opponentFriend.participantId],
+                    activity: store.friendActivity[opponentFriend.participantId]
+                )
+            } label: {
+                line
+            }
+            .buttonStyle(.plain)
+        } else {
+            line
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Head-to-head score line
@@ -462,12 +502,7 @@ struct MatchHistoryRow: View {
                             .lineLimit(1)
                         if record.myName == myName { youBadge }
                     }
-                    HStack(spacing: 3) {
-                        Text(opponentLabel)
-                            .font(.system(size: 12, weight: iWon ? .regular : .bold))
-                            .lineLimit(1)
-                        if record.opponentName == myName { youBadge }
-                    }
+                    opponentLine
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 1) {
