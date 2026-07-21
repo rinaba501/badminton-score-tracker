@@ -86,12 +86,13 @@ public enum AppStorageKeys {
     // via SettingsSnapshot (blind overwrite, like the other plain Bool
     // settings).
     public static let shareHistoryWithFriends = "shareHistoryWithFriends"
-    // Per-field friend-visibility toggles for profile data (avatar/gender/
-    // birthday/introduction) and derived stats — same synced-Bool pattern as
+    // Per-field friend-visibility toggles for profile data (gender/birthday/
+    // introduction) and derived stats — same synced-Bool pattern as
     // shareHistoryWithFriends, but each gates one field of
-    // FriendIdentitySnapshot/FriendStatsSnapshot independently. Name has no
-    // toggle (see SettingsSnapshot.swift doc comment).
-    public static let shareAvatarWithFriends = "shareAvatarWithFriends"
+    // FriendIdentitySnapshot/FriendStatsSnapshot independently. Name and
+    // avatar have no toggle — both always mirror to accepted friends (see
+    // SettingsSnapshot.swift doc comment; avatar's toggle was removed in
+    // Roadmap issue #272, avatar isn't sensitive like the fields below).
     public static let shareGenderWithFriends = "shareGenderWithFriends"
     public static let shareBirthdayWithFriends = "shareBirthdayWithFriends"
     public static let shareIntroductionWithFriends = "shareIntroductionWithFriends"
@@ -152,7 +153,7 @@ public enum AppStorageKeys {
         pointsToWin, gamesInMatch, courtTheme, gameScreenStyle,
         announceScore, enableSounds, enableCrownScoring, timeModeEnabled, timeLimitMinutes,
         courtChangeRemindersEnabled, gameMode, localPlayerId, clubLastViewedActivity,
-        shareHistoryWithFriends, shareAvatarWithFriends, shareGenderWithFriends,
+        shareHistoryWithFriends, shareGenderWithFriends,
         shareBirthdayWithFriends, shareIntroductionWithFriends, shareStatsWithFriends,
         gender, birthday, introduction,
         didPromptForName

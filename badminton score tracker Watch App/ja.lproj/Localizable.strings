@@ -279,8 +279,7 @@
 "friends.share_history_toggle" = "フレンドに履歴を共有";
 "friends.share_history_footer" = "オンにすると、あなたの個人プレイヤーリストと試合履歴が承認済みのフレンド全員に表示されます。";
 "friends.share_section_header" = "フレンドと共有";
-"friends.share_name_always_visible_footer" = "承認済みのフレンドには名前が常に表示されます。上のいずれかをオンにするとさらに共有されます。";
-"friends.share_avatar_toggle" = "アバターを共有";
+"friends.share_name_always_visible_footer" = "承認済みのフレンドには名前とアバターが常に表示されます。上のいずれかをオンにするとさらに共有されます。";
 "friends.share_gender_toggle" = "性別を共有";
 "friends.share_birthday_toggle" = "誕生日を共有";
 "friends.share_introduction_toggle" = "自己紹介を共有";

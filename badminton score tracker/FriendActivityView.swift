@@ -36,6 +36,13 @@ struct FriendActivityView: View {
             ?? participantId
     }
 
+    // Avatar always mirrors unconditionally now (Roadmap issue #272), same
+    // fallback-to-gray-until-synced rationale as FriendsView's.
+    private func avatarColor(for participantId: String) -> Color {
+        guard let colorIndex = store.friendIdentities[participantId]?.colorIndex else { return .gray }
+        return Player.avatarColors[colorIndex % Player.avatarColors.count]
+    }
+
     var body: some View {
         List {
             if participantIds.isEmpty {
@@ -44,7 +51,7 @@ struct FriendActivityView: View {
                     .font(.callout)
             } else {
                 ForEach(participantIds, id: \.self) { participantId in
-                    NavigationLink(displayName(for: participantId)) {
+                    NavigationLink {
                         FriendProfileDetailView(
                             participantId: participantId,
                             displayName: displayName(for: participantId),
@@ -52,6 +59,16 @@ struct FriendActivityView: View {
                             stats: store.friendStats[participantId],
                             activity: store.friendActivity[participantId]
                         )
+                    } label: {
+                        HStack(spacing: 8) {
+                            AvatarView(
+                                name: displayName(for: participantId),
+                                color: avatarColor(for: participantId),
+                                size: 24,
+                                iconName: store.friendIdentities[participantId]?.iconName
+                            )
+                            Text(displayName(for: participantId))
+                        }
                     }
                 }
             }

@@ -127,6 +127,12 @@ final class SupabaseSyncEngine: SyncEngine {
             if let uid = await manager.currentUserId() {
                 UserDefaults.standard.set(uid.uuidString, forKey: AppStorageKeys.myParticipantId)
             }
+            // Same rationale as upsertMyProfile above: avatar mirrors
+            // unconditionally now (Roadmap issue #272), so a device that has
+            // never touched gender/birthday/introduction toggles still gets
+            // its avatar mirrored as soon as it's signed in, not only after
+            // the next roster edit.
+            AppStore.shared.refreshMyIdentitySnapshot()
             await pullInitialState()
             await manager.startRealtimeSync(tables: Self.pullTables) { change in
                 Task { @MainActor in
@@ -503,21 +509,23 @@ final class SupabaseSyncEngine: SyncEngine {
         }
     }
 
-    /// Per-field toggle gating: a field is left `nil` in the snapshot itself
-    /// whenever its toggle is off, never written at all.
+    /// displayName and avatar (colorIndex/iconName) always mirror
+    /// unconditionally (Roadmap issue #272 — avatar isn't sensitive like the
+    /// fields below). gender/birthday/introduction stay per-field toggle
+    /// gated: a field is left `nil` in the snapshot itself whenever its
+    /// toggle is off, never written at all.
     private func currentFriendIdentitySnapshot(myId: UUID) -> FriendIdentitySnapshot {
         let defaults = UserDefaults.standard
         let myName = defaults.string(forKey: AppStorageKeys.myName) ?? Player.defaultMyName
         let mePlayer = AppStore.shared.roster.first(where: { $0.id == AppStore.shared.localPlayerId })
-        let shareAvatar = defaults.object(forKey: AppStorageKeys.shareAvatarWithFriends) as? Bool ?? false
         let shareGender = defaults.object(forKey: AppStorageKeys.shareGenderWithFriends) as? Bool ?? false
         let shareBirthday = defaults.object(forKey: AppStorageKeys.shareBirthdayWithFriends) as? Bool ?? false
         let shareIntroduction = defaults.object(forKey: AppStorageKeys.shareIntroductionWithFriends) as? Bool ?? false
         return FriendIdentitySnapshot(
             participantId: myId.uuidString,
             displayName: Player.displayName(for: myName),
-            colorIndex: shareAvatar ? mePlayer?.colorIndex : nil,
-            iconName: shareAvatar ? mePlayer?.iconName : nil,
+            colorIndex: mePlayer?.colorIndex,
+            iconName: mePlayer?.iconName,
             gender: shareGender ? defaults.string(forKey: AppStorageKeys.gender) : nil,
             birthday: shareBirthday ? (defaults.object(forKey: AppStorageKeys.birthday) as? Date) : nil,
             introduction: shareIntroduction ? defaults.string(forKey: AppStorageKeys.introduction) : nil

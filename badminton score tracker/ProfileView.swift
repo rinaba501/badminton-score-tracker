@@ -11,13 +11,14 @@
 //  toggle (a metadata-only "link this device" flag with no behavioral effect
 //  even before Supabase existed) was removed as dead code.
 //
-//  Each identity field (avatar/gender/birthday/bio) carries its own inline
-//  "share with friends" toggle right next to where it's edited, so the
-//  sharing decision happens at the moment the data is entered rather than
-//  requiring a trip to FriendsView's Sharing Settings screen — that screen
-//  remains the one place all six toggles (these four plus stats/history)
-//  are visible together. toggleIdentityField here is a deliberate duplicate
-//  of FriendSharingSettingsView's — keep the two in sync.
+//  Each identity field (gender/birthday/bio) carries its own inline "share
+//  with friends" toggle right next to where it's edited, so the sharing
+//  decision happens at the moment the data is entered rather than requiring
+//  a trip to FriendsView's Sharing Settings screen — that screen remains the
+//  one place all five toggles (these three plus stats/history) are visible
+//  together. Avatar has no toggle (Roadmap issue #272) — it always mirrors,
+//  same as the name. toggleIdentityField here is a deliberate duplicate of
+//  FriendSharingSettingsView's — keep the two in sync.
 //
 
 import SwiftUI
@@ -27,7 +28,6 @@ import CloudSyncSpike
 struct ProfileView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
-    @AppStorage(AppStorageKeys.shareAvatarWithFriends) private var shareAvatarWithFriends = false
     @AppStorage(AppStorageKeys.shareGenderWithFriends) private var shareGenderWithFriends = false
     @AppStorage(AppStorageKeys.shareBirthdayWithFriends) private var shareBirthdayWithFriends = false
     @AppStorage(AppStorageKeys.shareIntroductionWithFriends) private var shareIntroductionWithFriends = false
@@ -55,28 +55,20 @@ struct ProfileView: View {
     var body: some View {
         List {
             Section {
-                HStack(spacing: 10) {
-                    Button {
-                        editingPlayer = meAsPlayer()
-                    } label: {
-                        let me = meAsPlayer()
-                        HStack(spacing: 10) {
-                            AvatarView(name: myName, color: me.avatarColor, size: 44, iconName: me.iconName)
-                            Text(myName).foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                Button {
+                    editingPlayer = meAsPlayer()
+                } label: {
+                    let me = meAsPlayer()
+                    HStack(spacing: 10) {
+                        AvatarView(name: myName, color: me.avatarColor, size: 44, iconName: me.iconName)
+                        Text(myName).foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain)
-
-                    shareToggle(
-                        "friends.share_avatar_toggle",
-                        isOn: $shareAvatarWithFriends,
-                        onChange: toggleIdentityField
-                    )
                 }
+                .buttonStyle(.plain)
             }
 
             Section(footer: Text("profile.share_toggle_footer")) {
@@ -266,14 +258,14 @@ struct ProfileView: View {
         let defaults = UserDefaults.standard
         if let newValue { defaults.set(newValue, forKey: AppStorageKeys.gender) } else { defaults.removeObject(forKey: AppStorageKeys.gender) }
         AppStore.shared.enqueueSettingsChange()
-        store.refreshMyIdentitySnapshotIfSharing()
+        store.refreshMyIdentitySnapshot()
     }
 
     private func writeBirthday(_ newValue: Date?) {
         let defaults = UserDefaults.standard
         if let newValue { defaults.set(newValue, forKey: AppStorageKeys.birthday) } else { defaults.removeObject(forKey: AppStorageKeys.birthday) }
         AppStore.shared.enqueueSettingsChange()
-        store.refreshMyIdentitySnapshotIfSharing()
+        store.refreshMyIdentitySnapshot()
     }
 
     private func writeIntroduction(_ newValue: String) {
@@ -281,16 +273,16 @@ struct ProfileView: View {
         let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { defaults.removeObject(forKey: AppStorageKeys.introduction) } else { defaults.set(trimmed, forKey: AppStorageKeys.introduction) }
         AppStore.shared.enqueueSettingsChange()
-        store.refreshMyIdentitySnapshotIfSharing()
+        store.refreshMyIdentitySnapshot()
     }
 
-    // shareAvatar/Gender/Birthday/IntroductionWithFriends all gate fields on
-    // the SAME single "FriendIdentity" record (see AppStore.
-    // refreshMyIdentitySnapshotIfSharing), so every one of these four inline
+    // shareGender/Birthday/IntroductionWithFriends all gate fields on the
+    // SAME single "FriendIdentity" record (see AppStore.
+    // refreshMyIdentitySnapshot), so every one of these three inline
     // toggles shares this one handler. Duplicate of FriendSharingSettingsView's
     // — see this file's header comment.
     private func toggleIdentityField(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
-        store.refreshMyIdentitySnapshotIfSharing()
+        store.refreshMyIdentitySnapshot()
     }
 }

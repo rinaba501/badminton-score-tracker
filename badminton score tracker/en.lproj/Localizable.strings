@@ -293,8 +293,7 @@
 "friends.no_friends_yet" = "No friends yet";
 "friends.share_history_toggle" = "Share My History with Friends";
 "friends.share_section_header" = "Share With Friends";
-"friends.share_name_always_visible_footer" = "Your name is always visible to accepted friends. Turn on any field above to share more.";
-"friends.share_avatar_toggle" = "Share My Avatar";
+"friends.share_name_always_visible_footer" = "Your name and avatar are always visible to accepted friends. Turn on any field above to share more.";
 "friends.share_gender_toggle" = "Share My Gender";
 "friends.share_birthday_toggle" = "Share My Birthday";
 "friends.share_introduction_toggle" = "Share My Bio";

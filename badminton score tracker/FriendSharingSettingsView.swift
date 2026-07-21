@@ -2,10 +2,12 @@
 //  FriendSharingSettingsView.swift
 //  badminton score tracker (iOS)
 //
-//  Split out of FriendsView: the six per-field "share with friends" toggles
-//  are a set-once-and-forget decision, not something scored day-to-day, so
-//  they live on their own screen (pushed from a single row) instead of
-//  crowding the top of the friends list. Watch counterpart is
+//  Split out of FriendsView: the five per-field "share with friends" toggles
+//  (gender/birthday/introduction/stats/history — avatar's toggle was removed
+//  in Roadmap issue #272, it now always mirrors like the name) are a
+//  set-once-and-forget decision, not something scored day-to-day, so they
+//  live on their own screen (pushed from a single row) instead of crowding
+//  the top of the friends list. Watch counterpart is
 //  FriendSharingSettingsView.swift on that target.
 //
 
@@ -15,7 +17,6 @@ import BadmintonCore
 struct FriendSharingSettingsView: View {
     @EnvironmentObject private var store: AppStore
     @AppStorage(AppStorageKeys.shareHistoryWithFriends) private var shareHistoryWithFriends = false
-    @AppStorage(AppStorageKeys.shareAvatarWithFriends) private var shareAvatarWithFriends = false
     @AppStorage(AppStorageKeys.shareGenderWithFriends) private var shareGenderWithFriends = false
     @AppStorage(AppStorageKeys.shareBirthdayWithFriends) private var shareBirthdayWithFriends = false
     @AppStorage(AppStorageKeys.shareIntroductionWithFriends) private var shareIntroductionWithFriends = false
@@ -24,8 +25,6 @@ struct FriendSharingSettingsView: View {
     var body: some View {
         Form {
             Section(header: Text("friends.share_section_header"), footer: Text("friends.share_name_always_visible_footer")) {
-                Toggle("friends.share_avatar_toggle", isOn: $shareAvatarWithFriends)
-                    .onChange(of: shareAvatarWithFriends) { _, isOn in toggleIdentityField(isOn) }
                 Toggle("friends.share_gender_toggle", isOn: $shareGenderWithFriends)
                     .onChange(of: shareGenderWithFriends) { _, isOn in toggleIdentityField(isOn) }
                 Toggle("friends.share_birthday_toggle", isOn: $shareBirthdayWithFriends)
@@ -52,15 +51,15 @@ struct FriendSharingSettingsView: View {
         AppStore.shared.enqueueSettingsChange()
     }
 
-    // shareAvatar/Gender/Birthday/IntroductionWithFriends all gate fields on
-    // the SAME single "FriendIdentity" record (see AppStore.
-    // refreshMyIdentitySnapshotIfSharing), so every one of these four toggles
-    // shares this one handler regardless of which direction it flipped.
-    // refreshMyIdentitySnapshotIfSharing() is already backend-polymorphic
-    // (routes through AppStore.syncEngine).
+    // shareGender/Birthday/IntroductionWithFriends all gate fields on the
+    // SAME single "FriendIdentity" record (see AppStore.
+    // refreshMyIdentitySnapshot), so every one of these three toggles shares
+    // this one handler regardless of which direction it flipped.
+    // refreshMyIdentitySnapshot() is already backend-polymorphic (routes
+    // through AppStore.syncEngine).
     private func toggleIdentityField(_ isOn: Bool) {
         AppStore.shared.enqueueSettingsChange()
-        store.refreshMyIdentitySnapshotIfSharing()
+        store.refreshMyIdentitySnapshot()
     }
 
     // enqueueFriendStatsChange()/removeFriendStatsRecord() route through
