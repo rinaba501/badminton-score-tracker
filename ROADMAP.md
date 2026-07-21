@@ -552,7 +552,7 @@ Per CLAUDE.md, any slice touching `AppStore`/the sync layer goes through
 plan mode first — a discipline this whole phase followed from 9b through
 9f-3.
 
-### Phase 10 — Friend match auto-sync (in progress: 10a landing)
+### Phase 10 — Friend match auto-sync (in progress: 10b landing)
 
 Today, picking a Friend as your opponent only copies their display name —
 the resulting `MatchRecord` never touches the friend's own account, even
@@ -590,14 +590,17 @@ Sliced into 3 PRs, same convention as Phase 5/7/9:
   collects a friend's `participantId` yet, so low-risk to review in
   isolation. `swift test --package-path BadmintonCore` green; both app
   targets build clean.
-- **10b — Opponent-picker threading** ([#315](https://github.com/rinaba501/badminton-score-tracker/issues/315), `priority: high`): thread the friend's `participantId`
-  (already in scope at every `ForEach(filteredFriends, id: \.participantId)`
-  call site, currently discarded) through Watch/iOS `PreMatchView` +
-  `GameViewModel.saveMatch()` and iOS `AddMatchView`'s
-  `AddMatchPlayerPicker` into the saved `MatchRecord`, activating 10a
-  end-to-end. Needs a real two-account manual pass (log a match on Account A
-  against Account B, confirm B's history silently gains the mirrored
-  record) — not CI-provable.
+- **10b — Opponent-picker threading** ([#315](https://github.com/rinaba501/badminton-score-tracker/issues/315), `priority: high`) ✅ done: threaded the friend's
+  `participantId` (already in scope at every
+  `ForEach(filteredFriends, id: \.participantId)` call site, previously
+  discarded) through Watch/iOS `PreMatchView` + `GameViewModel.saveMatch()`
+  and iOS `AddMatchView`'s `AddMatchPlayerPicker` into the saved
+  `MatchRecord`, activating 10a end-to-end. Every picker's `onSelect` widened
+  from `(String) -> Void` to `(String, String?) -> Void`; only the far/
+  opponent slot writes the participantId, and only when singles + no club
+  selected. Real two-account manual pass (log a match on Account A against
+  Account B, confirm B's history silently gains the mirrored record) still
+  owed — not CI-provable.
 - **10c — Conflict-review UI** ([#316](https://github.com/rinaba501/badminton-score-tracker/issues/316), `priority: high`): a "Match Requests"/conflict section in
   `FriendsView` (both targets) for the rare case 10a's auto-mirror declines
   to resolve silently.
@@ -625,7 +628,7 @@ Cheap, independent CI hardening: a localization key-sync check across the 6 loca
 | 7 — Friend graph (v1, graph-only) | not yet issue-tracked | 7a-7g done (data model, public-DB plumbing, AppStore integration, invite link + deep-link consumption, Friends UI, code-entry fallback, push subscription, link-to-one-account) — the push-subscription half is unverified, needs a real two-device test |
 | 8 — Feathers & Gacha | [#244](https://github.com/rinaba501/badminton-score-tracker/issues/244) | Design complete ([docs/gacha-design.md](docs/gacha-design.md)); 8a–8f not started |
 | 9 — Backend migration (Supabase/Postgres) | not yet issue-tracked | Design in [docs/supabase-migration-plan.md](docs/supabase-migration-plan.md); 9a done ([supabase/schema.sql](supabase/schema.sql)), 9b done ([SyncEngine.swift](BadmintonCore/Sources/BadmintonCore/SyncEngine.swift)), 9c done (9c-1–9c-6: production SupabaseSyncManager, AppStore backend-switch plumbing, Sync Backend Settings UI, View-bypass fix, Realtime pull-side sync transport + wiring — push AND pull now both real), **9d done** (9d-1: clubs/challenges/reactions push+pull sync + Realtime filter fix; 9d-2: redeem_club_invite RPC + ClubInviteLink/ClubInviteView, Watch's first invite-sending affordance; 9d-3: member-list read via club_members/profiles + leave/kick), **9e done** (9e-1: FriendProfile/FriendRequest push+pull, reusing profiles/friend_requests with no new tables; 9e-2: friend identity/stats sharing via two new snapshot tables + a View-bypass fix for stats toggling; 9e-3: friend history sharing via RLS extension + SupabaseSyncEngine pull/Realtime routing fix, no mirrored copy needed; 9e-4: erase-all-data Friends-graph teardown, new profiles_delete RLS policy, explicit identity/stats snapshot cleanup), **9f done** (9f-1: unlinked devices default to NoOpSyncEngine/local-only instead of auto-starting CloudKit, plus gating the CloudKit invite/FriendsHistory-share code paths that would otherwise create empty artifacts; 9f-2: every remaining per-View CloudKit branch collapsed to unconditional Supabase behavior, the dead accountLinked flag removed, a friend-request push-notification data-loss bug fixed; 9f-3: CloudKitSyncManager.swift/CloudSharingView.swift/SceneDelegate.swift deleted outright, iCloud/push capabilities removed, full CloudKit-reference doc-comment sweep). **Phase 9 is complete** — real two-device/real-account verification still owed |
-| 10 — Friend match auto-sync | [#315](https://github.com/rinaba501/badminton-score-tracker/issues/315) (10b), [#316](https://github.com/rinaba501/badminton-score-tracker/issues/316) (10c) — both `priority: high` | 10a done (data model + sync plumbing: `match_invites` table/RLS, `SharedMatchInvite`/`MatchInviteMirror`, `StatsCalculator.conflictingRecord`, both targets' `AppStore`/`SupabaseSyncEngine` wiring — no UI yet, inert until 10b); 10b (opponent-picker threading, #315) and 10c (conflict-review UI, #316) not started |
+| 10 — Friend match auto-sync | [#315](https://github.com/rinaba501/badminton-score-tracker/issues/315) (10b), [#316](https://github.com/rinaba501/badminton-score-tracker/issues/316) (10c) — both `priority: high` | 10a done (data model + sync plumbing: `match_invites` table/RLS, `SharedMatchInvite`/`MatchInviteMirror`, `StatsCalculator.conflictingRecord`, both targets' `AppStore`/`SupabaseSyncEngine` wiring); 10b done (opponent-picker threading, #315 — every friend/opponent picker now threads `participantId` into `MatchRecord.opponentParticipantId`, feature is live end-to-end pending a real two-account pass); 10c (conflict-review UI, #316) not started |
 | Guardrails | [#110](https://github.com/rinaba501/badminton-score-tracker/issues/110) | Closed by PR [#116](https://github.com/rinaba501/badminton-score-tracker/pull/116) |
 
 Independent feature work (e.g. doubles support, [#8](https://github.com/rinaba501/badminton-score-tracker/issues/8)) is unaffected by this sequencing, though doubles will be cheaper after Phase 3's orientation-neutral groundwork.

@@ -41,6 +41,7 @@ struct AddMatchView: View {
     @State private var date = Date()
     @State private var clubId: UUID?
     @State private var isOfficial = true
+    @State private var opponentParticipantId: String?
     @State private var activePicker: PickerSlot?
 
     struct EditableGameScore: Identifiable {
@@ -118,7 +119,7 @@ struct AddMatchView: View {
                     excluding: pickerExcluding(for: slot),
                     usedGuestTokens: pickerUsedGuestTokens(for: slot),
                     clubId: clubId,
-                    onSelect: { name in setName(name, for: slot) }
+                    onSelect: { name, participantId in setName(name, participantId: participantId, for: slot) }
                 )
             }
         }
@@ -307,11 +308,13 @@ struct AddMatchView: View {
         Set(currentNames(excludingSlot: slot).filter(Player.isGuestName))
     }
 
-    private func setName(_ name: String, for slot: PickerSlot) {
+    private func setName(_ name: String, participantId: String?, for slot: PickerSlot) {
         switch slot {
         case .near: nearName = name
         case .nearPartner: nearPartnerName = name
-        case .far: farName = name
+        case .far:
+            farName = name
+            opponentParticipantId = participantId
         case .farPartner: farPartnerName = name
         }
     }
@@ -370,7 +373,8 @@ struct AddMatchView: View {
             myPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveNearPartner, roster: currentRoster),
             opponentPartnerPlayerId: resolvedPartnerPlayerId(for: effectiveFarPartner, roster: currentRoster),
             clubId: clubId,
-            isOfficial: selectedClubTracksStandings ? isOfficial : true
+            isOfficial: selectedClubTracksStandings ? isOfficial : true,
+            opponentParticipantId: (gameMode == .singles && clubId == nil) ? opponentParticipantId : nil
         )
         appStore.saveHistory(appStore.history + [record])
         dismiss()
@@ -385,7 +389,7 @@ private struct AddMatchPlayerPicker: View {
     let excluding: [String]
     let usedGuestTokens: Set<String>
     let clubId: UUID?
-    let onSelect: (String) -> Void
+    let onSelect: (String, String?) -> Void
 
     @EnvironmentObject private var appStore: AppStore
     @Environment(\.dismiss) private var dismiss
@@ -402,8 +406,8 @@ private struct AddMatchPlayerPicker: View {
         roster.first(where: { $0.name == name })?.iconName
     }
 
-    private func select(_ name: String) {
-        onSelect(name)
+    private func select(_ name: String, participantId: String? = nil) {
+        onSelect(name, participantId)
         dismiss()
     }
 
@@ -472,7 +476,7 @@ private struct AddMatchPlayerPicker: View {
             if !filteredFriends.isEmpty {
                 Section(header: Text("prematch.friends")) {
                     ForEach(filteredFriends, id: \.participantId) { friend in
-                        Button { select(friend.displayName) } label: {
+                        Button { select(friend.displayName, participantId: friend.participantId) } label: {
                             playerRow(name: friend.displayName, color: .gray, icon: nil)
                                 .contentShape(Rectangle())
                         }

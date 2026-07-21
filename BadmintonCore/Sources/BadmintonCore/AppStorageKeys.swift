@@ -19,6 +19,11 @@ public enum AppStorageKeys {
     public static let myName = "myName"
     public static let matchMyName = "matchMyName"
     public static let matchOpponentName = "matchOpponentName"
+    // Phase 10b (#315): the far/opponent slot's picked Friend's participantId,
+    // when picked from Friends — "" otherwise. Same per-device match-config
+    // exclusion as matchOpponentName, never synced; read once at save time to
+    // tag MatchRecord.opponentParticipantId.
+    public static let matchOpponentParticipantId = "matchOpponentParticipantId"
     public static let matchMyPartnerName = "matchMyPartnerName"
     public static let matchOpponentPartnerName = "matchOpponentPartnerName"
     // PreMatchView's club picker (#169); UUID string, "" = Personal. Same
@@ -142,7 +147,7 @@ public enum AppStorageKeys {
     // ownedProductIds (a StoreKit purchase cache tied to the Apple ID, never
     // app data).
     public static let eraseAllDataResetKeys: [String] = [
-        myName, matchMyName, matchOpponentName, matchMyPartnerName, matchOpponentPartnerName,
+        myName, matchMyName, matchOpponentName, matchOpponentParticipantId, matchMyPartnerName, matchOpponentPartnerName,
         matchClubId, matchIsOfficial, playerSortOrder,
         pointsToWin, gamesInMatch, courtTheme, gameScreenStyle,
         announceScore, enableSounds, enableCrownScoring, timeModeEnabled, timeLimitMinutes,
