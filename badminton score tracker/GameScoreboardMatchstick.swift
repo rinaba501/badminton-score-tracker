@@ -76,9 +76,14 @@ struct MatchstickScoreboard: View {
             .shadow(color: serveLampGlow(lit: lit, opacity: 0.55), radius: 11)
     }
 
+    /// Total games a full-length match can reach for the selected best-of
+    /// format (e.g. best-of-3 → 3, best-of-1 → 1) — how many lamp dots
+    /// should render, not a fixed minimum.
+    private var maxGameSlots: Int { header.gamesToWin * 2 - 1 }
+
     private func gameLamps(_ games: Int) -> some View {
         HStack(spacing: 5) {
-            ForEach(0..<max(games, 3), id: \.self) { i in
+            ForEach(0..<maxGameSlots, id: \.self) { i in
                 Circle()
                     .fill(i < games ? glowColor : Color.white.opacity(0.08))
                     .frame(width: 7, height: 7)

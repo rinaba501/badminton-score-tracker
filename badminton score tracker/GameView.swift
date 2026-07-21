@@ -37,6 +37,7 @@ struct ScoreSideData {
 struct GameHeaderData {
     let myGames: Int
     let opponentGames: Int
+    let gamesToWin: Int
     let canUndo: Bool
     let onUndo: () -> Void
     let isTimeModeEnabled: Bool
@@ -136,6 +137,7 @@ struct GameView: View {
         GameHeaderData(
             myGames: gamesWon(by: bottomSide),
             opponentGames: gamesWon(by: topSide),
+            gamesToWin: viewModel.match.gamesToWin,
             canUndo: !viewModel.undoStack.isEmpty &&
                 viewModel.match.gameWinner == nil &&
                 viewModel.match.matchWinner == nil &&
