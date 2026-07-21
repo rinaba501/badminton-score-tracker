@@ -16,6 +16,10 @@
 //  removed the same safe way in reverse — the field is gone from this
 //  struct, but an old record still carrying that JSON key decodes fine since
 //  Codable ignores keys the CodingKeys enum no longer declares.
+//  `shareAvatarWithFriends` was removed the same way (Roadmap issue #272) —
+//  avatar sharing is now unconditional, like displayName, so the toggle
+//  isn't needed; an old record's leftover "shareAvatarWithFriends" JSON key
+//  is likewise just ignored on decode.
 //
 
 import Foundation
@@ -47,13 +51,14 @@ public struct SettingsSnapshot: Codable, Equatable {
     /// apply, like the other plain Bools.
     public var shareHistoryWithFriends: Bool
     /// Per-field friend-visibility toggles for the profile fields below
-    /// (avatar/gender/birthday/introduction) plus derived stats — each
+    /// (gender/birthday/introduction) plus derived stats — each
     /// independently gates whether that one field is mirrored into
     /// FriendIdentitySnapshot/FriendStatsSnapshot. Unlike shareHistoryWithFriends
-    /// these never expose raw match records. Name has no toggle: an accepted
-    /// FriendRequest already carries a snapshotted displayName, so there's no
-    /// way to hide it from an existing friend (see FriendIdentitySnapshot).
-    public var shareAvatarWithFriends: Bool
+    /// these never expose raw match records. Name and avatar have no toggle:
+    /// an accepted FriendRequest already carries a snapshotted displayName,
+    /// so there's no way to hide it from an existing friend, and avatar
+    /// isn't sensitive data (Roadmap issue #272) — both always mirror (see
+    /// FriendIdentitySnapshot).
     public var shareGenderWithFriends: Bool
     public var shareBirthdayWithFriends: Bool
     public var shareIntroductionWithFriends: Bool
@@ -81,7 +86,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         clubLastViewedActivity: [String: Date] = [:],
         gameScreenStyle: String = "Depth",
         shareHistoryWithFriends: Bool = false,
-        shareAvatarWithFriends: Bool = false,
         shareGenderWithFriends: Bool = false,
         shareBirthdayWithFriends: Bool = false,
         shareIntroductionWithFriends: Bool = false,
@@ -104,7 +108,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         self.clubLastViewedActivity = clubLastViewedActivity
         self.gameScreenStyle = gameScreenStyle
         self.shareHistoryWithFriends = shareHistoryWithFriends
-        self.shareAvatarWithFriends = shareAvatarWithFriends
         self.shareGenderWithFriends = shareGenderWithFriends
         self.shareBirthdayWithFriends = shareBirthdayWithFriends
         self.shareIntroductionWithFriends = shareIntroductionWithFriends
@@ -119,7 +122,7 @@ public struct SettingsSnapshot: Codable, Equatable {
         case announceScore, enableSounds, enableCrownScoring, timeModeEnabled
         case timeLimitMinutes, courtChangeRemindersEnabled, clubLastViewedActivity
         case gameScreenStyle, shareHistoryWithFriends
-        case shareAvatarWithFriends, shareGenderWithFriends, shareBirthdayWithFriends
+        case shareGenderWithFriends, shareBirthdayWithFriends
         case shareIntroductionWithFriends, shareStatsWithFriends
         case gender, birthday, introduction
     }
@@ -141,7 +144,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         clubLastViewedActivity = try container.decodeIfPresent([String: Date].self, forKey: .clubLastViewedActivity) ?? [:]
         gameScreenStyle = try container.decodeIfPresent(String.self, forKey: .gameScreenStyle) ?? "Depth"
         shareHistoryWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareHistoryWithFriends) ?? false
-        shareAvatarWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareAvatarWithFriends) ?? false
         shareGenderWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareGenderWithFriends) ?? false
         shareBirthdayWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareBirthdayWithFriends) ?? false
         shareIntroductionWithFriends = try container.decodeIfPresent(Bool.self, forKey: .shareIntroductionWithFriends) ?? false
@@ -167,7 +169,6 @@ public struct SettingsSnapshot: Codable, Equatable {
         try container.encode(clubLastViewedActivity, forKey: .clubLastViewedActivity)
         try container.encode(gameScreenStyle, forKey: .gameScreenStyle)
         try container.encode(shareHistoryWithFriends, forKey: .shareHistoryWithFriends)
-        try container.encode(shareAvatarWithFriends, forKey: .shareAvatarWithFriends)
         try container.encode(shareGenderWithFriends, forKey: .shareGenderWithFriends)
         try container.encode(shareBirthdayWithFriends, forKey: .shareBirthdayWithFriends)
         try container.encode(shareIntroductionWithFriends, forKey: .shareIntroductionWithFriends)

@@ -230,7 +230,6 @@ final class AppStore: ObservableObject {
             clubLastViewedActivity: ClubActivityCodec.decode(defaults.data(forKey: AppStorageKeys.clubLastViewedActivity) ?? Data()),
             gameScreenStyle: defaults.string(forKey: AppStorageKeys.gameScreenStyle) ?? "Depth",
             shareHistoryWithFriends: defaults.object(forKey: AppStorageKeys.shareHistoryWithFriends) as? Bool ?? false,
-            shareAvatarWithFriends: defaults.object(forKey: AppStorageKeys.shareAvatarWithFriends) as? Bool ?? false,
             shareGenderWithFriends: defaults.object(forKey: AppStorageKeys.shareGenderWithFriends) as? Bool ?? false,
             shareBirthdayWithFriends: defaults.object(forKey: AppStorageKeys.shareBirthdayWithFriends) as? Bool ?? false,
             shareIntroductionWithFriends: defaults.object(forKey: AppStorageKeys.shareIntroductionWithFriends) as? Bool ?? false,
@@ -273,11 +272,11 @@ final class AppStore: ObservableObject {
                 syncEngine.enqueueFriendsRosterChanges(upsertedIds: personalUpserts, deletedIds: personalDeletes)
             }
         }
-        // Avatar is the one identity sub-field stored on the roster (the "Me"
+        // Avatar is the one identity field stored on the roster (the "Me"
         // player) rather than SettingsSnapshot — only re-mirror when that
         // player actually changed, not on every roster edit.
         if diff.upsertedIds.contains(localPlayerId) || diff.deletedIds.contains(localPlayerId) {
-            refreshMyIdentitySnapshotIfSharing()
+            refreshMyIdentitySnapshot()
         }
         if isSharingStatsWithFriends {
             syncEngine.enqueueFriendStatsChange()
@@ -383,7 +382,7 @@ final class AppStore: ObservableObject {
         await syncEngine.deleteMyFriendProfile()
         await syncEngine.deleteFriendsHistoryZone()
         // Explicit and unconditional, rather than relying on saveRoster's
-        // diff-gated refreshMyIdentitySnapshotIfSharing() call above to
+        // diff-gated refreshMyIdentitySnapshot() call above to
         // happen to fire: friend_identity_snapshots/friend_stats_snapshots
         // are ordinary tables with no bulk-delete-by-owner shortcut, so
         // these two calls are the only thing that clears them during an
@@ -398,29 +397,20 @@ final class AppStore: ObservableObject {
         UserDefaults.standard.bool(forKey: AppStorageKeys.shareHistoryWithFriends)
     }
 
-    var isSharingAnyFriendIdentityField: Bool {
-        let defaults = UserDefaults.standard
-        return defaults.bool(forKey: AppStorageKeys.shareAvatarWithFriends)
-            || defaults.bool(forKey: AppStorageKeys.shareGenderWithFriends)
-            || defaults.bool(forKey: AppStorageKeys.shareBirthdayWithFriends)
-            || defaults.bool(forKey: AppStorageKeys.shareIntroductionWithFriends)
-    }
-
     var isSharingStatsWithFriends: Bool {
         UserDefaults.standard.bool(forKey: AppStorageKeys.shareStatsWithFriends)
     }
 
-    /// Recomputes and re-enqueues this device's own "FriendIdentity" record
-    /// if any identity sub-field toggle is on — call after a SettingsSnapshot
-    /// identity field (gender/birthday/introduction) or its toggle changes,
-    /// so the mirror stays in sync without duplicating the per-field gating
-    /// logic at every call site.
-    func refreshMyIdentitySnapshotIfSharing() {
-        if isSharingAnyFriendIdentityField {
-            syncEngine.enqueueFriendIdentityChange()
-        } else {
-            syncEngine.removeFriendIdentityRecord()
-        }
+    /// Recomputes and re-enqueues this device's own "FriendIdentity" record —
+    /// call after avatar changes (saveRoster) or a gender/birthday/
+    /// introduction field/toggle changes, so the mirror stays in sync
+    /// without duplicating the per-field gating logic at every call site.
+    /// Always pushes: avatar+displayName are unconditionally shareable
+    /// (Roadmap issue #272), so there's no "share nothing" state that would
+    /// call removeFriendIdentityRecord() here — that's reserved for
+    /// eraseAllData()'s explicit full teardown.
+    func refreshMyIdentitySnapshot() {
+        syncEngine.enqueueFriendIdentityChange()
     }
 
     /// Ids whose (new, for upserts; old, for deletes) clubId is nil —
@@ -588,7 +578,6 @@ final class AppStore: ObservableObject {
         defaults.set(snapshot.courtChangeRemindersEnabled, forKey: AppStorageKeys.courtChangeRemindersEnabled)
         defaults.set(snapshot.gameScreenStyle, forKey: AppStorageKeys.gameScreenStyle)
         defaults.set(snapshot.shareHistoryWithFriends, forKey: AppStorageKeys.shareHistoryWithFriends)
-        defaults.set(snapshot.shareAvatarWithFriends, forKey: AppStorageKeys.shareAvatarWithFriends)
         defaults.set(snapshot.shareGenderWithFriends, forKey: AppStorageKeys.shareGenderWithFriends)
         defaults.set(snapshot.shareBirthdayWithFriends, forKey: AppStorageKeys.shareBirthdayWithFriends)
         defaults.set(snapshot.shareIntroductionWithFriends, forKey: AppStorageKeys.shareIntroductionWithFriends)

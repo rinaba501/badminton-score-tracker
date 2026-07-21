@@ -293,8 +293,7 @@
 "friends.no_friends_yet" = "아직 친구가 없습니다";
 "friends.share_history_toggle" = "친구에게 내 기록 공유하기";
 "friends.share_section_header" = "친구와 공유";
-"friends.share_name_always_visible_footer" = "수락된 친구에게는 이름이 항상 표시됩니다. 위 항목을 켜면 더 많은 정보를 공유할 수 있습니다.";
-"friends.share_avatar_toggle" = "아바타 공유";
+"friends.share_name_always_visible_footer" = "수락된 친구에게는 이름과 아바타가 항상 표시됩니다. 위 항목을 켜면 더 많은 정보를 공유할 수 있습니다.";
 "friends.share_gender_toggle" = "성별 공유";
 "friends.share_birthday_toggle" = "생일 공유";
 "friends.share_introduction_toggle" = "자기소개 공유";

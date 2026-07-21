@@ -26,7 +26,6 @@ struct SettingsSnapshotTests {
         clubLastViewedActivity: [String: Date] = [:],
         gameScreenStyle: String = "Depth",
         shareHistoryWithFriends: Bool = false,
-        shareAvatarWithFriends: Bool = false,
         shareGenderWithFriends: Bool = false,
         shareBirthdayWithFriends: Bool = false,
         shareIntroductionWithFriends: Bool = false,
@@ -45,7 +44,6 @@ struct SettingsSnapshotTests {
             clubLastViewedActivity: clubLastViewedActivity,
             gameScreenStyle: gameScreenStyle,
             shareHistoryWithFriends: shareHistoryWithFriends,
-            shareAvatarWithFriends: shareAvatarWithFriends,
             shareGenderWithFriends: shareGenderWithFriends,
             shareBirthdayWithFriends: shareBirthdayWithFriends,
             shareIntroductionWithFriends: shareIntroductionWithFriends,
@@ -93,7 +91,6 @@ struct SettingsSnapshotTests {
 
     @Test func perFieldFriendVisibilityTogglesRoundTrip() throws {
         let snapshot = makeSnapshot(
-            shareAvatarWithFriends: true,
             shareGenderWithFriends: true,
             shareBirthdayWithFriends: true,
             shareIntroductionWithFriends: true,
@@ -101,7 +98,6 @@ struct SettingsSnapshotTests {
         )
         let encoded = try #require(PersistenceStore.encodeSettingsSnapshot(snapshot))
         let decoded = try #require(PersistenceStore.decodeSettingsSnapshot(encoded))
-        #expect(decoded.shareAvatarWithFriends == true)
         #expect(decoded.shareGenderWithFriends == true)
         #expect(decoded.shareBirthdayWithFriends == true)
         #expect(decoded.shareIntroductionWithFriends == true)
@@ -162,7 +158,6 @@ struct SettingsSnapshotTests {
         #expect(decoded.clubLastViewedActivity == [:])
         #expect(decoded.gameScreenStyle == "Depth")
         #expect(decoded.shareHistoryWithFriends == false)
-        #expect(decoded.shareAvatarWithFriends == false)
         #expect(decoded.shareGenderWithFriends == false)
         #expect(decoded.shareBirthdayWithFriends == false)
         #expect(decoded.shareIntroductionWithFriends == false)
@@ -184,6 +179,25 @@ struct SettingsSnapshotTests {
         "courtTheme":"Blue","announceScore":false,"enableSounds":true,\
         "enableCrownScoring":false,"timeModeEnabled":true,"timeLimitMinutes":20,\
         "accountLinked":true}]}
+        """
+        let decoded = try #require(
+            PersistenceStore.decodeSettingsSnapshot(Data(legacyJSON.utf8))
+        )
+        #expect(decoded.myName == "Sam")
+    }
+
+    // Roadmap issue #272: shareAvatarWithFriends was removed the same way —
+    // avatar sharing is now unconditional, so the toggle isn't needed. A
+    // record some old device already wrote still carries the
+    // "shareAvatarWithFriends" JSON key — decode must ignore it rather than
+    // fail.
+    @Test func decodesPayloadWithNowRemovedShareAvatarWithFriendsKey() throws {
+        let legacyJSON = """
+        {"schemaVersion":1,"records":[{\
+        "myName":"Sam","localPlayerId":"","pointsToWin":15,"gamesInMatch":1,\
+        "courtTheme":"Blue","announceScore":false,"enableSounds":true,\
+        "enableCrownScoring":false,"timeModeEnabled":true,"timeLimitMinutes":20,\
+        "shareAvatarWithFriends":true}]}
         """
         let decoded = try #require(
             PersistenceStore.decodeSettingsSnapshot(Data(legacyJSON.utf8))

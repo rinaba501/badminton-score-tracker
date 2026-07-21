@@ -278,8 +278,7 @@
 "friends.share_history_toggle" = "Bagikan Riwayat Saya ke Teman";
 "friends.share_history_footer" = "Jika aktif, daftar pemain pribadi dan riwayat pertandingan Anda akan terlihat oleh semua teman yang diterima.";
 "friends.share_section_header" = "Bagikan ke Teman";
-"friends.share_name_always_visible_footer" = "Nama Anda selalu terlihat oleh teman yang diterima. Aktifkan salah satu di atas untuk berbagi lebih banyak.";
-"friends.share_avatar_toggle" = "Bagikan Avatar Saya";
+"friends.share_name_always_visible_footer" = "Nama dan avatar Anda selalu terlihat oleh teman yang diterima. Aktifkan salah satu di atas untuk berbagi lebih banyak.";
 "friends.share_gender_toggle" = "Bagikan Jenis Kelamin Saya";
 "friends.share_birthday_toggle" = "Bagikan Ulang Tahun Saya";
 "friends.share_introduction_toggle" = "Bagikan Bio Saya";
