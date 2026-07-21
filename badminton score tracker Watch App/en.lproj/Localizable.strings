@@ -270,6 +270,9 @@
 "friends.unknown_inviter" = "A player";
 "friends.pending_received" = "Pending Requests";
 "friends.pending_sent" = "Sent Requests";
+"friends.match_conflicts_section" = "Score Conflicts";
+"friends.match_conflict_accept" = "Accept Anyway";
+"friends.match_conflict_ignore" = "Ignore";
 "friends.your_friends" = "Friends";
 "friends.no_friends_yet" = "No friends yet";
 "friends.share_history_toggle" = "Share My History with Friends";

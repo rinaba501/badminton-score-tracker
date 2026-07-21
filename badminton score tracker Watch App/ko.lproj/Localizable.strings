@@ -270,6 +270,9 @@
 "friends.unknown_inviter" = "플레이어";
 "friends.pending_received" = "받은 요청";
 "friends.pending_sent" = "보낸 요청";
+"friends.match_conflicts_section" = "점수 충돌";
+"friends.match_conflict_accept" = "그래도 수락";
+"friends.match_conflict_ignore" = "무시";
 "friends.your_friends" = "친구";
 "friends.no_friends_yet" = "아직 친구가 없습니다";
 "friends.share_history_toggle" = "친구에게 내 기록 공유하기";

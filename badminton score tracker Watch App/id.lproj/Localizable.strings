@@ -270,6 +270,9 @@
 "friends.unknown_inviter" = "Seorang pemain";
 "friends.pending_received" = "Permintaan Masuk";
 "friends.pending_sent" = "Permintaan Terkirim";
+"friends.match_conflicts_section" = "Konflik Skor";
+"friends.match_conflict_accept" = "Tetap Terima";
+"friends.match_conflict_ignore" = "Abaikan";
 "friends.your_friends" = "Teman";
 "friends.no_friends_yet" = "Belum ada teman";
 "friends.share_history_toggle" = "Bagikan Riwayat Saya ke Teman";

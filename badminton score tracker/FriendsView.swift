@@ -119,6 +119,14 @@ struct FriendsView: View {
                 }
             }
 
+            if !store.matchConflicts.isEmpty {
+                Section("friends.match_conflicts_section") {
+                    ForEach(store.matchConflicts) { invite in
+                        matchConflictRow(invite)
+                    }
+                }
+            }
+
             Section {
                 if store.friends.isEmpty {
                     ContentUnavailableView("friends.no_friends_yet", systemImage: "person.2.slash")
@@ -179,6 +187,43 @@ struct FriendsView: View {
                 }
             }
         }
+    }
+
+    /// Roadmap Phase 10c (#316): a conflict `StatsCalculator.conflictingRecord`
+    /// flagged — the sender's own perspective (`invite.matchSnapshot.games`)
+    /// and the recipient's own pre-existing record (`conflict.games`) are
+    /// both already in each side's own natural "my"/"opponent" orientation,
+    /// so no flip math is needed to display them, just a "You"/sender-name
+    /// label per line (reusing the already-localized "clubs.you" string
+    /// rather than adding a redundant one).
+    private func matchConflictRow(_ invite: SharedMatchInvite) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                AvatarView(name: invite.fromDisplayName, color: .gray, size: 24)
+                Text(invite.fromDisplayName)
+            }
+            if let conflict = store.conflictingRecord(for: invite) {
+                HStack(spacing: 4) {
+                    Text("clubs.you").foregroundStyle(.secondary)
+                    Text(gameLine(conflict.games))
+                }
+                .font(.caption)
+                HStack(spacing: 4) {
+                    Text(invite.fromDisplayName).foregroundStyle(.secondary)
+                    Text(gameLine(invite.matchSnapshot.games))
+                }
+                .font(.caption)
+            }
+            HStack {
+                Button("friends.match_conflict_accept") { store.acceptConflictingMatchInvite(invite) }
+                Button("friends.match_conflict_ignore") { store.respondToMatchInvite(invite, accept: false) }
+            }
+        }
+    }
+
+    /// Same "X-Y, X-Y" per-game formatting as HistoryView's gameLine.
+    private func gameLine(_ games: [GameScore]) -> String {
+        games.map { "\($0.my)-\($0.opponent)" }.joined(separator: ", ")
     }
 
     private var codeEntryPrompt: some View {
