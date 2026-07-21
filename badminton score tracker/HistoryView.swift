@@ -455,22 +455,31 @@ struct MatchHistoryRow: View {
         store.roster.first(where: { $0.name == rawName })
     }
 
-    private func avatarColor(rawName: String, player: Player?) -> Color {
+    private func avatarColor(rawName: String, player: Player?, participantId: String?) -> Color {
         if let player { return player.avatarColor }
+        if let participantId, let colorIndex = store.friendIdentities[participantId]?.colorIndex {
+            return Player.avatarColors[colorIndex % Player.avatarColors.count]
+        }
         return Player.isGuestName(rawName) ? Player.guestAvatarColor(for: rawName) : .gray
     }
 
-    private func teamAvatars(rawName: String, fallbackLabel: String, rawPartner: String?) -> some View {
+    private func avatarIcon(player: Player?, participantId: String?) -> String? {
+        if let player { return player.iconName }
+        guard let participantId else { return nil }
+        return store.friendIdentities[participantId]?.iconName
+    }
+
+    private func teamAvatars(rawName: String, fallbackLabel: String, rawPartner: String?, participantId: String?) -> some View {
         let player = rosterPlayer(rawName)
         return HStack(spacing: rawPartner == nil ? 0 : -8) {
             AvatarView(name: Player.displayName(for: rawName.isEmpty ? fallbackLabel : rawName),
-                       color: avatarColor(rawName: rawName, player: player),
+                       color: avatarColor(rawName: rawName, player: player, participantId: participantId),
                        size: 26,
-                       iconName: player?.iconName)
+                       iconName: avatarIcon(player: player, participantId: participantId))
             if let rawPartner {
                 let partner = rosterPlayer(rawPartner)
                 AvatarView(name: Player.displayName(for: rawPartner),
-                           color: avatarColor(rawName: rawPartner, player: partner),
+                           color: avatarColor(rawName: rawPartner, player: partner, participantId: nil),
                            size: 26,
                            iconName: partner?.iconName)
             }
@@ -478,9 +487,9 @@ struct MatchHistoryRow: View {
     }
 
     private func teamRow(rawName: String, rawPartner: String?,
-                         label: String, games: Int, won: Bool) -> some View {
+                         label: String, games: Int, won: Bool, participantId: String? = nil) -> some View {
         HStack(spacing: 10) {
-            teamAvatars(rawName: rawName, fallbackLabel: label, rawPartner: rawPartner)
+            teamAvatars(rawName: rawName, fallbackLabel: label, rawPartner: rawPartner, participantId: participantId)
             Text(label)
                 .fontWeight(won ? .semibold : .regular)
                 .lineLimit(2)
@@ -498,7 +507,8 @@ struct MatchHistoryRow: View {
             teamRow(rawName: record.myName, rawPartner: record.myPartnerName,
                     label: myLabel, games: record.myGamesWon, won: iWon)
             teamRow(rawName: record.opponentName, rawPartner: record.opponentPartnerName,
-                    label: opponentLabel, games: record.opponentGamesWon, won: !iWon)
+                    label: opponentLabel, games: record.opponentGamesWon, won: !iWon,
+                    participantId: record.opponentParticipantId)
 
             HStack(spacing: 5) {
                 if !gameLine.isEmpty {
