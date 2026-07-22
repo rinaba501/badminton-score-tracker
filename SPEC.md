@@ -41,8 +41,8 @@ Living specification for the watchOS app. Every PR that adds or changes a featur
 - Complication source in `badminton score tracker Complication/` — separate WidgetKit extension target
 
 ### Pre-Match
-Two-step flow in Singles mode, four-step in Doubles mode on the Watch (see Settings → Game Mode):
-1. **Near Side** — pick yourself or a roster player or a guest; also offers the Club picker (default "Personal", hidden if the user has no clubs)
+Two-step flow in Singles mode, four-step in Doubles mode on both platforms. The Near Side step's inline Singles/Doubles picker (#281) prefills from Settings → Game Mode but only overrides this one match — picking Doubles here never rewrites the persisted Settings default, so future matches still default to whatever Settings says, on both Watch and iOS:
+1. **Near Side** — pick yourself or a roster player or a guest; also offers the Singles/Doubles picker and the Club picker (default "Personal", hidden if the user has no clubs)
 2. **Near Partner** (Doubles only) — pick your teammate; excludes the Near Side pick
 3. **Far Side** — pick opponent; excludes everyone already picked on the near team
 4. **Far Partner** (Doubles only) — pick the opponent's teammate; excludes everyone already picked; selecting starts the match
@@ -92,7 +92,7 @@ Two-step flow in Singles mode, four-step in Doubles mode on the Watch (see Setti
 ### Settings
 - **Me** section — single tappable row showing avatar + name; opens Player Edit
 - **Players** section — roster list; tap to edit, swipe to delete
-- **Game Mode** — Singles / Doubles; Doubles switches Pre-Match to the 4-player flow, the Game screen to two-name team tiles, and Match History rows to "Name & Partner" per team
+- **Game Mode** — Singles / Doubles; the default Pre-Match prefills with, not a hard lock (#281) — Pre-Match's own Singles/Doubles picker overrides it per-match without changing this setting. Doubles switches Pre-Match to the 4-player flow, the Game screen to two-name team tiles, and Match History rows to "Name & Partner" per team
 - **Match Format** — Points to win (11 / 15 / 21), Games in match (1 / 3 / 5)
 - **Match Timer** — toggle on/off; when enabled, duration stepper (±1 min, ±5 min buttons; min 1, max 99, default 10)
 - **Court Change Reminders** — toggle on/off (default off). When on, alerts the scorekeeper at real badminton end-change moments (end of each game, and mid-way through the deciding game — see Scoring Rules) and flips which side renders first on the Game screen to match. Purely a display/reminder — never changes who's "me" vs "opponent"
@@ -268,6 +268,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 281 | Pre-Match's inline Singles/Doubles picker (both platforms — Watch gains one for parity, iOS already had it) now overrides the match's mode via a per-device `matchGameMode` key instead of silently overwriting the persisted Settings default | #327 |
 | 272 | Removed the avatar Friends-sharing toggle — avatar now always mirrors to accepted friends unconditionally, like the name, instead of behind its own opt-in | #319 |
 | 285 | Scoreboard style: undo now flips the card in the reverse rotational direction instead of replaying the same forward flip | #323 |
 | 278 | Manual match entry: an iOS-only "+" button on History opens a form (players/partners, per-game scores, date, club/official flag) that produces a `MatchRecord` without playing it live | #313 |

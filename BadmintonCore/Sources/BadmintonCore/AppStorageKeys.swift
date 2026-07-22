@@ -33,6 +33,13 @@ public enum AppStorageKeys {
     // when a club is selected and tracks standings. Bool, defaults true
     // (Official). Same per-device, never-synced convention as matchClubId.
     public static let matchIsOfficial = "matchIsOfficial"
+    // PreMatchView's inline Singles/Doubles picker (#281): seeded from the
+    // persisted gameMode default each time PreMatchView appears, but the
+    // picker only ever writes this key, never gameMode itself, so picking a
+    // mode for one match doesn't silently overwrite the global default. Same
+    // per-device, never-synced convention as matchClubId/matchIsOfficial.
+    // GameViewModel reads this (not gameMode) to decide the live match's mode.
+    public static let matchGameMode = "matchGameMode"
     public static let playerRoster = "playerRoster"
     public static let matchHistory = "matchHistory"
     public static let clubs = "clubs"
@@ -149,7 +156,7 @@ public enum AppStorageKeys {
     // app data).
     public static let eraseAllDataResetKeys: [String] = [
         myName, matchMyName, matchOpponentName, matchOpponentParticipantId, matchMyPartnerName, matchOpponentPartnerName,
-        matchClubId, matchIsOfficial, playerSortOrder,
+        matchClubId, matchIsOfficial, matchGameMode, playerSortOrder,
         pointsToWin, gamesInMatch, courtTheme, gameScreenStyle,
         announceScore, enableSounds, enableCrownScoring, timeModeEnabled, timeLimitMinutes,
         courtChangeRemindersEnabled, gameMode, localPlayerId, clubLastViewedActivity,

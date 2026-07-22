@@ -31,6 +31,7 @@ struct PreMatchView: View {
     @AppStorage(AppStorageKeys.matchClubId) private var matchClubId = ""
     @AppStorage(AppStorageKeys.matchIsOfficial) private var matchIsOfficial = true
     @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
+    @AppStorage(AppStorageKeys.matchGameMode) private var matchGameMode: GameMode = .singles
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
 
     @State private var step: Step = .near
@@ -60,7 +61,7 @@ struct PreMatchView: View {
 
     private var history: [MatchRecord] { appStore.history }
     private var roster: [Player] { appStore.roster }
-    private var isDoubles: Bool { gameMode == .doubles }
+    private var isDoubles: Bool { matchGameMode == .doubles }
     private var nearDisplayName: String { matchMyName.isEmpty ? myName : matchMyName }
 
     // MARK: - Roster helpers
@@ -114,6 +115,10 @@ struct PreMatchView: View {
                     if !selectedClubTracksStandings {
                         matchIsOfficial = true
                     }
+                    // Prefill from the persisted default (#281) — the picker
+                    // below only ever writes matchGameMode, never gameMode,
+                    // so this match's choice can't leak back into Settings.
+                    matchGameMode = gameMode
                 }
         }
     }
@@ -256,7 +261,7 @@ struct PreMatchView: View {
         return List {
             if showModePicker {
                 Section {
-                    Picker("settings.mode", selection: $gameMode) {
+                    Picker("settings.mode", selection: $matchGameMode) {
                         Text("settings.singles").tag(GameMode.singles)
                         Text("settings.doubles").tag(GameMode.doubles)
                     }

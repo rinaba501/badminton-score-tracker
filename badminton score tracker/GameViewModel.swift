@@ -10,7 +10,7 @@
 //    • UIKit haptics (UIKitHapticsProvider) instead of WKInterfaceDevice.
 //    • No HealthKit workout logging (HKWorkoutSession is watchOS-only).
 //    • A top-level GameMode (there is no iOS SettingsView to nest it in).
-//  Match-config keys (matchMyName/… and gameMode) are deliberately KV-excluded,
+//  Match-config keys (matchMyName/… and matchGameMode) are deliberately KV-excluded,
 //  so a phone-scored match and a watch-scored match never collide; the finished
 //  MatchRecord flows through the same shrink-aware saveHistory the Watch uses.
 //
@@ -51,7 +51,9 @@ final class GameViewModel: ObservableObject {
     @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
     @AppStorage(AppStorageKeys.matchClubId) private var matchClubId = ""
     @AppStorage(AppStorageKeys.matchIsOfficial) private var matchIsOfficial = true
-    @AppStorage(AppStorageKeys.gameMode) private var gameMode: GameMode = .singles
+    // Per-match mode override (#281) — never the persisted Settings default,
+    // which PreMatchView's inline picker deliberately never writes to.
+    @AppStorage(AppStorageKeys.matchGameMode) private var gameMode: GameMode = .singles
     @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
     @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
     @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
