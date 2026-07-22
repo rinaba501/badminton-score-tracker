@@ -66,7 +66,7 @@ final class SoundPlayer: ObservableObject {
         if delay == 0 { block() } else { DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: block) }
     }
 
-    func playScore()     { schedule(tone(frequency: 880, duration: 0.18)) }
+    func playScore() { schedule(tone(frequency: 880, duration: 0.18)) }
     func playGamePoint() { schedule(tone(frequency: 740, duration: 0.18)) }
 
     // Descending two-note "reversal" cue — mirror image of playScore's single

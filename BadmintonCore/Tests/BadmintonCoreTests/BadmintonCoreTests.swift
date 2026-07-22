@@ -465,9 +465,20 @@ struct PlayerSortingTests {
         let mina = Player(id: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!, name: "Mina", colorIndex: 0)
         let players = [alex, zoe, mina]
         let history = [
-            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, myName: "Alex", opponentName: "Zoe", date: Date(), myPlayerId: alex.id, opponentPlayerId: zoe.id),
-            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .far, myName: "Alex", opponentName: "Zoe", date: Date().addingTimeInterval(-60), myPlayerId: alex.id, opponentPlayerId: zoe.id),
-            MatchRecord(id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near, myName: "Mina", opponentName: "Alex", date: Date().addingTimeInterval(-120), myPlayerId: mina.id, opponentPlayerId: alex.id)
+            MatchRecord(
+                id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near,
+                myName: "Alex", opponentName: "Zoe", date: Date(), myPlayerId: alex.id, opponentPlayerId: zoe.id
+            ),
+            MatchRecord(
+                id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .far,
+                myName: "Alex", opponentName: "Zoe", date: Date().addingTimeInterval(-60),
+                myPlayerId: alex.id, opponentPlayerId: zoe.id
+            ),
+            MatchRecord(
+                id: UUID(), games: [], myGamesWon: 0, opponentGamesWon: 0, winner: .near,
+                myName: "Mina", opponentName: "Alex", date: Date().addingTimeInterval(-120),
+                myPlayerId: mina.id, opponentPlayerId: alex.id
+            )
         ]
 
         let mostPlayed = Player.sortedPlayers(players, order: .mostPlayed, history: history)

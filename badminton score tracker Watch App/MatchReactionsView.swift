@@ -93,7 +93,7 @@ struct MatchReactionsView: View {
     private func emojiRow(_ emoji: String) -> some View {
         let reactionCount = matchReactions.filter { $0.kind == .emoji && $0.content == emoji }.count
         let mine = myReaction(for: emoji) != nil
-        Button(action: { toggle(emoji) }) {
+        Button(action: { toggle(emoji) }, label: {
             HStack {
                 Text(emoji)
                 Spacer()
@@ -103,7 +103,7 @@ struct MatchReactionsView: View {
                         .foregroundColor(mine ? .accentColor : .secondary)
                 }
             }
-        }
+        })
         .disabled(myParticipantId == nil)
         .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.reaction_button", comment: ""), emoji, reactionCount)))
         .accessibilityHint(mine ? Text("a11y.my_reaction") : Text(""))

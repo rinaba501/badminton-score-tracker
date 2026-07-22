@@ -331,12 +331,12 @@ struct ClubDetailView: View {
                             .font(.caption)
                     } else {
                         ForEach(clubRoster) { player in
-                            Button(action: { editingPlayer = player }) {
+                            Button(action: { editingPlayer = player }, label: {
                                 HStack(spacing: 8) {
                                     AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
                                     Text(player.name).font(.caption)
                                 }
-                            }
+                            })
                         }
                     }
                     Button(action: {
@@ -347,15 +347,15 @@ struct ClubDetailView: View {
                             iconName: appearance.iconName,
                             clubId: clubId
                         )
-                    }) {
+                    }, label: {
                         Label("clubs.add_player", systemImage: "plus")
-                    }
+                    })
                 }
 
                 Section {
-                    Button(role: .destructive, action: { showRemoveConfirm = true }) {
+                    Button(role: .destructive, action: { showRemoveConfirm = true }, label: {
                         Text(isOwned ? "clubs.delete_club" : "clubs.leave_club")
-                    }
+                    })
                 }
             }
         }

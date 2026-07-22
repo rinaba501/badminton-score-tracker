@@ -46,7 +46,7 @@ struct PreMatchView: View {
     @EnvironmentObject private var storeManager: StoreManager
     @State private var newPlayerName = ""
     @State private var newPlayerColorIndex = 0
-    @State private var newPlayerIconName: String? = nil
+    @State private var newPlayerIconName: String?
 
     /// The quick-add sheet stays friction-free: unentitled users just see the
     /// free avatar subset (no locks/paywall here — the full PlayerEditView
@@ -101,7 +101,16 @@ struct PreMatchView: View {
             .accessibilityLabel("clubs.you")
     }
 
-    private func playerPicker(title: String, defaultLabel: String, defaultColor: Color, usedGuestTokens: Set<String>, excluding: [String] = [], showClubPicker: Bool = false, h2hAgainst: String? = nil, onSelect: @escaping (String, String?) -> Void) -> some View {
+    private func playerPicker(
+        title: String,
+        defaultLabel: String,
+        defaultColor: Color,
+        usedGuestTokens: Set<String>,
+        excluding: [String] = [],
+        showClubPicker: Bool = false,
+        h2hAgainst: String? = nil,
+        onSelect: @escaping (String, String?) -> Void
+    ) -> some View {
         let selectedClubId = UUID(uuidString: matchClubId)
         let guestToken = Player.randomGuestToken(excluding: usedGuestTokens)
         let guestLabel = Player.displayName(for: guestToken)
@@ -135,20 +144,20 @@ struct PreMatchView: View {
             }
             Section(header: Text(title)) {
                 if !defaultLabel.isEmpty {
-                    Button(action: { onSelect(defaultLabel, nil) }) {
+                    Button(action: { onSelect(defaultLabel, nil) }, label: {
                         HStack {
                             AvatarView(name: defaultLabel, color: defaultColor, size: 24, iconName: avatarIcon(for: defaultLabel))
                             Text(defaultLabel)
                             youBadge
                         }
-                    }
+                    })
                 }
-                Button(action: { onSelect(guestToken, nil) }) {
+                Button(action: { onSelect(guestToken, nil) }, label: {
                     HStack {
                         AvatarView(name: guestLabel, color: Player.guestAvatarColor(for: guestToken), size: 24)
                         Text(Player.guestButtonLabel)
                     }
-                }
+                })
             }
             if !filteredRoster.isEmpty {
                 Section(header: Text("prematch.saved")) {
@@ -161,27 +170,29 @@ struct PreMatchView: View {
                     }
 
                     ForEach(filteredRoster) { player in
-                        Button(action: { onSelect(player.name, nil) }) {
+                        Button(action: { onSelect(player.name, nil) }, label: {
                             HStack {
                                 AvatarView(name: player.name, color: player.avatarColor, size: 24, iconName: player.iconName)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(player.name)
                                     if let against = h2hAgainst,
-                                       let record = StatsCalculator.headToHeadIfAny(me: against, opponent: player.name, history: history, roster: roster) {
+                                       let record = StatsCalculator.headToHeadIfAny(
+                                           me: against, opponent: player.name, history: history, roster: roster
+                                       ) {
                                         Text("\(record.wins)W – \(record.losses)L")
                                             .font(.caption2)
                                             .foregroundColor(.secondary)
                                     }
                                 }
                             }
-                        }
+                        })
                     }
                 }
             }
             if !filteredFriends.isEmpty {
                 Section(header: Text("prematch.friends")) {
                     ForEach(filteredFriends, id: \.participantId) { friend in
-                        Button(action: { onSelect(friend.displayName, friend.participantId) }) {
+                        Button(action: { onSelect(friend.displayName, friend.participantId) }, label: {
                             HStack {
                                 AvatarView(
                                     name: friend.displayName,
@@ -192,14 +203,16 @@ struct PreMatchView: View {
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(friend.displayName)
                                     if let against = h2hAgainst,
-                                       let record = StatsCalculator.headToHeadIfAny(me: against, opponent: friend.displayName, history: history, roster: roster) {
+                                       let record = StatsCalculator.headToHeadIfAny(
+                                           me: against, opponent: friend.displayName, history: history, roster: roster
+                                       ) {
                                         Text("\(record.wins)W – \(record.losses)L")
                                             .font(.caption2)
                                             .foregroundColor(.secondary)
                                     }
                                 }
                             }
-                        }
+                        })
                     }
                 }
             }
@@ -209,9 +222,9 @@ struct PreMatchView: View {
                     newPlayerColorIndex = appearance.colorIndex
                     newPlayerIconName = appearance.iconName
                     showAddPlayer = true
-                }) {
+                }, label: {
                     Label("prematch.add_new", systemImage: "plus")
-                }
+                })
             }
         }
         .sheet(isPresented: $showAddPlayer) {
@@ -222,7 +235,12 @@ struct PreMatchView: View {
 
                     HStack {
                         Spacer()
-                        AvatarView(name: newPlayerName, color: Player.avatarColors[newPlayerColorIndex % Player.avatarColors.count], size: 40, iconName: newPlayerIconName)
+                        AvatarView(
+                            name: newPlayerName,
+                            color: Player.avatarColors[newPlayerColorIndex % Player.avatarColors.count],
+                            size: 40,
+                            iconName: newPlayerIconName
+                        )
                         Spacer()
                     }
 
@@ -337,7 +355,13 @@ struct PreMatchView: View {
         switch step {
         case .pickMyPlayer:
             let usedGuestTokens = Set([matchMyPartnerName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
-            playerPicker(title: NSLocalizedString("prematch.near_side", comment: ""), defaultLabel: myName, defaultColor: avatarColor(for: myName), usedGuestTokens: usedGuestTokens, showClubPicker: true) { name, _ in
+            playerPicker(
+                title: NSLocalizedString("prematch.near_side", comment: ""),
+                defaultLabel: myName,
+                defaultColor: avatarColor(for: myName),
+                usedGuestTokens: usedGuestTokens,
+                showClubPicker: true
+            ) { name, _ in
                 matchMyName = name
                 step = isDoubles ? .pickMyPartner : .pickOpponent
             }
@@ -352,7 +376,13 @@ struct PreMatchView: View {
             let usedGuestTokens = Set([matchMyName, matchOpponentName, matchOpponentPartnerName].filter(Player.isGuestName))
             let excludingNames = [matchMyName]
             let meLabel = excludingNames.contains(myName) ? "" : myName
-            playerPicker(title: NSLocalizedString("prematch.near_partner", comment: ""), defaultLabel: meLabel, defaultColor: avatarColor(for: myName), usedGuestTokens: usedGuestTokens, excluding: excludingNames) { name, _ in
+            playerPicker(
+                title: NSLocalizedString("prematch.near_partner", comment: ""),
+                defaultLabel: meLabel,
+                defaultColor: avatarColor(for: myName),
+                usedGuestTokens: usedGuestTokens,
+                excluding: excludingNames
+            ) { name, _ in
                 matchMyPartnerName = name
                 step = .pickOpponent
             }
@@ -368,7 +398,14 @@ struct PreMatchView: View {
             let nearExclusions = [nearName, matchMyPartnerName].filter { !$0.isEmpty }
             let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentPartnerName].filter(Player.isGuestName))
             let meLabel = nearExclusions.contains(myName) ? "" : myName
-            playerPicker(title: NSLocalizedString("prematch.far_side", comment: ""), defaultLabel: meLabel, defaultColor: avatarColor(for: myName), usedGuestTokens: usedGuestTokens, excluding: nearExclusions, h2hAgainst: nearName) { name, participantId in
+            playerPicker(
+                title: NSLocalizedString("prematch.far_side", comment: ""),
+                defaultLabel: meLabel,
+                defaultColor: avatarColor(for: myName),
+                usedGuestTokens: usedGuestTokens,
+                excluding: nearExclusions,
+                h2hAgainst: nearName
+            ) { name, participantId in
                 matchOpponentName = name
                 matchOpponentParticipantId = participantId ?? ""
                 if isDoubles {
@@ -389,7 +426,13 @@ struct PreMatchView: View {
             let exclusions = [nearName, matchMyPartnerName, matchOpponentName].filter { !$0.isEmpty }
             let usedGuestTokens = Set([matchMyName, matchMyPartnerName, matchOpponentName].filter(Player.isGuestName))
             let meLabel = exclusions.contains(myName) ? "" : myName
-            playerPicker(title: NSLocalizedString("prematch.far_partner", comment: ""), defaultLabel: meLabel, defaultColor: avatarColor(for: myName), usedGuestTokens: usedGuestTokens, excluding: exclusions) { name, _ in
+            playerPicker(
+                title: NSLocalizedString("prematch.far_partner", comment: ""),
+                defaultLabel: meLabel,
+                defaultColor: avatarColor(for: myName),
+                usedGuestTokens: usedGuestTokens,
+                excluding: exclusions
+            ) { name, _ in
                 matchOpponentPartnerName = name
                 currentView = .game
             }

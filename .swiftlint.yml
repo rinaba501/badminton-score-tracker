@@ -13,6 +13,9 @@ included:
   - "badminton score tracker Watch AppUITests"
   - BadmintonCore
 
+excluded:
+  - BadmintonCore/.build
+
 disabled_rules:
   - type_body_length        # SwiftUI view structs are large by nature
   - function_body_length    # `body` and event handlers legitimately run long

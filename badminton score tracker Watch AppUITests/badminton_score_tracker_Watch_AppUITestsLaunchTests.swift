@@ -9,7 +9,7 @@ import XCTest
 
 final class badminton_score_tracker_Watch_AppUITestsLaunchTests: XCTestCase {
 
-    override class var runsForEachTargetApplicationUIConfiguration: Bool {
+    override static var runsForEachTargetApplicationUIConfiguration: Bool {
         true
     }
 
