@@ -220,6 +220,71 @@ struct BadmintonMatchTests {
     }
 }
 
+struct SetScoreTests {
+
+    @Test func setsScoreMidGame() {
+        var match = BadmintonMatch()
+        score(&match, .me, 3)
+        #expect(match.canSetScore(myScore: 10, opponentScore: 5))
+        match.setScore(myScore: 10, opponentScore: 5)
+        #expect(match.myScore == 10)
+        #expect(match.opponentScore == 5)
+    }
+
+    /// Helper: award `count` points to `side` (same shape as
+    /// `BadmintonMatchTests`'s private helper — Swift Testing structs don't
+    /// share private members across files/types).
+    private func score(_ match: inout BadmintonMatch, _ side: Side, _ count: Int) {
+        for _ in 0..<count { match.score(side) }
+    }
+
+    @Test func rejectsNegativeOrAboveCapValues() {
+        var match = BadmintonMatch()
+        #expect(!match.canSetScore(myScore: -1, opponentScore: 5))
+        #expect(!match.canSetScore(myScore: 5, opponentScore: 31))
+        match.setScore(myScore: -1, opponentScore: 5)
+        #expect(match.myScore == 0 && match.opponentScore == 0)  // rejected — no-op
+    }
+
+    @Test func rejectsAScoreThatWouldEndTheGame() {
+        var match = BadmintonMatch()
+        score(&match, .me, 5)
+        #expect(!match.canSetScore(myScore: 21, opponentScore: 10))  // would decide the game
+        match.setScore(myScore: 21, opponentScore: 10)
+        #expect(match.myScore == 5)  // rejected — unchanged
+        #expect(match.gameWinner == nil)
+    }
+
+    @Test func noOpsOnceGameAlreadyDecided() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21)
+        #expect(match.gameWinner == .me)
+        #expect(!match.canSetScore(myScore: 15, opponentScore: 15))
+        match.setScore(myScore: 15, opponentScore: 15)
+        #expect(match.myScore == 21)  // untouched
+    }
+
+    @Test func noOpsOnceMatchAlreadyDecided() {
+        var match = BadmintonMatch()
+        score(&match, .me, 21); match.startNextGame()
+        score(&match, .me, 21)
+        #expect(match.matchWinner == .me)
+        #expect(!match.canSetScore(myScore: 0, opponentScore: 0))
+        match.setScore(myScore: 0, opponentScore: 0)
+        #expect(match.myGamesWon == 2)
+    }
+
+    @Test func leavesServeAndBoxIndicesUntouched() {
+        var match = BadmintonMatch()
+        score(&match, .opponent, 3)  // opponent now serving, box index flipped by continuing-serve rallies
+        let serverBefore = match.serverIsMe
+        let boxBefore = match.opponentRightBoxPartnerIndex
+        match.setScore(myScore: 10, opponentScore: 8)
+        #expect(match.serverIsMe == serverBefore)
+        #expect(match.opponentRightBoxPartnerIndex == boxBefore)
+    }
+}
+
 struct DoublesServeRotationTests {
 
     /// Helper: award `count` points to `side`.

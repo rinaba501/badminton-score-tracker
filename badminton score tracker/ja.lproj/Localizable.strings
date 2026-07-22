@@ -340,3 +340,7 @@
 "addmatch.result_error" = "各ゲームにスコアを入力し、引き分けがないようにして、試合の勝者を決めてください。";
 "addmatch.game_count_label" = "ゲーム数：%d";
 "addmatch.even_games_warning" = "ストレート勝ちならゲーム数が偶数でも問題ありません。ゲームの入れ忘れがないか確認してください。";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "スコアを修正";
+"inmatch.correct_score_footer" = "1点以上前の間違いを修正するため、現在のスコアを直接調整します。";

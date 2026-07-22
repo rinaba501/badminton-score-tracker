@@ -172,6 +172,20 @@ final class GameViewModel: ObservableObject {
         if enableSounds { soundPlayer.playUndo() }
     }
 
+    /// Correct a side's current-game score directly (#279) — for a
+    /// discrepancy further back than `undo()` can reach in one step. Pushes
+    /// the same `undoStack` snapshot `tap(_:)` does, so a correction is
+    /// itself one `undo()` away from being reversed. No-ops silently if
+    /// `match.canSetScore` rejects the pair (game/match already decided, out
+    /// of range, or the values would themselves end the game).
+    func correctScore(myScore: Int, opponentScore: Int) {
+        guard match.canSetScore(myScore: myScore, opponentScore: opponentScore) else { return }
+        undoStack.append(match)
+        match.setScore(myScore: myScore, opponentScore: opponentScore)
+        hapticsProvider.play(.directionUp)
+        if enableSounds { soundPlayer.playUndo() }
+    }
+
     func startNextGame() {
         undoStack.removeAll()
         suddenDeath = false

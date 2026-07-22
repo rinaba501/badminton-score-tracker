@@ -314,3 +314,7 @@
 "friends.code_placeholder" = "초대 링크 또는 코드";
 "friends.code_send" = "요청 보내기";
 "friends.error_not_found" = "해당 코드의 플레이어를 찾을 수 없습니다.";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "점수 수정";
+"inmatch.correct_score_footer" = "한 점 이상 이전의 실수를 바로잡기 위해 현재 점수를 직접 조정합니다.";

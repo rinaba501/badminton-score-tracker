@@ -340,3 +340,7 @@
 "addmatch.result_error" = "请为每一局输入比分且不能平局，以便确定比赛的获胜方。";
 "addmatch.game_count_label" = "局数：%d";
 "addmatch.even_games_warning" = "如果是直落两/三局取胜，局数为偶数也没问题——请确认没有漏输入某一局。";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "更正比分";
+"inmatch.correct_score_footer" = "直接调整当前比分，用于修正一分以上的错误记分。";

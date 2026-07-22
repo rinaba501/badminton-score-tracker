@@ -340,3 +340,7 @@
 "addmatch.result_error" = "हर गेम का स्कोर दर्ज करें, बिना टाई के, ताकि मैच का विजेता स्पष्ट हो।";
 "addmatch.game_count_label" = "गेम: %d";
 "addmatch.even_games_warning" = "स्ट्रेट-सेट जीत के लिए गेम की सम संख्या ठीक है — बस जांच लें कि कोई गेम छूटा तो नहीं।";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "स्कोर सही करें";
+"inmatch.correct_score_footer" = "एक अंक से अधिक पीछे की गलती को ठीक करने के लिए मौजूदा स्कोर को सीधे समायोजित करें।";

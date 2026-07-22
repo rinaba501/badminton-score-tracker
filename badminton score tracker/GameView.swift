@@ -342,7 +342,7 @@ struct GameView: View {
                 }
             }
             .sheet(isPresented: $showInMatchSettings) {
-                InMatchSettingsView()
+                InMatchSettingsView(viewModel: viewModel)
             }
             .alert(NSLocalizedString("game.discard_title", comment: ""), isPresented: $viewModel.showDiscardAlert) {
                 Button(NSLocalizedString("game.discard_confirm", comment: ""), role: .destructive) { onExit() }

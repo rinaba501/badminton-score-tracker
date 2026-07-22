@@ -156,6 +156,40 @@ public struct BadmintonMatch: Codable, Equatable {
         opponentScore = 0
     }
 
+    /// Whether `setScore(myScore:opponentScore:)` would apply for this exact
+    /// pair of values — exposed separately so a picker/Stepper UI can disable
+    /// itself instead of silently no-oping (#279).
+    public func canSetScore(myScore: Int, opponentScore: Int) -> Bool {
+        guard gameWinner == nil, matchWinner == nil else { return false }
+        guard (0...pointCap).contains(myScore), (0...pointCap).contains(opponentScore) else { return false }
+        var trial = self
+        trial.myScore = myScore
+        trial.opponentScore = opponentScore
+        return trial.gameWinner == nil
+    }
+
+    /// Directly assigns the current, in-progress game's score — a correction
+    /// tool for mis-scored rallies further back than the one `undo()` can
+    /// step past (#279). No-ops (see `canSetScore`) if the game/match is
+    /// already decided, either value is out of `0...pointCap`, or the new
+    /// pair of values would itself end the game — ending a game has to go
+    /// through `score(_:)`/the normal win-handling path (persistence, sudden
+    /// death, etc.), not a silent score jump.
+    ///
+    /// Deliberately leaves `serverIsMe`/`myRightBoxPartnerIndex`/
+    /// `opponentRightBoxPartnerIndex` untouched: real serve/box-occupancy
+    /// state is path-dependent on *how* a score was reached (see
+    /// `currentPartnerIndex`'s doc comment), not a pure function of the
+    /// score alone, so there's no single correct value to derive from a
+    /// jump — the scorekeeper can still walk it back into agreement with a
+    /// few real taps afterward if a doubles pair's court positions also
+    /// need correcting.
+    public mutating func setScore(myScore: Int, opponentScore: Int) {
+        guard canSetScore(myScore: myScore, opponentScore: opponentScore) else { return }
+        self.myScore = myScore
+        self.opponentScore = opponentScore
+    }
+
     /// Force-ends the current game in favour of `winner` (used for sudden death in time mode).
     /// Records the current score as the game result and resets the board.
     public mutating func recordSuddenDeathGame(winner: Side) {
