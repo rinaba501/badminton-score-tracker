@@ -203,13 +203,17 @@ private struct ScoreboardPanel: View {
     /// hinge (angle +90, squashed to nothing) and swings down to flat,
     /// landing on top of the untouched resting face. Once it lands, it
     /// simply becomes the new resting face rather than a separate layer
-    /// that has to be timed to disappear invisibly.
+    /// that has to be timed to disappear invisibly. A decrement (undo)
+    /// starts the flap at a negative angle instead, so it swings up out of
+    /// the opposite rotational direction — reading as the flip reversing
+    /// rather than replaying the same forward motion.
     private func triggerFlip(to newValue: Int) {
+        let isDecrement = newValue < displayedScore
         var noAnim = Transaction()
         noAnim.disablesAnimations = true
         withTransaction(noAnim) {
             incomingScore = newValue
-            flipAngle = 220
+            flipAngle = isDecrement ? -220 : 220
         }
         withAnimation(.spring(response: 0.50, dampingFraction: 0.85)) {
             flipAngle = 0
