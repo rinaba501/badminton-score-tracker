@@ -88,4 +88,14 @@ final class SoundPlayer: ObservableObject {
         schedule(tone(frequency: 659, duration: 0.15), after: 0.15)
         schedule(tone(frequency: 784, duration: 0.35, amplitude: 0.6), after: 0.3)
     }
+
+    // A low thud (the flap landing) immediately followed by a brief high
+    // tick (the card's edge snapping flat) — two sine bursts read as one
+    // percussive "clack" rather than a musical tone, mimicking a physical
+    // flip-scoreboard card. Used by the Scoreboard GameScreenStyle
+    // (GameScoreboardClassic.swift) alongside the existing playScore cue.
+    func playFlip() {
+        schedule(tone(frequency: 180, duration: 0.05, amplitude: 0.35))
+        schedule(tone(frequency: 2400, duration: 0.02, amplitude: 0.25), after: 0.01)
+    }
 }

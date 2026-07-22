@@ -21,6 +21,7 @@
 //
 
 import SwiftUI
+import BadmintonCore
 
 /// One flip card: digit face, hinge seam across the middle, binder rings on
 /// the top edge. Sized by the parent — the same component draws the big
@@ -133,8 +134,10 @@ private struct ScoreboardPanel: View {
     let data: ScoreSideData
     let games: Int
     let theme: CourtTheme
+    let soundPlayer: SoundPlayer
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @State private var flash = false
     /// The resting face underneath — this one is NEVER rotated. A real flip
     /// card doesn't move the old number at all; a separate flap swings down
@@ -147,10 +150,11 @@ private struct ScoreboardPanel: View {
     @State private var incomingScore: Int?
     @State private var flipAngle: Double = 90
 
-    init(data: ScoreSideData, games: Int, theme: CourtTheme) {
+    init(data: ScoreSideData, games: Int, theme: CourtTheme, soundPlayer: SoundPlayer) {
         self.data = data
         self.games = games
         self.theme = theme
+        self.soundPlayer = soundPlayer
         _displayedScore = State(initialValue: data.score)
     }
 
@@ -208,6 +212,7 @@ private struct ScoreboardPanel: View {
     /// the opposite rotational direction — reading as the flip reversing
     /// rather than replaying the same forward motion.
     private func triggerFlip(to newValue: Int) {
+        if enableSounds { soundPlayer.playFlip() }
         let isDecrement = newValue < displayedScore
         var noAnim = Transaction()
         noAnim.disablesAnimations = true
@@ -312,6 +317,11 @@ struct ClassicScoreboard: View {
     let header: GameHeaderData
     let theme: CourtTheme
 
+    /// One shared player for both panels rather than one AVAudioEngine per
+    /// side — the flip is a single one-shot cue, no need to double the
+    /// engine instances GameViewModel's own SoundPlayer already runs.
+    @StateObject private var soundPlayer = SoundPlayer()
+
     @ViewBuilder
     private var clock: some View {
         if header.isTimeModeEnabled {
@@ -364,9 +374,9 @@ struct ClassicScoreboard: View {
             Color(white: 0.11).ignoresSafeArea()
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    ScoreboardPanel(data: left, games: header.myGames, theme: theme)
+                    ScoreboardPanel(data: left, games: header.myGames, theme: theme, soundPlayer: soundPlayer)
                     centerColumn
-                    ScoreboardPanel(data: right, games: header.opponentGames, theme: theme)
+                    ScoreboardPanel(data: right, games: header.opponentGames, theme: theme, soundPlayer: soundPlayer)
                 }
                 baseRail
                     .padding(.bottom, 8)
