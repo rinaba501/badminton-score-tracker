@@ -21,6 +21,7 @@ struct PreMatchView: View {
     @AppStorage(AppStorageKeys.matchClubId) private var matchClubId = ""
     @AppStorage(AppStorageKeys.matchIsOfficial) private var matchIsOfficial = true
     @AppStorage(AppStorageKeys.gameMode) private var gameMode: SettingsView.GameMode = .singles
+    @AppStorage(AppStorageKeys.matchGameMode) private var matchGameMode: SettingsView.GameMode = .singles
     @AppStorage(AppStorageKeys.playerSortOrder) private var playerSortOrder: Player.SortOrder = .name
 
     private var clubSelection: Binding<UUID?> {
@@ -61,7 +62,7 @@ struct PreMatchView: View {
 
     enum Step { case pickMyPlayer, pickMyPartner, pickOpponent, pickOpponentPartner }
 
-    private var isDoubles: Bool { gameMode == .doubles }
+    private var isDoubles: Bool { matchGameMode == .doubles }
 
     private var roster: [Player] { appStore.roster }
 
@@ -107,6 +108,7 @@ struct PreMatchView: View {
         defaultColor: Color,
         usedGuestTokens: Set<String>,
         excluding: [String] = [],
+        showModePicker: Bool = false,
         showClubPicker: Bool = false,
         h2hAgainst: String? = nil,
         onSelect: @escaping (String, String?) -> Void
@@ -128,6 +130,14 @@ struct PreMatchView: View {
             : []
         let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 4)
         return List {
+            if showModePicker {
+                Section {
+                    Picker("settings.mode", selection: $matchGameMode) {
+                        Text("settings.singles").tag(SettingsView.GameMode.singles)
+                        Text("settings.doubles").tag(SettingsView.GameMode.doubles)
+                    }
+                }
+            }
             if showClubPicker && !appStore.clubs.isEmpty {
                 Section {
                     Picker("playeredit.club", selection: clubSelection) {
@@ -347,6 +357,10 @@ struct PreMatchView: View {
             if !selectedClubTracksStandings {
                 matchIsOfficial = true
             }
+            // Prefill from the persisted default (#281) — the picker below
+            // only ever writes matchGameMode, never gameMode, so this
+            // match's choice can't leak back into Settings.
+            matchGameMode = gameMode
         }
     }
 
@@ -360,6 +374,7 @@ struct PreMatchView: View {
                 defaultLabel: myName,
                 defaultColor: avatarColor(for: myName),
                 usedGuestTokens: usedGuestTokens,
+                showModePicker: true,
                 showClubPicker: true
             ) { name, _ in
                 matchMyName = name

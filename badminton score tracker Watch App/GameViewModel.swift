@@ -37,7 +37,9 @@ final class GameViewModel: ObservableObject {
     @AppStorage(AppStorageKeys.matchOpponentPartnerName) private var matchOpponentPartnerName = ""
     @AppStorage(AppStorageKeys.matchClubId) private var matchClubId = ""
     @AppStorage(AppStorageKeys.matchIsOfficial) private var matchIsOfficial = true
-    @AppStorage(AppStorageKeys.gameMode) private var gameMode: SettingsView.GameMode = .singles
+    // Per-match mode override (#281) — never the persisted Settings default,
+    // which PreMatchView's inline picker deliberately never writes to.
+    @AppStorage(AppStorageKeys.matchGameMode) private var gameMode: SettingsView.GameMode = .singles
     @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
     @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
     @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
