@@ -86,13 +86,20 @@ struct BirdsEyeScoreboard: View {
         }
     }
 
+    /// Total games a full-length match can reach for the selected best-of
+    /// format (e.g. best-of-3 → 3, best-of-1 → 1) — a fixed slot count so a
+    /// side's progress toward winning the match reads at a glance, same
+    /// fix Matchstick's gameLamps applies to its own tally dots.
+    private var maxGameSlots: Int { header.gamesToWin * 2 - 1 }
+
     private func gameTally(_ games: Int) -> some View {
-        HStack(spacing: 4) {
-            ForEach(0..<max(games, 1), id: \.self) { i in
-                Rectangle()
-                    .fill(i < games ? Color.white.opacity(0.9) : Color.white.opacity(0.2))
-                    .frame(width: 3, height: 14)
-                    .rotationEffect(.degrees(-12))
+        HStack(spacing: 6) {
+            ForEach(0..<maxGameSlots, id: \.self) { i in
+                Circle()
+                    .fill(i < games ? Color.white : Color.white.opacity(0.15))
+                    .frame(width: 9, height: 9)
+                    .shadow(color: i < games ? Color.white.opacity(0.8) : .clear, radius: 3)
+                    .overlay(Circle().stroke(Color.white.opacity(i < games ? 0.9 : 0.3), lineWidth: 1))
             }
         }
     }
