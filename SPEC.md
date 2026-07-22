@@ -268,6 +268,7 @@ Architectural issues are sequenced in [ROADMAP.md](ROADMAP.md).
 
 | # | Feature | PR |
 |---|---|---|
+| 281 | Pre-Match's inline Singles/Doubles picker (both platforms — Watch gains one for parity, iOS already had it) now overrides the match's mode via a per-device `matchGameMode` key instead of silently overwriting the persisted Settings default | #327 |
 | 272 | Removed the avatar Friends-sharing toggle — avatar now always mirrors to accepted friends unconditionally, like the name, instead of behind its own opt-in | #319 |
 | 285 | Scoreboard style: undo now flips the card in the reverse rotational direction instead of replaying the same forward flip | #323 |
 | 278 | Manual match entry: an iOS-only "+" button on History opens a form (players/partners, per-game scores, date, club/official flag) that produces a `MatchRecord` without playing it live | #313 |
