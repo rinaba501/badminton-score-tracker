@@ -49,14 +49,14 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
-                Button(action: { showPaywall = true }) {
+                Button(action: { showPaywall = true }, label: {
                     HStack {
                         Label("paywall.title", systemImage: "crown.fill")
                             .foregroundStyle(.yellow)
                         Spacer()
                         planBadge
                     }
-                }
+                })
                 .accessibilityElement(children: .combine)
             }
 

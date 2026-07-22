@@ -64,7 +64,7 @@ struct StatsView: View {
     /// Stand-in for a Pro-gated stat (best streak, head-to-head): tapping
     /// opens the paywall.
     private var lockedProRow: some View {
-        Button(action: { showPaywall = true }) {
+        Button(action: { showPaywall = true }, label: {
             HStack {
                 Image(systemName: "lock.fill")
                     .font(.caption)
@@ -74,7 +74,7 @@ struct StatsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-        }
+        })
     }
 
     private var clubPicker: some View {

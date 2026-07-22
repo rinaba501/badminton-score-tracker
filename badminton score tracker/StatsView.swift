@@ -184,7 +184,7 @@ struct StatsView: View {
     /// already establishes, rather than a full-width accent-colored button —
     /// that read as this screen's primary action instead of a paywall (#238).
     private var lockedProRow: some View {
-        Button(action: { showPaywall = true }) {
+        Button(action: { showPaywall = true }, label: {
             HStack {
                 Label("stats.unlock_pro", systemImage: "crown.fill")
                     .foregroundStyle(.yellow)
@@ -194,7 +194,7 @@ struct StatsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-        }
+        })
         .buttonStyle(.plain)
     }
 

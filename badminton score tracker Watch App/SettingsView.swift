@@ -29,7 +29,7 @@ struct SettingsView: View {
     @ObservedObject private var supabaseManager = SupabaseSyncManager.shared
     @EnvironmentObject private var appStore: AppStore
     @EnvironmentObject private var storeManager: StoreManager
-    @State private var editingPlayer: Player? = nil
+    @State private var editingPlayer: Player?
     @State private var showAddPlayer = false
     @State private var showPaywall = false
     @State private var showSupabaseSwitchBackConfirm = false
@@ -151,14 +151,14 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
-                Button(action: { showPaywall = true }) {
+                Button(action: { showPaywall = true }, label: {
                     HStack {
                         Label(LocalizedStringKey("paywall.title"), systemImage: "crown.fill")
                             .foregroundColor(.yellow)
                         Spacer()
                         planBadge
                     }
-                }
+                })
                 .accessibilityElement(children: .combine)
             }
 
@@ -170,7 +170,7 @@ struct SettingsView: View {
             }
 
             Section(header: Text("settings.me")) {
-                Button(action: { editingPlayer = meAsPlayer() }) {
+                Button(action: { editingPlayer = meAsPlayer() }, label: {
                     HStack(spacing: 8) {
                         let me = meAsPlayer()
                         AvatarView(name: me.name, color: me.avatarColor, size: 28, iconName: me.iconName)
@@ -181,7 +181,7 @@ struct SettingsView: View {
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
-                }
+                })
             }
 
             Section(header: Text("settings.players")) {
@@ -220,7 +220,7 @@ struct SettingsView: View {
                             } else {
                                 editingPlayer = player
                             }
-                        }) {
+                        }, label: {
                             HStack(spacing: 8) {
                                 if isSelectingPlayers {
                                     Image(systemName: selectedPlayerIds.contains(player.id) ? "checkmark.circle.fill" : "circle")
@@ -238,7 +238,7 @@ struct SettingsView: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
-                        }
+                        })
                         .accessibilityAddTraits(isSelectingPlayers && selectedPlayerIds.contains(player.id) ? .isSelected : [])
                         .contextMenu {
                             if !isSelectingPlayers {
@@ -267,9 +267,9 @@ struct SettingsView: View {
                     Button(action: {
                         let appearance = Player.randomDefaultAppearance()
                         editingPlayer = Player(name: "", colorIndex: appearance.colorIndex, iconName: appearance.iconName)
-                    }) {
+                    }, label: {
                         Label("settings.add_player", systemImage: "plus")
-                    }
+                    })
                 }
             }
 

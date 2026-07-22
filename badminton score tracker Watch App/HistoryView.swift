@@ -135,7 +135,7 @@ struct HistoryView: View {
     }
 
     private var clubMenu: some View {
-        Button(action: { showingClubFilter = true }) {
+        Button(action: { showingClubFilter = true }, label: {
             HStack(spacing: 4) {
                 Image(systemName: "person.3")
                     .font(.system(size: 11))
@@ -153,7 +153,7 @@ struct HistoryView: View {
             .padding(.vertical, 4)
             .background(Color.secondary.opacity(0.15))
             .cornerRadius(6)
-        }
+        })
         .buttonStyle(.plain)
         .accessibilityLabel(Text("clubs.filter_label"))
     }
@@ -181,7 +181,7 @@ struct HistoryView: View {
                     VStack(spacing: 4) {
                         HStack(spacing: 4) {
                             ForEach(DateRange.allCases, id: \.self) { range in
-                                Button(action: { dateRange = range }) {
+                                Button(action: { dateRange = range }, label: {
                                     Text(range.label)
                                         .font(.system(size: 11, weight: dateRange == range ? .semibold : .regular))
                                         .frame(maxWidth: .infinity)
@@ -189,7 +189,7 @@ struct HistoryView: View {
                                         .background(dateRange == range ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
                                         .foregroundColor(dateRange == range ? .yellow : .primary)
                                         .cornerRadius(6)
-                                }
+                                })
                                 .buttonStyle(.plain)
                             }
                         }
@@ -197,7 +197,7 @@ struct HistoryView: View {
                         if hasMixedMatchTypes {
                             HStack(spacing: 4) {
                                 ForEach(StatsCalculator.MatchTypeFilter.allCases, id: \.self) { type in
-                                    Button(action: { matchType = type }) {
+                                    Button(action: { matchType = type }, label: {
                                         Text(matchTypeLabel(type))
                                             .font(.system(size: 11, weight: matchType == type ? .semibold : .regular))
                                             .frame(maxWidth: .infinity)
@@ -205,14 +205,14 @@ struct HistoryView: View {
                                             .background(matchType == type ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.15))
                                             .foregroundColor(matchType == type ? .yellow : .primary)
                                             .cornerRadius(6)
-                                    }
+                                    })
                                     .buttonStyle(.plain)
                                 }
                             }
                         }
 
                         HStack(spacing: 4) {
-                            Button(action: { newestFirst.toggle() }) {
+                            Button(action: { newestFirst.toggle() }, label: {
                                 HStack(spacing: 4) {
                                     Image(systemName: newestFirst ? "arrow.down" : "arrow.up")
                                         .font(.system(size: 10))
@@ -226,13 +226,13 @@ struct HistoryView: View {
                                 .padding(.vertical, 4)
                                 .background(Color.secondary.opacity(0.15))
                                 .cornerRadius(6)
-                            }
+                            })
                             .buttonStyle(.plain)
                             .accessibilityLabel(Text(String(format: NSLocalizedString("a11y.history_sort_toggle", comment: ""), sortLabel)))
                             .accessibilityHint(Text("a11y.history_sort_hint"))
 
                             if allPlayers.count > 1 {
-                                Button(action: { showingFilters = true }) {
+                                Button(action: { showingFilters = true }, label: {
                                     HStack(spacing: 4) {
                                         Image(systemName: "person")
                                             .font(.system(size: 11))
@@ -250,7 +250,7 @@ struct HistoryView: View {
                                     .padding(.vertical, 4)
                                     .background(Color.secondary.opacity(0.15))
                                     .cornerRadius(6)
-                                }
+                                })
                                 .buttonStyle(.plain)
                             }
                         }
@@ -271,10 +271,10 @@ struct HistoryView: View {
                 } else {
                     Section {
                         if isSelecting {
-                            Button(action: toggleSelectAll) {
+                            Button(action: toggleSelectAll, label: {
                                 Text(allFilteredSelected ? "history.deselect_all" : "history.select_all")
                                     .font(.caption)
-                            }
+                            })
                         }
                         ForEach(filteredHistory) { record in
                             HStack(spacing: 6) {
@@ -317,14 +317,14 @@ struct HistoryView: View {
                     if isSelecting {
                         Button(action: {
                             pendingDeleteIds = selectedIds.intersection(Set(filteredHistory.map(\.id)))
-                        }) {
+                        }, label: {
                             Image(systemName: "trash").foregroundColor(.red)
-                        }
+                        })
                         .disabled(selectedIds.isEmpty)
                     } else {
-                        Button(action: { showingMoreActions = true }) {
+                        Button(action: { showingMoreActions = true }, label: {
                             Image(systemName: "ellipsis.circle")
-                        }
+                        })
                     }
                 }
             }
@@ -335,7 +335,7 @@ struct HistoryView: View {
             // multi-select toggles apply live to the parent's filter state.
             List {
                 Section(header: Text("history.filter_player")) {
-                    Button(action: { selectedPlayers = []; showingFilters = false }) {
+                    Button(action: { selectedPlayers = []; showingFilters = false }, label: {
                         HStack {
                             Text("history.filter_all_players")
                             Spacer()
@@ -343,9 +343,9 @@ struct HistoryView: View {
                                 Image(systemName: "checkmark").foregroundColor(.yellow)
                             }
                         }
-                    }
+                    })
                     ForEach(allPlayers, id: \.self) { name in
-                        Button(action: { togglePlayer(name) }) {
+                        Button(action: { togglePlayer(name) }, label: {
                             HStack {
                                 Text(Player.displayName(for: name))
                                 Spacer()
@@ -353,7 +353,7 @@ struct HistoryView: View {
                                     Image(systemName: "checkmark").foregroundColor(.yellow)
                                 }
                             }
-                        }
+                        })
                     }
                 }
             }
@@ -361,7 +361,7 @@ struct HistoryView: View {
         .sheet(isPresented: $showingClubFilter) {
             List {
                 Section(header: Text("clubs.filter_label")) {
-                    Button(action: { selectedClubId = nil; showingClubFilter = false }) {
+                    Button(action: { selectedClubId = nil; showingClubFilter = false }, label: {
                         HStack {
                             Text("clubs.filter_personal")
                             Spacer()
@@ -369,9 +369,9 @@ struct HistoryView: View {
                                 Image(systemName: "checkmark").foregroundColor(.yellow)
                             }
                         }
-                    }
+                    })
                     ForEach(appStore.clubs) { club in
-                        Button(action: { selectedClubId = club.id; showingClubFilter = false }) {
+                        Button(action: { selectedClubId = club.id; showingClubFilter = false }, label: {
                             HStack {
                                 Text(club.name)
                                 Spacer()
@@ -379,7 +379,7 @@ struct HistoryView: View {
                                     Image(systemName: "checkmark").foregroundColor(.yellow)
                                 }
                             }
-                        }
+                        })
                     }
                 }
             }

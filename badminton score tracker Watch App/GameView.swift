@@ -20,10 +20,10 @@ struct OnboardingView: View {
     }
 
     private let hints: [Hint] = [
-        Hint(icon: "hand.tap",                      key: "onboarding.hint_tap"),
+        Hint(icon: "hand.tap", key: "onboarding.hint_tap"),
         Hint(icon: "digitalcrown.horizontal.press", key: "onboarding.hint_crown_cw"),
         Hint(icon: "digitalcrown.horizontal.press", key: "onboarding.hint_crown_ccw"),
-        Hint(icon: "arrow.uturn.backward",          key: "onboarding.hint_undo"),
+        Hint(icon: "arrow.uturn.backward", key: "onboarding.hint_undo")
     ]
 
     var body: some View {
@@ -402,7 +402,7 @@ struct ScoreView: View {
     let serveRight: Bool
     let isWinner: Bool
     let avatarColor: Color
-    var avatarIcon: String? = nil
+    var avatarIcon: String?
     var partnerAvatarColor: Color = .gray
     var partnerAvatarIcon: String?
     var isMe: Bool = false

@@ -91,7 +91,7 @@ struct AvatarView: View {
     let name: String
     let color: Color
     var size: CGFloat = 28
-    var iconName: String? = nil
+    var iconName: String?
 
     private var initials: String {
         let result = Player.initials(for: name)

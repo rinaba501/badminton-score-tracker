@@ -12,33 +12,33 @@ struct MenuView: View {
 
     var body: some View {
         List {
-            Button(action: { currentView = .preMatch }) {
+            Button(action: { currentView = .preMatch }, label: {
                 HStack {
                     Image(systemName: "play.fill")
                     Text("menu.new_match")
                 }
-            }
+            })
 
-            Button(action: { currentView = .history }) {
+            Button(action: { currentView = .history }, label: {
                 HStack {
                     Image(systemName: "clock.arrow.circlepath")
                     Text("menu.history")
                 }
-            }
+            })
 
-            Button(action: { currentView = .stats }) {
+            Button(action: { currentView = .stats }, label: {
                 HStack {
                     Image(systemName: "chart.bar.fill")
                     Text("menu.stats")
                 }
-            }
+            })
 
-            Button(action: { currentView = .settings }) {
+            Button(action: { currentView = .settings }, label: {
                 HStack {
                     Image(systemName: "gear")
                     Text("menu.settings")
                 }
-            }
+            })
         }
         .navigationTitle("menu.title")
     }

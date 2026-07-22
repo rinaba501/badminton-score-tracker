@@ -57,13 +57,13 @@ public enum ScoreCallFormatter {
 
         func fmt(_ key: String, _ a: Int, _ b: Int) -> String {
             if isJapanese { return String(format: strings(key), katakana(a), katakana(b)) }
-            if isZhHans   { return String(format: strings(key), a, b) }
+            if isZhHans { return String(format: strings(key), a, b) }
             return String(format: strings(key), loveScore(a), loveScore(b))
         }
 
         func fmtTied(_ key: String, _ n: Int) -> String {
             if isJapanese { return String(format: strings(key), katakana(n)) }
-            if isZhHans   { return String(format: strings(key), n) }
+            if isZhHans { return String(format: strings(key), n) }
             let word = n == 0 ? "love" : "\(n)"
             return String(format: strings(key), word)
         }

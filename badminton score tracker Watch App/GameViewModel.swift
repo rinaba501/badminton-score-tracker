@@ -22,7 +22,7 @@ final class GameViewModel: ObservableObject {
     @Published private(set) var matchStartDate = Date()
     @Published var showDiscardAlert = false
     @Published private(set) var timeRemaining: TimeInterval = 0
-    @Published private(set) var timeModeWinner: Side? = nil
+    @Published private(set) var timeModeWinner: Side?
     @Published private(set) var suddenDeath = false
     @Published private(set) var courtSidesSwapped = false
     @Published var showCourtChangeAlert = false
