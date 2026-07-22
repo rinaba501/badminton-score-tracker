@@ -314,3 +314,7 @@
 "friends.code_placeholder" = "邀请链接或代码";
 "friends.code_send" = "发送申请";
 "friends.error_not_found" = "未找到该代码对应的球友。";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "更正比分";
+"inmatch.correct_score_footer" = "直接调整当前比分，用于修正一分以上的错误记分。";

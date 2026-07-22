@@ -315,3 +315,7 @@
 "friends.code_placeholder" = "招待リンクまたはコード";
 "friends.code_send" = "申請を送る";
 "friends.error_not_found" = "そのコードのプレイヤーが見つかりません。";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "スコアを修正";
+"inmatch.correct_score_footer" = "1点以上前の間違いを修正するため、現在のスコアを直接調整します。";

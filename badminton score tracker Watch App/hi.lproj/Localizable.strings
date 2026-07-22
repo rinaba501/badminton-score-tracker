@@ -314,3 +314,7 @@
 "friends.code_placeholder" = "आमंत्रण लिंक या कोड";
 "friends.code_send" = "अनुरोध भेजें";
 "friends.error_not_found" = "उस कोड वाला कोई खिलाड़ी नहीं मिला।";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "स्कोर सही करें";
+"inmatch.correct_score_footer" = "एक अंक से अधिक पीछे की गलती को ठीक करने के लिए मौजूदा स्कोर को सीधे समायोजित करें।";

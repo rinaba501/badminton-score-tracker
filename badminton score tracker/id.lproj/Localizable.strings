@@ -340,3 +340,7 @@
 "addmatch.result_error" = "Masukkan skor untuk setiap game, tanpa hasil seri, agar pertandingan memiliki pemenang yang jelas.";
 "addmatch.game_count_label" = "Game: %d";
 "addmatch.even_games_warning" = "Jumlah game genap tidak masalah untuk kemenangan straight-set — pastikan tidak ada game yang terlewat.";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "Koreksi Skor";
+"inmatch.correct_score_footer" = "Sesuaikan skor saat ini secara langsung, untuk kesalahan lebih dari satu poin sebelumnya.";

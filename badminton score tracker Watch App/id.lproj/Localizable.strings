@@ -314,3 +314,7 @@
 "friends.code_placeholder" = "Tautan undangan atau kode";
 "friends.code_send" = "Kirim Permintaan";
 "friends.error_not_found" = "Tidak ada pemain dengan kode tersebut.";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "Koreksi Skor";
+"inmatch.correct_score_footer" = "Sesuaikan skor saat ini secara langsung, untuk kesalahan lebih dari satu poin sebelumnya.";

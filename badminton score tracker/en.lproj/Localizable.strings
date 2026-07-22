@@ -340,3 +340,7 @@
 "friends.error_not_found" = "No player found with that code.";
 "addmatch.game_count_label" = "Games: %d";
 "addmatch.even_games_warning" = "An even number of games is fine for a straight-sets win — just double check you didn't miss one.";
+
+// Correct Score (#279)
+"inmatch.correct_score" = "Correct Score";
+"inmatch.correct_score_footer" = "Adjust a side's current score directly — for a mistake more than one point back.";
