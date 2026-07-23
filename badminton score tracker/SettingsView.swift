@@ -19,7 +19,7 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.pointsToWin) private var pointsToWin: Int = 21
     @AppStorage(AppStorageKeys.gamesInMatch) private var gamesInMatch: Int = 3
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
-    @AppStorage(AppStorageKeys.gameScreenStyle) private var gameScreenStyle: GameScreenStyle = .depth
+    @AppStorage(AppStorageKeys.gameScreenStyle) private var gameScreenStyle: GameScreenStyle = .birdsEye
     @AppStorage(AppStorageKeys.announceScore) private var announceScore = true
     @AppStorage(AppStorageKeys.enableSounds) private var enableSounds = true
     @AppStorage(AppStorageKeys.timeModeEnabled) private var timeModeEnabled = false

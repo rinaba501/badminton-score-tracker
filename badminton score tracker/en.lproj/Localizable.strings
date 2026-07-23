@@ -176,7 +176,7 @@
 "ios.game_screen_style_split" = "Split";
 "ios.game_screen_style_minimal" = "Minimal";
 "ios.game_screen_style_blackbird" = "Blackbird";
-"ios.game_screen_style_matchstick" = "Matchstick";
+"ios.game_screen_style_ledboard" = "LED Board";
 "ios.game_screen_style_birdseye" = "Birds-Eye";
 "ios.game_screen_style_tug" = "Tug";
 "ios.game_screen_style_scoreboard" = "Scoreboard";

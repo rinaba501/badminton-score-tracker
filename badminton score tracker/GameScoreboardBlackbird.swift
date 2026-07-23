@@ -41,7 +41,7 @@ private struct BlackbirdHalf: View {
 
     /// Bright when serving, dim otherwise — never hidden. A marker with no
     /// visible "off" state gives nothing to compare against, so there's no way
-    /// to learn what the lit one means (cf. Matchstick's unlit lamp).
+    /// to learn what the lit one means (cf. LED Board's unlit lamp).
     private var serveMarker: some View {
         Image(systemName: "play.fill")
             .font(.system(size: 16, weight: .bold))
