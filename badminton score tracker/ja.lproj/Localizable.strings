@@ -1,5 +1,5 @@
 // iOS companion app
-"ios.title" = "Featherkeep";
+"ios.title" = "羽根キープ";
 "ios.latest_match_header" = "最新の試合";
 "ios.profile" = "プロフィール";
 "settings.title" = "設定";
@@ -253,7 +253,7 @@
 "common.done" = "完了";
 
 // Monetization (paywall & lock badges)
-"paywall.title" = "Featherkeep Pro";
+"paywall.title" = "羽根キープ Pro";
 "paywall.pro_features" = "ProはiPhoneの広告を削除し、詳細統計とすべてのコートテーマ・アバター・アイコンを解除します。一度の購入で全デバイスに適用されます。";
 "paywall.restore" = "購入を復元";
 "paywall.owned" = "購入済み";
@@ -261,7 +261,7 @@
 "paywall.locked" = "ロック中";
 "paywall.plan_pro" = "Pro";
 "paywall.plan_free" = "無料";
-"stats.unlock_pro" = "Featherkeep Proで解除";
+"stats.unlock_pro" = "羽根キープ Proで解除";
 "paywall.feature_no_ads" = "バナー広告なし";
 "paywall.feature_stats" = "詳細統計:対戦成績と連勝記録";
 "paywall.feature_cosmetics" = "すべてのコートテーマ・アバター・アイコン";
