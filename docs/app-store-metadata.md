@@ -39,7 +39,7 @@ Tap your side of the court to score. The app tracks serve, games, and match wins
 ```
 Keep score of your badminton matches from your wrist or your phone — no paper, no shouting "what's the score?" mid-rally.
 
-Featherkeep runs as an Apple Watch app and an iPhone companion, sharing the same roster, history, and stats via iCloud. Tap the top or bottom of the screen to score a point, and the app handles everything else: serve rotation, service court, game wins, and match completion — all following official badminton rules.
+Featherkeep runs as an Apple Watch app and an iPhone companion, sharing the same roster, history, and stats. Tap the top or bottom of the screen to score a point, and the app handles everything else: serve rotation, service court, game wins, and match completion — all following official badminton rules.
 
 SCORING MADE EFFORTLESS
 • Tap top or bottom of the screen to score for either player
@@ -69,7 +69,7 @@ MADE FOR PLAYERS
 • Five court color themes: green, blue, red, purple, black
 
 SYNC & HEALTH
-• iCloud sync keeps your roster, history, and settings on all your devices
+• Optional account sync keeps your roster, history, and settings on all your devices
 • Score on your Watch, review on your iPhone — or the other way around
 • Each match is logged to Apple Health as a badminton workout
 • Watch face complication — start a new match with one tap
@@ -77,7 +77,7 @@ SYNC & HEALTH
 
 Available in English, Japanese, Chinese (Simplified), Korean, Indonesian, and Hindi.
 
-No account required. No ads. No tracking. Your data stays on your devices and in your private iCloud.
+No account required to use the app. Free with banner ads on iPhone — Featherkeep Pro removes ads and unlocks extra court themes, avatars, and detailed stats.
 ```
 
 ---
@@ -110,13 +110,19 @@ Notes:
 
 ---
 
-## App Privacy ("Data Not Collected")
+## App Privacy
 
-In App Store Connect → App Privacy, declare **Data Not Collected**. The app:
-- Stores all data locally and in the user's private iCloud (CloudKit private database; shared zones for clubs)
-- Logs workouts to the user's own Health database
-- Uses no analytics, no third-party SDKs, no advertising
-- Sends no data to the developer or any server
+The backend migrated from CloudKit to Supabase/Postgres (Roadmap Phase 9) — sync is now an explicit per-device opt-in (default is local-only, `NoOpSyncEngine`; nothing leaves the device until the user turns on "Sync Backend" in Settings and signs in with Google). Because that opt-in path exists in the shipping build, App Store Connect's App Privacy section must reflect it — **do not declare "Data Not Collected"**.
+
+When a user opts into sync, the following is sent to the developer's own Supabase project (not a third-party analytics SDK — this is first-party backend storage the developer operates):
+- **Identifiers:** User ID (Google OAuth account identifier / Supabase `auth.uid()`)
+- **Contact Info:** Name (the player's chosen display name)
+- **User Content:** the match/roster/club/friends data the user enters (scores, player names, avatars) and, only if the user separately enables each sharing toggle, gender/birthday/introduction/stats shared with accepted friends
+- None of the above is used for tracking (no cross-app/cross-company data linkage, no ad targeting)
+
+Declare these under **"Data Linked to You"** (tied to the account identifier) rather than "Data Not Collected." HealthKit workout data stays local to the user's own Health database and is never sent to Supabase or the developer — that part of the old CloudKit-era description is still accurate.
+
+**Advertising (iOS only):** `AdBannerView.swift` runs Google Mobile Ads (UMP consent → App Tracking Transparency prompt → banner ads) for free-tier users; Pro removes ads. This is a real third-party advertising SDK and must be declared — do not describe the app as ad-free or SDK-free. Google Mobile Ads collects device identifiers (IDFA, gated behind the ATT prompt) and usage/interaction data for ad delivery and, if the user grants ATT permission, ad personalization/tracking. Declare **"Data Used to Track You"** (Identifiers, Usage Data) in addition to the Supabase-related "Data Linked to You" categories above.
 
 ---
 
