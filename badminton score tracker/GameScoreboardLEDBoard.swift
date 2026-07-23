@@ -1,8 +1,8 @@
 //
-//  GameScoreboardMatchstick.swift
+//  GameScoreboardLEDBoard.swift
 //  badminton score tracker (iOS)
 //
-//  "Matchstick" GameScreenStyle: a skeuomorphic nod to the physical LED
+//  "LED Board" GameScreenStyle: a skeuomorphic nod to the physical LED
 //  scoreboards bolted to gym walls. Score digits render in DSEG7 Classic
 //  Bold (SIL OFL licensed, see Fonts/DSEG-LICENSE.txt at repo root and
 //  UIAppFonts in Info.plist) — a real 7-segment display font, so the
@@ -19,7 +19,7 @@
 
 import SwiftUI
 
-struct MatchstickScoreboard: View {
+struct LEDBoardScoreboard: View {
     let top: ScoreSideData
     let bottom: ScoreSideData
     let header: GameHeaderData

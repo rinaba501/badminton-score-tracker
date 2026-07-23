@@ -89,7 +89,7 @@ struct BirdsEyeScoreboard: View {
     /// Total games a full-length match can reach for the selected best-of
     /// format (e.g. best-of-3 → 3, best-of-1 → 1) — a fixed slot count so a
     /// side's progress toward winning the match reads at a glance, same
-    /// fix Matchstick's gameLamps applies to its own tally dots.
+    /// fix LED Board's gameLamps applies to its own tally dots.
     private var maxGameSlots: Int { header.gamesToWin * 2 - 1 }
 
     private func gameTally(_ games: Int) -> some View {

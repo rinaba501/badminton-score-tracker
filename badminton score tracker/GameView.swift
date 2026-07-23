@@ -51,7 +51,7 @@ struct GameView: View {
     @EnvironmentObject private var appStore: AppStore
     @EnvironmentObject private var storeManager: StoreManager
     @AppStorage(AppStorageKeys.courtTheme) private var courtTheme: CourtTheme = .green
-    @AppStorage(AppStorageKeys.gameScreenStyle) private var gameScreenStyle: GameScreenStyle = .depth
+    @AppStorage(AppStorageKeys.gameScreenStyle) private var gameScreenStyle: GameScreenStyle = .birdsEye
     @AppStorage(AppStorageKeys.myName) private var myName = Player.defaultMyName
 
     @StateObject private var viewModel = GameViewModel()
@@ -288,8 +288,8 @@ struct GameView: View {
                 top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )
-        case .matchstick:
-            MatchstickScoreboard(
+        case .ledBoard:
+            LEDBoardScoreboard(
                 top: sideData(for: topSide), bottom: sideData(for: bottomSide),
                 header: headerData, theme: effectiveTheme
             )

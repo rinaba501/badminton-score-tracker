@@ -35,7 +35,7 @@ enum GameScreenStyle: String, Codable, CaseIterable {
     case split      = "Split"
     case minimal    = "Minimal"
     case blackbird  = "Blackbird"
-    case matchstick = "Matchstick"
+    case ledBoard   = "LEDBoard"
     case birdsEye   = "BirdsEye"
     case tug        = "Tug"
     case scoreboard = "Scoreboard"
@@ -46,7 +46,7 @@ enum GameScreenStyle: String, Codable, CaseIterable {
         case .split:      "ios.game_screen_style_split"
         case .minimal:    "ios.game_screen_style_minimal"
         case .blackbird:  "ios.game_screen_style_blackbird"
-        case .matchstick: "ios.game_screen_style_matchstick"
+        case .ledBoard:   "ios.game_screen_style_ledboard"
         case .birdsEye:   "ios.game_screen_style_birdseye"
         case .tug:        "ios.game_screen_style_tug"
         case .scoreboard: "ios.game_screen_style_scoreboard"
@@ -134,7 +134,7 @@ struct GameScreenStyleThumbnail: View {
         case .split: splitContent
         case .minimal: minimalContent
         case .blackbird: blackbirdContent
-        case .matchstick: matchstickContent
+        case .ledBoard:   ledBoardContent
         case .birdsEye: birdsEyeContent
         case .tug: tugContent
         case .scoreboard: scoreboardContent
@@ -183,7 +183,7 @@ struct GameScreenStyleThumbnail: View {
         }
     }
 
-    private var matchstickContent: some View {
+    private var ledBoardContent: some View {
         ZStack {
             Color.black
             RoundedRectangle(cornerRadius: 3)
