@@ -110,13 +110,17 @@ Notes:
 
 ---
 
-## App Privacy ("Data Not Collected")
+## App Privacy
 
-In App Store Connect → App Privacy, declare **Data Not Collected**. The app:
-- Stores all data locally and in the user's private iCloud (CloudKit private database; shared zones for clubs)
-- Logs workouts to the user's own Health database
-- Uses no analytics, no third-party SDKs, no advertising
-- Sends no data to the developer or any server
+The backend migrated from CloudKit to Supabase/Postgres (Roadmap Phase 9) — sync is now an explicit per-device opt-in (default is local-only, `NoOpSyncEngine`; nothing leaves the device until the user turns on "Sync Backend" in Settings and signs in with Google). Because that opt-in path exists in the shipping build, App Store Connect's App Privacy section must reflect it — **do not declare "Data Not Collected"**.
+
+When a user opts into sync, the following is sent to the developer's own Supabase project (not a third-party analytics SDK — this is first-party backend storage the developer operates):
+- **Identifiers:** User ID (Google OAuth account identifier / Supabase `auth.uid()`)
+- **Contact Info:** Name (the player's chosen display name)
+- **User Content:** the match/roster/club/friends data the user enters (scores, player names, avatars) and, only if the user separately enables each sharing toggle, gender/birthday/introduction/stats shared with accepted friends
+- None of the above is used for tracking (no cross-app/cross-company data linkage, no ad targeting)
+
+Declare these under **"Data Linked to You"** (tied to the account identifier) rather than "Data Not Collected." HealthKit workout data stays local to the user's own Health database and is never sent to Supabase or the developer — that part of the old CloudKit-era description is still accurate. No analytics SDKs, no advertising SDKs, no third parties beyond the developer's own Supabase project.
 
 ---
 
