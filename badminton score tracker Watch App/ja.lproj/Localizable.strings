@@ -1,5 +1,5 @@
 // Menu
-"menu.title" = "Featherkeep";
+"menu.title" = "羽根キープ";
 "menu.new_match" = "新しい試合";
 "menu.history" = "試合履歴";
 "menu.stats" = "統計";
@@ -256,7 +256,7 @@
 "playeredit.club_personal" = "個人";
 
 // Monetization (paywall & lock badges)
-"paywall.title" = "Featherkeep Pro";
+"paywall.title" = "羽根キープ Pro";
 "paywall.pro_features" = "ProはiPhoneの広告を削除し、詳細統計とすべてのコートテーマ・アバター・アイコンを解除します。一度の購入で全デバイスに適用されます。";
 "paywall.restore" = "購入を復元";
 "paywall.owned" = "購入済み";
@@ -264,7 +264,7 @@
 "paywall.locked" = "ロック中";
 "paywall.plan_pro" = "Pro";
 "paywall.plan_free" = "無料";
-"stats.unlock_pro" = "Featherkeep Proで解除";
+"stats.unlock_pro" = "羽根キープ Proで解除";
 
 // Roadmap Phase 7e: Friends UI
 "settings.friends" = "フレンド";
